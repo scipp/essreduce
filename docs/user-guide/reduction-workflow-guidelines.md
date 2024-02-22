@@ -51,7 +51,7 @@ This is often not apparent from small test data, as the location of performance 
 - Required for subsequent filtering, unless part of the workflow.
 
 **Note**
-There should be a workflow parameters (flag) to select whether to return event data or not.
+There should be a workflow parameter (flag) to select whether to return event data or not.
 
 ### S.2: Split loading and handling of monitors and detectors from loading of auxiliary data and metadata
 
@@ -67,7 +67,7 @@ Adding dependencies on large data to the output metadata extraction may lead to 
 
 **Note**
 Most of this is avoid by following S.2.
-A bad exampleAvoid would be to write to total raw counts to the output metadata, as this would require keeping the large data alive in memory, unless it is ensured that the task runs early.
+A bad example would be writing the total raw counts to the output metadata, as this would require keeping the large data alive in memory, unless it is ensured that the task runs early.
 
 ### S.4: Handle single- and double-precision transparently
 
@@ -85,7 +85,7 @@ This will allow for changing the precision of the entire workflow by choosing a 
 
 **Example**
 - If time-of-flight is single-precision, wavelength and momentum transfer should be single-precision.
-- In counts are single-precision, reduced intensity should be single-precision.
+- If counts are single-precision, reduced intensity should be single-precision.
 
 ### S.5: Switches to double-precision shall be deliberate, explicit, and documented
 
@@ -110,7 +110,7 @@ TODO Add reference to upper-bound approach.
 Providers should be side-effect free, and should not write files or make write requests to services.
 
 **Note**
-Workflow may run many times, or in parallel, or task may be retried after failure, and we want to avoid side-effects in these cases.
+Workflows may run many times, or in parallel, or tasks may be retried after failure, and we want to avoid side-effects in these cases.
 This will, e.g., avoid unintentional overwriting of a user's files.
 
 ### S.8: Detector banks shall be loaded with their logical dimensions, if possible
@@ -130,7 +130,7 @@ We want to ensure that the guidelines are followed, and that this remains the ca
 Referencing the guideline ID in the test name makes it easier to find the relevant guideline (or vice-versa), or remove the test if the guideline is removed.
 
 **Note**
-Note all guidelines are testable.
+Not all guidelines are testable.
 
 ### T.2: Write unit tests for providers
 
