@@ -1,0 +1,39 @@
+package:
+  name: essreduce
+
+  version: {{ GIT_DESCRIBE_TAG }}
+
+source:
+  path: ..
+
+requirements:
+  build:
+    - setuptools
+    - setuptools_scm
+  run:
+    - python>=3.10
+
+test:
+  imports:
+    - ess.reduce
+  requires:
+    - pytest
+  source_files:
+    - pyproject.toml
+    - tests/
+  commands:
+    # We ignore warnings during release package builds
+    - python -m pytest -Wignore tests
+
+build:
+  noarch: python
+  script:
+    - python -m pip install .
+
+about:
+  home: https://github.com/scipp/essreduce
+  license: BSD-3-Clause
+  summary: Common data reduction tools for the ESS facility
+  description: Common data reduction tools for the ESS facility
+  dev_url: https://github.com/scipp/essreduce
+  doc_url: https://scipp.github.io/essreduce
