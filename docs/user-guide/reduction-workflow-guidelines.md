@@ -129,6 +129,9 @@ This is not always possible, as some detectors have an irregular structure and c
 We want to ensure that the guidelines are followed, and that this remains the case as the code base evolves.
 Referencing the guideline ID in the test name makes it easier to find the relevant guideline (or vice-versa), or remove the test if the guideline is removed.
 
+**Note**
+Note all guidelines are testable.
+
 ### T.2: Write unit tests for providers
 
 **Reason** Unit tests for providers are easier to write and maintain than for entire workflows.
