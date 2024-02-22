@@ -32,6 +32,7 @@ extensions = [
 ]
 try:
     import sciline.sphinxext.domain_types  # noqa: F401
+
     extensions.append('sciline.sphinxext.domain_types')
 except ModuleNotFoundError:
     pass
@@ -150,11 +151,11 @@ html_theme_options = {
     },
     "external_links": [
         {"name": "ESSdiffraction", "url": "https://scipp.github.io/essdiffraction"},
-    {"name": "ESSimaging", "url": "https://scipp.github.io/essimaging"},
-    {"name": "ESSnmx", "url": "https://scipp.github.io/essnmx"},
-    {"name": "ESSreflectometry", "url": "https://scipp.github.io/essreflectometry"},
-    {"name": "ESSsans", "url": "https://scipp.github.io/esssans"},
-    {"name": "ESSspectroscopy", "url": "https://scipp.github.io/essspectroscopy"},
+        {"name": "ESSimaging", "url": "https://scipp.github.io/essimaging"},
+        {"name": "ESSnmx", "url": "https://scipp.github.io/essnmx"},
+        {"name": "ESSreflectometry", "url": "https://scipp.github.io/essreflectometry"},
+        {"name": "ESSsans", "url": "https://scipp.github.io/esssans"},
+        {"name": "ESSspectroscopy", "url": "https://scipp.github.io/essspectroscopy"},
     ],
     "icon_links": [
         {
