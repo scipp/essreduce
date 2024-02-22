@@ -1,0 +1,78 @@
+[build-system]
+requires = [
+  "setuptools>=68",
+  "setuptools_scm[toml]>=8.0",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "essreduce"
+description = "Common data reduction tools for the ESS facility"
+authors = [{ name = "Scipp contributors" }]
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering",
+    "Typing :: Typed",
+]
+requires-python = ">=3.10"
+
+# IMPORTANT:
+# Run 'tox -e deps' after making changes here. This will update requirement files.
+# Make sure to list one dependency per line.
+dependencies = [
+]
+
+dynamic = ["version"]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/scipp/essreduce/issues"
+"Documentation" = "https://scipp.github.io/essreduce"
+"Source" = "https://github.com/scipp/essreduce"
+
+[tool.setuptools_scm]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = """
+--strict-config
+--strict-markers
+--import-mode=importlib
+-ra
+-v
+"""
+testpaths = "tests"
+filterwarnings = [
+  "error",
+]
+
+[tool.bandit]
+# Excluding tests because bandit doesn't like `assert`.
+exclude_dirs = ["docs/conf.py", "tests"]
+
+[tool.black]
+skip-string-normalization = true
+
+[tool.isort]
+skip_gitignore = true
+profile = "black"
+known_first_party = ["essreduce"]
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
+enable_error_code = [
+    "ignore-without-code",
+    "redundant-expr",
+    "truthy-bool",
+]
+show_error_codes = true
+warn_unreachable = true
