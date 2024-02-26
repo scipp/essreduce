@@ -91,10 +91,10 @@ There should be a workflow parameter (flag) to select whether to return event da
 Adding dependencies on large data to the output metadata extraction may lead to large data being kept alive in memory.
 
 **Note**
-Most of this is avoid by following S.2.
+Most of this is avoided by following S.2.
 A bad example would be writing the total raw counts to the output metadata, as this would require keeping the large data alive in memory, unless it is ensured that the task runs early.
 
-### S.4: Handle single- and double-precision transparently
+### S.4: Preserve floating-point precision of input data and coordinates
 
 **Reason**
 Single-precision may be sufficient for most data.
@@ -121,7 +121,7 @@ This should be a deliberate choice, and the reason for the switch should be docu
 ### S.6: Propagation of uncertainties in broadcast operations should support "drop" and "upper-bound" strategies, "upper-bound" shall be the default
 
 **Reason**
-Unless explicitly computed, the exact propagation of uncertainties in broadcast operations is not well-defined.
+Unless explicitly computed, the exact propagation of uncertainties in broadcast operations is not tractable.
 Dropping uncertainties is not desireable in general, as it may lead to underestimation of the uncertainties, but we realize that the upper-bound approach may not be suitable in all cases.
 We should therefore support two strategies, "drop" and "upper-bound", and "upper-bound" should be the default.
 
