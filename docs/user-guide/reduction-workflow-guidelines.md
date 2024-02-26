@@ -1,15 +1,43 @@
 # Reduction Workflow Guidelines
 
+## About
+
+- Version: 1
+- Last update: 2024-02-26
+
 ## Introduction
 
-TODO
+This document contains guidelines for writing reduction workflows with for ESS based on Scipp and Sciline.
+The guidelines are intended to ensure that the workflows are consistent (both for developers and users, across instruments and techniques), maintainable, and efficient.
 
-- Package and module structure (where to place types? what goes where?)
-  - Requires minor discussion
-- Loading from SciCat vs. local files (e.g., define run ID, choose provider that either converts to local path, or uses service to get file and return path)
+## To be included in future version
+
+We plan to include the following in future versions of the guidelines:
+
+- Naming conventions
+- Type conventions
+  - Example: Filenames
+- Package and module structure:
+  - Where to place types?
+    What goes where?
+- Loading from SciCat vs. local files
+  - Example: Define run ID, choose provider that either converts to local path, or uses service to get file and return path
 - Should we have default params set in workflows?
   - Avoid unless good reason.
   - Can have widgets that generate dict of params and values, widgets can have defaults
+- How to define parameters, such that we can, e.g., auto generate widgets for user input (names, description, limits, default values, ...)
+  - Range checks / validators
+  - If part of pipeline then UX and writing providers is more cumbersome
+  - Default values?
+- Requires experimentation with how Sciline handles param tables, and transformations of task graphs:
+  - Multiple banks, multiple files, chunking (file-based + stream-based)
+  - How to handle optional steps
+  - Structure for masking any dim or transformed dim, in various steps
+    - Could be handled as a task-graph transform?
+- How to handle optional inputs?
+  - Can we find a way to minimize the occasions where we need this?
+  - Can we avoid mutually exclusive parameters?
+
 
 ## Nomenclature
 
@@ -28,9 +56,6 @@ We have previously documented math and references in Jupyter notebooks.
 This is not sufficient, as the documentation is not close to the code.
 
 ## N: Naming
-
-TODO
-- Naming conventions (and type conventions (example: filenames)?)
 
 ## P: Performance
 
