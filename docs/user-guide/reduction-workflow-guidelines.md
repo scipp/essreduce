@@ -7,7 +7,7 @@
 
 ## Introduction
 
-This document contains guidelines for writing reduction workflows with for ESS based on Scipp and Sciline.
+This document contains guidelines for writing reduction workflows for ESS based on Scipp and Sciline.
 The guidelines are intended to ensure that the workflows are consistent (both for developers and users, across instruments and techniques), maintainable, and efficient.
 
 ## To be included in future version
