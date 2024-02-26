@@ -122,7 +122,7 @@ This should be a deliberate choice, and the reason for the switch should be docu
 
 **Reason**
 Unless explicitly computed, the exact propagation of uncertainties in broadcast operations is not tractable.
-Dropping uncertainties is not desireable in general, as it may lead to underestimation of the uncertainties, but we realize that the upper-bound approach may not be suitable in all cases.
+Dropping uncertainties is not desirable in general, as it may lead to underestimation of the uncertainties, but we realize that the upper-bound approach may not be suitable in all cases.
 We should therefore support two strategies, "drop" and "upper-bound", and "upper-bound" should be the default.
 
 **Note**
