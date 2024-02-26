@@ -95,7 +95,7 @@ Loading only individual detectors avoids loading unnecessary data and allows for
 
 **Reason**
 Event-mode monitor- and detector-data can be extremely large.
-Auxiliary data such as sample-environment data, or chopper-metadata should be accesible without loading the large data.
+Auxiliary data such as sample-environment data, or chopper-metadata should be accessible without loading the large data.
 Loading auxiliary data and metadata separately avoids keeping large data alive in memory if output metadata extraction depends on auxiliary input data or input metadata.
 
 ### S.5: Avoid dependencies of output metadata on large data
