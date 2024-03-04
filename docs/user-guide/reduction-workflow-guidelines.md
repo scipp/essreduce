@@ -70,6 +70,26 @@ Names use glob syntax, i.e., '*Filename' is any string that ends in 'Filename'.
 | NeXus*                        | Any         | Spelling of all NeXus-related keys                                        |
 | WavelengthBins \| *Bins       | sc.Variable | Bin-edges                                                                 |
 
+### C.2: Use flexible types
+
+**Reason**
+Users should not have to worry about the concrete type of parameters.
+
+**Example**
+
+- Numbers should use the appropriate abstract type from {mod}`numbers`.
+  E.g.,
+  ```python
+  P = NewType('P', numbers.Real)
+  pipeline[P] = 3.0  # works
+  pipeline[P] = 3    # works, too, but not if `P` were `float`
+  ```
+- Use {class}`collections.abc.Sequence` instead of `list` or `tuple`.
+  - But do *not* use {class}`typing.Iterable`!
+    Parameters may be consumed multiple times and iterables are not guaranteed to support that.
+- Gracefully promote dtypes for small parameters.
+  E.g., `sc.scalar(2, unit='m')` and `sc.scalar(2.0, unit='m')` should be usable interchangeably.
+
 ## D: Documentation
 
 ### D.1: Document math and references in docstrings
