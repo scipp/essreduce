@@ -14,9 +14,6 @@ The guidelines are intended to ensure that the workflows are consistent (both fo
 
 We plan to include the following in future versions of the guidelines:
 
-- Naming conventions
-- Type conventions
-  - Example: Filenames
 - Package and module structure:
   - Where to place types?
     What goes where?
@@ -42,6 +39,36 @@ We plan to include the following in future versions of the guidelines:
 ## Nomenclature
 
 - *Provider*: A callable step in a workflow writing with Sciline.
+
+## C: Convention
+
+### C.1: Use common names and types
+
+**Reason**
+Helps with sticking to established practices and working across packages.
+
+**Table**
+Names use glob syntax, i.e., '*Filename' is any string that ends in 'Filename'.
+
+| Name                          | Type        | Description                                                               |
+|-------------------------------|-------------|---------------------------------------------------------------------------|
+| --- **Files** ---             |             |                                                                           |
+| Filename \| *Filename         | str         | Simple name of a file, must be processed into FilePath                    |
+| FilePath \| *FilePath         | Path        | Concrete path to a file on the host filesystem, ideally absolute          |
+| --- **Run IDs** ---           |             |                                                                           |
+| SampleRun, BackgroundRun, ... | Any         | Identifier for a run                                                      |
+| RunType                       | TypeVar     | Constrained to the run types used by the package, see above               |
+| RunTitle                      | str         | Extracted from NeXus or provided by user, can be used to find files       |
+| --- **Monitors** ---          |             |                                                                           |
+| IncidentMonitor \| *Monitor   | Any         | Identifier for a monitor                                                  |
+| MonitorType                   | TypeVar     | Constrained to the monitor types used by the package, see above           |
+| --- **Flags** ---             |             |                                                                           |
+| UncertaintyBroadcastMode      | enum        | E.g., `Enum('UncertaintyBroadcastMode', ['drop', 'upper_bound', 'fail'])` |
+| ReturnEvents                  | bool        | Select whether to return events or histograms from the workflow           |
+| CorrectForGravity             | bool        | Toggle gravity correction                                                 |
+| --- **Misc** ---              |             |                                                                           |
+| NeXus*                        | Any         | Spelling of all NeXus-related keys                                        |
+| WavelengthBins \| *Bins       | sc.Variable | Bin-edges                                                                 |
 
 ## D: Documentation
 
