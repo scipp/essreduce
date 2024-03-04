@@ -78,23 +78,36 @@ This is often not apparent from small test data, as the location of performance 
 **Note**
 There should be a workflow parameter (flag) to select whether to return event data or not.
 
-### S.2: Split loading and handling of monitors and detectors from loading of auxiliary data and metadata
+### S.2: Load each required NXmonitor separately
 
 **Reason**
-- Allows for more efficient parallelism and reduction in memory use.
-- Avoids loading large data into memory that is not needed for the reduction.
-- Avoids keeping large data alive in memory if output metadata extraction depends on auxiliary input data or input metadata.
+Monitor data can be extremely large when operating in event mode.
+Loading only individual monitors avoids loading unnecessary data and allows for more efficient parallelism and reduction in memory use.
 
-### S.3: Avoid dependencies of output metadata on large data
+### S.3: Load each required NXdetector separately
+
+**Reason**
+Detector data can be extremely large when operating in event mode.
+Loading only individual detectors avoids loading unnecessary data and allows for more efficient parallelism and reduction in memory use.
+
+
+### S.4: Load auxiliary data and metadata separately from monitors and detectors
+
+**Reason**
+Event-mode monitor- and detector-data can be extremely large.
+Auxiliary data such as sample-environment data, or chopper-metadata should be accessible without loading the large data.
+Loading auxiliary data and metadata separately avoids keeping large data alive in memory if output metadata extraction depends on auxiliary input data or input metadata.
+
+### S.5: Avoid dependencies of output metadata on large data
 
 **Reason**
 Adding dependencies on large data to the output metadata extraction may lead to large data being kept alive in memory.
 
 **Note**
-Most of this is avoided by following S.2.
+Most of this is avoided by following S.2, S.3, and S.4.
 A bad example would be writing the total raw counts to the output metadata, as this would require keeping the large data alive in memory, unless it is ensured that the task runs early.
 
-### S.4: Preserve floating-point precision of input data and coordinates
+### S.6: Preserve floating-point precision of input data and coordinates
 
 **Reason**
 Single-precision may be sufficient for most data.
@@ -112,13 +125,13 @@ This will allow for changing the precision of the entire workflow by choosing a 
 - If time-of-flight is single-precision, wavelength and momentum transfer should be single-precision.
 - If counts are single-precision, reduced intensity should be single-precision.
 
-### S.5: Switches to double-precision shall be deliberate, explicit, and documented
+### S.7: Switches to double-precision shall be deliberate, explicit, and documented
 
 **Reason**
 Some workflows may require switching to double-precision at a certain point in the workflow.
 This should be a deliberate choice, and the reason for the switch should be documented.
 
-### S.6: Propagation of uncertainties in broadcast operations should support "drop" and "upper-bound" strategies, "upper-bound" shall be the default
+### S.8: Propagation of uncertainties in broadcast operations should support "drop" and "upper-bound" strategies, "upper-bound" shall be the default
 
 **Reason**
 Unless explicitly computed, the exact propagation of uncertainties in broadcast operations is not tractable.
@@ -129,7 +142,7 @@ We should therefore support two strategies, "drop" and "upper-bound", and "upper
 See [Systematic underestimation of uncertainties by widespread neutron-scattering data-reduction software](http://dx.doi.org/10.3233/JNR-220049) for a discussion of the topic.
 TODO Add reference to upper-bound approach.
 
-### S.7: Do not write files or make write requests to services such as SciCat in providers
+### S.9: Do not write files or make write requests to services such as SciCat in providers
 
 **Reason**
 Providers should be side-effect free, and should not write files or make write requests to services.
@@ -138,7 +151,7 @@ Providers should be side-effect free, and should not write files or make write r
 Workflows may run many times, or in parallel, or tasks may be retried after failure, and we want to avoid side-effects in these cases.
 This will, e.g., avoid unintentional overwriting of a user's files.
 
-### S.8: Detector banks shall be loaded with their logical dimensions, if possible
+### S.10: Detector banks shall be loaded with their logical dimensions, if possible
 
 **Reason**
 Using logical dims (instead of a flat list of pixels) allows for simpler indexing and slicing of the data, reductions over a subset of dimensions, and masking of physical components.
