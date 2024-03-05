@@ -89,6 +89,7 @@ Users should not have to worry about the concrete type of parameters.
     Parameters may be consumed multiple times and iterables are not guaranteed to support that.
 - Gracefully promote dtypes for small parameters.
   E.g., `sc.scalar(2, unit='m')` and `sc.scalar(2.0, unit='m')` should be usable interchangeably.
+  This can also apply to arrays, for instance, `sc.linspace` and `sc.arange` should be interchangeable but the latter may result in integers while the former typically produces floats.
 
 ## D: Documentation
 
