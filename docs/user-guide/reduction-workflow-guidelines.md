@@ -50,27 +50,50 @@ Helps with sticking to established practices and working across packages.
 **Table**
 Names use glob syntax, i.e., '*Filename' is any string that ends in 'Filename'.
 
-| Name                          | Type        | Description                                                               |
-|-------------------------------|-------------|---------------------------------------------------------------------------|
-| --- **Files** ---             |             |                                                                           |
-| Filename \| *Filename         | str         | Simple name of a file, must be processed into FilePath                    |
-| FilePath \| *FilePath         | Path        | Concrete path to a file on the host filesystem, ideally absolute          |
-| --- **Run IDs** ---           |             |                                                                           |
-| SampleRun, BackgroundRun, ... | Any         | Identifier for a run                                                      |
-| RunType                       | TypeVar     | Constrained to the run types used by the package, see above               |
-| RunTitle                      | str         | Extracted from NeXus or provided by user, can be used to find files       |
-| --- **Monitors** ---          |             |                                                                           |
-| IncidentMonitor \| *Monitor   | Any         | Identifier for a monitor                                                  |
-| MonitorType                   | TypeVar     | Constrained to the monitor types used by the package, see above           |
-| --- **Flags** ---             |             |                                                                           |
-| UncertaintyBroadcastMode      | enum        | E.g., `Enum('UncertaintyBroadcastMode', ['drop', 'upper_bound', 'fail'])` |
-| ReturnEvents                  | bool        | Select whether to return events or histograms from the workflow           |
-| CorrectForGravity             | bool        | Toggle gravity correction                                                 |
-| --- **Misc** ---              |             |                                                                           |
-| NeXus*                        | Any         | Spelling of all NeXus-related keys                                        |
-| WavelengthBins \| *Bins       | sc.Variable | Bin-edges                                                                 |
+| Name                        | Type        | Description                                                               |
+|-----------------------------|-------------|---------------------------------------------------------------------------|
+| --- **Files** ---           |             |                                                                           |
+| Filename \| *Filename       | str         | Simple name of a file, must be processed into FilePath                    |
+| FilePath \| *FilePath       | Path        | Concrete path to a file on the host filesystem, ideally absolute          |
+| --- **Flags** ---           |             |                                                                           |
+| UncertaintyBroadcastMode    | enum        | E.g., `Enum('UncertaintyBroadcastMode', ['drop', 'upper_bound', 'fail'])` |
+| ReturnEvents                | bool        | Select whether to return events or histograms from the workflow           |
+| CorrectForGravity           | bool        | Toggle gravity correction                                                 |
+| --- **Misc** ---            |             |                                                                           |
+| NeXus*                      | Any         | Spelling of all NeXus-related keys                                        |
+| WavelengthBins \| *Bins     | sc.Variable | Bin-edges                                                                 |
+| RunTitle                    | str         | Extracted from NeXus or provided by user, can be used to find files       |
 
-### C.2: Use flexible types
+### C.2: Use common names for generics
+
+**Reason**
+Helps with sticking to established practices and working across packages.
+
+**Note**
+If a workflow uses generics to parametrize its types, e.g., `Filename`,
+it should define new types used as tags and type vars constrained to those tags.
+
+**Table**
+
+| Name                                      | Type    | Description                                                     |
+|-------------------------------------------|---------|-----------------------------------------------------------------|
+| --- **Run IDs** ---                       |         |                                                                 |
+| SampleRun, BackgroundRun, ...             | Any     | Identifier for a run, only used as a type tag                   |
+| RunType                                   | TypeVar | Constrained to the run types used by the package, see above     |
+| --- **Monitors** ---                      |         |                                                                 |
+| IncidentMonitor, TransmissionMonitor, ... | Any     | Identifier for a monitor, only used as a type tag               |
+| MonitorType                               | TypeVar | Constrained to the monitor types used by the package, see above |
+
+**Example**
+The choice of using `int` is arbitrary.
+```python
+SampleRun = NewType('SampleRun', int)
+BackgroundRun = NewType('BackgroundRun', int)
+RunType = TypeVar('RunType', SampleRun, BackgroundRun)
+class Filename(sciline.Scope[RunType, str], str): ...
+```
+
+### C.3: Use flexible types
 
 **Reason**
 Users should not have to worry about the concrete type of parameters.
