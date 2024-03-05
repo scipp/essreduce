@@ -6,6 +6,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Union
 
+import numpy as np
 import pytest
 import scipp as sc
 import scipp.testing
@@ -27,6 +28,10 @@ def _event_data_components() -> sc.DataGroup:
             'event_index': sc.array(
                 dims=['event_time_zero'], unit=None, values=[0, 3, 3, 6]
             ),
+            'offset': sc.vector([0.4, 0.0, 11.5], unit='m'),
+            'pixel_offset': sc.vectors(
+                dims=['event'], values=np.arange(3 * 6).reshape((6, 3)), unit='m'
+            ),
         }
     )
 
@@ -36,9 +41,21 @@ def _monitor_histogram() -> sc.DataArray:
         sc.array(dims=['time'], values=[2, 4, 8, 3], unit='counts'),
         coords={
             'time': sc.epoch(unit='ms')
-            + sc.array(dims=['time'], values=[2, 4, 6, 8, 10], unit='ms')
+            + sc.array(dims=['time'], values=[2, 4, 6, 8, 10], unit='ms'),
+            'position': sc.vector([0.1, -0.4, 10.3], unit='m'),
         },
     )
+
+
+def _write_transformation(group: snx.Group, offset: sc.Variable) -> None:
+    group.create_field('depends_on', sc.scalar('transformations/t1'))
+    transformations = group.create_class('transformations', snx.NXtransformations)
+    t1 = transformations.create_field('t1', sc.scalar(0.0, unit=offset.unit))
+    t1.attrs['depends_on'] = '.'
+    t1.attrs['transformation_type'] = 'translation'
+    t1.attrs['offset'] = offset.values
+    t1.attrs['offset_units'] = str(offset.unit)
+    t1.attrs['vector'] = sc.vector([0, 0, 1]).value
 
 
 def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
@@ -48,8 +65,15 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
 
         detector = instrument.create_class('bank12', snx.NXdetector)
         events = detector.create_class('bank12_events', snx.NXevent_data)
-        for key, val in _event_data_components().items():
-            events[key] = val
+        detector_components = _event_data_components()
+        events['event_id'] = detector_components['event_id']
+        events['event_time_offset'] = detector_components['event_time_offset']
+        events['event_time_zero'] = detector_components['event_time_zero']
+        events['event_index'] = detector_components['event_index']
+        events['x_pixel_offset'] = detector_components['pixel_offset'].fields.x
+        events['y_pixel_offset'] = detector_components['pixel_offset'].fields.y
+        events['z_pixel_offset'] = detector_components['pixel_offset'].fields.z
+        _write_transformation(detector, detector_components['offset'])
 
         monitor_data = _monitor_histogram()
         monitor = instrument.create_class('monitor', snx.NXmonitor)
@@ -58,20 +82,7 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
         signal.attrs['signal'] = 1
         signal.attrs['axes'] = monitor_data.dim
         data.create_field('time', monitor_data.coords['time'])
-
-
-# TODO more fields
-"""
-h5ls 60248-2022-02-28_2215.nxs/entry/instrument/larmor_detector       15:27:23
-depends_on               Dataset {1}
-detector_number          Dataset {458752}
-larmor_detector_events   Group
-pixel_shape              Group
-transformations          Group
-x_pixel_offset           Dataset {458752}
-y_pixel_offset           Dataset {458752}
-z_pixel_offset           Dataset {458752}
-"""
+        _write_transformation(monitor, monitor_data.coords['position'])
 
 
 def _file_store(typ):
@@ -94,6 +105,7 @@ def nexus_file(fs, request):
             yield f
 
 
+# TODO larmor data is grouped by pixel, not binned in time
 @pytest.fixture()
 def expected_bank12():
     components = _event_data_components()
@@ -102,6 +114,7 @@ def expected_bank12():
         coords={
             'event_id': components['event_id'],
             'event_time_offset': components['event_time_offset'],
+            'position': components['offset'] + components['pixel_offset'],
         },
     )
     events = sc.bins(

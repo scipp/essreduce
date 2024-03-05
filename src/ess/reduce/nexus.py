@@ -82,6 +82,7 @@ def _load_data(
         instrument = _unique_child_group(entry, snx.NXinstrument, instrument_name)
         detector = _unique_child_group(instrument, detector_class, detector_name)
         loaded = cast(sc.DataGroup, detector[()])
+        loaded = snx.compute_positions(loaded)
         return loaded
 
 
