@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
-import warnings
 from contextlib import nullcontext
 from pathlib import Path
-from typing import BinaryIO, ContextManager, NewType, Optional, Type, Union
+from typing import BinaryIO, ContextManager, NewType, Optional, Type, Union, cast
 
 import scipp as sc
 import scippnexus as snx
@@ -27,10 +26,12 @@ InstrumentName = NewType('InstrumentName', str)
 """Name of an instrument in a NeXus file."""
 DetectorName = NewType('DetectorName', str)
 """Name of a detector (bank) in a NeXus file."""
+MonitorName = NewType('MonitorName', str)
+"""Name of a monitor in a NeXus file."""
 
 RawDetector = NewType('RawDetector', sc.DataGroup)
 """Raw data from a NeXus detector."""
-RawMonitor = NewType('RawMonitor', sc.DataArray)
+RawMonitor = NewType('RawMonitor', sc.DataGroup)
 """Raw data from a NeXus monitor."""
 
 
@@ -43,24 +44,45 @@ def load_detector(
     """
     TODO handling of names, including event name
     """
+    return RawDetector(
+        _load_data(
+            file_path,
+            detector_name=detector_name,
+            detector_class=snx.NXdetector,
+            instrument_name=instrument_name,
+        )
+    )
+
+
+def load_monitor(
+    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    *,
+    monitor_name: MonitorName,
+    instrument_name: Optional[InstrumentName] = None,
+) -> RawMonitor:
+    return RawMonitor(
+        _load_data(
+            file_path,
+            detector_name=monitor_name,
+            detector_class=snx.NXmonitor,
+            instrument_name=instrument_name,
+        )
+    )
+
+
+def _load_data(
+    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    *,
+    detector_name: Union[DetectorName, MonitorName],
+    detector_class: Type[snx.NXobject],
+    instrument_name: Optional[InstrumentName] = None,
+) -> sc.DataGroup:
     with _open_nexus_file(file_path) as f:
         entry = f['entry']
         instrument = _unique_child_group(entry, snx.NXinstrument, instrument_name)
-        detector = _unique_child_group(instrument, snx.NXdetector, detector_name)
-        events = _unique_child_group(
-            detector,
-            snx.NXevent_data,
-            f'{detector_name}_events',
-        )
-        data = events[()]
-        if not isinstance(data, sc.DataArray):
-            warnings.warn(
-                'NeXus (event)data was not assembled correctly. Expected a '
-                f'scipp.DataArray, but got {type(events)}.',
-                UserWarning,
-                stacklevel=2,
-            )
-        return RawDetector(sc.DataGroup(data=data))
+        detector = _unique_child_group(instrument, detector_class, detector_name)
+        loaded = cast(sc.DataGroup, detector[()])
+        return loaded
 
 
 def _open_nexus_file(
