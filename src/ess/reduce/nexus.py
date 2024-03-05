@@ -28,10 +28,10 @@ InstrumentName = NewType('InstrumentName', str)
 DetectorName = NewType('DetectorName', str)
 """Name of a detector (bank) in a NeXus file."""
 
-RawDetector = NewType('RawDetector', sc.DataArray)
-"""A Scipp DataArray containing raw data from a detector."""
+RawDetector = NewType('RawDetector', sc.DataGroup)
+"""Raw data from a NeXus detector."""
 RawMonitor = NewType('RawMonitor', sc.DataArray)
-"""A Scipp DataArray containing raw data from a monitor."""
+"""Raw data from a NeXus monitor."""
 
 
 def load_detector(
@@ -60,7 +60,7 @@ def load_detector(
                 UserWarning,
                 stacklevel=2,
             )
-        return RawDetector(data)  # type: ignore[arg-type]
+        return RawDetector(sc.DataGroup(data=data))
 
 
 def _open_nexus_file(

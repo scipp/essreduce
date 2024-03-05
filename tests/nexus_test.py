@@ -97,4 +97,4 @@ def test_load_detector(nexus_file, expected_bank12, instrument_name):
         instrument_name=instrument_name,
     )
     # TODO positions
-    sc.testing.assert_identical(detector, nexus.RawDetector(expected_bank12))
+    sc.testing.assert_identical(detector['data'], expected_bank12)
