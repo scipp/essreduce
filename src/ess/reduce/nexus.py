@@ -36,8 +36,9 @@ RawMonitor = NewType('RawMonitor', sc.DataArray)
 
 def load_detector(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    *,
+    detector_name: DetectorName,
     instrument_name: Optional[InstrumentName] = None,
-    detector_name: Optional[DetectorName] = None,
 ) -> RawDetector:
     """
     TODO handling of names, including event name
@@ -49,7 +50,7 @@ def load_detector(
         events = _unique_child_group(
             detector,
             snx.NXevent_data,
-            None if detector_name is None else f'{detector_name}_events',
+            f'{detector_name}_events',
         )
         data = events[()]
         if not isinstance(data, sc.DataArray):
@@ -81,12 +82,12 @@ def _unique_child_group(
             )
         if child.nx_class != nx_class:
             raise ValueError(
-                f'The NeXus group {name} was expected to be a '
+                f"The NeXus group '{name}' was expected to be a "
                 f'{nx_class} but is a {child.nx_class}.'
             )
         return child
 
     children = group[nx_class]
     if len(children) != 1:
-        raise ValueError(f'Expected exactly one {nx_class} group.')
+        raise ValueError(f'Expected exactly one {nx_class} group, got {len(children)}')
     return next(iter(children.values()))  # type: ignore[return-value]
