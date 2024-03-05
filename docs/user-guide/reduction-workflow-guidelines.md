@@ -102,8 +102,6 @@ This includes mathematical formulas and references to literature.
 We have previously documented math and references in Jupyter notebooks.
 This is not sufficient, as the documentation is not close to the code.
 
-## N: Naming
-
 ## P: Performance
 
 ### P.1: Runtime and memory use of workflows shall be tested with large data
