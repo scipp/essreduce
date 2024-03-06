@@ -194,32 +194,32 @@ def expected_sample() -> sc.DataGroup:
     return _sample_data()
 
 
-@pytest.mark.parametrize('instrument_name', (None, nexus.InstrumentName('reducer')))
-def test_load_detector(nexus_file, expected_bank12, instrument_name):
+@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry')))
+def test_load_detector(nexus_file, expected_bank12, entry_name):
     detector = nexus.load_detector(
         nexus_file,
         detector_name=nexus.DetectorName('bank12'),
-        instrument_name=instrument_name,
+        entry_name=entry_name,
     )
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
 
 
-@pytest.mark.parametrize('instrument_name', (None, nexus.InstrumentName('reducer')))
-def test_load_monitor(nexus_file, expected_monitor, instrument_name):
+@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry')))
+def test_load_monitor(nexus_file, expected_monitor, entry_name):
     monitor = nexus.load_monitor(
         nexus_file,
         monitor_name=nexus.MonitorName('monitor'),
-        instrument_name=instrument_name,
+        entry_name=entry_name,
     )
     sc.testing.assert_identical(monitor['data'], expected_monitor)
 
 
-@pytest.mark.parametrize('instrument_name', (None, nexus.InstrumentName('reducer')))
+@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry')))
 @pytest.mark.parametrize('source_name', (None, nexus.SourceName('source')))
-def test_load_source(nexus_file, expected_source, instrument_name, source_name):
+def test_load_source(nexus_file, expected_source, entry_name, source_name):
     source = nexus.load_source(
         nexus_file,
-        instrument_name=instrument_name,
+        entry_name=entry_name,
         source_name=source_name,
     )
     # NeXus details that we don't need to test as long as the positions are ok:
@@ -228,8 +228,9 @@ def test_load_source(nexus_file, expected_source, instrument_name, source_name):
     sc.testing.assert_identical(source, nexus.RawSource(expected_source))
 
 
-def test_load_sample(nexus_file, expected_sample):
-    sample = nexus.load_sample(nexus_file)
+@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry')))
+def test_load_sample(nexus_file, expected_sample, entry_name):
+    sample = nexus.load_sample(nexus_file, entry_name=entry_name)
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
 
 

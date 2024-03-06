@@ -33,8 +33,8 @@ NeXusGroup = NewType('NeXusGroup', snx.Group)
 
 DetectorName = NewType('DetectorName', str)
 """Name of a detector (bank) in a NeXus file."""
-InstrumentName = NewType('InstrumentName', str)
-"""Name of an instrument in a NeXus file."""
+EntryName = NewType('EntryName', str)
+"""Name of an entry in a NeXus file."""
 MonitorName = NewType('MonitorName', str)
 """Name of a monitor in a NeXus file."""
 SourceName = NewType('SourceName', str)
@@ -58,7 +58,7 @@ def load_detector(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
     detector_name: DetectorName,
-    instrument_name: Optional[InstrumentName] = None,
+    entry_name: Optional[EntryName] = None,
 ) -> RawDetector:
     """Load a single detector (bank) from a NeXus file.
 
@@ -75,11 +75,11 @@ def load_detector(
         - A ScippNexus group of the root of a NeXus file.
     detector_name:
         Name of the detector (bank) to load.
-        Must be a group in the instrument group (see below).
-    instrument_name:
-        Name of the instrument that contains the detector.
-        If ``None``, the instrument will be located based
-        on its NeXus class.
+        Must be a group in an instrument group in the entry (see below).
+    entry_name:
+        Name of the entry that contains the detector.
+        If ``None``, the entry will be located based
+        on its NeXus class, but there cannot be more than 1.
 
     Returns
     -------
@@ -92,7 +92,7 @@ def load_detector(
             file_path,
             group_name=detector_name,
             nx_class=snx.NXdetector,
-            instrument_name=instrument_name,
+            entry_name=entry_name,
         )
     )
 
@@ -101,7 +101,7 @@ def load_monitor(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
     monitor_name: MonitorName,
-    instrument_name: Optional[InstrumentName] = None,
+    entry_name: Optional[EntryName] = None,
 ) -> RawMonitor:
     """Load a single monitor from a NeXus file.
 
@@ -118,11 +118,11 @@ def load_monitor(
         - A ScippNexus group of the root of a NeXus file.
     monitor_name:
         Name of the monitor to load.
-        Must be a group in the instrument group (see below).
-    instrument_name:
-        Name of the instrument that contains the detector.
-        If ``None``, the instrument will be located based
-        on its NeXus class.
+        Must be a group in an instrument group in the entry (see below).
+    entry_name:
+        Name of the entry that contains the monitor.
+        If ``None``, the entry will be located based
+        on its NeXus class, but there cannot be more than 1.
 
     Returns
     -------
@@ -135,7 +135,7 @@ def load_monitor(
             file_path,
             group_name=monitor_name,
             nx_class=snx.NXmonitor,
-            instrument_name=instrument_name,
+            entry_name=entry_name,
         )
     )
 
@@ -144,7 +144,7 @@ def load_source(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
     source_name: Optional[SourceName] = None,
-    instrument_name: Optional[InstrumentName] = None,
+    entry_name: Optional[EntryName] = None,
 ) -> RawSource:
     """Load a source from a NeXus file.
 
@@ -161,38 +161,39 @@ def load_source(
         - A ScippNexus group of the root of a NeXus file.
     source_name:
         Name of the source to load.
-        Must be a group in the instrument group (see below).
+        Must be a group in an instrument group in the entry (see below).
         If ``None``, the source will be located based
         on its NeXus class.
-    instrument_name:
-        Name of the instrument that contains the detector.
-        If ``None``, the instrument will be located based
-        on its NeXus class.
+    entry_name:
+        Name of the instrument that contains the source.
+        If ``None``, the entry will be located based
+        on its NeXus class, but there cannot be more than 1.
 
     Returns
     -------
     :
         A data group containing all data stored in
-         the source NeXus group.
+        the source NeXus group.
     """
     return RawSource(
         _load_group_with_positions(
             file_path,
             group_name=source_name,
             nx_class=snx.NXsource,
-            instrument_name=instrument_name,
+            entry_name=entry_name,
         )
     )
 
 
 def load_sample(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    entry_name: Optional[EntryName] = None,
 ) -> RawSample:
     """Load a sample from a NeXus file.
 
     The sample is located based on its NeXus class.
     There can be only one sample in a NeXus file or
-    in the group given as ``file_path``.
+    in the entry indicated by ``entry_name``.
 
     Parameters
     ----------
@@ -203,15 +204,19 @@ def load_sample(
         - Path to a NeXus file on disk.
         - File handle or buffer for reading binary data.
         - A ScippNexus group of the root of a NeXus file.
+    entry_name:
+        Name of the instrument that contains the source.
+        If ``None``, the entry will be located based
+        on its NeXus class, but there cannot be more than 1.
 
     Returns
     -------
     :
         A data group containing all data stored in
-         the sample NeXus group.
+        the sample NeXus group.
     """
     with _open_nexus_file(file_path) as f:
-        entry = f['entry']
+        entry = _unique_child_group(f, snx.NXentry, entry_name)
         loaded = cast(sc.DataGroup, _unique_child_group(entry, snx.NXsample, None)[()])
     return RawSample(loaded)
 
@@ -221,11 +226,11 @@ def _load_group_with_positions(
     *,
     group_name: Optional[str],
     nx_class: Type[snx.NXobject],
-    instrument_name: Optional[InstrumentName] = None,
+    entry_name: Optional[EntryName] = None,
 ) -> sc.DataGroup:
     with _open_nexus_file(file_path) as f:
-        entry = f['entry']
-        instrument = _unique_child_group(entry, snx.NXinstrument, instrument_name)
+        entry = _unique_child_group(f, snx.NXentry, entry_name)
+        instrument = _unique_child_group(entry, snx.NXinstrument, None)
         loaded = cast(
             sc.DataGroup, _unique_child_group(instrument, nx_class, group_name)[()]
         )
