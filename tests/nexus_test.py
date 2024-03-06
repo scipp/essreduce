@@ -48,6 +48,17 @@ def _monitor_histogram() -> sc.DataArray:
     )
 
 
+def _source_data() -> sc.DataGroup:
+    return sc.DataGroup(
+        {
+            'name': 'moderator',
+            'probe': 'neutron',
+            'type': 'Spallation Neutron Source',
+            'position': sc.vector([0, 0, 0], unit='m'),
+        }
+    )
+
+
 def _write_transformation(group: snx.Group, offset: sc.Variable) -> None:
     group.create_field('depends_on', sc.scalar('transformations/t1'))
     transformations = group.create_class('transformations', snx.NXtransformations)
@@ -85,6 +96,13 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
         signal.attrs['axes'] = monitor_data.dim
         data.create_field('time', monitor_data.coords['time'])
 
+        source_data = _source_data()
+        source = instrument.create_class('source', snx.NXsource)
+        source.create_field('name', source_data['name'])
+        source.create_field('probe', source_data['probe'])
+        source.create_field('type', source_data['type'])
+        _write_transformation(source, source_data['position'])
+
 
 def _file_store(typ):
     if typ == Path:
@@ -94,6 +112,8 @@ def _file_store(typ):
 
 @pytest.fixture(params=[Path, BytesIO, snx.Group])
 def nexus_file(fs, request):
+    _ = fs  # Request fs to prevent writing to real disk when param=Path
+
     store = _file_store(request.param)
     _write_nexus_data(store)
     if isinstance(store, BytesIO):
@@ -148,6 +168,11 @@ def expected_monitor() -> sc.DataArray:
     return _monitor_histogram()
 
 
+@pytest.fixture()
+def expected_source() -> sc.DataGroup:
+    return _source_data()
+
+
 @pytest.mark.parametrize('instrument_name', (None, nexus.InstrumentName('reducer')))
 def test_load_detector(nexus_file, expected_bank12, instrument_name):
     detector = nexus.load_detector(
@@ -166,3 +191,17 @@ def test_load_monitor(nexus_file, expected_monitor, instrument_name):
         instrument_name=instrument_name,
     )
     sc.testing.assert_identical(monitor['data'], expected_monitor)
+
+
+@pytest.mark.parametrize('instrument_name', (None, nexus.InstrumentName('reducer')))
+@pytest.mark.parametrize('source_name', (None, nexus.SourceName('source')))
+def test_load_source(nexus_file, expected_source, instrument_name, source_name):
+    source = nexus.load_source(
+        nexus.NeXusGroup(nexus_file),
+        instrument_name=instrument_name,
+        source_name=source_name,
+    )
+    # NeXus details that we don't need to test as long as the positions are ok:
+    del source['depends_on']
+    del source['transformations']
+    sc.testing.assert_identical(source, nexus.RawSource(expected_source))

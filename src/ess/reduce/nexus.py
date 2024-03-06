@@ -22,17 +22,23 @@ The type alias is provided for callers of load functions outside of pipelines.
 NeXusGroup = NewType('NeXusGroup', snx.Group)
 """A ScippNexus group in an open file."""
 
-InstrumentName = NewType('InstrumentName', str)
-"""Name of an instrument in a NeXus file."""
 DetectorName = NewType('DetectorName', str)
 """Name of a detector (bank) in a NeXus file."""
+InstrumentName = NewType('InstrumentName', str)
+"""Name of an instrument in a NeXus file."""
 MonitorName = NewType('MonitorName', str)
 """Name of a monitor in a NeXus file."""
+SourceName = NewType('SourceName', str)
+"""Name of a source in a NeXus file."""
 
 RawDetector = NewType('RawDetector', sc.DataGroup)
 """Raw data from a NeXus detector."""
 RawMonitor = NewType('RawMonitor', sc.DataGroup)
 """Raw data from a NeXus monitor."""
+RawSample = NewType('RawSample', sc.DataGroup)
+"""Raw data from a NeXus sample."""
+RawSource = NewType('RawSource', sc.DataGroup)
+"""Raw data from a NeXus source."""
 
 
 def load_detector(
@@ -45,10 +51,10 @@ def load_detector(
     TODO handling of names, including event name
     """
     return RawDetector(
-        _load_data(
+        _load_group_with_positions(
             file_path,
-            detector_name=detector_name,
-            detector_class=snx.NXdetector,
+            group_name=detector_name,
+            nx_class=snx.NXdetector,
             instrument_name=instrument_name,
         )
     )
@@ -61,27 +67,44 @@ def load_monitor(
     instrument_name: Optional[InstrumentName] = None,
 ) -> RawMonitor:
     return RawMonitor(
-        _load_data(
+        _load_group_with_positions(
             file_path,
-            detector_name=monitor_name,
-            detector_class=snx.NXmonitor,
+            group_name=monitor_name,
+            nx_class=snx.NXmonitor,
             instrument_name=instrument_name,
         )
     )
 
 
-def _load_data(
+def load_source(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
-    detector_name: Union[DetectorName, MonitorName],
-    detector_class: Type[snx.NXobject],
+    source_name: Optional[SourceName] = None,
+    instrument_name: Optional[InstrumentName] = None,
+) -> RawSource:
+    return RawSource(
+        _load_group_with_positions(
+            file_path,
+            group_name=source_name,
+            nx_class=snx.NXsource,
+            instrument_name=instrument_name,
+        )
+    )
+
+
+def _load_group_with_positions(
+    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    *,
+    group_name: Optional[str],
+    nx_class: Type[snx.NXobject],
     instrument_name: Optional[InstrumentName] = None,
 ) -> sc.DataGroup:
     with _open_nexus_file(file_path) as f:
         entry = f['entry']
         instrument = _unique_child_group(entry, snx.NXinstrument, instrument_name)
-        detector = _unique_child_group(instrument, detector_class, detector_name)
-        loaded = cast(sc.DataGroup, detector[()])
+        loaded = cast(
+            sc.DataGroup, _unique_child_group(instrument, nx_class, group_name)[()]
+        )
         loaded = snx.compute_positions(loaded)
         return loaded
 
@@ -114,3 +137,7 @@ def _unique_child_group(
     if len(children) != 1:
         raise ValueError(f'Expected exactly one {nx_class} group, got {len(children)}')
     return next(iter(children.values()))  # type: ignore[return-value]
+
+
+# TODO source
+# TODO sample
