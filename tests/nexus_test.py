@@ -269,15 +269,38 @@ def test_load_sample(nexus_file, expected_sample, entry_name):
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
 
 
-def test_extract_detector_data(nexus_file, expected_bank12):
-    detector_name = nexus.DetectorName('bank12')
-    detector = nexus.load_detector(nexus_file, detector_name=detector_name)
-    data = nexus.extract_detector_data(detector, detector_name=detector_name)
-    sc.testing.assert_identical(data, nexus.RawDetectorData(expected_bank12))
+def test_extract_detector_data():
+    detector = sc.DataGroup(
+        {
+            'jdl2ab': sc.DataArray(sc.arange('xx', 10)),
+            'llk': 23,
+            ' _': sc.linspace('xx', 2, 3, 10),
+        }
+    )
+    data = nexus.extract_detector_data(nexus.RawDetector(detector))
+    sc.testing.assert_identical(data, nexus.RawDetectorData(detector['jdl2ab']))
 
 
-def test_extract_monitor_data(nexus_file, expected_monitor):
-    monitor_name = nexus.MonitorName('monitor')
-    monitor = nexus.load_monitor(nexus_file, monitor_name=monitor_name)
-    data = nexus.extract_monitor_data(monitor, monitor_name=monitor_name)
-    sc.testing.assert_identical(data, nexus.RawMonitorData(expected_monitor))
+def test_extract_monitor_data():
+    monitor = sc.DataGroup(
+        {
+            '(eed)': sc.DataArray(sc.arange('xx', 10)),
+            'llk': 23,
+            ' _': sc.linspace('xx', 2, 3, 10),
+        }
+    )
+    data = nexus.extract_detector_data(nexus.RawMonitor(monitor))
+    sc.testing.assert_identical(data, nexus.RawDetectorData(monitor['(eed)']))
+
+
+def test_extract_detector_data_requires_unique_data_array():
+    detector = sc.DataGroup(
+        {
+            'jdl2ab': sc.DataArray(sc.arange('xx', 10)),
+            'llk': 23,
+            'lob': sc.DataArray(sc.arange('yy', 20)),
+            ' _': sc.linspace('xx', 2, 3, 10),
+        }
+    )
+    with pytest.raises(ValueError):
+        nexus.extract_detector_data(nexus.RawDetector(detector))

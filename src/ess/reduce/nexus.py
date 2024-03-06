@@ -268,22 +268,25 @@ def _unique_child_group(
     return next(iter(children.values()))  # type: ignore[return-value]
 
 
-def extract_detector_data(
-    detector: RawDetector, detector_name: DetectorName
-) -> RawDetectorData:
+def extract_detector_data(detector: RawDetector) -> RawDetectorData:
     """Get and return the events or histogram from a detector loaded from NeXus.
+
+    This function looks for a data array in the detector group and returns that.
 
     Parameters
     ----------
     detector:
         A detector loaded from NeXus.
-    detector_name:
-        Name of the detector.
 
     Returns
     -------
     :
         A data array containing the events or histogram.
+
+    Raises
+    ------
+    ValueError
+        If there is more than one data array.
 
     See also
     --------
@@ -291,25 +294,28 @@ def extract_detector_data(
         Load a detector from a NeXus file in a format compatible with
         ``extract_detector_data``.
     """
-    return RawDetectorData(_extract_events_or_histogram(detector, detector_name))
+    return RawDetectorData(_extract_events_or_histogram(detector))
 
 
-def extract_monitor_data(
-    monitor: RawMonitor, monitor_name: MonitorName
-) -> RawMonitorData:
+def extract_monitor_data(monitor: RawMonitor) -> RawMonitorData:
     """Get and return the events or histogram from a monitor loaded from NeXus.
+
+    This function looks for a data array in the monitor group and returns that.
 
     Parameters
     ----------
     monitor:
         A monitor loaded from NeXus.
-    monitor_name:
-        Name of the monitor.
 
     Returns
     -------
     :
         A data array containing the events or histogram.
+
+    Raises
+    ------
+    ValueError
+        If there is more than one data array.
 
     See also
     --------
@@ -317,18 +323,23 @@ def extract_monitor_data(
         Load a monitor from a NeXus file in a format compatible with
         ``extract_monitor_data``.
     """
-    return RawMonitorData(_extract_events_or_histogram(monitor, monitor_name))
+    return RawMonitorData(_extract_events_or_histogram(monitor))
 
 
-def _extract_events_or_histogram(dg: sc.DataGroup, name: str) -> sc.DataArray:
-    data_names = {f'{name}_events', 'data'}
-    for data_name in data_names:
-        try:
-            return dg[data_name]
-        except KeyError:
-            pass
-    raise ValueError(
-        f"Raw data '{name}' loaded from NeXus does not contain events or a histogram. "
-        f"Expected to find one of {data_names}, "
-        f"but the data only contains {set(dg.keys())}"
-    )
+def _extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
+    data_arrays = {
+        key: value for key, value in dg.items() if isinstance(value, sc.DataArray)
+    }
+    if len(data_arrays) == 0:
+        raise ValueError(
+            "Raw data loaded from NeXus does not contain events or a histogram. "
+            "Expected to find a data array, "
+            f"but the data only contains {set(dg.keys())}"
+        )
+    if len(data_arrays) > 1:
+        raise ValueError(
+            "Raw data loaded from NeXus contains more than one data array. "
+            "Cannot uniquely identify the event or histogram data. "
+            f"Got items {set(dg.keys())}"
+        )
+    return next(iter(data_arrays.values()))
