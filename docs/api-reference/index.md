@@ -26,4 +26,6 @@
    :toctree: ../generated/modules
    :template: module-template.rst
    :recursive:
+
+   nexus
 ```

@@ -1,6 +1,15 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
+"""NeXus utilities.
+
+This module defines functions and domain types that can be used
+to build Sciline pipelines for simple workflows.
+If multiple different kind sof files (e.g., sample and background runs)
+are needed, custom types and providers need to be defined to wrap
+the basic ones here.
+"""
+
 from contextlib import nullcontext
 from pathlib import Path
 from typing import BinaryIO, ContextManager, NewType, Optional, Type, Union, cast
@@ -51,8 +60,32 @@ def load_detector(
     detector_name: DetectorName,
     instrument_name: Optional[InstrumentName] = None,
 ) -> RawDetector:
-    """
-    TODO handling of names, including event name
+    """Load a single detector (bank) from a NeXus file.
+
+    The detector positions are computed automatically for NeXus transformations.
+
+    Parameters
+    ----------
+    file_path:
+        Indicates where to load data from.
+        One of:
+
+        - Path to a NeXus file on disk.
+        - File handle or buffer for reading binary data.
+        - A ScippNexus group of the root of a NeXus file.
+    detector_name:
+        Name of the detector (bank) to load.
+        Must be a group in the instrument group (see below).
+    instrument_name:
+        Name of the instrument that contains the detector.
+        If ``None``, the instrument will be located based
+        on its NeXus class.
+
+    Returns
+    -------
+    :
+        A data group containing the detector events or histogram
+        and any auxiliary data stored in the same NeXus group.
     """
     return RawDetector(
         _load_group_with_positions(
@@ -70,6 +103,33 @@ def load_monitor(
     monitor_name: MonitorName,
     instrument_name: Optional[InstrumentName] = None,
 ) -> RawMonitor:
+    """Load a single monitor from a NeXus file.
+
+    The monitor position is computed automatically for NeXus transformations.
+
+    Parameters
+    ----------
+    file_path:
+        Indicates where to load data from.
+        One of:
+
+        - Path to a NeXus file on disk.
+        - File handle or buffer for reading binary data.
+        - A ScippNexus group of the root of a NeXus file.
+    monitor_name:
+        Name of the monitor to load.
+        Must be a group in the instrument group (see below).
+    instrument_name:
+        Name of the instrument that contains the detector.
+        If ``None``, the instrument will be located based
+        on its NeXus class.
+
+    Returns
+    -------
+    :
+        A data group containing the monitor events or histogram
+        and any auxiliary data stored in the same NeXus group.
+    """
     return RawMonitor(
         _load_group_with_positions(
             file_path,
@@ -86,6 +146,35 @@ def load_source(
     source_name: Optional[SourceName] = None,
     instrument_name: Optional[InstrumentName] = None,
 ) -> RawSource:
+    """Load a source from a NeXus file.
+
+    The source position is computed automatically for NeXus transformations.
+
+    Parameters
+    ----------
+    file_path:
+        Indicates where to load data from.
+        One of:
+
+        - Path to a NeXus file on disk.
+        - File handle or buffer for reading binary data.
+        - A ScippNexus group of the root of a NeXus file.
+    source_name:
+        Name of the source to load.
+        Must be a group in the instrument group (see below).
+        If ``None``, the source will be located based
+        on its NeXus class.
+    instrument_name:
+        Name of the instrument that contains the detector.
+        If ``None``, the instrument will be located based
+        on its NeXus class.
+
+    Returns
+    -------
+    :
+        A data group containing all data stored in
+         the source NeXus group.
+    """
     return RawSource(
         _load_group_with_positions(
             file_path,
@@ -99,6 +188,28 @@ def load_source(
 def load_sample(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
 ) -> RawSample:
+    """Load a sample from a NeXus file.
+
+    The sample is located based on its NeXus class.
+    There can be only one sample in a NeXus file or
+    in the group given as ``file_path``.
+
+    Parameters
+    ----------
+    file_path:
+        Indicates where to load data from.
+        One of:
+
+        - Path to a NeXus file on disk.
+        - File handle or buffer for reading binary data.
+        - A ScippNexus group of the root of a NeXus file.
+
+    Returns
+    -------
+    :
+        A data group containing all data stored in
+         the sample NeXus group.
+    """
     with _open_nexus_file(file_path) as f:
         entry = f['entry']
         loaded = cast(sc.DataGroup, _unique_child_group(entry, snx.NXsample, None)[()])
@@ -155,12 +266,52 @@ def _unique_child_group(
 def extract_detector_data(
     detector: RawDetector, detector_name: DetectorName
 ) -> RawDetectorData:
+    """Get and return the events or histogram from a detector loaded from NeXus.
+
+    Parameters
+    ----------
+    detector:
+        A detector loaded from NeXus.
+    detector_name:
+        Name of the detector.
+
+    Returns
+    -------
+    :
+        A data array containing the events or histogram.
+
+    See also
+    --------
+    load_detector:
+        Load a detector from a NeXus file in a format compatible with
+        ``extract_detector_data``.
+    """
     return RawDetectorData(_extract_events_or_histogram(detector, detector_name))
 
 
 def extract_monitor_data(
     monitor: RawMonitor, monitor_name: MonitorName
 ) -> RawMonitorData:
+    """Get and return the events or histogram from a monitor loaded from NeXus.
+
+    Parameters
+    ----------
+    monitor:
+        A monitor loaded from NeXus.
+    monitor_name:
+        Name of the monitor.
+
+    Returns
+    -------
+    :
+        A data array containing the events or histogram.
+
+    See also
+    --------
+    load_monitor:
+        Load a monitor from a NeXus file in a format compatible with
+        ``extract_monitor_data``.
+    """
     return RawMonitorData(_extract_events_or_histogram(monitor, monitor_name))
 
 
