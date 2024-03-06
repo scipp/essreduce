@@ -82,7 +82,7 @@ def _write_transformation(group: snx.Group, offset: sc.Variable) -> None:
 
 def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
     with snx.File(store, 'w') as root:
-        entry = root.create_class('entry', snx.NXentry)
+        entry = root.create_class('entry-001', snx.NXentry)
         instrument = entry.create_class('reducer', snx.NXinstrument)
 
         detector = instrument.create_class('bank12', snx.NXdetector)
@@ -197,7 +197,7 @@ def expected_sample() -> sc.DataGroup:
     return _sample_data()
 
 
-@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry')))
+@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry-001')))
 def test_load_detector(nexus_file, expected_bank12, entry_name):
     detector = nexus.load_detector(
         nexus_file,
@@ -207,7 +207,39 @@ def test_load_detector(nexus_file, expected_bank12, entry_name):
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
 
 
-@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry')))
+def test_load_detector_requires_entry_name_if_not_unique(nexus_file):
+    if not isinstance(nexus_file, Path):
+        # For simplicity, only create a second entry in an actual file
+        return
+
+    with snx.File(nexus_file, 'r+') as f:
+        f.create_class('entry', snx.NXentry)
+
+    with pytest.raises(ValueError):
+        nexus.load_detector(
+            nexus.FilePath(nexus_file),
+            detector_name=nexus.DetectorName('bank12'),
+            entry_name=None,
+        )
+
+
+def test_load_detector_select_entry_if_not_unique(nexus_file, expected_bank12):
+    if not isinstance(nexus_file, Path):
+        # For simplicity, only create a second entry in an actual file
+        return
+
+    with snx.File(nexus_file, 'r+') as f:
+        f.create_class('entry', snx.NXentry)
+
+    detector = nexus.load_detector(
+        nexus.FilePath(nexus_file),
+        detector_name=nexus.DetectorName('bank12'),
+        entry_name=nexus.EntryName('entry-001'),
+    )
+    sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
+
+
+@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry-001')))
 def test_load_monitor(nexus_file, expected_monitor, entry_name):
     monitor = nexus.load_monitor(
         nexus_file,
@@ -217,7 +249,7 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name):
     sc.testing.assert_identical(monitor['data'], expected_monitor)
 
 
-@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry')))
+@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry-001')))
 @pytest.mark.parametrize('source_name', (None, nexus.SourceName('source')))
 def test_load_source(nexus_file, expected_source, entry_name, source_name):
     source = nexus.load_source(
@@ -231,7 +263,7 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
     sc.testing.assert_identical(source, nexus.RawSource(expected_source))
 
 
-@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry')))
+@pytest.mark.parametrize('entry_name', (None, nexus.EntryName('entry-001')))
 def test_load_sample(nexus_file, expected_sample, entry_name):
     sample = nexus.load_sample(nexus_file, entry_name=entry_name)
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
