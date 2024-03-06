@@ -44,7 +44,6 @@ def _monitor_histogram() -> sc.DataArray:
         coords={
             'time': sc.epoch(unit='ms')
             + sc.array(dims=['time'], values=[2, 4, 6, 8, 10], unit='ms'),
-            'position': sc.vector([0.1, -0.4, 10.3], unit='m'),
         },
     )
 
@@ -85,7 +84,6 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
         signal.attrs['signal'] = 1
         signal.attrs['axes'] = monitor_data.dim
         data.create_field('time', monitor_data.coords['time'])
-        _write_transformation(monitor, monitor_data.coords['position'])
 
 
 def _file_store(typ):
