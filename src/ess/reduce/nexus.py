@@ -92,6 +92,15 @@ def load_source(
     )
 
 
+def load_sample(
+    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+) -> RawSample:
+    with _open_nexus_file(file_path) as f:
+        entry = f['entry']
+        loaded = cast(sc.DataGroup, _unique_child_group(entry, snx.NXsample, None)[()])
+    return RawSample(loaded)
+
+
 def _load_group_with_positions(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
@@ -137,7 +146,3 @@ def _unique_child_group(
     if len(children) != 1:
         raise ValueError(f'Expected exactly one {nx_class} group, got {len(children)}')
     return next(iter(children.values()))  # type: ignore[return-value]
-
-
-# TODO source
-# TODO sample

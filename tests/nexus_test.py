@@ -59,6 +59,16 @@ def _source_data() -> sc.DataGroup:
     )
 
 
+def _sample_data() -> sc.DataGroup:
+    return sc.DataGroup(
+        {
+            'name': 'water',
+            'chemical_formula': 'H2O',
+            'type': 'sample+can',
+        }
+    )
+
+
 def _write_transformation(group: snx.Group, offset: sc.Variable) -> None:
     group.create_field('depends_on', sc.scalar('transformations/t1'))
     transformations = group.create_class('transformations', snx.NXtransformations)
@@ -102,6 +112,12 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
         source.create_field('probe', source_data['probe'])
         source.create_field('type', source_data['type'])
         _write_transformation(source, source_data['position'])
+
+        sample_data = _sample_data()
+        sample = entry.create_class('sample', snx.NXsample)
+        sample.create_field('name', sample_data['name'])
+        sample.create_field('chemical_formula', sample_data['chemical_formula'])
+        sample.create_field('type', sample_data['type'])
 
 
 def _file_store(typ):
@@ -173,6 +189,11 @@ def expected_source() -> sc.DataGroup:
     return _source_data()
 
 
+@pytest.fixture()
+def expected_sample() -> sc.DataGroup:
+    return _sample_data()
+
+
 @pytest.mark.parametrize('instrument_name', (None, nexus.InstrumentName('reducer')))
 def test_load_detector(nexus_file, expected_bank12, instrument_name):
     detector = nexus.load_detector(
@@ -205,3 +226,10 @@ def test_load_source(nexus_file, expected_source, instrument_name, source_name):
     del source['depends_on']
     del source['transformations']
     sc.testing.assert_identical(source, nexus.RawSource(expected_source))
+
+
+def test_load_sample(nexus_file, expected_sample):
+    sample = nexus.load_sample(
+        nexus.NeXusGroup(nexus_file),
+    )
+    sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
