@@ -22,15 +22,17 @@ def _event_data_components() -> sc.DataGroup:
             'event_time_offset': sc.array(
                 dims=['event'], unit='s', values=[456, 7, 3, 345, 632, 23]
             ),
-            'event_time_zero': sc.array(
-                dims=['event_time_zero'], unit='s', values=[1, 2, 3, 4]
-            ),
+            'event_time_zero': sc.epoch(unit='s')
+            + sc.array(dims=['event_index'], unit='s', values=[1, 2, 3, 4]),
             'event_index': sc.array(
-                dims=['event_time_zero'], unit=None, values=[0, 3, 3, 6]
+                dims=['event_index'], unit=None, values=[0, 3, 3, 6]
             ),
+            'detector_number': sc.arange('detector_number', 5, unit=None),
             'offset': sc.vector([0.4, 0.0, 11.5], unit='m'),
             'pixel_offset': sc.vectors(
-                dims=['event'], values=np.arange(3 * 6).reshape((6, 3)), unit='m'
+                dims=['detector_number'],
+                values=np.arange(3 * 5).reshape((5, 3)),
+                unit='m',
             ),
         }
     )
@@ -70,9 +72,10 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
         events['event_time_offset'] = detector_components['event_time_offset']
         events['event_time_zero'] = detector_components['event_time_zero']
         events['event_index'] = detector_components['event_index']
-        events['x_pixel_offset'] = detector_components['pixel_offset'].fields.x
-        events['y_pixel_offset'] = detector_components['pixel_offset'].fields.y
-        events['z_pixel_offset'] = detector_components['pixel_offset'].fields.z
+        detector['x_pixel_offset'] = detector_components['pixel_offset'].fields.x
+        detector['y_pixel_offset'] = detector_components['pixel_offset'].fields.y
+        detector['z_pixel_offset'] = detector_components['pixel_offset'].fields.z
+        detector['detector_number'] = detector_components['detector_number']
         _write_transformation(detector, detector_components['offset'])
 
         monitor_data = _monitor_histogram()
@@ -105,30 +108,41 @@ def nexus_file(fs, request):
             yield f
 
 
-# TODO larmor data is grouped by pixel, not binned in time
 @pytest.fixture()
 def expected_bank12():
     components = _event_data_components()
     buffer = sc.DataArray(
-        sc.ones(sizes={'event': 6}, unit='counts'),
+        sc.ones(sizes={'event': 6}, unit='counts', dtype='float32'),
         coords={
-            'event_id': components['event_id'],
+            'detector_number': components['event_id'],
             'event_time_offset': components['event_time_offset'],
-            'position': components['offset'] + components['pixel_offset'],
         },
     )
-    events = sc.bins(
-        data=buffer,
-        begin=components['event_index'],
-        end=sc.concat(
-            [components['event_index'][1:], components['event_index'][-1]],
-            dim='event_time_zero',
-        ),
-        dim='event',
+
+    # Bin by event_index tp broadcast event_time_zero to events
+    binned_in_time = sc.DataArray(
+        sc.bins(
+            data=buffer,
+            begin=components['event_index'],
+            end=sc.concat(
+                [components['event_index'][1:], components['event_index'][-1]],
+                dim='event_index',
+            ),
+            dim='event',
+        )
     )
-    return sc.DataArray(
-        events, coords={'event_time_zero': components['event_time_zero']}
+    binned_in_time.bins.coords['event_time_zero'] = sc.bins_like(
+        binned_in_time, components['event_time_zero']
     )
+
+    # Bin by detector number like ScippNexus would
+    binned = binned_in_time.bins.concat().group(components['detector_number'])
+    binned.coords['x_pixel_offset'] = components['pixel_offset'].fields.x
+    binned.coords['y_pixel_offset'] = components['pixel_offset'].fields.y
+    binned.coords['z_pixel_offset'] = components['pixel_offset'].fields.z
+    # Computed position
+    binned.coords['position'] = components['offset'] + components['pixel_offset']
+    return binned
 
 
 @pytest.fixture()
