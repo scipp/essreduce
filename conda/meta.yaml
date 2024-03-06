@@ -19,7 +19,6 @@ test:
   imports:
     - ess.reduce
   requires:
-    - pyfakefs
     - pytest
   source_files:
     - pyproject.toml

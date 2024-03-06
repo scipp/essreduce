@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
-import uuid
+from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
 from typing import Union
@@ -120,26 +120,29 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
         sample.create_field('type', sample_data['type'])
 
 
-def _file_store(typ):
-    if typ == Path:
-        return Path('nexus_test', uuid.uuid4().hex, 'testfile.nxs')
-    return BytesIO()
+@contextmanager
+def _file_store(request: pytest.FixtureRequest):
+    if request.param == BytesIO:
+        yield BytesIO()
+    else:
+        # It would be good to use pyfakefs here, but h5py
+        # uses C to open files and that bypasses the fake.
+        base = request.getfixturevalue('tmp_path')
+        yield base / 'testfile.nxs'
 
 
 @pytest.fixture(params=[Path, BytesIO, snx.Group])
-def nexus_file(fs, request):
-    _ = fs  # Request fs to prevent writing to real disk when param=Path
+def nexus_file(request):
+    with _file_store(request) as store:
+        _write_nexus_data(store)
+        if isinstance(store, BytesIO):
+            store.seek(0)
 
-    store = _file_store(request.param)
-    _write_nexus_data(store)
-    if isinstance(store, BytesIO):
-        store.seek(0)
-
-    if request.param in (Path, BytesIO):
-        yield store
-    else:
-        with snx.File(store, 'r') as f:
-            yield f
+        if request.param in (Path, BytesIO):
+            yield store
+        else:
+            with snx.File(store, 'r') as f:
+                yield f
 
 
 @pytest.fixture()
