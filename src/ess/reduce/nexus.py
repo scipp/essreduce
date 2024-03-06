@@ -32,9 +32,13 @@ SourceName = NewType('SourceName', str)
 """Name of a source in a NeXus file."""
 
 RawDetector = NewType('RawDetector', sc.DataGroup)
-"""Raw data from a NeXus detector."""
+"""Full raw data from a NeXus detector."""
+RawDetectorData = NewType('RawDetectorData', sc.DataArray)
+"""Data extracted from a RawDetector."""
 RawMonitor = NewType('RawMonitor', sc.DataGroup)
-"""Raw data from a NeXus monitor."""
+"""Full raw data from a NeXus monitor."""
+RawMonitorData = NewType('RawMonitorData', sc.DataArray)
+"""Data extracted from a RawMonitor."""
 RawSample = NewType('RawSample', sc.DataGroup)
 """Raw data from a NeXus sample."""
 RawSource = NewType('RawSource', sc.DataGroup)
@@ -146,3 +150,29 @@ def _unique_child_group(
     if len(children) != 1:
         raise ValueError(f'Expected exactly one {nx_class} group, got {len(children)}')
     return next(iter(children.values()))  # type: ignore[return-value]
+
+
+def extract_detector_data(
+    detector: RawDetector, detector_name: DetectorName
+) -> RawDetectorData:
+    return RawDetectorData(_extract_events_or_histogram(detector, detector_name))
+
+
+def extract_monitor_data(
+    monitor: RawMonitor, monitor_name: MonitorName
+) -> RawMonitorData:
+    return RawMonitorData(_extract_events_or_histogram(monitor, monitor_name))
+
+
+def _extract_events_or_histogram(dg: sc.DataGroup, name: str) -> sc.DataArray:
+    data_names = {f'{name}_events', 'data'}
+    for data_name in data_names:
+        try:
+            return dg[data_name]
+        except KeyError:
+            pass
+    raise ValueError(
+        f"Raw data '{name}' loaded from NeXus does not contain events or a histogram. "
+        f"Expected to find one of {data_names}, "
+        f"but the data only contains {set(dg.keys())}"
+    )

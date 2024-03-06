@@ -197,7 +197,7 @@ def expected_sample() -> sc.DataGroup:
 @pytest.mark.parametrize('instrument_name', (None, nexus.InstrumentName('reducer')))
 def test_load_detector(nexus_file, expected_bank12, instrument_name):
     detector = nexus.load_detector(
-        nexus.NeXusGroup(nexus_file),
+        nexus_file,
         detector_name=nexus.DetectorName('bank12'),
         instrument_name=instrument_name,
     )
@@ -207,7 +207,7 @@ def test_load_detector(nexus_file, expected_bank12, instrument_name):
 @pytest.mark.parametrize('instrument_name', (None, nexus.InstrumentName('reducer')))
 def test_load_monitor(nexus_file, expected_monitor, instrument_name):
     monitor = nexus.load_monitor(
-        nexus.NeXusGroup(nexus_file),
+        nexus_file,
         monitor_name=nexus.MonitorName('monitor'),
         instrument_name=instrument_name,
     )
@@ -218,7 +218,7 @@ def test_load_monitor(nexus_file, expected_monitor, instrument_name):
 @pytest.mark.parametrize('source_name', (None, nexus.SourceName('source')))
 def test_load_source(nexus_file, expected_source, instrument_name, source_name):
     source = nexus.load_source(
-        nexus.NeXusGroup(nexus_file),
+        nexus_file,
         instrument_name=instrument_name,
         source_name=source_name,
     )
@@ -229,7 +229,19 @@ def test_load_source(nexus_file, expected_source, instrument_name, source_name):
 
 
 def test_load_sample(nexus_file, expected_sample):
-    sample = nexus.load_sample(
-        nexus.NeXusGroup(nexus_file),
-    )
+    sample = nexus.load_sample(nexus_file)
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
+
+
+def test_extract_detector_data(nexus_file, expected_bank12):
+    detector_name = nexus.DetectorName('bank12')
+    detector = nexus.load_detector(nexus_file, detector_name=detector_name)
+    data = nexus.extract_detector_data(detector, detector_name=detector_name)
+    sc.testing.assert_identical(data, nexus.RawDetectorData(expected_bank12))
+
+
+def test_extract_monitor_data(nexus_file, expected_monitor):
+    monitor_name = nexus.MonitorName('monitor')
+    monitor = nexus.load_monitor(nexus_file, monitor_name=monitor_name)
+    data = nexus.extract_monitor_data(monitor, monitor_name=monitor_name)
+    sc.testing.assert_identical(data, nexus.RawMonitorData(expected_monitor))
