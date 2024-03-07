@@ -5,7 +5,7 @@
 
 This module defines functions and domain types that can be used
 to build Sciline pipelines for simple workflows.
-If multiple different kind sof files (e.g., sample and background runs)
+If multiple different kinds of files (e.g., sample and background runs)
 are needed, custom types and providers need to be defined to wrap
 the basic ones here.
 """
