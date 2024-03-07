@@ -17,6 +17,8 @@ from typing import BinaryIO, ContextManager, NewType, Optional, Type, Union, cas
 import scipp as sc
 import scippnexus as snx
 
+from .logging import get_logger
+
 FilePath = NewType('FilePath', Path)
 """Full path to a NeXus file on disk."""
 NeXusFile = NewType('NeXusFile', BinaryIO)
@@ -242,7 +244,8 @@ def _load_group_with_positions(
         if transform_out_name in loaded:
             raise RuntimeError(
                 f"Loaded data contains an item '{transform_out_name}' but we want to "
-                "store the combined NeXus transformations under that name.")
+                "store the combined NeXus transformations under that name."
+            )
 
         loaded = snx.compute_positions(loaded, store_transform=transform_out_name)
         return loaded
@@ -337,19 +340,44 @@ def extract_monitor_data(monitor: RawMonitor) -> RawMonitorData:
 
 
 def _extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
-    data_arrays = {
-        key: value for key, value in dg.items() if isinstance(value, sc.DataArray)
+    event_data_arrays = {
+        key: value
+        for key, value in dg.items()
+        if isinstance(value, sc.DataArray) and value.bins is not None
     }
-    if len(data_arrays) == 0:
+    histogram_data_arrays = {
+        key: value
+        for key, value in dg.items()
+        if isinstance(value, sc.DataArray) and value.bins is None
+    }
+    if (array := _select_unique_array(event_data_arrays, 'event')) is not None:
+        if histogram_data_arrays:
+            get_logger().info(
+                "Selecting event data '%s' in favor of histogram data {%s}",
+                next(iter(event_data_arrays.keys())),
+                ', '.join(map(lambda k: f"'{k}'", histogram_data_arrays)),
+            )
+        return array
+
+    if (array := _select_unique_array(histogram_data_arrays, 'histogram')) is not None:
+        return array
+
+    raise ValueError(
+        "Raw data loaded from NeXus does not contain events or a histogram. "
+        "Expected to find a data array, "
+        f"but the data only contains {set(dg.keys())}"
+    )
+
+
+def _select_unique_array(
+    arrays: dict[str, sc.DataArray], mapping_name: str
+) -> Optional[sc.DataArray]:
+    if not arrays:
+        return None
+    if len(arrays) > 1:
         raise ValueError(
-            "Raw data loaded from NeXus does not contain events or a histogram. "
-            "Expected to find a data array, "
-            f"but the data only contains {set(dg.keys())}"
+            f"Raw data loaded from NeXus contains more than one {mapping_name} "
+            "data array. Cannot uniquely identify the data to extract. "
+            f"Got {mapping_name} items {set(arrays.keys())}"
         )
-    if len(data_arrays) > 1:
-        raise ValueError(
-            "Raw data loaded from NeXus contains more than one data array. "
-            "Cannot uniquely identify the event or histogram data. "
-            f"Got items {set(dg.keys())}"
-        )
-    return next(iter(data_arrays.values()))
+    return next(iter(arrays.values()))

@@ -38,8 +38,12 @@ def _event_data_components() -> sc.DataGroup:
 
 
 def detector_transformation_components() -> sc.DataGroup:
-    return sc.DataGroup({
-            'offset': sc.vector([0.4, 0.0, 11.5], unit='m'),})
+    return sc.DataGroup(
+        {
+            'offset': sc.vector([0.4, 0.0, 11.5], unit='m'),
+        }
+    )
+
 
 def _monitor_histogram() -> sc.DataArray:
     return sc.DataArray(
@@ -58,7 +62,7 @@ def _source_data() -> sc.DataGroup:
             'probe': 'neutron',
             'type': 'Spallation Neutron Source',
             'position': sc.vector([0, 0, 0], unit='m'),
-            'transformation': sc.spatial.translation(value=[0, 0, 0], unit='m')
+            'transformation': sc.spatial.translation(value=[0, 0, 0], unit='m'),
         }
     )
 
@@ -211,7 +215,10 @@ def test_load_detector(nexus_file, expected_bank12, entry_name):
     )
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
     offset = detector_transformation_components()['offset']
-    sc.testing.assert_identical(detector['transformation'], sc.spatial.translation(unit=offset.unit, value=offset.value))
+    sc.testing.assert_identical(
+        detector['transformation'],
+        sc.spatial.translation(unit=offset.unit, value=offset.value),
+    )
 
 
 def test_load_detector_requires_entry_name_if_not_unique(nexus_file):
@@ -279,7 +286,7 @@ def test_load_sample(nexus_file, expected_sample, entry_name):
 def test_extract_detector_data():
     detector = sc.DataGroup(
         {
-            'jdl2ab': sc.DataArray(sc.arange('xx', 10)),
+            'jdl2ab': sc.data.binned_x(10, 3),
             'llk': 23,
             ' _': sc.linspace('xx', 2, 3, 10),
         }
@@ -291,23 +298,49 @@ def test_extract_detector_data():
 def test_extract_monitor_data():
     monitor = sc.DataGroup(
         {
-            '(eed)': sc.DataArray(sc.arange('xx', 10)),
+            '(eed)': sc.data.data_xy(),
             'llk': 23,
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_detector_data(nexus.RawMonitor(monitor))
-    sc.testing.assert_identical(data, nexus.RawDetectorData(monitor['(eed)']))
+    data = nexus.extract_monitor_data(nexus.RawMonitor(monitor))
+    sc.testing.assert_identical(data, nexus.RawMonitorData(monitor['(eed)']))
 
 
-def test_extract_detector_data_requires_unique_data_array():
+def test_extract_detector_data_requires_unique_dense_data():
     detector = sc.DataGroup(
         {
-            'jdl2ab': sc.DataArray(sc.arange('xx', 10)),
+            'jdl2ab': sc.data.data_xy(),
             'llk': 23,
-            'lob': sc.DataArray(sc.arange('yy', 20)),
+            'lob': sc.data.data_xy(),
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
     with pytest.raises(ValueError):
         nexus.extract_detector_data(nexus.RawDetector(detector))
+
+
+def test_extract_detector_data_requires_unique_event_data():
+    detector = sc.DataGroup(
+        {
+            'jdl2ab': sc.data.binned_x(10, 3),
+            'llk': 23,
+            'lob': sc.data.binned_x(14, 5),
+            ' _': sc.linspace('xx', 2, 3, 10),
+        }
+    )
+    with pytest.raises(ValueError):
+        nexus.extract_detector_data(nexus.RawDetector(detector))
+
+
+def test_extract_detector_data_favors_event_data_over_histogram_data():
+    detector = sc.DataGroup(
+        {
+            'jdl2ab': sc.data.data_xy(),
+            'llk': 23,
+            'lob': sc.data.binned_x(14, 5),
+            ' _': sc.linspace('xx', 2, 3, 10),
+        }
+    )
+    data = nexus.extract_detector_data(nexus.RawDetector(detector))
+    sc.testing.assert_identical(data, nexus.RawDetectorData(detector['lob']))
