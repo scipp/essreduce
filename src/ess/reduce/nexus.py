@@ -246,8 +246,16 @@ def _load_group_with_positions(
                 f"Loaded data contains an item '{transform_out_name}' but we want to "
                 "store the combined NeXus transformations under that name."
             )
+        position_out_name = 'position'
+        if position_out_name in loaded:
+            raise RuntimeError(
+                f"Loaded data contains an item '{position_out_name}' but we want to "
+                "store the computed positions under that name."
+            )
 
-        loaded = snx.compute_positions(loaded, store_transform=transform_out_name)
+        loaded = snx.compute_positions(
+            loaded, store_position=position_out_name, store_transform=transform_out_name
+        )
         return loaded
 
 
