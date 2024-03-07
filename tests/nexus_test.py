@@ -28,7 +28,6 @@ def _event_data_components() -> sc.DataGroup:
                 dims=['event_index'], unit=None, values=[0, 3, 3, 6]
             ),
             'detector_number': sc.arange('detector_number', 5, unit=None),
-            'offset': sc.vector([0.4, 0.0, 11.5], unit='m'),
             'pixel_offset': sc.vectors(
                 dims=['detector_number'],
                 values=np.arange(3 * 5).reshape((5, 3)),
@@ -37,6 +36,10 @@ def _event_data_components() -> sc.DataGroup:
         }
     )
 
+
+def detector_transformation_components() -> sc.DataGroup:
+    return sc.DataGroup({
+            'offset': sc.vector([0.4, 0.0, 11.5], unit='m'),})
 
 def _monitor_histogram() -> sc.DataArray:
     return sc.DataArray(
@@ -55,6 +58,7 @@ def _source_data() -> sc.DataGroup:
             'probe': 'neutron',
             'type': 'Spallation Neutron Source',
             'position': sc.vector([0, 0, 0], unit='m'),
+            'transformation': sc.spatial.translation(value=[0, 0, 0], unit='m')
         }
     )
 
@@ -96,7 +100,7 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
         detector['y_pixel_offset'] = detector_components['pixel_offset'].fields.y
         detector['z_pixel_offset'] = detector_components['pixel_offset'].fields.z
         detector['detector_number'] = detector_components['detector_number']
-        _write_transformation(detector, detector_components['offset'])
+        _write_transformation(detector, detector_transformation_components()['offset'])
 
         monitor_data = _monitor_histogram()
         monitor = instrument.create_class('monitor', snx.NXmonitor)
@@ -178,7 +182,8 @@ def expected_bank12():
     binned.coords['y_pixel_offset'] = components['pixel_offset'].fields.y
     binned.coords['z_pixel_offset'] = components['pixel_offset'].fields.z
     # Computed position
-    binned.coords['position'] = components['offset'] + components['pixel_offset']
+    offset = detector_transformation_components()['offset']
+    binned.coords['position'] = offset + components['pixel_offset']
     return binned
 
 
@@ -205,6 +210,8 @@ def test_load_detector(nexus_file, expected_bank12, entry_name):
         entry_name=entry_name,
     )
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
+    offset = detector_transformation_components()['offset']
+    sc.testing.assert_identical(detector['transformation'], sc.spatial.translation(unit=offset.unit, value=offset.value))
 
 
 def test_load_detector_requires_entry_name_if_not_unique(nexus_file):

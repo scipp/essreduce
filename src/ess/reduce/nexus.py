@@ -62,7 +62,8 @@ def load_detector(
 ) -> RawDetector:
     """Load a single detector (bank) from a NeXus file.
 
-    The detector positions are computed automatically for NeXus transformations.
+    The detector positions are computed automatically from NeXus transformations,
+    and the combined transformation is stored under the name 'transformation'.
 
     Parameters
     ----------
@@ -105,7 +106,8 @@ def load_monitor(
 ) -> RawMonitor:
     """Load a single monitor from a NeXus file.
 
-    The monitor position is computed automatically for NeXus transformations.
+    The monitor position is computed automatically from NeXus transformations,
+    and the combined transformation is stored under the name 'transformation'.
 
     Parameters
     ----------
@@ -148,7 +150,8 @@ def load_source(
 ) -> RawSource:
     """Load a source from a NeXus file.
 
-    The source position is computed automatically for NeXus transformations.
+    The source position is computed automatically from NeXus transformations,
+    and the combined transformation is stored under the name 'transformation'.
 
     Parameters
     ----------
@@ -234,7 +237,14 @@ def _load_group_with_positions(
         loaded = cast(
             sc.DataGroup, _unique_child_group(instrument, nx_class, group_name)[()]
         )
-        loaded = snx.compute_positions(loaded)
+
+        transform_out_name = 'transformation'
+        if transform_out_name in loaded:
+            raise RuntimeError(
+                f"Loaded data contains an item '{transform_out_name}' but we want to "
+                "store the combined NeXus transformations under that name.")
+
+        loaded = snx.compute_positions(loaded, store_transform=transform_out_name)
         return loaded
 
 
