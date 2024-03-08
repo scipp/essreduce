@@ -33,13 +33,13 @@ The type alias is provided for callers of load functions outside of pipelines.
 NeXusGroup = NewType('NeXusGroup', snx.Group)
 """A ScippNexus group in an open file."""
 
-DetectorName = NewType('DetectorName', str)
+NeXusDetectorName = NewType('NeXusDetectorName', str)
 """Name of a detector (bank) in a NeXus file."""
-EntryName = NewType('EntryName', str)
+NeXusEntryName = NewType('NeXusEntryName', str)
 """Name of an entry in a NeXus file."""
-MonitorName = NewType('MonitorName', str)
+NeXusMonitorName = NewType('NeXusMonitorName', str)
 """Name of a monitor in a NeXus file."""
-SourceName = NewType('SourceName', str)
+NeXusSourceName = NewType('NeXusSourceName', str)
 """Name of a source in a NeXus file."""
 
 RawDetector = NewType('RawDetector', sc.DataGroup)
@@ -59,8 +59,8 @@ RawSource = NewType('RawSource', sc.DataGroup)
 def load_detector(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
-    detector_name: DetectorName,
-    entry_name: Optional[EntryName] = None,
+    detector_name: NeXusDetectorName,
+    entry_name: Optional[NeXusEntryName] = None,
 ) -> RawDetector:
     """Load a single detector (bank) from a NeXus file.
 
@@ -103,8 +103,8 @@ def load_detector(
 def load_monitor(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
-    monitor_name: MonitorName,
-    entry_name: Optional[EntryName] = None,
+    monitor_name: NeXusMonitorName,
+    entry_name: Optional[NeXusEntryName] = None,
 ) -> RawMonitor:
     """Load a single monitor from a NeXus file.
 
@@ -147,8 +147,8 @@ def load_monitor(
 def load_source(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
-    source_name: Optional[SourceName] = None,
-    entry_name: Optional[EntryName] = None,
+    source_name: Optional[NeXusSourceName] = None,
+    entry_name: Optional[NeXusEntryName] = None,
 ) -> RawSource:
     """Load a source from a NeXus file.
 
@@ -192,7 +192,7 @@ def load_source(
 
 def load_sample(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    entry_name: Optional[EntryName] = None,
+    entry_name: Optional[NeXusEntryName] = None,
 ) -> RawSample:
     """Load a sample from a NeXus file.
 
@@ -231,7 +231,7 @@ def _load_group_with_positions(
     *,
     group_name: Optional[str],
     nx_class: Type[snx.NXobject],
-    entry_name: Optional[EntryName] = None,
+    entry_name: Optional[NeXusEntryName] = None,
 ) -> sc.DataGroup:
     with _open_nexus_file(file_path) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
