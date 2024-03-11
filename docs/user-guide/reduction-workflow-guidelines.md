@@ -93,7 +93,15 @@ RunType = TypeVar('RunType', SampleRun, BackgroundRun)
 class Filename(sciline.Scope[RunType, str], str): ...
 ```
 
-### C.3: Use flexible types
+### C.3: Use the suffix 'Type' for type vars
+
+**Reason**
+This makes it easier to distinguish type vars from concrete domain types.
+
+**Example**
+See 'RunType' and 'MonitorType' in the table of C.2.
+
+### C.4: Use flexible types
 
 **Reason**
 Users should not have to worry about the concrete type of parameters.
