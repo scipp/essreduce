@@ -14,9 +14,6 @@ The guidelines are intended to ensure that the workflows are consistent (both fo
 
 We plan to include the following in future versions of the guidelines:
 
-- Naming conventions
-- Type conventions
-  - Example: Filenames
 - Package and module structure:
   - Where to place types?
     What goes where?
@@ -43,6 +40,88 @@ We plan to include the following in future versions of the guidelines:
 
 - *Provider*: A callable step in a workflow writing with Sciline.
 
+## C: Convention
+
+### C.1: Use common names and types
+
+**Reason**
+Helps with sticking to established practices and working across packages.
+
+**Table**
+Names use glob syntax, i.e., '*Filename' is any string that ends in 'Filename'.
+
+| Name                        | Type        | Description                                                               |
+|-----------------------------|-------------|---------------------------------------------------------------------------|
+| --- **Files** ---           |             |                                                                           |
+| Filename \| *Filename       | str         | Simple name of a file, must be processed into FilePath                    |
+| FilePath \| *FilePath       | Path        | Concrete path to a file on the host filesystem, ideally absolute          |
+| --- **Flags** ---           |             |                                                                           |
+| UncertaintyBroadcastMode    | enum        | E.g., `Enum('UncertaintyBroadcastMode', ['drop', 'upper_bound', 'fail'])` |
+| ReturnEvents                | bool        | Select whether to return events or histograms from the workflow           |
+| CorrectForGravity           | bool        | Toggle gravity correction                                                 |
+| --- **Misc** ---            |             |                                                                           |
+| NeXus*                      | Any         | Spelling of all NeXus-related keys                                        |
+| WavelengthBins \| *Bins     | sc.Variable | Bin-edges                                                                 |
+| RunTitle                    | str         | Extracted from NeXus or provided by user, can be used to find files       |
+
+### C.2: Use common names for generics
+
+**Reason**
+Helps with sticking to established practices and working across packages.
+
+**Note**
+If a workflow uses generics to parametrize its types, e.g., `Filename`,
+it should define new types used as tags and type vars constrained to those tags.
+
+**Table**
+
+| Name                                      | Type    | Description                                                     |
+|-------------------------------------------|---------|-----------------------------------------------------------------|
+| --- **Run IDs** ---                       |         |                                                                 |
+| SampleRun, BackgroundRun, ...             | Any     | Identifier for a run, only used as a type tag                   |
+| RunType                                   | TypeVar | Constrained to the run types used by the package, see above     |
+| --- **Monitors** ---                      |         |                                                                 |
+| IncidentMonitor, TransmissionMonitor, ... | Any     | Identifier for a monitor, only used as a type tag               |
+| MonitorType                               | TypeVar | Constrained to the monitor types used by the package, see above |
+
+**Example**
+The choice of using `int` is arbitrary.
+```python
+SampleRun = NewType('SampleRun', int)
+BackgroundRun = NewType('BackgroundRun', int)
+RunType = TypeVar('RunType', SampleRun, BackgroundRun)
+class Filename(sciline.Scope[RunType, str], str): ...
+```
+
+### C.3: Use the suffix 'Type' for type vars
+
+**Reason**
+This makes it easier to distinguish type vars from concrete domain types.
+
+**Example**
+See 'RunType' and 'MonitorType' in the table of C.2.
+
+### C.4: Use flexible types
+
+**Reason**
+Users should not have to worry about the concrete type of parameters.
+
+**Example**
+
+- Numbers should use the appropriate abstract type from {mod}`numbers`.
+  E.g.,
+  ```python
+  P = NewType('P', numbers.Real)
+  pipeline[P] = 3.0  # works
+  pipeline[P] = 3    # works, too, but not if `P` were `float`
+  ```
+- Use {class}`collections.abc.Sequence` instead of `list` or `tuple`.
+  - But do *not* use {class}`typing.Iterable`!
+    Parameters may be consumed multiple times and iterables are not guaranteed to support that.
+- Gracefully promote dtypes for small parameters.
+  E.g., `sc.scalar(2, unit='m')` and `sc.scalar(2.0, unit='m')` should be usable interchangeably.
+  This can also apply to arrays, for instance, `sc.linspace` and `sc.arange` should be interchangeable but the latter may result in integers while the former typically produces floats.
+
 ## D: Documentation
 
 ### D.1: Document math and references in docstrings
@@ -54,8 +133,6 @@ This includes mathematical formulas and references to literature.
 **Note**
 We have previously documented math and references in Jupyter notebooks.
 This is not sufficient, as the documentation is not close to the code.
-
-## N: Naming
 
 ## P: Performance
 
