@@ -65,7 +65,7 @@ def load_detector(
     """Load a single detector (bank) from a NeXus file.
 
     The detector positions are computed automatically from NeXus transformations,
-    and the combined transformation is stored under the name 'transformation'.
+    and the combined transformation is stored under the name 'transform'.
 
     Parameters
     ----------
@@ -109,7 +109,7 @@ def load_monitor(
     """Load a single monitor from a NeXus file.
 
     The monitor position is computed automatically from NeXus transformations,
-    and the combined transformation is stored under the name 'transformation'.
+    and the combined transformation is stored under the name 'transform'.
 
     Parameters
     ----------
@@ -153,7 +153,7 @@ def load_source(
     """Load a source from a NeXus file.
 
     The source position is computed automatically from NeXus transformations,
-    and the combined transformation is stored under the name 'transformation'.
+    and the combined transformation is stored under the name 'transform'.
 
     Parameters
     ----------
@@ -240,7 +240,7 @@ def _load_group_with_positions(
             sc.DataGroup, _unique_child_group(instrument, nx_class, group_name)[()]
         )
 
-        transform_out_name = 'transformation'
+        transform_out_name = 'transform'
         if transform_out_name in loaded:
             raise RuntimeError(
                 f"Loaded data contains an item '{transform_out_name}' but we want to "

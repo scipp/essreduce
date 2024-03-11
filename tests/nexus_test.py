@@ -62,7 +62,7 @@ def _source_data() -> sc.DataGroup:
             'probe': 'neutron',
             'type': 'Spallation Neutron Source',
             'position': sc.vector([0, 0, 0], unit='m'),
-            'transformation': sc.spatial.translation(value=[0, 0, 0], unit='m'),
+            'transform': sc.spatial.translation(value=[0, 0, 0], unit='m'),
         }
     )
 
@@ -216,7 +216,7 @@ def test_load_detector(nexus_file, expected_bank12, entry_name):
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
     offset = detector_transformation_components()['offset']
     sc.testing.assert_identical(
-        detector['transformation'],
+        detector['transform'],
         sc.spatial.translation(unit=offset.unit, value=offset.value),
     )
 
