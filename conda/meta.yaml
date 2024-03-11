@@ -12,8 +12,8 @@ requirements:
     - setuptools_scm
   run:
     - python>=3.10
-    - scipp >= 24.02.0
-    - scippnexus >= 24.03.0
+    - scipp>=24.02.0
+    - scippnexus>=24.03.0
 
 test:
   imports:
