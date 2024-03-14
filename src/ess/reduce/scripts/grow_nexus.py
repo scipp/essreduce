@@ -62,6 +62,13 @@ def grow_nexus_file(
         )
 
 
+def integer_greater_than_one(x):
+    x = int(x)
+    if x < 1:
+        raise argparse.ArgumentTypeError('Must be larger than or equal to 1')
+    return x
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -84,14 +91,14 @@ def main():
     parser.add_argument(
         "-s",
         "--detector-scale",
-        type=int,
+        type=integer_greater_than_one,
         help=('Scale factor to multiply the number of detector events by.'),
         required=True,
     )
     parser.add_argument(
         "-m",
         "--monitor-scale",
-        type=int,
+        type=integer_greater_than_one,
         default=None,
         help=(
             'Scale factor to multiply the number of monitor events by. '
