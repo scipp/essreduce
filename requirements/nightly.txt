@@ -8,11 +8,6 @@
 -r basetest.txt
 h5py==3.10.0
     # via scippnexus
-numpy==1.26.4
-    # via
-    #   h5py
-    #   scipp
-    #   scipy
 python-dateutil==2.9.0.post0
     # via scippnexus
 scipp==24.2.0

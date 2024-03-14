@@ -36,6 +36,9 @@ dependencies = [
 
 dynamic = ["version"]
 
+[project.scripts]
+grow-nexus = "ess.reduce.scripts.grow_nexus:main"
+
 [project.urls]
 "Bug Tracker" = "https://github.com/scipp/essreduce/issues"
 "Documentation" = "https://scipp.github.io/essreduce"
