@@ -68,7 +68,10 @@ def main():
         "-f",
         "--file",
         type=str,
-        help='Input file name. The events in the input file will be will be scaled and stored in the output file.',
+        help=(
+            'Input file name. The events in the input file will be '
+            'repeated `scale` times and stored in the output file.'
+        ),
         required=True,
     )
     parser.add_argument(
