@@ -12,10 +12,6 @@ alabaster==0.7.16
     # via sphinx
 asttokens==2.4.1
     # via stack-data
-attrs==23.2.0
-    # via
-    #   jsonschema
-    #   referencing
 babel==2.14.0
     # via
     #   pydata-sphinx-theme
@@ -40,8 +36,6 @@ docutils==0.20.1
     #   nbsphinx
     #   pydata-sphinx-theme
     #   sphinx
-exceptiongroup==1.2.0
-    # via ipython
 executing==2.0.1
     # via stack-data
 fastjsonschema==2.19.1
@@ -143,8 +137,6 @@ pygments==2.17.2
     #   nbconvert
     #   pydata-sphinx-theme
     #   sphinx
-pyyaml==6.0.1
-    # via myst-parser
 pyzmq==25.1.2
     # via
     #   ipykernel
