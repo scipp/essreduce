@@ -17,10 +17,8 @@ def download_scicat_file(
 ) -> FilePath:
     if version is None:
         version = 'v3'
-
     if target is None:
         target = Path(f'~/.cache/essreduce/{dataset_id}')
-
     client = Client.from_token(
         url=f"https://scicat.ess.eu/api/{version}",
         token=token,
