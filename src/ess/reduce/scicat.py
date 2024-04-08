@@ -28,4 +28,6 @@ def download_scicat_file(
     )
     dset = client.get_dataset(dataset_id)
     dset = client.download_files(dset, target=target, select=filename)
-    return dset.files[0].local_path
+    for f in dset.files:
+        if f.remote_path.name == filename:
+            return f.local_path
