@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
-# flake8: noqa
 import importlib.metadata
 
-from . import nexus
+from . import nexus, uncertainty
 
 try:
     __version__ = importlib.metadata.version(__package__ or __name__)
@@ -13,4 +12,4 @@ except importlib.metadata.PackageNotFoundError:
 
 del importlib
 
-__all__ = ['nexus']
+__all__ = ['nexus', 'uncertainty']
