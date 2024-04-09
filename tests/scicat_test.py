@@ -49,7 +49,7 @@ def local_dataset(fs, files):
     return dset
 
 
-def test_download_scicat_file_(fs, local_dataset):
+def test_download_scicat_file(fs, local_dataset):
     transfer = FakeFileTransfer(fs=fs)
     client = FakeClient.without_login(url="https://fake.scicat", file_transfer=transfer)
     uploaded = client.upload_new_dataset_now(local_dataset)
@@ -61,3 +61,25 @@ def test_download_scicat_file_(fs, local_dataset):
             target=dname,
         )
         assert path == Path(dname) / uploaded.files[0].remote_path.posix
+
+
+def test_local_scicat_file_no_download(fs, local_dataset):
+    client = FakeClient.without_login(
+        url="https://fake.scicat", file_transfer=FakeFileTransfer(fs=fs)
+    )
+    dataset = client.upload_new_dataset_now(local_dataset)
+    with TemporaryDirectory() as dname:
+        path = download_scicat_file(
+            dataset.pid,
+            dataset.files[0].remote_path.posix,
+            client=client,
+            target=dname,
+        )
+        client._file_transfer = None
+        no_download_path = download_scicat_file(
+            dataset.pid,
+            dataset.files[0].remote_path.posix,
+            client=client,
+            target=dname,
+        )
+        assert path == no_download_path
