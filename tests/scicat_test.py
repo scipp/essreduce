@@ -5,7 +5,6 @@ from tempfile import TemporaryDirectory
 import pytest
 from dateutil.parser import parse as parse_date
 from scitacean import Dataset, DatasetType, RemotePath
-from scitacean.model import DownloadDataFile
 from scitacean.testing.client import FakeClient
 from scitacean.testing.transfer import FakeFileTransfer
 
@@ -19,28 +18,16 @@ def _checksum(data: bytes) -> str:
 
 
 @pytest.fixture
-def data_files():
-    contents = {
+def files():
+    return {
         "file1.dat": b"contents-of-file1",
         "log/what-happened.log": b"ERROR Flux is off the scale",
         "thaum.dat": b"0 4 2 59 330 2314552",
     }
-    files = [
-        DownloadDataFile(
-            path=name,
-            size=len(content),
-            chk=_checksum(content),
-            time=parse_date("1995-08-06T14:14:14"),
-        )
-        for name, content in contents.items()
-    ]
-    return files, contents
 
 
 @pytest.fixture
-def local_dataset(fs, data_files):
-    _, contents = data_files
-
+def local_dataset(fs, files):
     dset = Dataset(
         contact_email="p.stibbons@uu.am",
         creation_time=parse_date("1995-08-06T14:14:14"),
@@ -55,11 +42,10 @@ def local_dataset(fs, data_files):
             "mass": "hefty",
         },
     )
-    for name, content in contents.items():
+    for name, content in files.items():
         path = Path('tmp') / name
         fs.create_file(path, contents=content)
         dset.add_local_files(path, base_path='tmp')
-
     return dset
 
 
