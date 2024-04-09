@@ -38,7 +38,7 @@ def data_files():
 
 
 @pytest.fixture
-def dataset(fs, data_files):
+def local_dataset(fs, data_files):
     _, contents = data_files
 
     dset = Dataset(
@@ -63,12 +63,11 @@ def dataset(fs, data_files):
     return dset
 
 
-def test_download_scicat_file_(fs, dataset):
+def test_download_scicat_file_(fs, local_dataset):
     transfer = FakeFileTransfer(fs=fs)
     client = FakeClient.without_login(url="https://fake.scicat", file_transfer=transfer)
-    uploaded = client.upload_new_dataset_now(dataset)
+    uploaded = client.upload_new_dataset_now(local_dataset)
     with TemporaryDirectory() as dname:
-        # Should probably return dset instead of file path...
         path = download_scicat_file(
             uploaded.pid,
             uploaded.files[0].remote_path.posix,
