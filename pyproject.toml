@@ -32,7 +32,8 @@ requires-python = ">=3.10"
 dependencies = [
     "scipp >= 24.02.0",
     "scippnexus >= 24.03.0",
-    "scitacean[sftp]",
+    "scitacean",
+    "paramiko",
 ]
 
 dynamic = ["version"]
