@@ -1,4 +1,5 @@
 from pathlib import Path
+from threading import Lock
 from typing import NewType, Optional
 
 from scitacean import Client
@@ -12,6 +13,8 @@ ScitaceanVersion = NewType('ScitaceanVersion', str)
 '''Version of the scitacean api'''
 ScitaceanClient = NewType('ScitaceanClient', Client)
 '''An instance of scitacean.Client that is used to fetch data from Scicat'''
+
+_scicat_download_lock = Lock()
 
 
 def sftp_ess_file_transfer() -> SFTPFileTransfer:
@@ -41,6 +44,7 @@ def download_scicat_file(
 ) -> FilePath:
     if target is None:
         target = Path(f'~/.cache/essreduce/{dataset_id}')
-    dset = client.get_dataset(dataset_id)
-    dset = client.download_files(dset, target=target, select=filename)
+    with _scicat_download_lock:
+        dset = client.get_dataset(dataset_id)
+        dset = client.download_files(dset, target=target, select=filename)
     return dset.files[0].local_path
