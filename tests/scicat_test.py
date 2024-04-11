@@ -5,10 +5,11 @@ from tempfile import TemporaryDirectory
 import pytest
 from dateutil.parser import parse as parse_date
 from scitacean import Dataset, DatasetType, RemotePath
-from scitacean.testing.client import FakeClient
+from scitacean.model import Relationship
+from scitacean.testing.client import FakeClient, ScicatCommError
 from scitacean.testing.transfer import FakeFileTransfer
 
-from ess.reduce.scicat import download_scicat_file
+from ess.reduce.scicat import download_scicat_file, get_related_dataset
 
 
 def _checksum(data: bytes) -> str:
@@ -41,6 +42,7 @@ def local_dataset(fs, files):
             "height": {"value": 0.3, "unit": "m"},
             "mass": "hefty",
         },
+        relationships=[Relationship(pid='123', relationship='background')],
     )
     for name, content in files.items():
         path = Path('tmp') / name
@@ -50,36 +52,24 @@ def local_dataset(fs, files):
 
 
 def test_download_scicat_file(fs, local_dataset):
+    local_dataset.make_upload_model()
     transfer = FakeFileTransfer(fs=fs)
     client = FakeClient.without_login(url="https://fake.scicat", file_transfer=transfer)
     uploaded = client.upload_new_dataset_now(local_dataset)
     with TemporaryDirectory() as dname:
         path = download_scicat_file(
+            client,
             uploaded.pid,
             uploaded.files[0].remote_path.posix,
-            client=client,
             target=dname,
         )
         assert path == Path(dname) / uploaded.files[0].remote_path.posix
 
 
-def test_local_scicat_file_no_download(fs, local_dataset):
-    client = FakeClient.without_login(
-        url="https://fake.scicat", file_transfer=FakeFileTransfer(fs=fs)
-    )
-    dataset = client.upload_new_dataset_now(local_dataset)
-    with TemporaryDirectory() as dname:
-        path = download_scicat_file(
-            dataset.pid,
-            dataset.files[0].remote_path.posix,
-            client=client,
-            target=dname,
-        )
-        client._file_transfer = None
-        no_download_path = download_scicat_file(
-            dataset.pid,
-            dataset.files[0].remote_path.posix,
-            client=client,
-            target=dname,
-        )
-        assert path == no_download_path
+def test_get_related_dataset(local_dataset):
+    client = FakeClient.without_login(url="https://fake.scicat")
+    # Looking for comm error here because that indicates the dataset was queried for
+    with pytest.raises(ScicatCommError):
+        get_related_dataset(client, local_dataset, 'background')
+    with pytest.raises(ValueError):
+        get_related_dataset(client, local_dataset, 'reference')
