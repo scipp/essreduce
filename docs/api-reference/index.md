@@ -27,5 +27,7 @@
    :template: module-template.rst
    :recursive:
 
+   logging
    nexus
+   uncertainty
 ```

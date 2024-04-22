@@ -1,6 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-"""Tools for handling statistical uncertainties."""
+"""Tools for handling statistical uncertainties.
+
+This module provides tools for handling statistical uncertainties in the context of
+data reduction. Handling variances during broadcast operations is not handled
+correctly by Scipp because correlations are not tracked.
+See https://doi.org/10.3233/JNR-220049 for context.
+
+This module provides two ways of handling variances during broadcast operations:
+- `drop_variances_if_broadcast`: Drop variances if the data is broadcasted.
+- `broadcast_with_upper_bound_variances`: Compute an upper bound for the variances.
+"""
 
 from enum import Enum
 from typing import Dict, TypeVar, Union, overload
