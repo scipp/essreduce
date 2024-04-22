@@ -48,6 +48,20 @@ def broadcast_with_upper_bound_variances(
     return data.broadcast(sizes={**sizes, **data.sizes}).copy()
 
 
+@overload
+def drop_variances_if_broadcast(
+    data: sc.Variable, sizes: Dict[str, int]
+) -> sc.Variable:
+    pass
+
+
+@overload
+def drop_variances_if_broadcast(
+    data: sc.DataArray, sizes: Dict[str, int]
+) -> sc.DataArray:
+    pass
+
+
 def drop_variances_if_broadcast(
     data: Union[sc.Variable, sc.DataArray], sizes: Dict[str, int]
 ) -> Union[sc.Variable, sc.DataArray]:
