@@ -122,6 +122,31 @@ Users should not have to worry about the concrete type of parameters.
   E.g., `sc.scalar(2, unit='m')` and `sc.scalar(2.0, unit='m')` should be usable interchangeably.
   This can also apply to arrays, for instance, `sc.linspace` and `sc.arange` should be interchangeable but the latter may result in integers while the former typically produces floats.
 
+### C.5: Use a conventional pattern minimizing programming jargon, favor fewer and concepts
+
+**Reason**
+- Terms such as provider or pipeline mean nothing to users, using their language instead reduces cognitive load.
+- Manipulating multiple concepts such as (1) a dict of parameters, (2) a `sciline.Pipeline`, and (3) a `sciline.TaskGraph` is confusing, especially for non-programmers.
+
+**Notes**
+
+- Add one or more `make_workflow` function(s) that returns a `sciline.Pipeline` object, configured with default providers and parameters.
+  - Prefix with `make` and suffix with `workflow`, qualifiers can be added in between, for example `make_abc_workflow`.
+- Avoid creating parameter dicts in notebooks, set parameters on the workflow object directly.
+- Avoid calling `workflow.get` (which would return a `sciline.TaskGraph`), instead call `workflow.compute` and `workflow.visualize`, even if it means listing the result and building the task graph multiple times.
+
+**Example**
+
+```python
+from ess import loki
+
+workflow = loki.make_workflow()
+workflow[Param1] = param1
+workflow[Param2] = param2
+workflow.visualize(Result)
+workflow.compute(Result)
+```
+
 ## D: Documentation
 
 ### D.1: Document math and references in docstrings
