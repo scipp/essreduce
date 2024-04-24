@@ -26,6 +26,10 @@ UncertaintyBroadcastMode = Enum(
 """
 Mode for broadcasting uncertainties.
 
+- `drop`: Drop variances if the data is broadcasted.
+- `upper_bound`: Compute an upper bound for the variances.
+- `fail`: Do not broadcast, simply return the input data.
+
 See https://doi.org/10.3233/JNR-220049 for context.
 """
 
