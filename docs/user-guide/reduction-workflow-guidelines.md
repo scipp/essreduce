@@ -122,7 +122,7 @@ Users should not have to worry about the concrete type of parameters.
   E.g., `sc.scalar(2, unit='m')` and `sc.scalar(2.0, unit='m')` should be usable interchangeably.
   This can also apply to arrays, for instance, `sc.linspace` and `sc.arange` should be interchangeable but the latter may result in integers while the former typically produces floats.
 
-### C.5: Use a conventional pattern minimizing programming jargon, favor fewer and concepts
+### C.5: Use a fixed pattern for creating, manipulating, and running workflows
 
 **Reason**
 - Terms such as provider or pipeline mean nothing to users, using their language instead reduces cognitive load.
