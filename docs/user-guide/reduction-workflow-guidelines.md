@@ -53,8 +53,7 @@ Names use glob syntax, i.e., '*Filename' is any string that ends in 'Filename'.
 | Name                        | Type        | Description                                                               |
 |-----------------------------|-------------|---------------------------------------------------------------------------|
 | --- **Files** ---           |             |                                                                           |
-| Filename \| *Filename       | str         | Simple name of a file, must be processed into FilePath                    |
-| FilePath \| *FilePath       | Path        | Concrete path to a file on the host filesystem, ideally absolute          |
+| Filename \| *Filename       | str         | Name or path to a file                                                    |
 | --- **Flags** ---           |             |                                                                           |
 | UncertaintyBroadcastMode    | enum        | E.g., `Enum('UncertaintyBroadcastMode', ['drop', 'upper_bound', 'fail'])` |
 | ReturnEvents                | bool        | Select whether to return events or histograms from the workflow           |
