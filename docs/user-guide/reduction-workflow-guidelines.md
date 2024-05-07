@@ -130,8 +130,10 @@ Users should not have to worry about the concrete type of parameters.
 
 **Notes**
 
-- Add one or more `make_workflow` function(s) that returns a `sciline.Pipeline` object, configured with default providers and parameters.
-  - Prefix with `make` and suffix with `workflow`, qualifiers can be added in between, for example `make_abc_workflow`.
+- Add one or more `*Workflow` function(s) that returns a `sciline.Pipeline` object, configured with default providers and parameters.
+  - Prefix with the instrument name and suffix with `Workflow`, qualifiers can be added in between, for example `LokiWorkflow` and `LokiAtLarmorWorkflow`.
+  - Despite being a function we choose camel-case naming, to minimize future refactoring in user code if we decide to wrap/inherit `Pipeline` instead of returning an instance.
+    Furthermore, non-expert Python users will be more familiar with classes than with factory functions.
 - Avoid creating parameter dicts in notebooks, set parameters on the workflow object directly.
 - Avoid calling `workflow.get` (which would return a `sciline.TaskGraph`), instead call `workflow.compute` and `workflow.visualize`, even if it means listing the result and building the task graph multiple times.
 
@@ -140,7 +142,7 @@ Users should not have to worry about the concrete type of parameters.
 ```python
 from ess import loki
 
-workflow = loki.make_workflow()
+workflow = loki.LokiWorkflow()
 workflow[Param1] = param1
 workflow[Param2] = param2
 workflow.visualize(Result)
