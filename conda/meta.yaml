@@ -17,8 +17,6 @@ requirements:
     - setuptools_scm
   run:
     - python>=3.10
-    - scipp>=24.02.0
-    - scippnexus>=24.03.0
 
   {% for package in dependencies %}
     - {% if package == "graphviz" %}python-graphviz{% else %}{{ package }}{% endif %}
