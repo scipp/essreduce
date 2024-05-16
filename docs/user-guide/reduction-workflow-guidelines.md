@@ -124,7 +124,8 @@ Users should not have to worry about the concrete type of parameters.
 ### C.5: Use a fixed pattern for creating, manipulating, and running workflows
 
 **Reason**
-- Terms such as provider or pipeline mean nothing to users, using their language instead reduces cognitive load.
+- Using terms such as provider or pipeline increases cognitive load for scientific users.
+  The reason is that those terms are unfamiliar to users based on the scientific domain language they are used to.
 - Manipulating multiple concepts such as (1) a dict of parameters, (2) a `sciline.Pipeline`, and (3) a `sciline.TaskGraph` is confusing, especially for non-programmers.
 
 **Notes**
