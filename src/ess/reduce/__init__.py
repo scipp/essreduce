@@ -4,7 +4,7 @@
 import importlib.metadata
 
 from . import nexus, uncertainty
-from .masking import masking_tool
+from .masking import MaskingTool
 
 try:
     __version__ = importlib.metadata.version(__package__ or __name__)
@@ -13,4 +13,4 @@ except importlib.metadata.PackageNotFoundError:
 
 del importlib
 
-__all__ = ["masking_tool", "nexus", "uncertainty"]
+__all__ = ["MaskingTool", "nexus", "uncertainty"]
