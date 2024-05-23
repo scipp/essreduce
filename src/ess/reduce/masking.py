@@ -2,11 +2,12 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
 import os
+
 import plopp as pp
 import scipp as sc
-from plopp.core.typing import FigureLike
 from mpltoolbox import Hspans, Vspans
 from mpltoolbox.patch import Patch
+from plopp.core.typing import FigureLike
 
 
 def _define_rect_mask(da: sc.DataArray, rect_info: dict) -> sc.Variable:
@@ -102,8 +103,8 @@ class MaskingTool:
             Additional keyword arguments passed to the figure constructor.
         """
         import ipywidgets as ipw
-        from plopp.widgets import DrawingTool, style
         from mpltoolbox import Rectangles
+        from plopp.widgets import DrawingTool, style
 
         # Convert potential bin edge coords to midpoints
         da = data.copy(deep=False)
