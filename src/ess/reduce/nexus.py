@@ -260,7 +260,7 @@ def _load_group_with_positions(
 
 
 def _open_nexus_file(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup]
+    file_path: Union[FilePath, NeXusFile, NeXusGroup],
 ) -> ContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         return nullcontext(file_path)
@@ -363,7 +363,7 @@ def _extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
             get_logger().info(
                 "Selecting event data '%s' in favor of histogram data {%s}",
                 next(iter(event_data_arrays.keys())),
-                ', '.join(map(lambda k: f"'{k}'", histogram_data_arrays)),
+                ', '.join(f"'{k}'" for k in histogram_data_arrays),
             )
         return array
 

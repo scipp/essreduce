@@ -11,7 +11,6 @@ import pytest
 import scipp as sc
 import scipp.testing
 import scippnexus as snx
-
 from ess.reduce import nexus
 
 
@@ -206,7 +205,7 @@ def expected_sample() -> sc.DataGroup:
     return _sample_data()
 
 
-@pytest.mark.parametrize('entry_name', (None, nexus.NeXusEntryName('entry-001')))
+@pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 def test_load_detector(nexus_file, expected_bank12, entry_name):
     detector = nexus.load_detector(
         nexus_file,
@@ -229,7 +228,7 @@ def test_load_detector_requires_entry_name_if_not_unique(nexus_file):
     with snx.File(nexus_file, 'r+') as f:
         f.create_class('entry', snx.NXentry)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Expected exactly one"):
         nexus.load_detector(
             nexus.FilePath(nexus_file),
             detector_name=nexus.NeXusDetectorName('bank12'),
@@ -253,7 +252,7 @@ def test_load_detector_select_entry_if_not_unique(nexus_file, expected_bank12):
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
 
 
-@pytest.mark.parametrize('entry_name', (None, nexus.NeXusEntryName('entry-001')))
+@pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 def test_load_monitor(nexus_file, expected_monitor, entry_name):
     monitor = nexus.load_monitor(
         nexus_file,
@@ -263,8 +262,8 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name):
     sc.testing.assert_identical(monitor['data'], expected_monitor)
 
 
-@pytest.mark.parametrize('entry_name', (None, nexus.NeXusEntryName('entry-001')))
-@pytest.mark.parametrize('source_name', (None, nexus.NeXusSourceName('source')))
+@pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
+@pytest.mark.parametrize('source_name', [None, nexus.NeXusSourceName('source')])
 def test_load_source(nexus_file, expected_source, entry_name, source_name):
     source = nexus.load_source(
         nexus_file,
@@ -277,7 +276,7 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
     sc.testing.assert_identical(source, nexus.RawSource(expected_source))
 
 
-@pytest.mark.parametrize('entry_name', (None, nexus.NeXusEntryName('entry-001')))
+@pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 def test_load_sample(nexus_file, expected_sample, entry_name):
     sample = nexus.load_sample(nexus_file, entry_name=entry_name)
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
@@ -316,7 +315,9 @@ def test_extract_detector_data_requires_unique_dense_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Cannot uniquely identify the data to extract"
+    ):
         nexus.extract_detector_data(nexus.RawDetector(detector))
 
 
@@ -329,7 +330,9 @@ def test_extract_detector_data_requires_unique_event_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Cannot uniquely identify the data to extract"
+    ):
         nexus.extract_detector_data(nexus.RawDetector(detector))
 
 

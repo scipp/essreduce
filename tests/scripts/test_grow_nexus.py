@@ -4,11 +4,10 @@ import tempfile
 import h5py
 import numpy as np
 import pytest
-
 from ess.reduce.scripts.grow_nexus import grow_nexus_file
 
 
-@pytest.fixture
+@pytest.fixture()
 def nexus_file():
     with tempfile.TemporaryDirectory() as tmp:
         path = os.path.join(tmp, 'test.nxs')
@@ -57,8 +56,8 @@ def nexus_file():
             yield path
 
 
-@pytest.mark.parametrize('monitor_scale', (1, 2, None))
-@pytest.mark.parametrize('detector_scale', (1, 2))
+@pytest.mark.parametrize('monitor_scale', [1, 2, None])
+@pytest.mark.parametrize('detector_scale', [1, 2])
 def test_grow_nexus(nexus_file, detector_scale, monitor_scale):
     grow_nexus_file(
         filename=nexus_file, detector_scale=detector_scale, monitor_scale=monitor_scale
@@ -68,7 +67,7 @@ def test_grow_nexus(nexus_file, detector_scale, monitor_scale):
 
     with h5py.File(nexus_file, 'r') as f:
         for detector, scale in zip(
-            ('detector', 'monitor'), (detector_scale, monitor_scale)
+            ('detector', 'monitor'), (detector_scale, monitor_scale), strict=True
         ):
             np.testing.assert_equal(
                 [scale * i for i in [2, 4, 6]],
