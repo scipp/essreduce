@@ -53,8 +53,7 @@ Names use glob syntax, i.e., '*Filename' is any string that ends in 'Filename'.
 | Name                        | Type        | Description                                                               |
 |-----------------------------|-------------|---------------------------------------------------------------------------|
 | --- **Files** ---           |             |                                                                           |
-| Filename \| *Filename       | str         | Simple name of a file, must be processed into FilePath                    |
-| FilePath \| *FilePath       | Path        | Concrete path to a file on the host filesystem, ideally absolute          |
+| Filename \| *Filename       | str         | Name or path to a file                                                    |
 | --- **Flags** ---           |             |                                                                           |
 | UncertaintyBroadcastMode    | enum        | E.g., `Enum('UncertaintyBroadcastMode', ['drop', 'upper_bound', 'fail'])` |
 | ReturnEvents                | bool        | Select whether to return events or histograms from the workflow           |
@@ -121,6 +120,34 @@ Users should not have to worry about the concrete type of parameters.
 - Gracefully promote dtypes for small parameters.
   E.g., `sc.scalar(2, unit='m')` and `sc.scalar(2.0, unit='m')` should be usable interchangeably.
   This can also apply to arrays, for instance, `sc.linspace` and `sc.arange` should be interchangeable but the latter may result in integers while the former typically produces floats.
+
+### C.5: Use a fixed pattern for creating, manipulating, and running workflows
+
+**Reason**
+- Using terms such as provider or pipeline increases cognitive load for scientific users.
+  The reason is that those terms are unfamiliar to users based on the scientific domain language they are used to.
+- Manipulating multiple concepts such as (1) a dict of parameters, (2) a `sciline.Pipeline`, and (3) a `sciline.TaskGraph` is confusing, especially for non-programmers.
+
+**Notes**
+
+- Add one or more `*Workflow` function(s) that returns a `sciline.Pipeline` object, configured with default providers and parameters.
+  - Prefix with the instrument name and suffix with `Workflow`, qualifiers can be added in between, for example `LokiWorkflow` and `LokiAtLarmorWorkflow`.
+  - Despite being a function we choose camel-case naming, to minimize future refactoring in user code if we decide to wrap/inherit `Pipeline` instead of returning an instance.
+    Furthermore, non-expert Python users will be more familiar with classes than with factory functions.
+- Avoid creating parameter dicts in notebooks, set parameters on the workflow object directly.
+- Avoid calling `workflow.get` (which would return a `sciline.TaskGraph`), instead call `workflow.compute` and `workflow.visualize`, even if it means listing the result and building the task graph multiple times.
+
+**Example**
+
+```python
+from ess import loki
+
+workflow = loki.LokiWorkflow()
+workflow[Param1] = param1
+workflow[Param2] = param2
+workflow.visualize(Result)
+workflow.compute(Result)
+```
 
 ## D: Documentation
 
