@@ -10,7 +10,7 @@ h5py==3.10.0
     # via scippnexus
 python-dateutil==2.9.0.post0
     # via scippnexus
-scipp==24.2.0
+scipp==24.5.0
     # via
     #   -r nightly.in
     #   scippnexus
