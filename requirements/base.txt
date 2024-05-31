@@ -19,7 +19,7 @@ matplotlib==3.9.0
     # via
     #   mpltoolbox
     #   plopp
-mpltoolbox==24.5.0
+mpltoolbox==24.5.1
     # via -r base.in
 numpy==1.26.4
     # via
@@ -33,7 +33,7 @@ packaging==24.0
     # via matplotlib
 pillow==10.3.0
     # via matplotlib
-plopp==24.4.0
+plopp==24.5.0
     # via -r base.in
 pyparsing==3.1.2
     # via matplotlib

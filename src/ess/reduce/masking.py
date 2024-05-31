@@ -164,7 +164,6 @@ class MaskingTool:
             c._tool._on_change.clear()
             c._tool.on_vertex_release(c.update_node)
             c._tool.on_drag_release(c.update_node)
-            c._tool.on_remove(c.update_node)
             c._tool.on_remove(self.masking_node.notify_children)
             c.observe(self.toggle_button_states, names="value")
 
@@ -208,7 +207,7 @@ class MaskingTool:
         )
         self.fig.canvas.draw()
 
-    def save_masks(self, _=None) -> sc.DataGroup:
+    def get_masks(self) -> sc.DataGroup:
         masks = {}
         mask_counter = 0
         for c in self.controls:
@@ -225,7 +224,10 @@ class MaskingTool:
                     }
                 )
                 mask_counter += 1
-        out = sc.DataGroup(masks)
+        return sc.DataGroup(masks)
+
+    def save_masks(self, _=None) -> sc.DataGroup:
+        out = self.get_masks()
         out.save_hdf5(self.filename.value)
         return out
 
