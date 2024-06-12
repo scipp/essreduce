@@ -12,7 +12,7 @@ the basic ones here.
 
 from contextlib import nullcontext
 from pathlib import Path
-from typing import BinaryIO, ContextManager, NewType, Optional, Type, Union, cast
+from typing import BinaryIO, ContextManager, NewType, Optional, Type, Union, cast, Mapping
 
 import scipp as sc
 import scippnexus as snx
@@ -61,6 +61,7 @@ def load_detector(
     *,
     detector_name: NeXusDetectorName,
     entry_name: Optional[NeXusEntryName] = None,
+    definitions: Optional[Mapping] = None,
 ) -> RawDetector:
     """Load a single detector (bank) from a NeXus file.
 
@@ -83,6 +84,9 @@ def load_detector(
         Name of the entry that contains the detector.
         If ``None``, the entry will be located based
         on its NeXus class, but there cannot be more than 1.
+    definitions:
+        Definitions used by scippnexus loader, see :py:`scippnexus.File`
+        for documentation.
 
     Returns
     -------
@@ -96,6 +100,7 @@ def load_detector(
             group_name=detector_name,
             nx_class=snx.NXdetector,
             entry_name=entry_name,
+            definitions=definitions,
         )
     )
 
@@ -105,6 +110,7 @@ def load_monitor(
     *,
     monitor_name: NeXusMonitorName,
     entry_name: Optional[NeXusEntryName] = None,
+    definitions: Optional[Mapping] = None,
 ) -> RawMonitor:
     """Load a single monitor from a NeXus file.
 
@@ -127,6 +133,9 @@ def load_monitor(
         Name of the entry that contains the monitor.
         If ``None``, the entry will be located based
         on its NeXus class, but there cannot be more than 1.
+    definitions:
+        Definitions used by scippnexus loader, see :py:`scippnexus.File`
+        for documentation.
 
     Returns
     -------
@@ -140,6 +149,7 @@ def load_monitor(
             group_name=monitor_name,
             nx_class=snx.NXmonitor,
             entry_name=entry_name,
+            definitions=definitions,
         )
     )
 
@@ -149,6 +159,7 @@ def load_source(
     *,
     source_name: Optional[NeXusSourceName] = None,
     entry_name: Optional[NeXusEntryName] = None,
+    definitions: Optional[Mapping] = None,
 ) -> RawSource:
     """Load a source from a NeXus file.
 
@@ -173,6 +184,9 @@ def load_source(
         Name of the instrument that contains the source.
         If ``None``, the entry will be located based
         on its NeXus class, but there cannot be more than 1.
+    definitions:
+        Definitions used by scippnexus loader, see :py:`scippnexus.File`
+        for documentation.
 
     Returns
     -------
@@ -186,6 +200,7 @@ def load_source(
             group_name=source_name,
             nx_class=snx.NXsource,
             entry_name=entry_name,
+            definitions=definitions,
         )
     )
 
@@ -193,6 +208,7 @@ def load_source(
 def load_sample(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     entry_name: Optional[NeXusEntryName] = None,
+    definitions: Optional[Mapping] = None,
 ) -> RawSample:
     """Load a sample from a NeXus file.
 
@@ -213,6 +229,9 @@ def load_sample(
         Name of the instrument that contains the source.
         If ``None``, the entry will be located based
         on its NeXus class, but there cannot be more than 1.
+    definitions:
+        Definitions used by scippnexus loader, see :py:`scippnexus.File`
+        for documentation.
 
     Returns
     -------
@@ -220,7 +239,7 @@ def load_sample(
         A data group containing all data stored in
         the sample NeXus group.
     """
-    with _open_nexus_file(file_path) as f:
+    with _open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         loaded = cast(sc.DataGroup, _unique_child_group(entry, snx.NXsample, None)[()])
     return RawSample(loaded)
@@ -232,8 +251,9 @@ def _load_group_with_positions(
     group_name: Optional[str],
     nx_class: Type[snx.NXobject],
     entry_name: Optional[NeXusEntryName] = None,
+    definitions: Optional[Mapping] = None,
 ) -> sc.DataGroup:
-    with _open_nexus_file(file_path) as f:
+    with _open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         instrument = _unique_child_group(entry, snx.NXinstrument, None)
         loaded = cast(
@@ -261,9 +281,13 @@ def _load_group_with_positions(
 
 def _open_nexus_file(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    definitions: Optional[Mapping] = None,
 ) -> ContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
+        # Bug. Definitions ignored if the file_path is an already opened nexus file.
         return nullcontext(file_path)
+    if definitions is not None:
+        return snx.File(file_path, definitions=definitions)
     return snx.File(file_path)
 
 

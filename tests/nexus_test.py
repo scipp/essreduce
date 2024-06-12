@@ -206,11 +206,13 @@ def expected_sample() -> sc.DataGroup:
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
-def test_load_detector(nexus_file, expected_bank12, entry_name):
+@pytest.mark.parametrize('definitions', [None, {}])
+def test_load_detector(nexus_file, expected_bank12, entry_name, definitions):
     detector = nexus.load_detector(
         nexus_file,
         detector_name=nexus.NeXusDetectorName('bank12'),
         entry_name=entry_name,
+        #definitions=definitions,
     )
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
     offset = detector_transformation_components()['offset']
@@ -264,11 +266,13 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name):
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 @pytest.mark.parametrize('source_name', [None, nexus.NeXusSourceName('source')])
-def test_load_source(nexus_file, expected_source, entry_name, source_name):
+@pytest.mark.parametrize('definitions', [None, {"something": "something else"}])
+def test_load_source(nexus_file, expected_source, entry_name, source_name, definitions):
     source = nexus.load_source(
         nexus_file,
         entry_name=entry_name,
         source_name=source_name,
+        definitions=definitions,
     )
     # NeXus details that we don't need to test as long as the positions are ok:
     del source['depends_on']
@@ -277,8 +281,9 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
-def test_load_sample(nexus_file, expected_sample, entry_name):
-    sample = nexus.load_sample(nexus_file, entry_name=entry_name)
+@pytest.mark.parametrize('definitions', [None, {"something": "something else"}])
+def test_load_sample(nexus_file, expected_sample, entry_name, definitions):
+    sample = nexus.load_sample(nexus_file, entry_name=entry_name, definitions=definitions)
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
 
 
