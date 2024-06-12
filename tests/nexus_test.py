@@ -212,7 +212,7 @@ def test_load_detector(nexus_file, expected_bank12, entry_name, definitions):
         nexus_file,
         detector_name=nexus.NeXusDetectorName('bank12'),
         entry_name=entry_name,
-        #definitions=definitions,
+        # definitions=definitions,
     )
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
     offset = detector_transformation_components()['offset']
@@ -283,7 +283,9 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name, defin
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 @pytest.mark.parametrize('definitions', [None, {"something": "something else"}])
 def test_load_sample(nexus_file, expected_sample, entry_name, definitions):
-    sample = nexus.load_sample(nexus_file, entry_name=entry_name, definitions=definitions)
+    sample = nexus.load_sample(
+        nexus_file, entry_name=entry_name, definitions=definitions
+    )
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
 
 
