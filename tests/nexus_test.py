@@ -206,13 +206,11 @@ def expected_sample() -> sc.DataGroup:
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
-@pytest.mark.parametrize('definitions', [None, {}])
-def test_load_detector(nexus_file, expected_bank12, entry_name, definitions):
+def test_load_detector(nexus_file, expected_bank12, entry_name):
     detector = nexus.load_detector(
         nexus_file,
         detector_name=nexus.NeXusDetectorName('bank12'),
         entry_name=entry_name,
-        #definitions=definitions,
     )
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
     offset = detector_transformation_components()['offset']
@@ -220,6 +218,22 @@ def test_load_detector(nexus_file, expected_bank12, entry_name, definitions):
         detector['transform'],
         sc.spatial.translation(unit=offset.unit, value=offset.value),
     )
+
+
+def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
+    if isinstance(nexus_file, snx.Group):
+        with pytest.raises(ValueError, match="new definitions"):
+            nexus.load_detector(
+                nexus_file,
+                detector_name=nexus.NeXusDetectorName('bank12'),
+                definitions={},
+            )
+    else:
+        nexus.load_detector(
+            nexus_file,
+            detector_name=nexus.NeXusDetectorName('bank12'),
+            definitions={},
+        )
 
 
 def test_load_detector_requires_entry_name_if_not_unique(nexus_file):
@@ -266,13 +280,11 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name):
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 @pytest.mark.parametrize('source_name', [None, nexus.NeXusSourceName('source')])
-@pytest.mark.parametrize('definitions', [None, {"something": "something else"}])
-def test_load_source(nexus_file, expected_source, entry_name, source_name, definitions):
+def test_load_source(nexus_file, expected_source, entry_name, source_name):
     source = nexus.load_source(
         nexus_file,
         entry_name=entry_name,
         source_name=source_name,
-        definitions=definitions,
     )
     # NeXus details that we don't need to test as long as the positions are ok:
     del source['depends_on']
@@ -281,9 +293,8 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name, defin
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
-@pytest.mark.parametrize('definitions', [None, {"something": "something else"}])
-def test_load_sample(nexus_file, expected_sample, entry_name, definitions):
-    sample = nexus.load_sample(nexus_file, entry_name=entry_name, definitions=definitions)
+def test_load_sample(nexus_file, expected_sample, entry_name):
+    sample = nexus.load_sample(nexus_file, entry_name=entry_name)
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
 
 

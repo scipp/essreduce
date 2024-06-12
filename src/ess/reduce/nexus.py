@@ -293,7 +293,10 @@ def _open_nexus_file(
     definitions: Optional[Mapping] = None,
 ) -> ContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
-        # Bug. Definitions ignored if the file_path is an already opened nexus file.
+        if definitions is not None:
+            raise ValueError(
+                "Cannot apply new definitions to open nexus file or nexus group."
+            )
         return nullcontext(file_path)
     if definitions is not None:
         return snx.File(file_path, definitions=definitions)
