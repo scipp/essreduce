@@ -12,7 +12,16 @@ the basic ones here.
 
 from contextlib import nullcontext
 from pathlib import Path
-from typing import BinaryIO, ContextManager, NewType, Optional, Type, Union, cast, Mapping
+from typing import (
+    BinaryIO,
+    ContextManager,
+    Mapping,
+    NewType,
+    Optional,
+    Type,
+    Union,
+    cast,
+)
 
 import scipp as sc
 import scippnexus as snx
