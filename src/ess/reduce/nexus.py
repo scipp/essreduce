@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import (
     BinaryIO,
     ContextManager,
+    Literal,
     Mapping,
     NewType,
     Optional,
@@ -65,12 +66,15 @@ RawSource = NewType('RawSource', sc.DataGroup)
 """Raw data from a NeXus source."""
 
 
+_no_new_definitions = object()
+
+
 def load_detector(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
     detector_name: NeXusDetectorName,
     entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] = None,
+    definitions: Optional[Mapping] | Literal[_no_new_definitions] = _no_new_definitions,
 ) -> RawDetector:
     """Load a single detector (bank) from a NeXus file.
 
@@ -119,7 +123,7 @@ def load_monitor(
     *,
     monitor_name: NeXusMonitorName,
     entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] = None,
+    definitions: Optional[Mapping] | Literal[_no_new_definitions] = _no_new_definitions,
 ) -> RawMonitor:
     """Load a single monitor from a NeXus file.
 
@@ -168,7 +172,7 @@ def load_source(
     *,
     source_name: Optional[NeXusSourceName] = None,
     entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] = None,
+    definitions: Optional[Mapping] | Literal[_no_new_definitions] = _no_new_definitions,
 ) -> RawSource:
     """Load a source from a NeXus file.
 
@@ -217,7 +221,7 @@ def load_source(
 def load_sample(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] = None,
+    definitions: Optional[Mapping] | Literal[_no_new_definitions] = _no_new_definitions,
 ) -> RawSample:
     """Load a sample from a NeXus file.
 
@@ -260,7 +264,7 @@ def _load_group_with_positions(
     group_name: Optional[str],
     nx_class: Type[snx.NXobject],
     entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] = None,
+    definitions: Optional[Mapping] | Literal[_no_new_definitions] = _no_new_definitions,
 ) -> sc.DataGroup:
     with _open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
@@ -290,17 +294,17 @@ def _load_group_with_positions(
 
 def _open_nexus_file(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    definitions: Optional[Mapping] = None,
+    definitions: Optional[Mapping] | Literal[_no_new_definitions] = _no_new_definitions,
 ) -> ContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
-        if definitions is not None:
+        if definitions is not _no_new_definitions:
             raise ValueError(
                 "Cannot apply new definitions to open nexus file or nexus group."
             )
         return nullcontext(file_path)
-    if definitions is not None:
-        return snx.File(file_path, definitions=definitions)
-    return snx.File(file_path)
+    if definitions is _no_new_definitions:
+        return snx.File(file_path)
+    return snx.File(file_path, definitions=definitions)
 
 
 def _unique_child_group(
