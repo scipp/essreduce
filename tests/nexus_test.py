@@ -312,6 +312,32 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
     sc.testing.assert_identical(source, nexus.RawSource(expected_source))
 
 
+@pytest.mark.parametrize(
+    ('loader', 'cls', 'name'),
+    [
+        (nexus.load_source, snx.NXsource, 'NXsource'),
+        (nexus.load_sample, snx.NXsample, 'NXsample'),
+    ],
+)
+def test_load_new_definitions_applied(nexus_file, loader, cls, name):
+    if not isinstance(nexus_file, snx.Group):
+        new_definition_used = False
+
+        def new(*args, **kwargs):
+            nonlocal new_definition_used
+            new_definition_used = True
+            return cls(*args, **kwargs)
+
+        loader(
+            nexus_file,
+            definitions={
+                **snx.base_definitions(),
+                name: new,
+            },
+        )
+        assert new_definition_used
+
+
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 def test_load_sample(nexus_file, expected_sample, entry_name):
     sample = nexus.load_sample(nexus_file, entry_name=entry_name)
