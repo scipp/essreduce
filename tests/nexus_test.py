@@ -220,6 +220,42 @@ def test_load_detector(nexus_file, expected_bank12, entry_name):
     )
 
 
+def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
+    if isinstance(nexus_file, snx.Group):
+        with pytest.raises(ValueError, match="new definitions"):
+            nexus.load_detector(
+                nexus_file,
+                detector_name=nexus.NeXusDetectorName('bank12'),
+                definitions={},
+            )
+    else:
+        nexus.load_detector(
+            nexus_file,
+            detector_name=nexus.NeXusDetectorName('bank12'),
+            definitions={},
+        )
+
+
+def test_load_detector_new_definitions_applied(nexus_file, expected_bank12):
+    if not isinstance(nexus_file, snx.Group):
+        new_definition_used = False
+
+        def detector(*args, **kwargs):
+            nonlocal new_definition_used
+            new_definition_used = True
+            return snx.base_definitions()['NXdetector'](*args, **kwargs)
+
+        nexus.load_detector(
+            nexus_file,
+            detector_name=nexus.NeXusDetectorName('bank12'),
+            definitions=dict(
+                snx.base_definitions(),
+                NXdetector=detector,
+            ),
+        )
+        assert new_definition_used
+
+
 def test_load_detector_requires_entry_name_if_not_unique(nexus_file):
     if not isinstance(nexus_file, Path):
         # For simplicity, only create a second entry in an actual file
@@ -274,6 +310,32 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
     del source['depends_on']
     del source['transformations']
     sc.testing.assert_identical(source, nexus.RawSource(expected_source))
+
+
+@pytest.mark.parametrize(
+    ('loader', 'cls', 'name'),
+    [
+        (nexus.load_source, snx.NXsource, 'NXsource'),
+        (nexus.load_sample, snx.NXsample, 'NXsample'),
+    ],
+)
+def test_load_new_definitions_applied(nexus_file, loader, cls, name):
+    if not isinstance(nexus_file, snx.Group):
+        new_definition_used = False
+
+        def new(*args, **kwargs):
+            nonlocal new_definition_used
+            new_definition_used = True
+            return cls(*args, **kwargs)
+
+        loader(
+            nexus_file,
+            definitions={
+                **snx.base_definitions(),
+                name: new,
+            },
+        )
+        assert new_definition_used
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
