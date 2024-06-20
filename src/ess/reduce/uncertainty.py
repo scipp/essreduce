@@ -15,7 +15,9 @@ This module provides two ways of handling variances during broadcast operations:
 from enum import Enum
 from typing import Dict, TypeVar, Union, overload
 
+import numpy as np
 import scipp as sc
+from scipp.core.concepts import irreducible_mask
 
 T = TypeVar("T", bound=Union[sc.Variable, sc.DataArray])
 
@@ -36,50 +38,99 @@ See https://doi.org/10.3233/JNR-220049 for context.
 
 @overload
 def broadcast_with_upper_bound_variances(
-    data: sc.Variable, sizes: Dict[str, int]
+    data: sc.Variable, prototype: sc.DataArray | sc.Variable
 ) -> sc.Variable:
     pass
 
 
 @overload
 def broadcast_with_upper_bound_variances(
-    data: sc.DataArray, sizes: Dict[str, int]
+    data: sc.DataArray, prototype: sc.DataArray | sc.Variable
 ) -> sc.DataArray:
     pass
 
 
 def broadcast_with_upper_bound_variances(
-    data: Union[sc.Variable, sc.DataArray], sizes: Dict[str, int]
+    data: Union[sc.Variable, sc.DataArray], prototype: sc.DataArray | sc.Variable
 ) -> Union[sc.Variable, sc.DataArray]:
-    if _no_variance_broadcast(data, sizes):
+    """
+    Compute an upper bound for the variances of the broadcasted data.
+
+    The variances of the broadcasted data are computed by scaling the variances of the
+    input data by the volume of the new subspace. The volume of the new subspace is
+    computed as the product of the sizes of the new dimensions.
+
+    Parameters
+    ----------
+    data:
+        The data to broadcast.
+    prototype:
+        Defines the new sizes (dims and shape). If present, masks are used to exclude
+        masked values from the variance computation.
+
+    Returns
+    -------
+    :
+        The data with the variances scaled by the volume of the new subspace.
+    """
+    if _no_variance_broadcast(data, prototype.sizes):
         return data
-    size = 1
+    sizes = {dim: size for dim, size in prototype.sizes.items() if dim not in data.dims}
+    sizes = prototype.sizes
+    mask = sc.scalar(False)
+    if isinstance(prototype, sc.DataArray):
+        if (irred := irreducible_mask(prototype, dim=sizes)) is not None:
+            for dim in data.dims:
+                if dim in irred.dims:
+                    irred = irred.all(dim)
+            mask = irred
+    size = (~mask).sum().value
     for dim, dim_size in sizes.items():
-        if dim not in data.dims:
+        if dim not in data.dims and dim not in mask.dims:
             size *= dim_size
     data = data.copy()
     data.variances *= size
-    return data.broadcast(sizes={**sizes, **data.sizes}).copy()
+    sizes = {**sizes, **data.sizes}
+    data = data.broadcast(sizes=sizes).copy()
+    if mask is not None:
+        # The masked values are not counted in the variance, so we set them to infinity.
+        data.variances[mask.broadcast(sizes=sizes).values] = np.inf
+    return data
 
 
 @overload
 def drop_variances_if_broadcast(
-    data: sc.Variable, sizes: Dict[str, int]
+    data: sc.Variable, prototype: sc.DataArray | sc.Variable
 ) -> sc.Variable:
     pass
 
 
 @overload
 def drop_variances_if_broadcast(
-    data: sc.DataArray, sizes: Dict[str, int]
+    data: sc.DataArray, prototype: sc.DataArray | sc.Variable
 ) -> sc.DataArray:
     pass
 
 
 def drop_variances_if_broadcast(
-    data: Union[sc.Variable, sc.DataArray], sizes: Dict[str, int]
+    data: Union[sc.Variable, sc.DataArray], prototype: sc.DataArray | sc.Variable
 ) -> Union[sc.Variable, sc.DataArray]:
-    if _no_variance_broadcast(data, sizes):
+    """
+    Drop variances if the data is broadcasted.
+
+    Parameters
+    ----------
+    data:
+        The data to broadcast.
+    prototype:
+        Defines the new sizes (dims and shape).
+
+    Returns
+    -------
+    :
+        The data without variances if the data is broadcasted.
+    """
+    if _no_variance_broadcast(data, prototype.sizes):
         return data
     return sc.values(data)
 
@@ -98,5 +149,5 @@ def _no_variance_broadcast(
 broadcasters = {
     UncertaintyBroadcastMode.drop: drop_variances_if_broadcast,
     UncertaintyBroadcastMode.upper_bound: broadcast_with_upper_bound_variances,
-    UncertaintyBroadcastMode.fail: lambda x, sizes: x,
+    UncertaintyBroadcastMode.fail: lambda x, _: x,
 }
