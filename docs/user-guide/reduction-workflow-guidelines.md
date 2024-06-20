@@ -92,13 +92,16 @@ RunType = TypeVar('RunType', SampleRun, BackgroundRun)
 class Filename(sciline.Scope[RunType, str], str): ...
 ```
 
-### C.3: Use the suffix 'Type' for type vars
+### C.3: Carefully choose names of type vars
 
 **Reason**
-This makes it easier to distinguish type vars from concrete domain types.
+It is important that type vars can be distinguished from concrete domain types, and that it has a clear meaning.
 
 **Example**
-See 'RunType' and 'MonitorType' in the table of C.2.
+
+- `RunType` and `MonitorType` are examples where having the suffix `Type` can be useful, since `Run` could be confused with (or used as) a domain type giving the run number.
+  See 'RunType' and 'MonitorType' in the table of C.2.
+- `PolarizerSpin = TypeVar['PolarizerSpin', Up, Down]` probably does not require a `Type` suffix.
 
 ### C.4: Use flexible types
 
