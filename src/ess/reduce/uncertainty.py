@@ -75,7 +75,6 @@ def broadcast_with_upper_bound_variances(
     """
     if _no_variance_broadcast(data, prototype.sizes):
         return data
-    sizes = {dim: size for dim, size in prototype.sizes.items() if dim not in data.dims}
     sizes = prototype.sizes
     mask = sc.scalar(False)
     if isinstance(prototype, sc.DataArray):
