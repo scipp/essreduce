@@ -94,6 +94,9 @@ class Filename(sciline.Scope[RunType, str], str): ...
 
 ### C.3: (Removed rule on naming TypeVars)
 
+This guideline was too restrictive as not all TypeVars represent a "type", conceptually.
+Instead, authors should apply good judgment when naming TypeVars.
+
 ### C.4: Use flexible types
 
 **Reason**
