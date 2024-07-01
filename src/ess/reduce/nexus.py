@@ -71,7 +71,7 @@ _no_new_definitions = object()
 
 def load_detector(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    data_slice=(),
+    selection=(),
     *,
     detector_name: NeXusDetectorName,
     entry_name: Optional[NeXusEntryName] = None,
@@ -111,7 +111,7 @@ def load_detector(
     return RawDetector(
         _load_group_with_positions(
             file_path,
-            data_slice=data_slice,
+            selection=selection,
             group_name=detector_name,
             nx_class=snx.NXdetector,
             entry_name=entry_name,
@@ -122,7 +122,7 @@ def load_detector(
 
 def load_monitor(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    data_slice=(),
+    selection=(),
     *,
     monitor_name: NeXusMonitorName,
     entry_name: Optional[NeXusEntryName] = None,
@@ -162,7 +162,7 @@ def load_monitor(
     return RawMonitor(
         _load_group_with_positions(
             file_path,
-            data_slice=data_slice,
+            selection=selection,
             group_name=monitor_name,
             nx_class=snx.NXmonitor,
             entry_name=entry_name,
@@ -214,7 +214,7 @@ def load_source(
     return RawSource(
         _load_group_with_positions(
             file_path,
-            data_slice=(),
+            selection=(),
             group_name=source_name,
             nx_class=snx.NXsource,
             entry_name=entry_name,
@@ -266,7 +266,7 @@ def load_sample(
 def _load_group_with_positions(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     *,
-    data_slice,
+    selection,
     group_name: Optional[str],
     nx_class: Type[snx.NXobject],
     entry_name: Optional[NeXusEntryName] = None,
@@ -277,7 +277,7 @@ def _load_group_with_positions(
         instrument = _unique_child_group(entry, snx.NXinstrument, None)
         loaded = cast(
             sc.DataGroup,
-            _unique_child_group(instrument, nx_class, group_name)[data_slice],
+            _unique_child_group(instrument, nx_class, group_name)[selection],
         )
 
         transform_out_name = 'transform'

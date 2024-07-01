@@ -209,23 +209,23 @@ def expected_sample() -> sc.DataGroup:
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 @pytest.mark.parametrize(
-    'data_slice',
+    'selection',
     [
         None,
         ('event_time_zero', slice(year_zero, None)),
         ('event_time_zero', slice(None, year_zero)),
     ],
 )
-def test_load_detector(nexus_file, expected_bank12, entry_name, data_slice):
+def test_load_detector(nexus_file, expected_bank12, entry_name, selection):
     detector = nexus.load_detector(
         nexus_file,
-        **({'data_slice': data_slice} if data_slice is not None else {}),
+        **({'selection': selection} if selection is not None else {}),
         detector_name=nexus.NeXusDetectorName('bank12'),
         entry_name=entry_name,
     )
-    if data_slice:
-        expected = expected_bank12.bins[data_slice]
-        expected.coords.pop(data_slice[0])
+    if selection:
+        expected = expected_bank12.bins[selection]
+        expected.coords.pop(selection[0])
     else:
         expected = expected_bank12
     sc.testing.assert_identical(detector['bank12_events'], expected)
@@ -306,21 +306,21 @@ def test_load_detector_select_entry_if_not_unique(nexus_file, expected_bank12):
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
 @pytest.mark.parametrize(
-    'data_slice',
+    'selection',
     [
         None,
         ('time', slice(year_zero.to(unit='ms'), None)),
         ('time', slice(None, year_zero.to(unit='ms'))),
     ],
 )
-def test_load_monitor(nexus_file, expected_monitor, entry_name, data_slice):
+def test_load_monitor(nexus_file, expected_monitor, entry_name, selection):
     monitor = nexus.load_monitor(
         nexus_file,
-        **({'data_slice': data_slice} if data_slice is not None else {}),
+        **({'selection': selection} if selection is not None else {}),
         monitor_name=nexus.NeXusMonitorName('monitor'),
         entry_name=entry_name,
     )
-    expected = expected_monitor[data_slice] if data_slice else expected_monitor
+    expected = expected_monitor[selection] if selection else expected_monitor
     sc.testing.assert_identical(monitor['data'], expected)
 
 
