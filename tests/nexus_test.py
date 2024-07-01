@@ -13,6 +13,8 @@ import scipp.testing
 import scippnexus as snx
 from ess.reduce import nexus
 
+year_zero = sc.datetime('1970-01-01T00:00:00')
+
 
 def _event_data_components() -> sc.DataGroup:
     return sc.DataGroup(
@@ -206,13 +208,27 @@ def expected_sample() -> sc.DataGroup:
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
-def test_load_detector(nexus_file, expected_bank12, entry_name):
+@pytest.mark.parametrize(
+    'selection',
+    [
+        None,
+        ('event_time_zero', slice(year_zero, None)),
+        ('event_time_zero', slice(None, year_zero)),
+    ],
+)
+def test_load_detector(nexus_file, expected_bank12, entry_name, selection):
     detector = nexus.load_detector(
         nexus_file,
+        **({'selection': selection} if selection is not None else {}),
         detector_name=nexus.NeXusDetectorName('bank12'),
         entry_name=entry_name,
     )
-    sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
+    if selection:
+        expected = expected_bank12.bins[selection]
+        expected.coords.pop(selection[0])
+    else:
+        expected = expected_bank12
+    sc.testing.assert_identical(detector['bank12_events'], expected)
     offset = detector_transformation_components()['offset']
     sc.testing.assert_identical(
         detector['transform'],
@@ -289,13 +305,23 @@ def test_load_detector_select_entry_if_not_unique(nexus_file, expected_bank12):
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
-def test_load_monitor(nexus_file, expected_monitor, entry_name):
+@pytest.mark.parametrize(
+    'selection',
+    [
+        None,
+        ('time', slice(year_zero.to(unit='ms'), None)),
+        ('time', slice(None, year_zero.to(unit='ms'))),
+    ],
+)
+def test_load_monitor(nexus_file, expected_monitor, entry_name, selection):
     monitor = nexus.load_monitor(
         nexus_file,
+        **({'selection': selection} if selection is not None else {}),
         monitor_name=nexus.NeXusMonitorName('monitor'),
         entry_name=entry_name,
     )
-    sc.testing.assert_identical(monitor['data'], expected_monitor)
+    expected = expected_monitor[selection] if selection else expected_monitor
+    sc.testing.assert_identical(monitor['data'], expected)
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
