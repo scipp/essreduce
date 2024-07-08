@@ -163,3 +163,11 @@ def test_broadcast_into_nonorthogonal_2d_mask_reducible_mask_counts_masked():
     expected.variances *= 2
     expected['y', 1].variances = [np.inf, np.inf]
     assert_identical(xy, expected)
+
+
+def test_upper_bound_broadcast_raises_if_input_is_binned():
+    x = sc.linspace('x', 0.0, 1.0, 10).bin(x=1).squeeze()
+    x.value.variances = x.value.values
+    y = sc.linspace('y', 0.0, 1.0, 10)
+    with pytest.raises(ValueError, match="Cannot broadcast binned data."):
+        unc.broadcast_with_upper_bound_variances(x, prototype=y)

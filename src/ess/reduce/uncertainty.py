@@ -13,7 +13,7 @@ This module provides two ways of handling variances during broadcast operations:
 """
 
 from enum import Enum
-from typing import Dict, TypeVar, Union, overload
+from typing import TypeVar, Union, overload
 
 import numpy as np
 import scipp as sc
@@ -73,7 +73,7 @@ def broadcast_with_upper_bound_variances(
     :
         The data with the variances scaled by the volume of the new subspace.
     """
-    if _no_variance_broadcast(data, prototype.sizes):
+    if _no_variance_broadcast(data, prototype):
         return data
     sizes = prototype.sizes
     mask = sc.scalar(False)
@@ -129,17 +129,22 @@ def drop_variances_if_broadcast(
     :
         The data without variances if the data is broadcasted.
     """
-    if _no_variance_broadcast(data, prototype.sizes):
+    if _no_variance_broadcast(data, prototype):
         return data
     return sc.values(data)
 
 
 def _no_variance_broadcast(
-    data: Union[sc.Variable, sc.DataArray], sizes: Dict[str, int]
+    data: sc.Variable | sc.DataArray, prototype: sc.Variable | sc.DataArray
 ) -> bool:
-    return (data.variances is None) or all(
-        data.sizes.get(dim) == size for dim, size in sizes.items()
-    )
+    if data.bins is not None:
+        raise ValueError("Cannot broadcast binned data.")
+    if data.variances is None:
+        return True
+    if prototype.bins is not None:
+        return False
+    sizes = prototype.sizes
+    return all(data.sizes.get(dim) == size for dim, size in sizes.items())
 
 
 # TODO: For now, we only have broadcasters for dense data. Event-data broadcasters will
