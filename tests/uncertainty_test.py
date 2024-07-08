@@ -226,7 +226,7 @@ def test_upper_bound_event_broadcast_event_count_excludes_masked():
     expected = prototype.copy().bins.constituents
     expected['data'].values[:10] = 1.0
     expected['data'].values[10:] = 2.0
-    # There are 5 bins along x, but 10 events, so variance scale factor is 10.
+    # There are 5 bins along x, but 10 events (4 masked), so variance scale factor is 6.
     expected['data'].variances = expected['data'].values * 6
     expected['data']['event', 0:1].variances = [np.inf]
     expected['data']['event', 7:10].variances = [np.inf, np.inf, np.inf]

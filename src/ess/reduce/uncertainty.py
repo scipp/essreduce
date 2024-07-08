@@ -107,7 +107,7 @@ def broadcast_with_upper_bound_variances(
     else:
         size = prototype.bins.size().sum(set(prototype.dims) - set(data.dims))
     scale = size.broadcast(sizes=sizes).to(dtype='float64')
-    if mask is not None:
+    if not sc.identical(mask, sc.scalar(False)):
         # The masked values are not counted in the variance, so we set them to infinity.
         scale.values[mask.broadcast(sizes=sizes).values] = np.inf
     data = data.broadcast(sizes=sizes).copy()
