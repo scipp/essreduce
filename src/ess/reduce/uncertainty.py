@@ -99,23 +99,19 @@ def broadcast_with_upper_bound_variances(
     data = data.copy()
     sizes = {**sizes, **data.sizes}
     if prototype.bins is None:
-        size = (~mask).sum().value
+        size = (~mask).sum().to(dtype='int64', copy=False)
         for dim, dim_size in sizes.items():
             if dim not in data.dims and dim not in mask.dims:
-                size *= dim_size
-        data.variances *= size
-        data = data.broadcast(sizes=sizes).copy()
-        if mask is not None:
-            # The masked values are not counted in the variance, so we set them to infinity.
-            data.variances[mask.broadcast(sizes=sizes).values] = np.inf
+                size *= sc.index(dim_size)
     else:
-        bin_sizes = prototype.bins.size().sum(set(prototype.dims) - set(data.dims))
-        scale = bin_sizes.broadcast(sizes=sizes).to(dtype='float64')
-        if mask is not None:
-            # The masked values are not counted in the variance, so we set them to infinity.
-            scale.values[mask.broadcast(sizes=sizes).values] = np.inf
-        data = data.broadcast(sizes=sizes).copy()
-        data.variances *= scale.values
+        size = prototype.bins.size().sum(set(prototype.dims) - set(data.dims))
+    scale = size.broadcast(sizes=sizes).to(dtype='float64')
+    if mask is not None:
+        # The masked values are not counted in the variance, so we set them to infinity.
+        scale.values[mask.broadcast(sizes=sizes).values] = np.inf
+    data = data.broadcast(sizes=sizes).copy()
+    data.variances *= scale.values
+    if prototype.bins is not None:
         if isinstance(data, sc.Variable):
             data = sc.bins_like(prototype, data)
         else:
