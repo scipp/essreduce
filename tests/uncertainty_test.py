@@ -190,20 +190,51 @@ def test_upper_bound_event_broadcast_counts_events():
     # sizes = [0,1,2,4,3]
     begin = sc.array(dims=['x'], values=[0, 0, 1, 3, 7], unit=None)
     prototype = sc.bins(data=content, dim='event', begin=begin)
+    # We are not supporting the case of prototype missing dims of the data.
+    prototype = sc.concat([prototype, prototype], 'y')
     y = sc.array(dims=['y'], values=[1.0, 2.0], variances=[1.0, 2.0])
-    xy = unc.broadcast_with_upper_bound_variances(y, prototype=prototype)
-    # There are 5 bins along x, but 10 events, so variance scale factor is 10.
-    assert_identical(
-        xy,
-        sc.array(
-            dims=['x', 'y'],
-            values=[[1.0, 2.0], [1.0, 2.0], [1.0, 2.0], [1.0, 2.0], [1.0, 2.0]],
-            variances=[
-                [10.0, 20.0],
-                [10.0, 20.0],
-                [10.0, 20.0],
-                [10.0, 20.0],
-                [10.0, 20.0],
-            ],
-        ),
+    upper_bound_broadcast = unc.broadcast_with_upper_bound_variances(
+        y, prototype=prototype
     )
+
+    expected = prototype.copy().bins.constituents
+    expected['data'].values[:10] = 1.0
+    expected['data'].values[10:] = 2.0
+    # There are 5 bins along x, but 10 events, so variance scale factor is 10.
+    expected['data'].variances = expected['data'].values * 10
+    expected = sc.bins(**expected)
+
+    assert_identical(upper_bound_broadcast, expected)
+    _ = prototype * upper_bound_broadcast  # Check that this does not raise.
+
+
+def test_upper_bound_event_broadcast_event_count_excludes_masked():
+    content = sc.ones(dims=['event'], shape=[10])
+    # sizes = [0,1,2,4,3]
+    begin = sc.array(dims=['x'], values=[0, 0, 1, 3, 7], unit=None)
+    prototype = sc.bins(data=content, dim='event', begin=begin)
+    # We are not supporting the case of prototype missing dims of the data.
+    prototype = sc.DataArray(sc.concat([prototype, prototype], 'y'))
+    prototype.masks['x'] = sc.array(
+        dims=['x'], values=[False, True, False, False, True]
+    )
+    y = sc.array(dims=['y'], values=[1.0, 2.0], variances=[1.0, 2.0])
+    upper_bound_broadcast = unc.broadcast_with_upper_bound_variances(
+        y, prototype=prototype
+    )
+
+    expected = prototype.copy().bins.constituents
+    expected['data'].values[:10] = 1.0
+    expected['data'].values[10:] = 2.0
+    # There are 5 bins along x, but 10 events, so variance scale factor is 10.
+    expected['data'].variances = expected['data'].values * 6
+    expected['data']['event', 0:1].variances = [np.inf]
+    expected['data']['event', 7:10].variances = [np.inf, np.inf, np.inf]
+    expected['data']['event', 10:11].variances = [np.inf]
+    expected['data']['event', 17:20].variances = [np.inf, np.inf, np.inf]
+    expected = sc.bins(**expected)
+
+    assert_identical(upper_bound_broadcast, expected)
+    _ = prototype * upper_bound_broadcast  # Check that this does not raise.
+    assert sc.all(sc.isinf(sc.variances(upper_bound_broadcast['x', 1])))
+    assert sc.all(sc.isinf(sc.variances(upper_bound_broadcast['x', 4])))

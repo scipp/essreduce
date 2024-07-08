@@ -97,20 +97,29 @@ def broadcast_with_upper_bound_variances(
                     irred = irred.all(dim)
             mask = irred
     data = data.copy()
+    sizes = {**sizes, **data.sizes}
     if prototype.bins is None:
         size = (~mask).sum().value
         for dim, dim_size in sizes.items():
             if dim not in data.dims and dim not in mask.dims:
                 size *= dim_size
         data.variances *= size
+        data = data.broadcast(sizes=sizes).copy()
+        if mask is not None:
+            # The masked values are not counted in the variance, so we set them to infinity.
+            data.variances[mask.broadcast(sizes=sizes).values] = np.inf
     else:
         bin_sizes = prototype.bins.size().sum(set(prototype.dims) - set(data.dims))
-        data.variances *= bin_sizes.broadcast(sizes=data.sizes).values
-    sizes = {**sizes, **data.sizes}
-    data = data.broadcast(sizes=sizes).copy()
-    if mask is not None:
-        # The masked values are not counted in the variance, so we set them to infinity.
-        data.variances[mask.broadcast(sizes=sizes).values] = np.inf
+        scale = bin_sizes.broadcast(sizes=sizes).to(dtype='float64')
+        if mask is not None:
+            # The masked values are not counted in the variance, so we set them to infinity.
+            scale.values[mask.broadcast(sizes=sizes).values] = np.inf
+        data = data.broadcast(sizes=sizes).copy()
+        data.variances *= scale.values
+        if isinstance(data, sc.Variable):
+            data = sc.bins_like(prototype, data)
+        else:
+            data.data = sc.bins_like(prototype, data.data)
     return data
 
 
