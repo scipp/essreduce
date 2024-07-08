@@ -75,6 +75,19 @@ def broadcast_with_upper_bound_variances(
     """
     if _no_variance_broadcast(data, prototype):
         return data
+    for dim in prototype.dims:
+        coord1 = None if isinstance(data, sc.Variable) else data.coords.get(dim)
+        coord2 = (
+            None if isinstance(prototype, sc.Variable) else prototype.coords.get(dim)
+        )
+        if coord1 is None or coord2 is None:
+            if dim in data.dims:
+                if data.sizes[dim] != prototype.sizes[dim]:
+                    raise ValueError("Mismatching binning not supported in broadcast.")
+            continue
+        elif sc.identical(coord1, coord2):
+            continue
+        raise ValueError("Mismatching binning not supported in broadcast.")
     sizes = prototype.sizes
     mask = sc.scalar(False)
     if isinstance(prototype, sc.DataArray):
