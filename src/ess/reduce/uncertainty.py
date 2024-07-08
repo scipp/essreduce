@@ -96,12 +96,16 @@ def broadcast_with_upper_bound_variances(
                 if dim in irred.dims:
                     irred = irred.all(dim)
             mask = irred
-    size = (~mask).sum().value
-    for dim, dim_size in sizes.items():
-        if dim not in data.dims and dim not in mask.dims:
-            size *= dim_size
     data = data.copy()
-    data.variances *= size
+    if prototype.bins is None:
+        size = (~mask).sum().value
+        for dim, dim_size in sizes.items():
+            if dim not in data.dims and dim not in mask.dims:
+                size *= dim_size
+        data.variances *= size
+    else:
+        bin_sizes = prototype.bins.size().sum(set(prototype.dims) - set(data.dims))
+        data.variances *= bin_sizes.broadcast(sizes=data.sizes).values
     sizes = {**sizes, **data.sizes}
     data = data.broadcast(sizes=sizes).copy()
     if mask is not None:
