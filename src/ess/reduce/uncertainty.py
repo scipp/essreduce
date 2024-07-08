@@ -13,13 +13,13 @@ This module provides two ways of handling variances during broadcast operations:
 """
 
 from enum import Enum
-from typing import TypeVar, Union, overload
+from typing import TypeVar, overload
 
 import numpy as np
 import scipp as sc
 from scipp.core.concepts import irreducible_mask
 
-T = TypeVar("T", bound=Union[sc.Variable, sc.DataArray])
+T = TypeVar("T", bound=sc.Variable | sc.DataArray)
 
 
 UncertaintyBroadcastMode = Enum(
@@ -51,14 +51,15 @@ def broadcast_with_upper_bound_variances(
 
 
 def broadcast_with_upper_bound_variances(
-    data: Union[sc.Variable, sc.DataArray], prototype: sc.DataArray | sc.Variable
-) -> Union[sc.Variable, sc.DataArray]:
+    data: sc.Variable | sc.DataArray, prototype: sc.DataArray | sc.Variable
+) -> sc.Variable | sc.DataArray:
     """
     Compute an upper bound for the variances of the broadcasted data.
 
     The variances of the broadcasted data are computed by scaling the variances of the
     input data by the volume of the new subspace. The volume of the new subspace is
-    computed as the product of the sizes of the new dimensions.
+    computed as the product of the sizes of the new dimensions. In the case of an
+    event-data prototype the events are counted.
 
     Parameters
     ----------
@@ -112,6 +113,8 @@ def broadcast_with_upper_bound_variances(
     data = data.broadcast(sizes=sizes).copy()
     data.variances *= scale.values
     if prototype.bins is not None:
+        # Note that we are not using event masks in the upper-bound computation. Less
+        # than optimal, but simpler.
         if isinstance(data, sc.Variable):
             data = sc.bins_like(prototype, data)
         else:
@@ -134,8 +137,8 @@ def drop_variances_if_broadcast(
 
 
 def drop_variances_if_broadcast(
-    data: Union[sc.Variable, sc.DataArray], prototype: sc.DataArray | sc.Variable
-) -> Union[sc.Variable, sc.DataArray]:
+    data: sc.Variable | sc.DataArray, prototype: sc.DataArray | sc.Variable
+) -> sc.Variable | sc.DataArray:
     """
     Drop variances if the data is broadcasted.
 
@@ -168,9 +171,6 @@ def _no_variance_broadcast(
     sizes = prototype.sizes
     return all(data.sizes.get(dim) == size for dim, size in sizes.items())
 
-
-# TODO: For now, we only have broadcasters for dense data. Event-data broadcasters will
-# be added at a later stage, as we currently only have one which is valid for SANS.
 
 broadcasters = {
     UncertaintyBroadcastMode.drop: drop_variances_if_broadcast,
