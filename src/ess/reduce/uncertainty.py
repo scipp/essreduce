@@ -13,13 +13,13 @@ This module provides two ways of handling variances during broadcast operations:
 """
 
 from enum import Enum
-from typing import Dict, TypeVar, Union, overload
+from typing import TypeVar, overload
 
 import numpy as np
 import scipp as sc
 from scipp.core.concepts import irreducible_mask
 
-T = TypeVar("T", bound=Union[sc.Variable, sc.DataArray])
+T = TypeVar("T", bound=sc.Variable | sc.DataArray)
 
 
 UncertaintyBroadcastMode = Enum(
@@ -51,14 +51,15 @@ def broadcast_with_upper_bound_variances(
 
 
 def broadcast_with_upper_bound_variances(
-    data: Union[sc.Variable, sc.DataArray], prototype: sc.DataArray | sc.Variable
-) -> Union[sc.Variable, sc.DataArray]:
+    data: sc.Variable | sc.DataArray, prototype: sc.DataArray | sc.Variable
+) -> sc.Variable | sc.DataArray:
     """
     Compute an upper bound for the variances of the broadcasted data.
 
     The variances of the broadcasted data are computed by scaling the variances of the
     input data by the volume of the new subspace. The volume of the new subspace is
-    computed as the product of the sizes of the new dimensions.
+    computed as the product of the sizes of the new dimensions. In the case of an
+    event-data prototype the events are counted.
 
     Parameters
     ----------
@@ -73,8 +74,21 @@ def broadcast_with_upper_bound_variances(
     :
         The data with the variances scaled by the volume of the new subspace.
     """
-    if _no_variance_broadcast(data, prototype.sizes):
+    if _no_variance_broadcast(data, prototype):
         return data
+    for dim in prototype.dims:
+        coord1 = None if isinstance(data, sc.Variable) else data.coords.get(dim)
+        coord2 = (
+            None if isinstance(prototype, sc.Variable) else prototype.coords.get(dim)
+        )
+        if coord1 is None or coord2 is None:
+            if dim in data.dims:
+                if data.sizes[dim] != prototype.sizes[dim]:
+                    raise ValueError("Mismatching binning not supported in broadcast.")
+            continue
+        elif sc.identical(coord1, coord2):
+            continue
+        raise ValueError("Mismatching binning not supported in broadcast.")
     sizes = prototype.sizes
     mask = sc.scalar(False)
     if isinstance(prototype, sc.DataArray):
@@ -83,17 +97,28 @@ def broadcast_with_upper_bound_variances(
                 if dim in irred.dims:
                     irred = irred.all(dim)
             mask = irred
-    size = (~mask).sum().value
-    for dim, dim_size in sizes.items():
-        if dim not in data.dims and dim not in mask.dims:
-            size *= dim_size
     data = data.copy()
-    data.variances *= size
     sizes = {**sizes, **data.sizes}
-    data = data.broadcast(sizes=sizes).copy()
-    if mask is not None:
+    if prototype.bins is None:
+        size = (~mask).sum().to(dtype='int64', copy=False)
+        for dim, dim_size in sizes.items():
+            if dim not in data.dims and dim not in mask.dims:
+                size *= sc.index(dim_size)
+    else:
+        size = prototype.bins.size().sum(set(prototype.dims) - set(data.dims))
+    scale = size.broadcast(sizes=sizes).to(dtype='float64')
+    if not sc.identical(mask, sc.scalar(False)):
         # The masked values are not counted in the variance, so we set them to infinity.
-        data.variances[mask.broadcast(sizes=sizes).values] = np.inf
+        scale.values[mask.broadcast(sizes=sizes).values] = np.inf
+    data = data.broadcast(sizes=sizes).copy()
+    data.variances *= scale.values
+    if prototype.bins is not None:
+        # Note that we are not using event masks in the upper-bound computation. Less
+        # than optimal, but simpler.
+        if isinstance(data, sc.Variable):
+            data = sc.bins_like(prototype, data)
+        else:
+            data.data = sc.bins_like(prototype, data.data)
     return data
 
 
@@ -112,8 +137,8 @@ def drop_variances_if_broadcast(
 
 
 def drop_variances_if_broadcast(
-    data: Union[sc.Variable, sc.DataArray], prototype: sc.DataArray | sc.Variable
-) -> Union[sc.Variable, sc.DataArray]:
+    data: sc.Variable | sc.DataArray, prototype: sc.DataArray | sc.Variable
+) -> sc.Variable | sc.DataArray:
     """
     Drop variances if the data is broadcasted.
 
@@ -129,21 +154,23 @@ def drop_variances_if_broadcast(
     :
         The data without variances if the data is broadcasted.
     """
-    if _no_variance_broadcast(data, prototype.sizes):
+    if _no_variance_broadcast(data, prototype):
         return data
     return sc.values(data)
 
 
 def _no_variance_broadcast(
-    data: Union[sc.Variable, sc.DataArray], sizes: Dict[str, int]
+    data: sc.Variable | sc.DataArray, prototype: sc.Variable | sc.DataArray
 ) -> bool:
-    return (data.variances is None) or all(
-        data.sizes.get(dim) == size for dim, size in sizes.items()
-    )
+    if data.bins is not None:
+        raise ValueError("Cannot broadcast binned data.")
+    if data.variances is None:
+        return True
+    if prototype.bins is not None:
+        return False
+    sizes = prototype.sizes
+    return all(data.sizes.get(dim) == size for dim, size in sizes.items())
 
-
-# TODO: For now, we only have broadcasters for dense data. Event-data broadcasters will
-# be added at a later stage, as we currently only have one which is valid for SANS.
 
 broadcasters = {
     UncertaintyBroadcastMode.drop: drop_variances_if_broadcast,

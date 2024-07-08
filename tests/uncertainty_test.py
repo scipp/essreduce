@@ -163,3 +163,114 @@ def test_broadcast_into_nonorthogonal_2d_mask_reducible_mask_counts_masked():
     expected.variances *= 2
     expected['y', 1].variances = [np.inf, np.inf]
     assert_identical(xy, expected)
+
+
+def test_upper_bound_broadcast_raises_if_input_is_binned():
+    x = sc.linspace('x', 0.0, 1.0, 10).bin(x=1).squeeze()
+    x.value.variances = x.value.values
+    y = sc.linspace('y', 0.0, 1.0, 10)
+    with pytest.raises(ValueError, match="Cannot broadcast binned data."):
+        unc.broadcast_with_upper_bound_variances(x, prototype=y)
+
+
+def test_upper_bound_event_broadcast_raises_if_binning_mismatching():
+    prototype = sc.linspace('x', 0.0, 1.0, 10).bin(x=3).squeeze()
+    data = sc.DataArray(
+        sc.ones(dims=['x'], shape=[2], with_variances=True),
+        coords={'x': sc.linspace('x', 0.0, 1.0, 3)},
+    )
+    with pytest.raises(
+        ValueError, match="Mismatching binning not supported in broadcast."
+    ):
+        unc.broadcast_with_upper_bound_variances(data, prototype=prototype)
+
+
+def test_upper_bound_event_broadcast_counts_events():
+    content = sc.ones(dims=['event'], shape=[10])
+    # sizes = [0,1,2,4,3]
+    begin = sc.array(dims=['x'], values=[0, 0, 1, 3, 7], unit=None)
+    prototype = sc.bins(data=content, dim='event', begin=begin)
+    # We are not supporting the case of prototype missing dims of the data.
+    prototype = sc.concat([prototype, prototype], 'y')
+    y = sc.array(dims=['y'], values=[1.0, 2.0], variances=[1.0, 2.0])
+    upper_bound_broadcast = unc.broadcast_with_upper_bound_variances(
+        y, prototype=prototype
+    )
+
+    expected = prototype.copy().bins.constituents
+    expected['data'].values[:10] = 1.0
+    expected['data'].values[10:] = 2.0
+    # There are 5 bins along x, but 10 events, so variance scale factor is 10.
+    expected['data'].variances = expected['data'].values * 10
+    expected = sc.bins(**expected)
+
+    assert_identical(upper_bound_broadcast, expected)
+    # The point of broadcast_with_upper_bound_variances is that we can afterwards
+    # perform the following operation with getting a variance broadcast error.
+    # Did it work?
+    _ = prototype * upper_bound_broadcast
+
+
+def test_upper_bound_event_broadcast_event_count_excludes_masked():
+    content = sc.ones(dims=['event'], shape=[10])
+    # sizes = [0,1,2,4,3]
+    begin = sc.array(dims=['x'], values=[0, 0, 1, 3, 7], unit=None)
+    prototype = sc.bins(data=content, dim='event', begin=begin)
+    # We are not supporting the case of prototype missing dims of the data.
+    prototype = sc.DataArray(sc.concat([prototype, prototype], 'y'))
+    prototype.masks['x'] = sc.array(
+        dims=['x'], values=[False, True, False, False, True]
+    )
+    y = sc.array(dims=['y'], values=[1.0, 2.0], variances=[1.0, 2.0])
+    upper_bound_broadcast = unc.broadcast_with_upper_bound_variances(
+        y, prototype=prototype
+    )
+
+    expected = prototype.copy().bins.constituents
+    expected['data'].values[:10] = 1.0
+    expected['data'].values[10:] = 2.0
+    # There are 5 bins along x, but 10 events (4 masked), so variance scale factor is 6.
+    expected['data'].variances = expected['data'].values * 6
+    expected['data']['event', 0:1].variances = [np.inf]
+    expected['data']['event', 7:10].variances = [np.inf, np.inf, np.inf]
+    expected['data']['event', 10:11].variances = [np.inf]
+    expected['data']['event', 17:20].variances = [np.inf, np.inf, np.inf]
+    expected = sc.bins(**expected)
+
+    assert_identical(upper_bound_broadcast, expected)
+    # The point of broadcast_with_upper_bound_variances is that we can afterwards
+    # perform the following operation with getting a variance broadcast error.
+    # Did it work?
+    _ = prototype * upper_bound_broadcast
+    assert sc.all(sc.isinf(sc.variances(upper_bound_broadcast['x', 1])))
+    assert sc.all(sc.isinf(sc.variances(upper_bound_broadcast['x', 4])))
+
+
+def test_upper_bound_event_broadcast_only_bin_broadcast():
+    content = sc.ones(dims=['event'], shape=[10])
+    begin = sc.array(dims=['x'], values=[0, 3, 6], unit=None)
+    prototype = sc.DataArray(sc.bins(data=content, dim='event', begin=begin))
+    prototype.masks['x'] = sc.array(dims=['x'], values=[False, True, False])
+    x = sc.array(dims=['x'], values=[1.0, 2.0, 3.0], variances=[1.0, 2.0, 3.0])
+    # Data has same dims as prototype, broadcast is only into bins
+    assert x.sizes == prototype.sizes
+    upper_bound_broadcast = unc.broadcast_with_upper_bound_variances(
+        x, prototype=prototype
+    )
+
+    expected = prototype.copy().bins.constituents
+    expected['data'].values[:3] = 1.0
+    expected['data'].values[3:6] = 2.0
+    expected['data'].values[6:] = 3.0
+    expected['data'].variances = expected['data'].values
+    expected['data']['event', 0:3].variances = [3.0, 3.0, 3.0]
+    # The x=1 bin is masked, but it is not being broadcasted, so no inf.
+    expected['data']['event', 3:6].variances = [6.0, 6.0, 6.0]
+    expected['data']['event', 6:].variances = [12.0, 12.0, 12.0, 12.0]
+    expected = sc.bins(**expected)
+
+    assert_identical(upper_bound_broadcast, expected)
+    # The point of broadcast_with_upper_bound_variances is that we can afterwards
+    # perform the following operation with getting a variance broadcast error.
+    # Did it work?
+    _ = prototype * upper_bound_broadcast
