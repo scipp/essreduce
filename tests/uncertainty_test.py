@@ -205,7 +205,10 @@ def test_upper_bound_event_broadcast_counts_events():
     expected = sc.bins(**expected)
 
     assert_identical(upper_bound_broadcast, expected)
-    _ = prototype * upper_bound_broadcast  # Check that this does not raise.
+    # The point of broadcast_with_upper_bound_variances is that we can afterwards
+    # perform the following operation with getting a variance broadcast error.
+    # Did it work?
+    _ = prototype * upper_bound_broadcast
 
 
 def test_upper_bound_event_broadcast_event_count_excludes_masked():
@@ -235,7 +238,10 @@ def test_upper_bound_event_broadcast_event_count_excludes_masked():
     expected = sc.bins(**expected)
 
     assert_identical(upper_bound_broadcast, expected)
-    _ = prototype * upper_bound_broadcast  # Check that this does not raise.
+    # The point of broadcast_with_upper_bound_variances is that we can afterwards
+    # perform the following operation with getting a variance broadcast error.
+    # Did it work?
+    _ = prototype * upper_bound_broadcast
     assert sc.all(sc.isinf(sc.variances(upper_bound_broadcast['x', 1])))
     assert sc.all(sc.isinf(sc.variances(upper_bound_broadcast['x', 4])))
 
@@ -264,4 +270,7 @@ def test_upper_bound_event_broadcast_only_bin_broadcast():
     expected = sc.bins(**expected)
 
     assert_identical(upper_bound_broadcast, expected)
-    _ = prototype * upper_bound_broadcast  # Check that this does not raise.
+    # The point of broadcast_with_upper_bound_variances is that we can afterwards
+    # perform the following operation with getting a variance broadcast error.
+    # Did it work?
+    _ = prototype * upper_bound_broadcast
