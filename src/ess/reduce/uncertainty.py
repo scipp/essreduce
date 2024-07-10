@@ -7,9 +7,10 @@ data reduction. Handling variances during broadcast operations is not handled
 correctly by Scipp because correlations are not tracked.
 See https://doi.org/10.3233/JNR-220049 for context.
 
-This module provides two ways of handling variances during broadcast operations:
-- `drop_variances_if_broadcast`: Drop variances if the data is broadcasted.
-- `broadcast_with_upper_bound_variances`: Compute an upper bound for the variances.
+This module provides three ways of handling variances during broadcast operations,
+defined by :py:class:`UncertaintyBroadcastMode`.
+The recommended use of this module is via the :py:func:`broadcast_uncertainties`
+helper function.
 """
 
 from enum import Enum
