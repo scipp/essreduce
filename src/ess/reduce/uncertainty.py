@@ -38,20 +38,20 @@ See https://doi.org/10.3233/JNR-220049 for context.
 
 @overload
 def broadcast_with_upper_bound_variances(
-    data: sc.Variable, prototype: sc.DataArray | sc.Variable
+    data: sc.Variable, /, *, prototype: sc.DataArray | sc.Variable
 ) -> sc.Variable:
     pass
 
 
 @overload
 def broadcast_with_upper_bound_variances(
-    data: sc.DataArray, prototype: sc.DataArray | sc.Variable
+    data: sc.DataArray, /, *, prototype: sc.DataArray | sc.Variable
 ) -> sc.DataArray:
     pass
 
 
 def broadcast_with_upper_bound_variances(
-    data: sc.Variable | sc.DataArray, prototype: sc.DataArray | sc.Variable
+    data: sc.Variable | sc.DataArray, /, *, prototype: sc.DataArray | sc.Variable
 ) -> sc.Variable | sc.DataArray:
     """
     Compute an upper bound for the variances of the broadcasted data.
@@ -74,7 +74,7 @@ def broadcast_with_upper_bound_variances(
     :
         The data with the variances scaled by the volume of the new subspace.
     """
-    if _no_variance_broadcast(data, prototype):
+    if _no_variance_broadcast(data, prototype=prototype):
         return data
     for dim in prototype.dims:
         coord1 = None if isinstance(data, sc.Variable) else data.coords.get(dim)
@@ -124,20 +124,20 @@ def broadcast_with_upper_bound_variances(
 
 @overload
 def drop_variances_if_broadcast(
-    data: sc.Variable, prototype: sc.DataArray | sc.Variable
+    data: sc.Variable, /, *, prototype: sc.DataArray | sc.Variable
 ) -> sc.Variable:
     pass
 
 
 @overload
 def drop_variances_if_broadcast(
-    data: sc.DataArray, prototype: sc.DataArray | sc.Variable
+    data: sc.DataArray, /, *, prototype: sc.DataArray | sc.Variable
 ) -> sc.DataArray:
     pass
 
 
 def drop_variances_if_broadcast(
-    data: sc.Variable | sc.DataArray, prototype: sc.DataArray | sc.Variable
+    data: sc.Variable | sc.DataArray, /, *, prototype: sc.DataArray | sc.Variable
 ) -> sc.Variable | sc.DataArray:
     """
     Drop variances if the data is broadcasted.
@@ -154,13 +154,13 @@ def drop_variances_if_broadcast(
     :
         The data without variances if the data is broadcasted.
     """
-    if _no_variance_broadcast(data, prototype):
+    if _no_variance_broadcast(data, prototype=prototype):
         return data
     return sc.values(data)
 
 
 def _no_variance_broadcast(
-    data: sc.Variable | sc.DataArray, prototype: sc.Variable | sc.DataArray
+    data: sc.Variable | sc.DataArray, /, *, prototype: sc.Variable | sc.DataArray
 ) -> bool:
     if data.bins is not None:
         raise ValueError("Cannot broadcast binned data.")
@@ -172,8 +172,45 @@ def _no_variance_broadcast(
     return all(data.sizes.get(dim) == size for dim, size in sizes.items())
 
 
+def _fail(
+    data: sc.Variable | sc.DataArray, /, *, prototype: sc.Variable | sc.DataArray
+) -> sc.Variable | sc.DataArray:
+    # If there are variances, a subsequent broadcasting operation using Scipp will fail.
+    # Do nothing here.
+    return data
+
+
 broadcasters = {
     UncertaintyBroadcastMode.drop: drop_variances_if_broadcast,
     UncertaintyBroadcastMode.upper_bound: broadcast_with_upper_bound_variances,
-    UncertaintyBroadcastMode.fail: lambda x, _: x,
+    UncertaintyBroadcastMode.fail: _fail,
 }
+
+
+def broadcast_uncertainties(
+    data: sc.Variable | sc.DataArray,
+    /,
+    *,
+    prototype: sc.DataArray | sc.Variable,
+    mode: UncertaintyBroadcastMode,
+) -> sc.Variable | sc.DataArray:
+    """Broadcast uncertainties using the specified mode.
+
+    Since Scipp raises an error when broadcasting data with variances, this function
+    provides an explicit way to handle variances during broadcast operations.
+
+    Parameters
+    ----------
+    data:
+        Data with uncertainties to broadcast.
+    prototype:
+        Prototype defining the new sizes (dims and shape, or binned data sizes).
+    mode:
+        Selected broadcast mode.
+
+    Returns
+    -------
+    :
+        Data with broadcast uncertainties.
+    """
+    return broadcasters[mode](data, prototype=prototype)
