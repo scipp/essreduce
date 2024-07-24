@@ -446,6 +446,33 @@ def load_event_data(
     component_name: str,
     definitions: Mapping | Literal[_no_new_definitions] | None = _no_new_definitions,
 ) -> sc.DataArray:
+    """Load NXevent_data of a detector or monitor from a NeXus file.
+
+    Parameters
+    ----------
+    file_path:
+        Indicates where to load data from.
+        One of:
+
+        - Path to a NeXus file on disk.
+        - File handle or buffer for reading binary data.
+        - A ScippNexus group of the root of a NeXus file.
+    component_name:
+        Name of the NXdetector or NXmonitor containing the NXevent_data to load.
+        Must be a group in an instrument group in the entry (see below).
+    entry_name:
+        Name of the entry that contains the detector.
+        If ``None``, the entry will be located based
+        on its NeXus class, but there cannot be more than 1.
+    definitions:
+        Definitions used by scippnexus loader, see :py:`scippnexus.File`
+        for documentation.
+
+    Returns
+    -------
+    :
+        Data array with events grouped by event_time_zero, as in the NeXus file.
+    """
     with _open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         instrument = _unique_child_group(entry, snx.NXinstrument, None)
@@ -457,7 +484,22 @@ def load_event_data(
 def group_event_data(
     *, event_data: sc.DataArray, detector_number: sc.Variable
 ) -> sc.DataArray:
-    """Group event data by detector number."""
+    """Group event data by detector number.
+
+    The detector_number variable also defined the output shape and dimension names.
+
+    Parameters
+    ----------
+    event_data:
+        Data array with events to group, as returned from :py:func:`load_event_data`.
+    detector_number:
+        Variable with detector numbers matching the `event_id` field of the event data.
+
+    Returns
+    -------
+    :
+        Data array with events grouped by detector number.
+    """
     event_id = detector_number.flatten(to='event_id').copy()
     if 'event_time_zero' in event_data.coords:
         event_data.bins.coords['event_time_zero'] = sc.bins_like(
