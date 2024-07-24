@@ -236,6 +236,35 @@ def test_load_detector(nexus_file, expected_bank12, entry_name, selection):
     )
 
 
+@pytest.mark.parametrize(
+    'selection',
+    [
+        (),
+        {'event_time_zero': slice(2, None)},
+        {'event_time_zero': slice(None, 3)},
+        {'event_time_zero': slice(1, 3)},
+    ],
+)
+def test_load_and_group_event_data_consistent_with_load_via_detector(
+    nexus_file, selection
+):
+    detector = nexus.load_detector(
+        nexus_file,
+        selection=selection,
+        detector_name=nexus.NeXusDetectorName('bank12'),
+    )['bank12_events']
+    events = nexus.load_event_data(
+        nexus_file,
+        selection=selection,
+        component_name=nexus.NeXusDetectorName('bank12'),
+    )
+    grouped = nexus.group_event_data(
+        event_data=events,
+        detector_number=detector.coords['detector_number'],
+    )
+    scipp.testing.assert_identical(detector.data, grouped.data)
+
+
 def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
     if isinstance(nexus_file, snx.Group):
         with pytest.raises(ValueError, match="new definitions"):
