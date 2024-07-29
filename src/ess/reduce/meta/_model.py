@@ -2,9 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel, EmailStr
+import pydantic
 
 from ._orcid import ORCIDiD
+
+
+class BaseModel(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(
+        extra='forbid',
+    )
 
 
 class Beamline(BaseModel):
@@ -31,7 +37,7 @@ class Person(BaseModel):
     role: str | None = None
 
     address: str | None = None
-    email: EmailStr | None = None
+    email: pydantic.EmailStr | None = None
     affiliation: str | None = None
 
 
