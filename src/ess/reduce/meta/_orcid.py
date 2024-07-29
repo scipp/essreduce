@@ -28,13 +28,13 @@ else:
             ...     orcid_id: ORCIDiD
             >>> m = Model(orcid_id='0000-0000-0000-0001')
             >>> m.orcid_id
-            https://orcid.org/0000-0000-0000-0001
+            'https://orcid.org/0000-0000-0000-0001'
 
         Or equivalently with an explicit domain:
 
             >>> m = Model(orcid_id='https://orcid.org/0000-0000-0000-0001')
             >>> m.orcid_id
-            https://orcid.org/0000-0000-0000-0001
+            'https://orcid.org/0000-0000-0000-0001'
         """
 
         @classmethod

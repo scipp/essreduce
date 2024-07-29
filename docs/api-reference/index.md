@@ -28,6 +28,7 @@
    :recursive:
 
    logging
+   meta
    nexus
    uncertainty
 ```

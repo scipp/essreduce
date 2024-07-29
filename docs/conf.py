@@ -23,6 +23,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
+    'sphinxcontrib.autodoc_pydantic',
     'sphinx_autodoc_typehints',
     'sphinx_copybutton',
     'sphinx_design',
@@ -60,8 +61,9 @@ autodoc_type_aliases = {
 }
 
 intersphinx_mapping = {
-    'python': ('https://docs.python.org/3', None),
     'numpy': ('https://numpy.org/doc/stable/', None),
+    'pydantic': ('https://docs.pydantic.dev/latest', None),
+    'python': ('https://docs.python.org/3', None),
     'scipp': ('https://scipp.github.io/', None),
 }
 
@@ -253,3 +255,7 @@ linkcheck_ignore = [
     # Specific lines in Github blobs cannot be found by linkcheck.
     r'https?://github\.com/.*?/blob/[a-f0-9]+/.+?#',
 ]
+
+# -- Options for autodoc_pydantic -----------------------------------------
+# Some fields are not directly serializable, so this would cause errors in Sphinx.
+autodoc_pydantic_model_show_json = False
