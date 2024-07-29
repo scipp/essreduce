@@ -1,9 +1,12 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
 from datetime import datetime
 
 import pydantic
 
+from ._doi import DOI
 from ._orcid import ORCIDiD
 
 
@@ -25,7 +28,7 @@ class Experiment(BaseModel):
     beamline: Beamline
     start_date: datetime | None = None
     proposal_id: str | None = None
-    doi: str | None = None
+    doi: DOI | None = None
 
 
 class Person(BaseModel):

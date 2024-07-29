@@ -5,14 +5,16 @@ from typing import TYPE_CHECKING, Annotated, Any
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
 
-_ORCID_PREFIX: str = 'https://orcid.org'
+_ORCID_DOMAIN: str = 'https://orcid.org'
 
 
 class _ORCIDiD:
     """An ORCID iD.
 
-    Ensures that the id is valid during initialization.
+    Ensures that the id is structurally valid during initialization.
     See https://support.orcid.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier
+    The class does not check whether the id exists.
+
     This class can be used with Pydantic models.
 
     Examples
@@ -23,7 +25,7 @@ class _ORCIDiD:
         >>> orcid_id
         https://orcid.org/0000-0000-0000-0001
 
-    Or equivalently with an explicit prefix:
+    Or equivalently with an explicit domain:
 
         >>> orcid_id = ORCIDiD('https://orcid.org/0000-0000-0000-0001')
         >>> orcid_id
@@ -39,7 +41,7 @@ class _ORCIDiD:
             self._orcid_id = _parse_id(orcid_id)
 
     def __str__(self) -> str:
-        return f'{_ORCID_PREFIX}/{self._orcid_id}'
+        return f'{_ORCID_DOMAIN}/{self._orcid_id}'
 
     def __repr__(self) -> str:
         return f'ORCIDiD({self!s})'
@@ -86,11 +88,11 @@ def _parse_pydantic(value: str | _ORCIDiD) -> _ORCIDiD:
 def _parse_id(value: str) -> str:
     parts = value.rsplit('/', 1)
     if len(parts) == 2:
-        prefix, orcid_id = parts
-        if prefix != _ORCID_PREFIX:
+        domain, orcid_id = parts
+        if domain != _ORCID_DOMAIN:
             # must be the correct ORCID URL
             raise ValueError(
-                f"Invalid ORCID URL: '{prefix}'. Must be '{_ORCID_PREFIX}'"
+                f"Invalid ORCID URL: '{domain}'. Must be '{_ORCID_DOMAIN}'"
             )
     else:
         (orcid_id,) = parts
