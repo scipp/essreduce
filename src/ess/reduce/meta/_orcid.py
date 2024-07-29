@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
@@ -8,7 +8,7 @@ from pydantic_core import core_schema
 _ORCID_PREFIX: str = 'https://orcid.org'
 
 
-class ORCIDiD:
+class _ORCIDiD:
     """An ORCID iD.
 
     Ensures that the id is valid during initialization.
@@ -18,7 +18,7 @@ class ORCIDiD:
     Examples
     --------
 
-        >>> from scippneutron.meta import ORCIDiD
+        >>> from ess.reduce.meta import ORCIDiD
         >>> orcid_id = ORCIDiD('0000-0000-0000-0001')
         >>> orcid_id
         https://orcid.org/0000-0000-0000-0001
@@ -32,8 +32,8 @@ class ORCIDiD:
 
     __slots__ = ('_orcid_id',)
 
-    def __init__(self, orcid_id: str | ORCIDiD) -> None:
-        if isinstance(orcid_id, ORCIDiD):
+    def __init__(self, orcid_id: str | _ORCIDiD) -> None:
+        if isinstance(orcid_id, _ORCIDiD):
             self._orcid_id: str = orcid_id._orcid_id
         else:
             self._orcid_id = _parse_id(orcid_id)
@@ -45,7 +45,7 @@ class ORCIDiD:
         return f'ORCIDiD({self!s})'
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, ORCIDiD):
+        if isinstance(other, _ORCIDiD):
             return self._orcid_id == other._orcid_id
         if isinstance(other, str):
             return self._orcid_id == _parse_id(other)
@@ -64,7 +64,7 @@ class ORCIDiD:
         return core_schema.no_info_after_validator_function(
             _parse_pydantic,
             core_schema.union_schema(
-                [core_schema.is_instance_schema(ORCIDiD), core_schema.str_schema()]
+                [core_schema.is_instance_schema(_ORCIDiD), core_schema.str_schema()]
             ),
             serialization=core_schema.plain_serializer_function_ser_schema(
                 cls.__str__, info_arg=False, return_schema=core_schema.str_schema()
@@ -72,8 +72,15 @@ class ORCIDiD:
         )
 
 
-def _parse_pydantic(value: str | ORCIDiD) -> ORCIDiD:
-    return ORCIDiD(value)
+if TYPE_CHECKING:
+    # Make type checkers happy with assigning strings to orcid fields.
+    ORCIDiD = Annotated[str, ...]
+else:
+    ORCIDiD = _ORCIDiD
+
+
+def _parse_pydantic(value: str | _ORCIDiD) -> _ORCIDiD:
+    return _ORCIDiD(value)
 
 
 def _parse_id(value: str) -> str:
