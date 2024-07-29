@@ -7,85 +7,50 @@ from pydantic_core import core_schema
 
 _ORCID_DOMAIN: str = 'https://orcid.org'
 
-
-class _ORCIDiD:
-    """An ORCID iD.
-
-    Ensures that the id is structurally valid during initialization.
-    See https://support.orcid.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier
-    The class does not check whether the id exists.
-
-    This class can be used with Pydantic models.
-
-    Examples
-    --------
-
-        >>> from ess.reduce.meta import ORCIDiD
-        >>> orcid_id = ORCIDiD('0000-0000-0000-0001')
-        >>> orcid_id
-        https://orcid.org/0000-0000-0000-0001
-
-    Or equivalently with an explicit domain:
-
-        >>> orcid_id = ORCIDiD('https://orcid.org/0000-0000-0000-0001')
-        >>> orcid_id
-        https://orcid.org/0000-0000-0000-0001
-    """
-
-    __slots__ = ('_orcid_id',)
-
-    def __init__(self, orcid_id: str | _ORCIDiD) -> None:
-        if isinstance(orcid_id, _ORCIDiD):
-            self._orcid_id: str = orcid_id._orcid_id
-        else:
-            self._orcid_id = _parse_id(orcid_id)
-
-    def __str__(self) -> str:
-        return f'{_ORCID_DOMAIN}/{self._orcid_id}'
-
-    def __repr__(self) -> str:
-        return f'ORCIDiD({self!s})'
-
-    def __eq__(self, other: object) -> bool:
-        if isinstance(other, _ORCIDiD):
-            return self._orcid_id == other._orcid_id
-        if isinstance(other, str):
-            return self._orcid_id == _parse_id(other)
-        return NotImplemented
-
-    def __ne__(self, other: object) -> bool:
-        return not self.__eq__(other)
-
-    def __hash__(self) -> int:
-        return hash(str(self._orcid_id))
-
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls, _source_type: Any, _handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
-        return core_schema.no_info_after_validator_function(
-            _parse_pydantic,
-            core_schema.union_schema(
-                [core_schema.is_instance_schema(_ORCIDiD), core_schema.str_schema()]
-            ),
-            serialization=core_schema.plain_serializer_function_ser_schema(
-                cls.__str__, info_arg=False, return_schema=core_schema.str_schema()
-            ),
-        )
-
-
 if TYPE_CHECKING:
     # Make type checkers happy with assigning strings to orcid fields.
     ORCIDiD = Annotated[str, ...]
 else:
-    ORCIDiD = _ORCIDiD
+
+    class ORCIDiD:
+        """An ORCID iD field type for Pydantic models.
+
+        Validates structural correctness of an ORCID iD.
+        See https://support.orcid.org/hc/en-us/articles/360006897674-Structure-of-the-ORCID-Identifier
+        Does not check whether the id exists.
+
+        Examples
+        --------
+
+            >>> from ess.reduce.meta import ORCIDiD
+            >>> from pydantic import BaseModel
+            >>> class Model(BaseModel):
+            ...     orcid_id: ORCIDiD
+            >>> m = Model(orcid_id='0000-0000-0000-0001')
+            >>> m.orcid_id
+            https://orcid.org/0000-0000-0000-0001
+
+        Or equivalently with an explicit domain:
+
+            >>> m = Model(orcid_id='https://orcid.org/0000-0000-0000-0001')
+            >>> m.orcid_id
+            https://orcid.org/0000-0000-0000-0001
+        """
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls, _source_type: type[Any], _handler: GetCoreSchemaHandler
+        ) -> core_schema.CoreSchema:
+            return core_schema.no_info_after_validator_function(
+                cls._validate, core_schema.str_schema()
+            )
+
+        @classmethod
+        def _validate(cls, value: str, /) -> str:
+            return _parse_orcid_id(value)
 
 
-def _parse_pydantic(value: str | _ORCIDiD) -> _ORCIDiD:
-    return _ORCIDiD(value)
-
-
-def _parse_id(value: str) -> str:
+def _parse_orcid_id(value: str) -> str:
     parts = value.rsplit('/', 1)
     if len(parts) == 2:
         domain, orcid_id = parts
@@ -106,7 +71,7 @@ def _parse_id(value: str) -> str:
         # checksum must match the last digit
         raise ValueError(f"Invalid ORCID iD: '{orcid_id}'. Checksum does not match.")
 
-    return orcid_id
+    return f'{_ORCID_DOMAIN}/{orcid_id}'
 
 
 def _orcid_id_checksum(orcid_id: str) -> str:

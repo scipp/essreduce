@@ -114,8 +114,7 @@ def test_experiment_to_orso() -> None:
     assert orso_experiment == expected
 
 
-@pytest.mark.parametrize('field', ['title', 'start_date'])
-def test_experiment_missing_field(field: str) -> None:
+def test_experiment_missing_field() -> None:
     experiment = meta.Experiment(
         title='Test Experiment 5',
         beamline=meta.Beamline(
@@ -123,10 +122,10 @@ def test_experiment_missing_field(field: str) -> None:
         ),
         start_date=datetime(2024, 4, 18, 15, 9, 53, tzinfo=timezone.utc),
     )
-    setattr(experiment, field, None)
+    experiment.start_date = None
     with pytest.raises(
         ValueError,
-        match=f"Field 'Experiment.{field}' must not be None when converting to ORSO.",
+        match="Field 'Experiment.start_date' must not be None when converting to ORSO.",
     ):
         orso.to_orso(experiment)
 

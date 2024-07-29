@@ -11,9 +11,7 @@ from ._orcid import ORCIDiD
 
 
 class BaseModel(pydantic.BaseModel):
-    model_config = pydantic.ConfigDict(
-        extra='forbid',
-    )
+    model_config = pydantic.ConfigDict(extra='forbid', validate_assignment=True)
 
 
 class Beamline(BaseModel):
