@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, Any
 
-from pydantic import GetCoreSchemaHandler
+from pydantic import GetCoreSchemaHandler, GetJsonSchemaHandler, json_schema
 from pydantic_core import core_schema
 
 _ORCID_DOMAIN: str = 'https://orcid.org'
@@ -44,6 +44,16 @@ else:
             return core_schema.no_info_after_validator_function(
                 cls._validate, core_schema.str_schema()
             )
+
+        @classmethod
+        def __get_pydantic_json_schema__(
+            cls,
+            core_schema_: core_schema.CoreSchema,
+            handler: GetJsonSchemaHandler,
+        ) -> json_schema.JsonSchemaValue:
+            field_schema = handler(core_schema_)
+            field_schema.update(type='string', format='uri')
+            return field_schema
 
         @classmethod
         def _validate(cls, value: str, /) -> str:
