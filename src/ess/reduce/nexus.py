@@ -27,6 +27,7 @@ from typing import (
 import scipp as sc
 import scippnexus as snx
 
+from . import meta
 from .logging import get_logger
 
 FilePath = NewType('FilePath', Path)
@@ -64,7 +65,8 @@ RawSample = NewType('RawSample', sc.DataGroup)
 """Raw data from a NeXus sample."""
 RawSource = NewType('RawSource', sc.DataGroup)
 """Raw data from a NeXus source."""
-
+RawUsers = NewType('RawUsers', list[meta.Person])
+"""Raw user data from a NeXus file."""
 
 _no_new_definitions = object()
 
@@ -261,6 +263,58 @@ def load_sample(
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         loaded = cast(sc.DataGroup, _unique_child_group(entry, snx.NXsample, None)[()])
     return RawSample(loaded)
+
+
+def load_users(
+    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    entry_name: Optional[NeXusEntryName] = None,
+    definitions: Optional[Mapping] | Literal[_no_new_definitions] = _no_new_definitions,
+) -> RawUsers:
+    """Load all users from a NeXus file.
+
+    Finds and loads all ``NXuser`` groups from the file.
+
+    Parameters
+    ----------
+    file_path:
+        Indicates where to load data from.
+        One of:
+
+        - Path to a NeXus file on disk.
+        - File handle or buffer for reading binary data.
+        - A ScippNexus group of the root of a NeXus file.
+    entry_name:
+        Name of the instrument that contains the source.
+        If ``None``, the entry will be located based
+        on its NeXus class, but there cannot be more than 1.
+    definitions:
+        Definitions used by scippnexus loader, see :py:`scippnexus.File`
+        for documentation.
+
+    Returns
+    -------
+    :
+        A list with all users in the file in arbitrary order.
+    """
+    with _open_nexus_file(file_path, definitions=definitions) as f:
+        entry = _unique_child_group(f, snx.NXentry, entry_name)
+        return RawUsers([_parse_user(user) for user in entry[snx.NXuser].values()])
+
+
+def _parse_user(user: snx.Group) -> meta.Person:
+    fields = {
+        'orcid': user.get('ORCID', None),
+        **{
+            key: user.get(key, None)
+            for key in ('name', 'role', 'address', 'email', 'affiliation')
+        },
+    }
+    person = meta.Person(
+        **{key: val[()] for key, val in fields.items() if val is not None}
+    )
+    if person.role == 'principal_investigator':
+        person.corresponding = True
+    return person
 
 
 def _load_group_with_positions(

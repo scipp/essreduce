@@ -11,7 +11,7 @@ import pytest
 import scipp as sc
 import scipp.testing
 import scippnexus as snx
-from ess.reduce import nexus
+from ess.reduce import meta, nexus
 
 year_zero = sc.datetime('1970-01-01T00:00:00')
 
@@ -78,6 +78,29 @@ def _sample_data() -> sc.DataGroup:
     )
 
 
+def _users_data() -> list[sc.DataGroup]:
+    return [
+        sc.DataGroup(
+            {
+                'name': 'Jane Doe',
+                'role': 'local_contact',
+                'affiliation': 'ESS',
+                'address': 'Partikelgatan, Lund, Sverige',
+                'email': 'jane.doe@ess.eu',
+                'ORCID': '0000-0000-0000-0001',
+            }
+        ),
+        sc.DataGroup(
+            {
+                'name': 'Nanashi no Gonbei',
+                'affiliation': 'JPARC',
+                'email': 'Nanashi@j-parc.jp',
+                'ORCID': '1000-0000-0000-0002',
+            }
+        ),
+    ]
+
+
 def _write_transformation(group: snx.Group, offset: sc.Variable) -> None:
     group.create_field('depends_on', sc.scalar('transformations/t1'))
     transformations = group.create_class('transformations', snx.NXtransformations)
@@ -127,6 +150,11 @@ def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
         sample.create_field('name', sample_data['name'])
         sample.create_field('chemical_formula', sample_data['chemical_formula'])
         sample.create_field('type', sample_data['type'])
+
+        for i, user_data in enumerate(_users_data()):
+            user = entry.create_class(f'user{i}', snx.NXuser)
+            for key, val in user_data.items():
+                user.create_field(key, val)
 
 
 @contextmanager
@@ -368,6 +396,28 @@ def test_load_new_definitions_applied(nexus_file, loader, cls, name):
 def test_load_sample(nexus_file, expected_sample, entry_name):
     sample = nexus.load_sample(nexus_file, entry_name=entry_name)
     sc.testing.assert_identical(sample, nexus.RawSample(expected_sample))
+
+
+@pytest.mark.parametrize('entry_name', [None, nexus.NeXusEntryName('entry-001')])
+def test_load_users(nexus_file, entry_name: str | None) -> None:
+    expected0 = meta.Person(
+        name='Jane Doe',
+        role='local_contact',
+        affiliation='ESS',
+        address='Partikelgatan, Lund, Sverige',
+        email='jane.doe@ess.eu',
+        orcid='0000-0000-0000-0001',
+    )
+    expected1 = meta.Person(
+        name='Nanashi no Gonbei',
+        affiliation='JPARC',
+        email='Nanashi@j-parc.jp',
+        orcid='1000-0000-0000-0002',
+    )
+    users = nexus.load_users(nexus_file, entry_name=entry_name)
+    users = sorted(users, key=lambda u: u.name)
+    assert users[0] == expected0
+    assert users[1] == expected1
 
 
 def test_extract_detector_data():
