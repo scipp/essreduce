@@ -28,7 +28,8 @@ class Parameter(Generic[T]):
     def from_type(
         cls: type[C], t: type[T], default: T | NoDefaultType = NoDefault
     ) -> C:
-        # TODO __doc__ probably not correct when using NewType
+        # TODO __doc__ not correct when using NewType
+        # TODO __doc__ not correct when using Generic
         # use sciline type->string helper
         return cls(name=str(t), description=t.__doc__, default=default)
 
