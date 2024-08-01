@@ -25,7 +25,6 @@ from ipywidgets import Layout, TwoByTwoLayout
 
 workflows = workflow.workflow_registry
 
-
 _style = {
     'description_width': 'auto',
     'value_width': 'auto',
@@ -187,5 +186,5 @@ layout = TwoByTwoLayout(
     top_left=workflow_box,
     bottom_left=widgets.VBox([run_button, output]),
     #   bottom_left=run_button,
-    bottom_right=parameter_box,
+    top_right=parameter_box,
 )

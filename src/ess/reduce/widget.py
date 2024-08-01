@@ -1,8 +1,9 @@
-from functools import singledispatch
+from functools import partial, singledispatch
 
 import ipywidgets as widgets
 import scipp as sc
 from ess.reduce import parameter
+from ess.reduce.autowidget import AutoWidget
 
 _layout = widgets.Layout(width='80%')
 _style = {
@@ -12,91 +13,6 @@ _style = {
 }
 
 
-class LinspaceWidget(widgets.GridBox, widgets.ValueWidget):
-    def __init__(self, dim, unit):
-        super().__init__()
-
-        self.fields = {
-            'dim': widgets.Label(value=dim, description='dim'),
-            'start': widgets.FloatText(description='start'),
-            'end': widgets.FloatText(description='end'),
-            'num': widgets.IntText(description='num'),
-            'unit': widgets.Label(description='unit', value=unit),
-        }
-        self.children = [
-            widgets.Label(value="Select range:"),
-            self.fields['dim'],
-            self.fields['unit'],
-            self.fields['start'],
-            self.fields['end'],
-            self.fields['num'],
-        ]
-
-    @property
-    def value(self):
-        return sc.linspace(
-            self.fields['dim'].value,
-            self.fields['start'].value,
-            self.fields['end'].value,
-            self.fields['num'].value,
-            unit=self.fields['unit'].value,
-        )
-
-
-class BoundsWidget(widgets.GridBox, widgets.ValueWidget):
-    def __init__(self):
-        super().__init__()
-
-        self.fields = {
-            'start': widgets.FloatText(description='start'),
-            'end': widgets.FloatText(description='end'),
-            'unit': widgets.Text(description='unit'),
-        }
-        self.children = [
-            widgets.Label(value="Select bound:"),
-            self.fields['unit'],
-            self.fields['start'],
-            self.fields['end'],
-        ]
-
-    @property
-    def value(self):
-        return (
-            sc.scalar(self.fields['start'].value, unit=self.fields['unit']),
-            sc.scalar(self.fields['end'].value, unit=self.fields['unit']),
-        )
-
-
-class VectorWidget(widgets.GridBox, widgets.ValueWidget):
-    def __init__(self, variable):
-        super().__init__()
-
-        self.fields = {
-            "x": widgets.FloatText(description="x", value=variable.fields.x.value),
-            "y": widgets.FloatText(description="y", value=variable.fields.y.value),
-            "z": widgets.FloatText(description="z", value=variable.fields.z.value),
-            "unit": widgets.Text(description="unit", value=str(variable.unit)),
-        }
-        self.children = [
-            widgets.Label(value="(x, y, z) ="),
-            self.fields['x'],
-            self.fields['y'],
-            self.fields['z'],
-            self.fields['unit'],
-        ]
-
-    @property
-    def value(self):
-        return sc.vector(
-            value=[
-                self.fields['x'].value,
-                self.fields['y'].value,
-                self.fields['z'].value,
-            ],
-            unit=self.fields['unit'].value,
-        )
-
-
 @singledispatch
 def create_parameter_widget(param):
     return widgets.Text('', layout=_layout, style=_style)
@@ -104,7 +20,38 @@ def create_parameter_widget(param):
 
 @create_parameter_widget.register(parameter.VectorParameter)
 def _(param):
-    return VectorWidget(param.default)
+    entry = partial(
+        widgets.FloatText,
+        layout=widgets.Layout(width='5em'),
+    )
+    tri_tuple = AutoWidget(
+        lambda _, x: x,
+        (
+            widgets.Label(value="(x, y, z) = "),
+            AutoWidget(
+                lambda x, y, z: (x, y, z),
+                (
+                    entry(value=param.default.fields.x.value),
+                    entry(value=param.default.fields.y.value),
+                    entry(value=param.default.fields.z.value),
+                ),
+            ),
+        ),
+    )
+    return AutoWidget(
+        sc.vector,
+        (tri_tuple,),
+        dict(  # noqa: C408
+            unit=widgets.Text(
+                description='unit of vector',
+                value=str('m'),
+                layout=widgets.Layout(width='10em'),
+            )
+        ),
+        description=param.name,
+        layout=widgets.Layout(border='0.5px solid'),
+        child_layout=widgets.VBox,
+    )
 
 
 @create_parameter_widget.register(parameter.BooleanParameter)
@@ -147,9 +94,26 @@ def _(param):
 
 @create_parameter_widget.register(parameter.BinEdgesParameter)
 def _(param):
-    dim = param.dim
-    unit = param.unit
-    return LinspaceWidget(dim, unit)
+    return AutoWidget(
+        lambda space, **kwargs: space(**kwargs),
+        (),
+        dict(  # noqa: C408
+            space=widgets.Dropdown(
+                default=sc.linspace,
+                options=[sc.linspace, sc.geomspace],
+                description='bin space',
+            ),
+            dim=widgets.Text(value=param.dim, description='dim'),
+            start=widgets.FloatText(description='left edge'),
+            stop=widgets.FloatText(description='right edge'),
+            num=widgets.IntText(value=1, description='num. edges'),
+            unit=widgets.Text(value=str(param.unit), description='unit'),
+        ),
+        description=param.name,
+        child_layout=widgets.VBox,
+        layout=widgets.Layout(border='0.5px solid'),
+        style=_style,
+    )
 
 
 @create_parameter_widget.register(parameter.FilenameParameter)

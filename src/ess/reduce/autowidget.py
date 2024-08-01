@@ -9,9 +9,8 @@ class AutoWidget(ipw.ValueWidget, ipw.AppLayout):
         tp_args,
         tp_kwargs=None,
         *,
-        display_output=True,
-        arg_layout=ipw.VBox,
-        kwarg_layout=ipw.VBox,
+        display_output=False,
+        child_layout=ipw.HBox,
         **kwargs,
     ):
         '''Creates a widget from a constructor `tp` and a range of argument widgets
@@ -38,12 +37,7 @@ class AutoWidget(ipw.ValueWidget, ipw.AppLayout):
         self.kwargs = tp_kwargs
         self.out = ipw.Output()
 
-        form = kwarg_layout(
-            [
-                arg_layout(tp_args),
-                *(ipw.HBox([ipw.Label(value=k), v]) for k, v in tp_kwargs.items()),
-            ]
-        )
+        form = child_layout([*tp_args, *tp_kwargs.values()])
         layout = (
             dict(left_sidebar=form, center=self.out)  # noqa: C408
             if display_output
