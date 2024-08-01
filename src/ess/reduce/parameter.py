@@ -11,37 +11,30 @@ T = TypeVar('T')
 C = TypeVar('C', bound='Parameter')
 
 
-class NoDefaultType:
-    pass
-
-
-NoDefault = NoDefaultType()
-
-
 @dataclass
 class Parameter(Generic[T]):
     name: str
     description: str
-    default: T | NoDefaultType
+    default: T | None
+    optional: bool = False
+    """If True, widget has radio buttons switch between "None" and param widget."""
+    switchable: bool = False
+    """If True, widget has checkbox to enable/disable parameter."""
 
     @classmethod
-    def from_type(
-        cls: type[C], t: type[T], default: T | NoDefaultType = NoDefault
-    ) -> C:
+    def from_type(cls: type[C], t: type[T], default: T | None = None) -> C:
         # TODO __doc__ not correct when using NewType
         # TODO __doc__ not correct when using Generic
         # use sciline type->string helper
         return cls(name=str(t), description=t.__doc__, default=default)
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ParamWithOptions(Parameter[T]):
     options: list[T]
 
     @classmethod
-    def from_enum(
-        cls: type[C], t: type[T], default: T | NoDefaultType = NoDefault
-    ) -> C:
+    def from_enum(cls: type[C], t: type[T], default: T) -> C:
         options = [e.value for e in t]
         return cls(name=str(t), description=t.__doc__, options=options, default=default)
 
@@ -58,7 +51,7 @@ class MultiFilenameParameter(Parameter[tuple[str, ...]]):
     """Widget for entering multiple filenames or selecting multiple in a file dialog."""
 
 
-@dataclass
+@dataclass(kw_only=True)
 class BinEdgesParameter(Parameter[sc.Variable]):
     """Widget for entering bin edges."""
 
@@ -69,7 +62,7 @@ class BinEdgesParameter(Parameter[sc.Variable]):
     def __init__(self, t: type[T], dim: str, unit: str):
         self.dim = dim
         self.unit = unit
-        super().__init__(name=str(t), description=t.__doc__, default=NoDefault)
+        super().__init__(name=str(t), description=t.__doc__, default=None)
 
 
 @dataclass
@@ -82,19 +75,19 @@ class StringParameter(Parameter[str]):
     pass
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ParamWithBounds(Parameter[T]):
     bounds: tuple[T, T]
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ScalarParameter(Parameter[T]):
     """Fixed unit displayed in widget"""
 
     unit: str
 
 
-@dataclass
+@dataclass(kw_only=True)
 class ScalarParamWithUnitOptions(Parameter[T]):
     """User can select between compatible units"""
 
