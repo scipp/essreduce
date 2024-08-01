@@ -104,3 +104,8 @@ class ScalarParamWithUnitOptions(Parameter[T]):
     """User can select between compatible units"""
 
     unit_options: list[str]
+
+
+@dataclass(kw_only=True)
+class VectorParameter(Parameter[sc.Variable]):
+    """Widget for entering a vector."""
