@@ -22,11 +22,23 @@ class Parameter(Generic[T]):
     """If True, widget has checkbox to enable/disable parameter."""
 
     @classmethod
-    def from_type(cls: type[C], t: type[T], default: T | None = None) -> C:
+    def from_type(
+        cls: type[C],
+        t: type[T],
+        default: T | None = None,
+        optional: bool = False,
+        switchable: bool = False,
+    ) -> C:
         # TODO __doc__ not correct when using NewType
         # TODO __doc__ not correct when using Generic
         # use sciline type->string helper
-        return cls(name=str(t), description=t.__doc__, default=default)
+        return cls(
+            name=str(t),
+            description=t.__doc__,
+            default=default,
+            optional=optional,
+            switchable=switchable,
+        )
 
 
 @dataclass(kw_only=True)
