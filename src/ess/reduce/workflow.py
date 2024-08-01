@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from types import UnionType
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, ClassVar, TypeVar
 
 import networkx as nx
 from sciline import Pipeline
@@ -21,8 +21,18 @@ T = TypeVar('T')
 
 
 class Workflow(ABC):
+    _workflows: ClassVar = []
+
     def __init__(self, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
+
+    def __init_subclass__(cls) -> None:
+        return Workflow._workflows.append(cls)
+
+    @classmethod
+    def available_workflows(cls) -> tuple[type, ...]:
+        """Return all workflows."""
+        return tuple(cls._workflows)
 
     @property
     @abstractmethod
