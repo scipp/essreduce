@@ -15,7 +15,7 @@ C = TypeVar('C', bound='Parameter')
 class Parameter(Generic[T]):
     name: str
     description: str
-    default: T | None
+    default: T
     optional: bool = False
     """If True, widget has radio buttons switch between "None" and param widget."""
     switchable: bool = False
