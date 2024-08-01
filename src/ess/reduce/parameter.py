@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Generic, TypeVar
 
 import scipp as sc
@@ -43,12 +44,11 @@ class Parameter(Generic[T]):
 
 @dataclass(kw_only=True)
 class ParamWithOptions(Parameter[T]):
-    options: list[T]
+    options: Enum
 
     @classmethod
     def from_enum(cls: type[C], t: type[T], default: T) -> C:
-        options = [e.value for e in t]
-        return cls(name=str(t), description=t.__doc__, options=options, default=default)
+        return cls(name=str(t), description=t.__doc__, options=t, default=default)
 
 
 @dataclass
