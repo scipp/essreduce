@@ -5,7 +5,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from types import UnionType
-from typing import TYPE_CHECKING, Any, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 import networkx as nx
 from sciline import Pipeline
@@ -35,8 +35,12 @@ class Workflow(ABC):
         return tuple(self.pipeline.underlying_graph.nodes)
 
     @abstractmethod
-    def _parameters(self, outputs: tuple[Key, ...]) -> dict[Key, Parameter]:
+    def _parameters(self) -> dict[Key, Parameter]:
         """Return a dictionary of parameters for the workflow."""
+
+    @property
+    def _param_value_setters(self) -> dict[Key, Callable[[Pipeline, Any], Pipeline]]:
+        return {}
 
     def parameters(self, outputs: tuple[Key, ...]) -> dict[Key, Parameter]:
         """Return a dictionary of parameters for the workflow."""
@@ -45,14 +49,18 @@ class Workflow(ABC):
         for key in outputs:
             subgraph.update(nx.ancestors(graph, key))
         return {
-            key: param
-            for key, param in self._parameters(outputs).items()
-            if key in subgraph
+            key: param for key, param in self._parameters().items() if key in subgraph
         }
 
     def __setitem__(self, key: Key, value: DataGraph | Any) -> None:
         """Set a value for a Key."""
-        self.pipeline[key] = value
+        if (
+            isinstance(value, tuple)
+            and (setter := self._param_value_setters.get(key)) is not None
+        ):
+            self.pipeline = setter(self.pipeline, value)
+        else:
+            self.pipeline[key] = value
 
     def compute(self, tp: type | Iterable[type] | UnionType, **kwargs: Any) -> Any:
         """Run the workflow to compute outputs."""

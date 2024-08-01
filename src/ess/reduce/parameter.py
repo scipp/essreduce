@@ -54,6 +54,11 @@ class FilenameParameter(Parameter[str]):
 
 
 @dataclass
+class MultiFilenameParameter(Parameter[tuple[str, ...]]):
+    """Widget for entering multiple filenames or selecting multiple in a file dialog."""
+
+
+@dataclass
 class BinEdgesParameter(Parameter[sc.Variable]):
     """Widget for entering bin edges."""
 
