@@ -181,6 +181,8 @@ run_button.on_click(run_workflow)
 
 # To render this in a voila server, create a notebook which imports this
 # layout and then render it.
+# from ess.reduce.ui import layout
+# layout
 layout = TwoByTwoLayout(
     top_left=workflow_box,
     bottom_left=widgets.VBox([run_button, output]),
