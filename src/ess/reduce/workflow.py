@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
+from collections.abc import Iterable, MutableSet
 from types import UnionType
-from typing import TYPE_CHECKING, Any, Callable, ClassVar, TypeVar
+from typing import TYPE_CHECKING, Any, Callable, TypeVar
 
 import networkx as nx
 from sciline import Pipeline
@@ -20,14 +20,38 @@ if TYPE_CHECKING:
 T = TypeVar('T')
 
 
-class Workflow(ABC):
-    _workflows: ClassVar = []
+class WorkflowRegistry(MutableSet):
+    def __init__(self):
+        self._workflows: dict[str, type] = {}
 
+    def __contains__(self, item: object) -> bool:
+        return item in self._workflows.values()
+
+    def __iter__(self):
+        return iter(self._workflows.values())
+
+    def __len__(self) -> int:
+        return len(self._workflows)
+
+    def add(self, value: type) -> None:
+        key = value.__qualname__
+        self._workflows[key] = value
+
+    def discard(self, value: type) -> None:
+        self._workflows = {k: v for k, v in self._workflows.items() if v != value}
+
+
+workflow_registry = WorkflowRegistry()
+
+
+def register_workflow(cls: type[Workflow]) -> type[Workflow]:
+    workflow_registry.add(cls)
+    return cls
+
+
+class Workflow(ABC):
     def __init__(self, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
-
-    def __init_subclass__(cls) -> None:
-        return Workflow._workflows.append(cls)
 
     @classmethod
     def available_workflows(cls) -> tuple[type, ...]:
