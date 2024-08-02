@@ -436,3 +436,89 @@ def _select_unique_array(
             f"Got {mapping_name} items {set(arrays.keys())}"
         )
     return next(iter(arrays.values()))
+
+
+def load_event_data(
+    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    selection=(),
+    *,
+    entry_name: NeXusEntryName | None = None,
+    component_name: str,
+    definitions: Mapping | Literal[_no_new_definitions] | None = _no_new_definitions,
+) -> sc.DataArray:
+    """Load NXevent_data of a detector or monitor from a NeXus file.
+
+    Parameters
+    ----------
+    file_path:
+        Indicates where to load data from.
+        One of:
+
+        - Path to a NeXus file on disk.
+        - File handle or buffer for reading binary data.
+        - A ScippNexus group of the root of a NeXus file.
+    component_name:
+        Name of the NXdetector or NXmonitor containing the NXevent_data to load.
+        Must be a group in an instrument group in the entry (see below).
+    entry_name:
+        Name of the entry that contains the detector.
+        If ``None``, the entry will be located based
+        on its NeXus class, but there cannot be more than 1.
+    definitions:
+        Definitions used by scippnexus loader, see :py:`scippnexus.File`
+        for documentation.
+
+    Returns
+    -------
+    :
+        Data array with events grouped by event_time_zero, as in the NeXus file.
+    """
+    with _open_nexus_file(file_path, definitions=definitions) as f:
+        entry = _unique_child_group(f, snx.NXentry, entry_name)
+        instrument = _unique_child_group(entry, snx.NXinstrument, None)
+        component = instrument[component_name]
+        event_data = _unique_child_group(component, snx.NXevent_data, None)
+        return event_data[selection]
+
+
+def group_event_data(
+    *, event_data: sc.DataArray, detector_number: sc.Variable
+) -> sc.DataArray:
+    """Group event data by detector number.
+
+    The detector_number variable also defines the output shape and dimension names.
+
+    Parameters
+    ----------
+    event_data:
+        Data array with events to group, as returned from :py:func:`load_event_data`.
+    detector_number:
+        Variable with detector numbers matching the `event_id` field of the event data.
+
+    Returns
+    -------
+    :
+        Data array with events grouped by detector number.
+    """
+    event_id = detector_number.flatten(to='event_id').copy()
+    constituents = event_data.bins.constituents
+    begin = constituents['begin']
+    end = constituents['end']
+    data = constituents['data'].copy(deep=False)
+    if 'event_time_zero' in event_data.coords:
+        data.coords['event_time_zero'] = sc.bins_like(
+            event_data, fill_value=event_data.coords['event_time_zero']
+        ).bins.constituents['data']
+    # After loading raw NXevent_data it is guaranteed that the event table
+    # is contiguous and that there is no masking. We can therefore use the
+    # more efficient approach of binning from scratch instead of erasing the
+    # 'event_time_zero' binning defined by NXevent_data. This sanity check should
+    # therefore always pass unless some unusual modifications were performed.
+    if (
+        event_data.masks
+        or begin[0] != sc.index(0)
+        or end[-1] != sc.index(data.sizes[data.dim])
+        or (begin[1:] != end[:-1]).any()
+    ):
+        raise ValueError("Grouping only implemented for contiguous data with no masks.")
+    return data.group(event_id).fold(dim='event_id', sizes=detector_number.sizes)
