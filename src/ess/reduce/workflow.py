@@ -53,11 +53,6 @@ class Workflow(ABC):
     def __init__(self, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
 
-    @classmethod
-    def available_workflows(cls) -> tuple[type, ...]:
-        """Return all workflows."""
-        return tuple(cls._workflows)
-
     @property
     @abstractmethod
     def typical_outputs(self) -> tuple[Key, ...]:
