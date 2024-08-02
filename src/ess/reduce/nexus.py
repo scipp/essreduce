@@ -486,7 +486,7 @@ def group_event_data(
 ) -> sc.DataArray:
     """Group event data by detector number.
 
-    The detector_number variable also defined the output shape and dimension names.
+    The detector_number variable also defines the output shape and dimension names.
 
     Parameters
     ----------
@@ -502,6 +502,10 @@ def group_event_data(
     """
     event_id = detector_number.flatten(to='event_id').copy()
     if 'event_time_zero' in event_data.coords:
+        comps = event_data.bins.constituents
+        comps['data'] = comps['data'].copy(deep=False)
+        event_data = event_data.copy(deep=False)
+        event_data.data = sc._scipp.core._bins_no_validate(**comps)
         event_data.bins.coords['event_time_zero'] = sc.bins_like(
             event_data, fill_value=event_data.coords['event_time_zero']
         )

@@ -265,6 +265,22 @@ def test_load_and_group_event_data_consistent_with_load_via_detector(
     scipp.testing.assert_identical(detector.data, grouped.data)
 
 
+def test_group_event_data_does_not_modify_input(nexus_file):
+    detector = nexus.load_detector(
+        nexus_file,
+        detector_name=nexus.NeXusDetectorName('bank12'),
+    )['bank12_events']
+    events = nexus.load_event_data(
+        nexus_file,
+        component_name=nexus.NeXusDetectorName('bank12'),
+    )
+    _ = nexus.group_event_data(
+        event_data=events,
+        detector_number=detector.coords['detector_number'],
+    )
+    assert 'event_time_zero' not in events.bins.coords
+
+
 def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
     if isinstance(nexus_file, snx.Group):
         with pytest.raises(ValueError, match="new definitions"):
