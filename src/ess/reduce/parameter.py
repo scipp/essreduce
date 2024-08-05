@@ -2,14 +2,23 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, TypeVar
 
 import scipp as sc
+from sciline.typing import Key
 
 T = TypeVar('T')
 C = TypeVar('C', bound='Parameter')
+
+
+class KeepDefaultType:
+    pass
+
+
+keep_default = KeepDefaultType()
 
 
 @dataclass
@@ -21,6 +30,15 @@ class Parameter(Generic[T]):
     """If True, widget has radio buttons switch between "None" and param widget."""
     switchable: bool = False
     """If True, widget has checkbox to enable/disable parameter."""
+
+    def with_default(self: C, default: T | KeepDefaultType = keep_default) -> C:
+        return type(self)(
+            self.name,
+            self.description,
+            self.default if default == keep_default else default,
+            self.optional,
+            self.switchable,
+        )
 
     @classmethod
     def from_type(
@@ -109,3 +127,26 @@ class ScalarParamWithUnitOptions(Parameter[T]):
 @dataclass(kw_only=True)
 class VectorParameter(Parameter[sc.Variable]):
     """Widget for entering a vector."""
+
+
+class ParameterRegistry(MutableMapping):
+    def __init__(self):
+        self._parameters = {}
+
+    def __getitem__(self, key: Key) -> Parameter:
+        return self._parameters[key]
+
+    def __setitem__(self, key: Key, value: Parameter):
+        self._parameters[key] = value
+
+    def __delitem__(self, key: Key):
+        del self._parameters[key]
+
+    def __iter__(self):
+        return iter(self._parameters)
+
+    def __len__(self) -> int:
+        return len(self._parameters)
+
+
+parameter_registry = ParameterRegistry()

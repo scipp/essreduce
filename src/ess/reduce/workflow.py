@@ -12,12 +12,12 @@ from sciline import Pipeline
 from sciline.data_graph import DataGraph
 from sciline.typing import Key
 
-from .parameter import Parameter
+from .parameter import Parameter, keep_default, parameter_registry
 
 if TYPE_CHECKING:
     import graphviz
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class WorkflowRegistry(MutableSet):
@@ -49,6 +49,11 @@ def register_workflow(cls: type[Workflow]) -> type[Workflow]:
     return cls
 
 
+def _get_defaults_from_workflow(workflow: Pipeline) -> dict[Key, Any]:
+    nodes = workflow.underlying_graph.nodes
+    return {key: values["value"] for key, values in nodes.items() if "value" in values}
+
+
 class Workflow(ABC):
     def __init__(self, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
@@ -63,10 +68,6 @@ class Workflow(ABC):
         """All possible outputs."""
         return tuple(self.pipeline.underlying_graph.nodes)
 
-    @abstractmethod
-    def _parameters(self) -> dict[Key, Parameter]:
-        """Return a dictionary of parameters for the workflow."""
-
     @property
     def _param_value_setters(self) -> dict[Key, Callable[[Pipeline, Any], Pipeline]]:
         return {}
@@ -77,8 +78,11 @@ class Workflow(ABC):
         graph = self.pipeline.underlying_graph
         for key in outputs:
             subgraph.update(nx.ancestors(graph, key))
+        defaults = _get_defaults_from_workflow(self.pipeline)
         return {
-            key: param for key, param in self._parameters().items() if key in subgraph
+            key: param.with_default(defaults.get(key, keep_default))
+            for key, param in parameter_registry.items()
+            if key in subgraph
         }
 
     def __setitem__(self, key: Key, value: DataGraph | Any) -> None:
