@@ -15,7 +15,7 @@ _style = {
     'button_width': 'auto',
 }
 workflow_select = widgets.Dropdown(
-    options=workflows,
+    options=[(workflow.__name__, workflow) for workflow in workflows],
     description='Workflow:',
     value=None,
 )
