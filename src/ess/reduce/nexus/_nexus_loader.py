@@ -415,7 +415,7 @@ def load_event_data(
     *,
     entry_name: NeXusEntryName | None = None,
     component_name: str,
-    definitions: Mapping | Literal[_no_new_definitions] | None = _no_new_definitions,
+    definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataArray:
     """Load NXevent_data of a detector or monitor from a NeXus file.
 

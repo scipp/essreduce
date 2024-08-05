@@ -251,12 +251,12 @@ def test_load_and_group_event_data_consistent_with_load_via_detector(
     detector = nexus.load_detector(
         nexus_file,
         selection=selection,
-        detector_name=nexus.NeXusDetectorName('bank12'),
+        detector_name=nexus.types.NeXusDetectorName('bank12'),
     )['bank12_events']
     events = nexus.load_event_data(
         nexus_file,
         selection=selection,
-        component_name=nexus.NeXusDetectorName('bank12'),
+        component_name=nexus.types.NeXusDetectorName('bank12'),
     )
     grouped = nexus.group_event_data(
         event_data=events,
@@ -268,11 +268,11 @@ def test_load_and_group_event_data_consistent_with_load_via_detector(
 def test_group_event_data_does_not_modify_input(nexus_file):
     detector = nexus.load_detector(
         nexus_file,
-        detector_name=nexus.NeXusDetectorName('bank12'),
+        detector_name=nexus.types.NeXusDetectorName('bank12'),
     )['bank12_events']
     events = nexus.load_event_data(
         nexus_file,
-        component_name=nexus.NeXusDetectorName('bank12'),
+        component_name=nexus.types.NeXusDetectorName('bank12'),
     )
     _ = nexus.group_event_data(
         event_data=events,
