@@ -49,9 +49,9 @@ possible_outputs_widget = widgets.SelectMultiple(
 
 
 def handle_workflow_select(change):
-    wf = workflow.Workflow(change.new())
-    typical_outputs_widget.options = wf.typical_outputs
-    possible_outputs_widget.options = wf.possible_outputs
+    wf = change.new()
+    typical_outputs_widget.options = workflow.get_typical_outputs(wf)
+    possible_outputs_widget.options = workflow.get_possible_outputs(wf)
 
 
 workflow_select.observe(handle_workflow_select, names='value')
@@ -74,9 +74,9 @@ parameter_box = widgets.VBox([])
 
 
 def generate_parameter_widgets():
-    wf = workflow.Workflow(workflow_select.value())
+    wf = workflow_select.value()
     outputs = possible_outputs_widget.value + typical_outputs_widget.value
-    registry = wf.parameters(outputs)
+    registry = workflow.get_parameters(wf, outputs)
 
     for parameter in registry.values():
         temp_widget = create_parameter_widget(parameter)
@@ -120,30 +120,38 @@ output = widgets.Output()
 
 
 def run_workflow(b):
-    wf = workflow.Workflow(workflow_select.value())
+    wf = workflow_select.value()
     outputs = possible_outputs_widget.value + typical_outputs_widget.value
-    registry = wf.parameters(outputs)
+    registry = workflow.get_parameters(wf, outputs)
+
+    values = {}
 
     for i, node in enumerate(registry.keys()):
-        wf[node] = parameter_box.children[i].children[0].value
+        values[node] = parameter_box.children[i].children[0].value
 
     # workflow[UncertaintyBroadcastMode] = UncertaintyBroadcastMode.upper_bound
-    wf[ess.sans.types.NeXusDetectorName] = 'larmor_detector'
-    wf[ess.sans.types.Filename[ess.sans.types.SampleRun]] = (
+    values[ess.sans.types.NeXusDetectorName] = 'larmor_detector'
+    values[ess.sans.types.Filename[ess.sans.types.SampleRun]] = (
         loki.data.loki_tutorial_sample_run_60339()
     )
-    wf[ess.sans.types.PixelMaskFilename] = loki.data.loki_tutorial_mask_filenames()[0]
+    values[ess.sans.types.PixelMaskFilename] = loki.data.loki_tutorial_mask_filenames()[
+        0
+    ]
 
-    wf[Filename[SampleRun]] = loki.data.loki_tutorial_sample_run_60339()
-    wf[Filename[BackgroundRun]] = loki.data.loki_tutorial_background_run_60393()
-    wf[Filename[TransmissionRun[SampleRun]]] = (
+    values[Filename[SampleRun]] = loki.data.loki_tutorial_sample_run_60339()
+    values[Filename[BackgroundRun]] = loki.data.loki_tutorial_background_run_60393()
+    values[Filename[TransmissionRun[SampleRun]]] = (
         loki.data.loki_tutorial_sample_transmission_run()
     )
-    wf[Filename[TransmissionRun[BackgroundRun]]] = loki.data.loki_tutorial_run_60392()
-    wf[Filename[EmptyBeamRun]] = loki.data.loki_tutorial_run_60392()
+    values[Filename[TransmissionRun[BackgroundRun]]] = (
+        loki.data.loki_tutorial_run_60392()
+    )
+    values[Filename[EmptyBeamRun]] = loki.data.loki_tutorial_run_60392()
 
-    wf[ess.sans.types.BeamCenter] = sc.vector(value=[0.0, 0.0, 0.0], unit='m')
-    wf[ess.sans.types.DirectBeam] = None
+    values[ess.sans.types.BeamCenter] = sc.vector(value=[0.0, 0.0, 0.0], unit='m')
+    values[ess.sans.types.DirectBeam] = None
+
+    wf = workflow.assign_parameter_values(wf, values)
 
     # Wavelength binning parameters
     # wavelength_min = sc.scalar(1.0, unit='angstrom')
@@ -170,7 +178,7 @@ def run_workflow(b):
             outputs, scheduler=sciline.scheduler.NaiveScheduler()
         )
         for i in compute_result.values():
-            display.display(i.plot())
+            display.display(display.HTML(i._repr_html_()))
 
 
 run_button.on_click(run_workflow)

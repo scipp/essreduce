@@ -2,19 +2,14 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
-from collections.abc import Iterable, MutableSet
-from types import UnionType
-from typing import TYPE_CHECKING, Any, Callable, TypeVar
+from collections.abc import MutableSet
+from typing import Any, Callable, TypeVar
 
 import networkx as nx
 from sciline import Pipeline
-from sciline.data_graph import DataGraph
 from sciline.typing import Key
 
-from .parameter import Parameter, keep_default, parameter_registry
-
-if TYPE_CHECKING:
-    import graphviz
+from .parameter import Parameter, keep_default, parameter_mappers, parameter_registry
 
 T = TypeVar("T")
 
@@ -43,7 +38,7 @@ class WorkflowRegistry(MutableSet):
 workflow_registry = WorkflowRegistry()
 
 
-def register_workflow(cls: type[Workflow]) -> type[Workflow]:
+def register_workflow(cls: Callable[[], Pipeline]) -> Callable[[], Pipeline]:
     workflow_registry.add(cls)
     return cls
 
@@ -53,53 +48,39 @@ def _get_defaults_from_workflow(workflow: Pipeline) -> dict[Key, Any]:
     return {key: values["value"] for key, values in nodes.items() if "value" in values}
 
 
-class Workflow:
-    def __init__(self, pipeline: Pipeline) -> None:
-        self.pipeline = pipeline
+def get_typical_outputs(pipeline: Pipeline) -> tuple[Key, ...]:
+    return tuple(pipeline.typical_outputs)
 
-    @property
-    def typical_outputs(self) -> tuple[Key, ...]:
-        """Return a tuple of outputs that are used regularly."""
-        return self.pipeline.typical_outputs
 
-    @property
-    def possible_outputs(self) -> tuple[Key, ...]:
-        """All possible outputs."""
-        return tuple(self.pipeline.underlying_graph.nodes)
+def get_possible_outputs(pipeline: Pipeline) -> tuple[Key, ...]:
+    return tuple(pipeline.underlying_graph.nodes)
 
-    @property
-    def _param_value_setters(self) -> dict[Key, Callable[[Pipeline, Any], Pipeline]]:
-        return {}
 
-    def parameters(self, outputs: tuple[Key, ...]) -> dict[Key, Parameter]:
-        """Return a dictionary of parameters for the workflow."""
-        subgraph = set(outputs)
-        graph = self.pipeline.underlying_graph
-        for key in outputs:
-            subgraph.update(nx.ancestors(graph, key))
-        defaults = _get_defaults_from_workflow(self.pipeline)
-        return {
-            key: param.with_default(defaults.get(key, keep_default))
-            for key, param in parameter_registry.items()
-            if key in subgraph
-        }
+def get_parameters(
+    pipeline: Pipeline, outputs: tuple[Key, ...]
+) -> dict[Key, Parameter]:
+    """Return a dictionary of parameters for the workflow."""
+    subgraph = set(outputs)
+    graph = pipeline.underlying_graph
+    for key in outputs:
+        subgraph.update(nx.ancestors(graph, key))
+    defaults = _get_defaults_from_workflow(pipeline)
+    return {
+        key: param.with_default(defaults.get(key, keep_default))
+        for key, param in parameter_registry.items()
+        if key in subgraph
+    }
 
-    def __setitem__(self, key: Key, value: DataGraph | Any) -> None:
-        """Set a value for a Key."""
+
+def assign_parameter_values(pipeline: Pipeline, values: dict[Key, Any]) -> Pipeline:
+    """Set a value for a parameter in the pipeline."""
+    pipeline = pipeline.copy()
+    for key, value in values.items():
         if (
             isinstance(value, tuple)
-            and (setter := self._param_value_setters.get(key)) is not None
+            and (mapper := parameter_mappers.get(key)) is not None
         ):
-            self.pipeline = setter(self.pipeline, value)
+            pipeline = mapper(pipeline, value)
         else:
-            self.pipeline[key] = value
-
-    def compute(self, tp: type | Iterable[type] | UnionType, **kwargs: Any) -> Any:
-        """Run the workflow to compute outputs."""
-        return self.pipeline.compute(tp, **kwargs)
-
-    def visualize(self, tp: type | Iterable[type], **kwargs: Any) -> graphviz.Digraph:
-        return self.pipeline.visualize(tp, **kwargs)
-
-    def insert(self, provider, /) -> None:
-        self.pipeline.insert(provider)
+            pipeline[key] = value
+    return pipeline

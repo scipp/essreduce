@@ -149,3 +149,6 @@ class ParameterRegistry(MutableMapping):
 
 
 parameter_registry = ParameterRegistry()
+
+
+parameter_mappers = {}
