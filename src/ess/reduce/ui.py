@@ -134,9 +134,9 @@ def run_workflow(b):
     values[ess.sans.types.Filename[ess.sans.types.SampleRun]] = (
         loki.data.loki_tutorial_sample_run_60339()
     )
-    values[ess.sans.types.PixelMaskFilename] = loki.data.loki_tutorial_mask_filenames()[
-        0
-    ]
+    values[ess.sans.types.PixelMaskFilename] = tuple(
+        loki.data.loki_tutorial_mask_filenames()
+    )
 
     values[Filename[SampleRun]] = loki.data.loki_tutorial_sample_run_60339()
     values[Filename[BackgroundRun]] = loki.data.loki_tutorial_background_run_60393()
