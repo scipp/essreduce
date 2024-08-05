@@ -49,7 +49,11 @@ def _get_defaults_from_workflow(workflow: Pipeline) -> dict[Key, Any]:
 
 
 def get_typical_outputs(pipeline: Pipeline) -> tuple[Key, ...]:
-    return tuple(pipeline.typical_outputs)
+    if (typical_outputs := getattr(pipeline, "typical_outputs", None)) is None:
+        graph = pipeline.underlying_graph
+        sink_nodes = [node for node, degree in graph.out_degree if degree == 0]
+        return tuple(sink_nodes)
+    return tuple(typical_outputs)
 
 
 def get_possible_outputs(pipeline: Pipeline) -> tuple[Key, ...]:
