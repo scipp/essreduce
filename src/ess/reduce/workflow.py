@@ -2,7 +2,6 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 from collections.abc import Iterable, MutableSet
 from types import UnionType
 from typing import TYPE_CHECKING, Any, Callable, TypeVar
@@ -54,14 +53,14 @@ def _get_defaults_from_workflow(workflow: Pipeline) -> dict[Key, Any]:
     return {key: values["value"] for key, values in nodes.items() if "value" in values}
 
 
-class Workflow(ABC):
+class Workflow:
     def __init__(self, pipeline: Pipeline) -> None:
         self.pipeline = pipeline
 
     @property
-    @abstractmethod
     def typical_outputs(self) -> tuple[Key, ...]:
         """Return a tuple of outputs that are used regularly."""
+        return self.pipeline.typical_outputs
 
     @property
     def possible_outputs(self) -> tuple[Key, ...]:

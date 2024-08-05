@@ -32,12 +32,11 @@ class Parameter(Generic[T]):
     """If True, widget has checkbox to enable/disable parameter."""
 
     def with_default(self: C, default: T | KeepDefaultType = keep_default) -> C:
+        if default == keep_default:
+            return self
+        # TODO I think some subclasses currently cannot be instantiated with this method
         return type(self)(
-            self.name,
-            self.description,
-            self.default if default == keep_default else default,
-            self.optional,
-            self.switchable,
+            self.name, self.description, default, self.optional, self.switchable
         )
 
     @classmethod
