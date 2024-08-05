@@ -18,9 +18,9 @@ class LinspaceWidget(widgets.GridBox, widgets.ValueWidget):
 
         self.fields = {
             'dim': widgets.Label(value=dim, description='dim'),
-            'start': widgets.FloatText(description='start'),
-            'end': widgets.FloatText(description='end'),
-            'num': widgets.IntText(description='num'),
+            'start': widgets.FloatText(description='start', value=0.0),
+            'end': widgets.FloatText(description='end', value=1.0),
+            'num': widgets.IntText(description='num', value=100),
             'unit': widgets.Label(description='unit', value=unit),
         }
         self.children = [
@@ -155,13 +155,17 @@ def _(param):
 @create_parameter_widget.register(parameter.FilenameParameter)
 def _(param):
     # TODO: Need to add the file upload widget
-    return widgets.Text(description=param.name, layout=_layout, style=_style)
+    return widgets.Text(
+        description=param.name, layout=_layout, style=_style, value=param.default
+    )
 
 
 @create_parameter_widget.register(parameter.MultiFilenameParameter)
 def _(param):
     # TODO: Need to add the file upload widget
-    return widgets.Text(description=param.name, layout=_layout, style=_style)
+    return widgets.Text(
+        description=param.name, layout=_layout, style=_style, value=param.default
+    )
 
 
 @create_parameter_widget.register(parameter.ParamWithOptions)

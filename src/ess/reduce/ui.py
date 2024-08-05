@@ -1,25 +1,8 @@
 import ess
 import ipywidgets as widgets
 import sciline
-import scipp as sc
-from ess import loki
 from ess.reduce import workflow
 from ess.reduce.widget import create_parameter_widget
-from ess.sans.types import (
-    BackgroundRun,
-    # BeamCenter,
-    # CorrectForGravity,
-    EmptyBeamRun,
-    Filename,
-    # QBins,
-    # ReturnEvents,
-    SampleRun,
-    TransmissionRun,
-)
-
-# UncertaintyBroadcastMode,
-# WavelengthBands,
-# WavelengthBins,
 from IPython import display
 from ipywidgets import Layout, TwoByTwoLayout
 
@@ -129,54 +112,16 @@ def run_workflow(b):
     for i, node in enumerate(registry.keys()):
         values[node] = parameter_box.children[i].children[0].value
 
-    # workflow[UncertaintyBroadcastMode] = UncertaintyBroadcastMode.upper_bound
-    values[ess.sans.types.NeXusDetectorName] = 'larmor_detector'
-    values[ess.sans.types.Filename[ess.sans.types.SampleRun]] = (
-        loki.data.loki_tutorial_sample_run_60339()
-    )
-    values[ess.sans.types.PixelMaskFilename] = tuple(
-        loki.data.loki_tutorial_mask_filenames()
-    )
-
-    values[Filename[SampleRun]] = loki.data.loki_tutorial_sample_run_60339()
-    values[Filename[BackgroundRun]] = loki.data.loki_tutorial_background_run_60393()
-    values[Filename[TransmissionRun[SampleRun]]] = (
-        loki.data.loki_tutorial_sample_transmission_run()
-    )
-    values[Filename[TransmissionRun[BackgroundRun]]] = (
-        loki.data.loki_tutorial_run_60392()
-    )
-    values[Filename[EmptyBeamRun]] = loki.data.loki_tutorial_run_60392()
-
-    values[ess.sans.types.BeamCenter] = sc.vector(value=[0.0, 0.0, 0.0], unit='m')
     values[ess.sans.types.DirectBeam] = None
 
     wf = workflow.assign_parameter_values(wf, values)
-
-    # Wavelength binning parameters
-    # wavelength_min = sc.scalar(1.0, unit='angstrom')
-    # wavelength_max = sc.scalar(13.0, unit='angstrom')
-    # n_wavelength_bins = 50
-    # n_wavelength_bands = 50
-
-    # workflow[WavelengthBins] = sc.linspace(
-    #     'wavelength', wavelength_min, wavelength_max, n_wavelength_bins + 1
-    # )
-    # workflow[WavelengthBands] = sc.linspace(
-    #     'wavelength', wavelength_min, wavelength_max, n_wavelength_bands + 1
-    # )
-
-    # workflow[CorrectForGravity] = True
-    # workflow[UncertaintyBroadcastMode] = UncertaintyBroadcastMode.upper_bound
-    # workflow[ReturnEvents] = False
-
-    # workflow[QBins] = sc.linspace(dim='Q', start=0.01, stop=0.3,
-    # num=101, unit='1/angstrom')
 
     with output:
         compute_result = wf.compute(
             outputs, scheduler=sciline.scheduler.NaiveScheduler()
         )
+        results.clear()
+        results.update(compute_result)
         for i in compute_result.values():
             display.display(display.HTML(i._repr_html_()))
 
@@ -185,11 +130,13 @@ run_button.on_click(run_workflow)
 
 # To render this in a voila server, create a notebook which imports this
 # layout and then render it.
-# from ess.reduce.ui import layout
-# layout
+#     from ess.reduce import ui
+#     ui.layout
+# Results will be in ui.results
 layout = TwoByTwoLayout(
     top_left=workflow_box,
     bottom_left=widgets.VBox([run_button, output]),
     #   bottom_left=run_button,
     bottom_right=parameter_box,
 )
+results = {}
