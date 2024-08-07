@@ -8,7 +8,7 @@ import sciline
 from IPython import display
 from ipywidgets import Layout, TwoByTwoLayout
 
-from .widget import create_parameter_widget
+from .widgets import create_parameter_widget
 from .workflow import (
     assign_parameter_values,
     get_parameters,
