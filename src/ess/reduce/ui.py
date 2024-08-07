@@ -1,13 +1,21 @@
-import ess
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+from collections.abc import Callable
+from typing import cast
+
 import ipywidgets as widgets
 import sciline
-from ess.reduce import workflow
-from ess.reduce.widget import create_parameter_widget
 from IPython import display
 from ipywidgets import Layout, TwoByTwoLayout
 
-workflows = workflow.workflow_registry
-
+from .widget import create_parameter_widget
+from .workflow import (
+    assign_parameter_values,
+    get_parameters,
+    get_possible_outputs,
+    get_typical_outputs,
+    workflow_registry,
+)
 
 _style = {
     'description_width': 'auto',
@@ -15,7 +23,7 @@ _style = {
     'button_width': 'auto',
 }
 workflow_select = widgets.Dropdown(
-    options=[(workflow.__name__, workflow) for workflow in workflows],
+    options=[(workflow.__name__, workflow) for workflow in workflow_registry],
     description='Workflow:',
     value=None,
 )
@@ -31,10 +39,10 @@ possible_outputs_widget = widgets.SelectMultiple(
 )
 
 
-def handle_workflow_select(change):
-    wf = change.new()
-    typical_outputs_widget.options = workflow.get_typical_outputs(wf)
-    possible_outputs_widget.options = workflow.get_possible_outputs(wf)
+def handle_workflow_select(change) -> None:
+    selected_workflow: sciline.Pipeline = change.new()
+    typical_outputs_widget.options = get_typical_outputs(selected_workflow)
+    possible_outputs_widget.options = get_possible_outputs(selected_workflow)
 
 
 workflow_select.observe(handle_workflow_select, names='value')
@@ -57,9 +65,10 @@ parameter_box = widgets.VBox([])
 
 
 def generate_parameter_widgets():
-    wf = workflow_select.value()
+    workflow_constructor = cast(Callable[[], sciline.Pipeline], workflow_select.value)
+    selected_workflow = workflow_constructor()
     outputs = possible_outputs_widget.value + typical_outputs_widget.value
-    registry = workflow.get_parameters(wf, outputs)
+    registry = get_parameters(selected_workflow, outputs)
 
     for parameter in registry.values():
         temp_widget = create_parameter_widget(parameter)
@@ -102,22 +111,21 @@ run_button = widgets.Button(
 output = widgets.Output()
 
 
-def run_workflow(b):
-    wf = workflow_select.value()
+def run_workflow(_: widgets.Button) -> None:
+    workflow_constructor = cast(Callable[[], sciline.Pipeline], workflow_select.value)
+    selected_workflow = workflow_constructor()
     outputs = possible_outputs_widget.value + typical_outputs_widget.value
-    registry = workflow.get_parameters(wf, outputs)
+    registry = get_parameters(selected_workflow, outputs)
 
-    values = {}
+    values = {
+        node: parameter_box.children[i].children[0].value
+        for i, node in enumerate(registry.keys())
+    }
 
-    for i, node in enumerate(registry.keys()):
-        values[node] = parameter_box.children[i].children[0].value
-
-    values[ess.sans.types.DirectBeam] = None
-
-    wf = workflow.assign_parameter_values(wf, values)
+    workflow = assign_parameter_values(selected_workflow, values)
 
     with output:
-        compute_result = wf.compute(
+        compute_result = workflow.compute(
             outputs, scheduler=sciline.scheduler.NaiveScheduler()
         )
         results.clear()
@@ -128,15 +136,19 @@ def run_workflow(b):
 
 run_button.on_click(run_workflow)
 
-# To render this in a voila server, create a notebook which imports this
-# layout and then render it.
-#     from ess.reduce import ui
-#     ui.layout
-# Results will be in ui.results
 layout = TwoByTwoLayout(
     top_left=workflow_box,
     bottom_left=widgets.VBox([run_button, output]),
-    #   bottom_left=run_button,
     bottom_right=parameter_box,
 )
+"""Widget for selecting a workflow and its parameters.
+
+To render this in a voila server, create a notebook which imports this
+layout and then render it.
+```python
+    from ess.reduce import ui
+    ui.layout
+```
+Results will be in ui.results
+"""
 results = {}
