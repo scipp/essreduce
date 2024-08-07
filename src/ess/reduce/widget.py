@@ -1,8 +1,21 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 from functools import singledispatch
+from typing import Any, Protocol
 
 import ipywidgets as widgets
 import scipp as sc
-from ess.reduce import parameter
+
+from .parameter import (
+    BinEdgesParameter,
+    BooleanParameter,
+    FilenameParameter,
+    MultiFilenameParameter,
+    Parameter,
+    ParamWithOptions,
+    StringParameter,
+    VectorParameter,
+)
 
 _layout = widgets.Layout(width='80%')
 _style = {
@@ -12,8 +25,20 @@ _style = {
 }
 
 
+class EssWidget(Protocol):
+    """Protocol for ESS widgets.
+
+    All widgets should have a `value` property that returns the value of the widget.
+    It can be composed from multiple widgets.
+    ```
+    """
+
+    @property
+    def value(self) -> Any: ...
+
+
 class LinspaceWidget(widgets.GridBox, widgets.ValueWidget):
-    def __init__(self, dim, unit):
+    def __init__(self, dim: str, unit: str):
         super().__init__()
 
         self.fields = {
@@ -33,7 +58,7 @@ class LinspaceWidget(widgets.GridBox, widgets.ValueWidget):
         ]
 
     @property
-    def value(self):
+    def value(self) -> sc.Variable:
         return sc.linspace(
             self.fields['dim'].value,
             self.fields['start'].value,
@@ -68,7 +93,7 @@ class BoundsWidget(widgets.GridBox, widgets.ValueWidget):
 
 
 class VectorWidget(widgets.GridBox, widgets.ValueWidget):
-    def __init__(self, variable):
+    def __init__(self, variable: sc.Variable):
         super().__init__()
 
         self.fields = {
@@ -98,36 +123,34 @@ class VectorWidget(widgets.GridBox, widgets.ValueWidget):
 
 
 @singledispatch
-def create_parameter_widget(param):
-    return widgets.Text('', layout=_layout, style=_style)
+def create_parameter_widget(param: Parameter) -> widgets.Widget:
+    """Create a widget for a parameter depending on the ``param`` type.
+
+    If the type of the parameter is not supported, a text widget is returned.
+    """
+    return widgets.Text('', description=param.name, layout=_layout, style=_style)
 
 
-@create_parameter_widget.register(parameter.VectorParameter)
-def _(param):
+@create_parameter_widget.register(VectorParameter)
+def vector_parameter_widget(param: VectorParameter):
     return VectorWidget(param.default)
 
 
-@create_parameter_widget.register(parameter.BooleanParameter)
-def _(param):
+@create_parameter_widget.register(BooleanParameter)
+def boolean_parameter_widget(param: BooleanParameter):
     name = param.name.split('.')[-1]
     description = param.description
-    if param.switchable:
-        # TODO: Make switch widgets
-        return widgets.Checkbox(
-            description=name, tooltip=description, layout=_layout, style=_style
-        )
-    else:
-        return widgets.Checkbox(
-            value=param.default,
-            description=name,
-            tooltip=description,
-            layout=_layout,
-            style=_style,
-        )
+    return widgets.Checkbox(
+        value=param.default,
+        description=name,
+        tooltip=description,
+        layout=_layout,
+        style=_style,
+    )
 
 
-@create_parameter_widget.register(parameter.StringParameter)
-def _(param):
+@create_parameter_widget.register(StringParameter)
+def string_parameter_widget(param: StringParameter):
     name = param.name
     description = param.description
     if param.switchable:
@@ -145,31 +168,31 @@ def _(param):
         )
 
 
-@create_parameter_widget.register(parameter.BinEdgesParameter)
-def _(param):
+@create_parameter_widget.register(BinEdgesParameter)
+def bin_edges_parameter_widget(param: BinEdgesParameter):
     dim = param.dim
     unit = param.unit
     return LinspaceWidget(dim, unit)
 
 
-@create_parameter_widget.register(parameter.FilenameParameter)
-def _(param):
+@create_parameter_widget.register(FilenameParameter)
+def filename_parameter_widget(param: FilenameParameter):
     # TODO: Need to add the file upload widget
     return widgets.Text(
         description=param.name, layout=_layout, style=_style, value=param.default
     )
 
 
-@create_parameter_widget.register(parameter.MultiFilenameParameter)
-def _(param):
+@create_parameter_widget.register(MultiFilenameParameter)
+def multi_filename_parameter_widget(param: MultiFilenameParameter):
     # TODO: Need to add the file upload widget
     return widgets.Text(
         description=param.name, layout=_layout, style=_style, value=param.default
     )
 
 
-@create_parameter_widget.register(parameter.ParamWithOptions)
-def _(param):
+@create_parameter_widget.register(ParamWithOptions)
+def param_with_option_widget(param: ParamWithOptions):
     return widgets.Dropdown(
         description=param.name, options=param.options, layout=_layout, style=_style
     )
