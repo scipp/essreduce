@@ -23,6 +23,11 @@ keep_default = KeepDefaultType()
 
 @dataclass
 class Parameter(Generic[T]):
+    """Interface between workflow parameters and widgets.
+
+    .. versionadded:: RELEASE_PLACEHOLDER
+    """
+
     name: str
     description: str
     default: T
