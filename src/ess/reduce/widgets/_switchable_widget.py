@@ -17,25 +17,30 @@ class SwitchWidget(HBox):
 
     def __init__(self, wrapped: Widget, name: str = '') -> None:
         super().__init__()
-        self.enable_box = Checkbox(description='Use Parameter', style=default_style)
+        self._enable_box = Checkbox(description='', style=default_style)
+        # The layout is not applied if they are set in the constructor
+        self._enable_box.layout.description_width = '0px'
+        self._enable_box.layout.width = 'auto'
+
         self.wrapped = wrapped
         wrapped_stack = Stack([Label(name, style=default_style), self.wrapped])
+        # We wanted to implement this by greying out the widget when disabled
+        # but ``disabled`` is not a common property of all widgets
         wrapped_stack.selected_index = 0
 
         def handle_checkbox(change) -> None:
             wrapped_stack.selected_index = 1 if change.new else 0
 
-        self.enable_box.observe(handle_checkbox, names='value')
-
-        self.children = [self.enable_box, wrapped_stack]
+        self._enable_box.observe(handle_checkbox, names='value')
+        self.children = [self._enable_box, wrapped_stack]
 
     @property
     def enabled(self) -> bool:
-        return self.enable_box.value
+        return self._enable_box.value
 
     @enabled.setter
     def enabled(self, value: bool) -> None:
-        self.enable_box.value = value
+        self._enable_box.value = value
 
     @property
     def value(self) -> Any:
