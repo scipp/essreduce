@@ -22,6 +22,7 @@ from ._config import default_layout, default_style
 from ._linspace_widget import LinspaceWidget
 from ._vector_widget import VectorWidget
 from ._bounds_widget import BoundsWidget
+from ._switchable_widget import SwitchWidget
 
 
 class EssWidget(Protocol):
@@ -36,6 +37,26 @@ class EssWidget(Protocol):
     def value(self) -> Any: ...
 
 
+from collections.abc import Callable
+from functools import wraps
+
+
+def switchable_widget(
+    func: Callable[[Parameter], widgets.Widget],
+) -> Callable[[Parameter], widgets.Widget]:
+    """Wrap a widget in a switchable widget."""
+
+    @wraps(func)
+    def wrapper(param: Parameter) -> widgets.Widget:
+        widget = func(param)
+        if param.switchable:
+            return SwitchWidget(widget, name=param.name)
+        return widget
+
+    return wrapper
+
+
+@switchable_widget
 @singledispatch
 def create_parameter_widget(param: Parameter) -> widgets.Widget:
     """Create a widget for a parameter depending on the ``param`` type.
@@ -133,5 +154,6 @@ __all__ = [
     'LinspaceWidget',
     'EssWidget',
     'VectorWidget',
+    'SwitchWidget',
     'create_parameter_widget',
 ]

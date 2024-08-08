@@ -8,7 +8,7 @@ import sciline
 from IPython import display
 from ipywidgets import Layout, TwoByTwoLayout
 
-from .widgets import create_parameter_widget
+from .widgets import SwitchWidget, create_parameter_widget
 from .workflow import (
     assign_parameter_values,
     get_parameters,
@@ -120,6 +120,12 @@ def run_workflow(_: widgets.Button) -> None:
     values = {
         node: parameter_box.children[i].children[0].value
         for i, node in enumerate(registry.keys())
+        if (
+            not isinstance(
+                widget := parameter_box.children[i].children[0], SwitchWidget
+            )
+        )
+        or widget.enabled
     }
 
     workflow = assign_parameter_values(selected_workflow, values)
