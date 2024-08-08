@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-from collections.abc import Callable
-from typing import cast
+from collections.abc import Callable, Iterable
+from typing import Any, cast
 
 import ipywidgets as widgets
 import sciline
@@ -10,6 +10,7 @@ from ipywidgets import Layout, TwoByTwoLayout
 
 from .widgets import SwitchWidget, create_parameter_widget
 from .workflow import (
+    Key,
     assign_parameter_values,
     get_parameters,
     get_possible_outputs,
@@ -111,15 +112,12 @@ run_button = widgets.Button(
 output = widgets.Output()
 
 
-def run_workflow(_: widgets.Button) -> None:
-    workflow_constructor = cast(Callable[[], sciline.Pipeline], workflow_select.value)
-    selected_workflow = workflow_constructor()
-    outputs = possible_outputs_widget.value + typical_outputs_widget.value
-    registry = get_parameters(selected_workflow, outputs)
-
-    values = {
+def collect_values(
+    parameter_box: widgets.VBox, param_keys: Iterable[Key]
+) -> dict[Key, Any]:
+    return {
         node: parameter_box.children[i].children[0].value
-        for i, node in enumerate(registry.keys())
+        for i, node in enumerate(param_keys)
         if (
             not isinstance(
                 widget := parameter_box.children[i].children[0], SwitchWidget
@@ -127,6 +125,15 @@ def run_workflow(_: widgets.Button) -> None:
         )
         or widget.enabled
     }
+
+
+def run_workflow(_: widgets.Button) -> None:
+    workflow_constructor = cast(Callable[[], sciline.Pipeline], workflow_select.value)
+    selected_workflow = workflow_constructor()
+    outputs = possible_outputs_widget.value + typical_outputs_widget.value
+    registry = get_parameters(selected_workflow, outputs)
+
+    values = collect_values(parameter_box, registry.keys())
 
     workflow = assign_parameter_values(selected_workflow, values)
 
