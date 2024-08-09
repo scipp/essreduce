@@ -69,6 +69,22 @@ def test_parameter_default_value_test() -> None:
     assert _get_param_widget(widget, float).value == 2.0
 
 
+def test_run_not_allowed_when_parameter_not_refreshed_after_output_selected() -> None:
+    widget = _ready_widget(providers=[strict_provider], output_selections=[str])
+    # Clear the value of the output selection box
+    widget.output_selection_box.typical_outputs_widget.value = []
+    assert widget.result_box.run_button.disabled
+    # Click the refresh button
+    widget.parameter_box.parameter_refresh_button.click()
+    assert not widget.result_box.run_button.disabled
+    # Add a value to the parameter
+    widget.output_selection_box.typical_outputs_widget.value = [str]
+    assert widget.result_box.run_button.disabled
+    # Click the refresh button again
+    widget.parameter_box.parameter_refresh_button.click()
+    assert not widget.result_box.run_button.disabled
+
+
 def test_result_registry() -> None:
     registry = {}
     widget = _ready_widget(
