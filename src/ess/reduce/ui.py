@@ -1,15 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-from collections.abc import Callable
-from typing import cast
+from collections.abc import Callable, Iterable
+from typing import Any, cast
 
 import ipywidgets as widgets
 import sciline
 from IPython import display
 from ipywidgets import Layout, TwoByTwoLayout
 
-from .widgets import create_parameter_widget
+from .widgets import SwitchWidget, create_parameter_widget, default_style
 from .workflow import (
+    Key,
     assign_parameter_values,
     get_parameters,
     get_possible_outputs,
@@ -17,11 +18,6 @@ from .workflow import (
     workflow_registry,
 )
 
-_style = {
-    'description_width': 'auto',
-    'value_width': 'auto',
-    'button_width': 'auto',
-}
 workflow_select = widgets.Dropdown(
     options=[(workflow.__name__, workflow) for workflow in workflow_registry],
     description='Workflow:',
@@ -34,7 +30,7 @@ typical_outputs_widget = widgets.SelectMultiple(
 
 possible_outputs_widget = widgets.SelectMultiple(
     description='Extended Outputs:',
-    style=_style,
+    style=default_style,
     layout=Layout(width='80%', height='150px'),
 )
 
@@ -111,16 +107,28 @@ run_button = widgets.Button(
 output = widgets.Output()
 
 
+def collect_values(
+    parameter_box: widgets.VBox, param_keys: Iterable[Key]
+) -> dict[Key, Any]:
+    return {
+        node: parameter_box.children[i].children[0].value
+        for i, node in enumerate(param_keys)
+        if (
+            not isinstance(
+                widget := parameter_box.children[i].children[0], SwitchWidget
+            )
+        )
+        or widget.enabled
+    }
+
+
 def run_workflow(_: widgets.Button) -> None:
     workflow_constructor = cast(Callable[[], sciline.Pipeline], workflow_select.value)
     selected_workflow = workflow_constructor()
     outputs = possible_outputs_widget.value + typical_outputs_widget.value
     registry = get_parameters(selected_workflow, outputs)
 
-    values = {
-        node: parameter_box.children[i].children[0].value
-        for i, node in enumerate(registry.keys())
-    }
+    values = collect_values(parameter_box, registry.keys())
 
     workflow = assign_parameter_values(selected_workflow, values)
 
