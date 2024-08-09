@@ -53,8 +53,10 @@ class OutputSelectionWidget(widgets.VBox):
         super().__init__([_typical_selection, _possible_selection], **kwargs)
 
     @property
-    def value(self):
-        return self.typical_outputs_widget.value + self.possible_outputs_widget.value
+    def value(self) -> set[Key]:
+        return set(
+            self.typical_outputs_widget.value + self.possible_outputs_widget.value
+        )
 
 
 class ParameterBox(widgets.VBox):
