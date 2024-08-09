@@ -63,6 +63,12 @@ def _get_param_widget(widget: WorkflowWidget, param_type: type) -> Any:
     return widget.parameter_box._input_widgets[param_type].children[0]
 
 
+def test_parameter_default_value_test() -> None:
+    widget = _ready_widget(providers=[strict_provider], output_selections=[str])
+    assert _get_param_widget(widget, int).value == 1
+    assert _get_param_widget(widget, float).value == 2.0
+
+
 def test_result_registry() -> None:
     registry = {}
     widget = _ready_widget(
