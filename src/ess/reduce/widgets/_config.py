@@ -3,8 +3,4 @@
 from ipywidgets import Layout
 
 default_layout = Layout(width='80%')
-default_style = {
-    'description_width': 'auto',
-    'value_width': 'auto',
-    'button_width': 'auto',
-}
+default_style = {'description_width': 'auto'}

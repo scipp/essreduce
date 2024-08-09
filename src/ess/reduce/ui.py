@@ -8,7 +8,7 @@ import sciline
 from IPython import display
 from ipywidgets import Layout, TwoByTwoLayout
 
-from .widgets import SwitchWidget, create_parameter_widget
+from .widgets import SwitchWidget, create_parameter_widget, default_style
 from .workflow import (
     Key,
     assign_parameter_values,
@@ -18,11 +18,6 @@ from .workflow import (
     workflow_registry,
 )
 
-_style = {
-    'description_width': 'auto',
-    'value_width': 'auto',
-    'button_width': 'auto',
-}
 workflow_select = widgets.Dropdown(
     options=[(workflow.__name__, workflow) for workflow in workflow_registry],
     description='Workflow:',
@@ -35,7 +30,7 @@ typical_outputs_widget = widgets.SelectMultiple(
 
 possible_outputs_widget = widgets.SelectMultiple(
     description='Extended Outputs:',
-    style=_style,
+    style=default_style,
     layout=Layout(width='80%', height='150px'),
 )
 

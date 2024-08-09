@@ -1,13 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-import pytest
 from ess.reduce.parameter import Parameter
 from ess.reduce.widgets import SwitchWidget, create_parameter_widget
 
 
-@pytest.mark.filterwarnings(
-    'ignore::DeprecationWarning'
-)  # Ignore deprecation warning from widget library
 def test_switchable_widget_dispatch() -> None:
     switchable_param = Parameter('a', 'a', 1, switchable=True)
     assert isinstance(create_parameter_widget(switchable_param), SwitchWidget)
@@ -15,9 +11,6 @@ def test_switchable_widget_dispatch() -> None:
     assert not isinstance(create_parameter_widget(non_switchable_param), SwitchWidget)
 
 
-@pytest.mark.filterwarnings(
-    'ignore::DeprecationWarning'
-)  # Ignore deprecation warning from widget library
 def test_collect_values_from_disabled_switchable_widget() -> None:
     from ess.reduce.ui import collect_values
     from ipywidgets import Box, Text, VBox
