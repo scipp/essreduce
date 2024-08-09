@@ -45,3 +45,7 @@ class SwitchWidget(HBox):
     @property
     def value(self) -> Any:
         return self.wrapped.value
+
+    @value.setter
+    def value(self, value: Any) -> None:
+        self.wrapped.value = value

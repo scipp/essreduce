@@ -5,7 +5,7 @@ from functools import partial
 from typing import Any
 
 import ipywidgets as widgets
-import sciline
+import sciline as sl
 from IPython import display
 from ipywidgets import Layout, TwoByTwoLayout
 
@@ -32,7 +32,7 @@ def _wrap_foldable(
 
 
 class OutputSelectionWidget(widgets.VBox):
-    def __init__(self, workflow: sciline.Pipeline, **kwargs):
+    def __init__(self, workflow: sl.Pipeline, **kwargs):
         self.typical_outputs_widget = widgets.SelectMultiple(
             options=get_typical_outputs(workflow),
             layout=Layout(width='90%', height='auto'),
@@ -100,7 +100,7 @@ class ParameterBox(widgets.VBox):
 
 
 def _registry_getter_template(
-    workflow: sciline.Pipeline, output_selection_box: OutputSelectionWidget
+    workflow: sl.Pipeline, output_selection_box: OutputSelectionWidget
 ) -> dict[Key, Parameter]:
     return get_parameters(workflow, output_selection_box.value)
 
@@ -145,7 +145,7 @@ class ResultBox(widgets.VBox):
 
 
 def _workflow_runner_template(
-    workflow_constructor: Callable[[], sciline.Pipeline],
+    workflow_constructor: Callable[[], sl.Pipeline],
     output_selection_box: OutputSelectionWidget,
     input_selection_box: ParameterBox,
 ) -> dict[type, Any]:
@@ -154,7 +154,7 @@ def _workflow_runner_template(
     target_outputs = output_selection_box.value
     values = input_selection_box.collect_values()
     return assign_parameter_values(workflow, values).compute(
-        target_outputs, scheduler=sciline.scheduler.NaiveScheduler()
+        target_outputs, scheduler=sl.scheduler.NaiveScheduler()
     )
 
 
@@ -190,39 +190,51 @@ def connect_output_selection_and_parameter_run_button(
     parameter_refresh_button.on_click(observe_parameter_refrheshed)
 
 
+class WorkflowWidget(widgets.TwoByTwoLayout):
+    def __init__(
+        self, workflow: sl.Pipeline, result_registry: dict | None = None, **kwargs
+    ):
+        self.output_selection_box = OutputSelectionWidget(workflow)
+        registry_getter = partial(
+            _registry_getter_template, workflow, self.output_selection_box
+        )
+        self.parameter_box = ParameterBox(registry_getter)
+        workflow_runner = partial(
+            _workflow_runner_template,
+            workflow.copy,
+            self.output_selection_box,
+            self.parameter_box,
+        )
+        self.result_box = ResultBox(workflow_runner, result_registry)
+        connect_refresh_button(
+            self.parameter_box.parameter_refresh_button, self.result_box.output
+        )
+        connect_output_selection_and_parameter_run_button(
+            self.output_selection_box.typical_outputs_widget,
+            self.output_selection_box.possible_outputs_widget,
+            parameter_refresh_button=self.parameter_box.parameter_refresh_button,
+            run_button=self.result_box.run_button,
+        )
+        for box in (self.output_selection_box, self.parameter_box, self.result_box):
+            box.layout.border = '1px solid black'
+
+        super().__init__(
+            top_left=self.output_selection_box,
+            top_right=self.parameter_box,
+            bottom_left=self.result_box,
+            grid_gap="10px",
+            layout=default_layout,
+            **kwargs,
+        )
+
+
 def workflow_widget_from_constructor(
-    workflow_constructor: Callable[[], sciline.Pipeline],
+    workflow_constructor: Callable[[], sl.Pipeline],
     result_registry: dict | None = None,
 ) -> TwoByTwoLayout:
     """Create a widget for a workflow constructed from a workflow constructor."""
     workflow = workflow_constructor()
-    output_selection_box = OutputSelectionWidget(workflow)
-    registry_getter = partial(_registry_getter_template, workflow, output_selection_box)
-    parameter_box = ParameterBox(registry_getter)
-    workflow_runner = partial(
-        _workflow_runner_template,
-        workflow_constructor,
-        output_selection_box,
-        parameter_box,
-    )
-    result_box = ResultBox(workflow_runner, result_registry)
-    connect_refresh_button(parameter_box.parameter_refresh_button, result_box.output)
-    connect_output_selection_and_parameter_run_button(
-        output_selection_box.typical_outputs_widget,
-        output_selection_box.possible_outputs_widget,
-        parameter_refresh_button=parameter_box.parameter_refresh_button,
-        run_button=result_box.run_button,
-    )
-    for box in (output_selection_box, parameter_box, result_box):
-        box.layout.border = '1px solid black'
-
-    return TwoByTwoLayout(
-        top_left=output_selection_box,
-        top_right=parameter_box,
-        bottom_left=result_box,
-        grid_gap="10px",
-        layout=default_layout,
-    )
+    return WorkflowWidget(workflow, result_registry)
 
 
 def workflow_widget(result_registry: dict | None = None) -> widgets.Widget:
