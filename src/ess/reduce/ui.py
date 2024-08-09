@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-from collections.abc import Callable, Iterable
-from typing import Any, cast
+from collections.abc import Callable
+from functools import partial
+from typing import Any
 
 import ipywidgets as widgets
 import sciline
 from IPython import display
 from ipywidgets import Layout, TwoByTwoLayout
 
-from .widgets import SwitchWidget, create_parameter_widget, default_style
+from .parameter import Parameter
+from .widgets import SwitchWidget, create_parameter_widget, default_layout
 from .workflow import (
     Key,
     assign_parameter_values,
@@ -18,145 +20,228 @@ from .workflow import (
     workflow_registry,
 )
 
-workflow_select = widgets.Dropdown(
-    options=[(workflow.__name__, workflow) for workflow in workflow_registry],
-    description='Workflow:',
-    value=None,
-)
 
-typical_outputs_widget = widgets.SelectMultiple(
-    description='Outputs:', layout=Layout(width='80%', height='150px')
-)
-
-possible_outputs_widget = widgets.SelectMultiple(
-    description='Extended Outputs:',
-    style=default_style,
-    layout=Layout(width='80%', height='150px'),
-)
+def _wrap_foldable(
+    wrapped: widgets.Widget, title: str | None = None
+) -> widgets.Accordion:
+    return widgets.Accordion(
+        [wrapped],
+        layout=Layout(width='99%', height='auto'),
+        titles=(title,),
+    )
 
 
-def handle_workflow_select(change) -> None:
-    selected_workflow: sciline.Pipeline = change.new()
-    typical_outputs_widget.options = get_typical_outputs(selected_workflow)
-    possible_outputs_widget.options = get_possible_outputs(selected_workflow)
+class OutputSelectionWidget(widgets.VBox):
+    def __init__(self, workflow: sciline.Pipeline, **kwargs):
+        self.typical_outputs_widget = widgets.SelectMultiple(
+            options=get_typical_outputs(workflow),
+            layout=Layout(width='90%', height='auto'),
+        )
+        self.possible_outputs_widget = widgets.SelectMultiple(
+            options=get_possible_outputs(workflow),
+            layout=Layout(width='90%', height='auto'),
+        )
+        # Wrapping the selection widget in an individual accordion.
+        # It is not possible to have multiple sections open in one ``Accordion`` widget.
+        _typical_selection = _wrap_foldable(
+            self.typical_outputs_widget, title='Typical Outputs'
+        )
+        _typical_selection.selected_index = 0  # Open typical outputs by default
+        _possible_selection = _wrap_foldable(
+            self.possible_outputs_widget, title='Extended Outputs'
+        )
+        super().__init__([_typical_selection, _possible_selection], **kwargs)
+
+    @property
+    def value(self):
+        return self.typical_outputs_widget.value + self.possible_outputs_widget.value
 
 
-workflow_select.observe(handle_workflow_select, names='value')
+class ParameterBox(widgets.VBox):
+    def __init__(
+        self,
+        registry_getter: Callable[[], dict[Key, Parameter]],
+        **kwargs,
+    ):
+        self.parameter_refresh_button = widgets.Button(
+            description='Refresh Parameters',
+            disabled=False,
+            button_style='success',
+            tooltip='Generate Parameter Input Widgets',
+        )
+        self._input_registry = {}
+        self._input_widgets = {}
+        self._input_box = widgets.VBox()
 
-generate_parameter_button = widgets.Button(
-    description='Generate Parameters',
-    disabled=False,
-    button_style='info',
-    tooltip='Generate Parameters',
-)
-
-reset_button = widgets.Button(
-    description='Reset',
-    disabled=True,
-    button_style='info',
-    tooltip='Reset',
-)
-
-parameter_box = widgets.VBox([])
-
-
-def generate_parameter_widgets():
-    workflow_constructor = cast(Callable[[], sciline.Pipeline], workflow_select.value)
-    selected_workflow = workflow_constructor()
-    outputs = possible_outputs_widget.value + typical_outputs_widget.value
-    registry = get_parameters(selected_workflow, outputs)
-
-    for parameter in registry.values():
-        temp_widget = create_parameter_widget(parameter)
-        temp = widgets.HBox([temp_widget])
-        parameter_box.children = (*parameter_box.children, temp)
-
-
-def on_button_clicked(b):
-    generate_parameter_widgets()
-    generate_parameter_button.disabled = True
-    reset_button.disabled = False
-    run_button.disabled = False
-    output.clear_output()
-
-
-generate_parameter_button.on_click(on_button_clicked)
-
-
-def reset_button_clicked(b):
-    generate_parameter_button.disabled = False
-    reset_button.disabled = True
-    parameter_box.children = []
-    output.clear_output()
-
-
-reset_button.on_click(reset_button_clicked)
-
-button_box = widgets.HBox([generate_parameter_button, reset_button])
-workflow_box = widgets.VBox(
-    [workflow_select, typical_outputs_widget, possible_outputs_widget, button_box]
-)
-
-run_button = widgets.Button(
-    description='Run',
-    disabled=True,
-    button_style='success',
-    tooltip='Run',
-)
-
-output = widgets.Output()
-
-
-def collect_values(
-    parameter_box: widgets.VBox, param_keys: Iterable[Key]
-) -> dict[Key, Any]:
-    return {
-        node: parameter_box.children[i].children[0].value
-        for i, node in enumerate(param_keys)
-        if (
-            not isinstance(
-                widget := parameter_box.children[i].children[0], SwitchWidget
+        def _refresh_input_box(_: widgets.Button):
+            new_input_parameters = registry_getter()
+            self._input_registry.clear()
+            self._input_registry.update(new_input_parameters)
+            self._input_widgets.clear()
+            self._input_widgets.update(
+                {
+                    node: widgets.HBox([create_parameter_widget(parameter)])
+                    for node, parameter in registry_getter().items()
+                }
             )
+            self._input_box.children = list(self._input_widgets.values())
+
+        self.parameter_refresh_button.on_click(_refresh_input_box)
+
+        super().__init__([self.parameter_refresh_button, self._input_box], **kwargs)
+
+    def collect_values(self) -> dict[Key, Any]:
+        return {
+            node: widget.value
+            for node, widget_box in self._input_widgets.items()
+            if (not isinstance((widget := widget_box.children[0]), SwitchWidget))
+            or widget.enabled
+        }
+
+
+def _registry_getter_template(
+    workflow: sciline.Pipeline, output_selection_box: OutputSelectionWidget
+) -> dict[Key, Parameter]:
+    return get_parameters(workflow, output_selection_box.value)
+
+
+class ResultBox(widgets.VBox):
+    def __init__(
+        self,
+        workflow_runner: Callable[[], dict[type, Any]],
+        result_registry: dict | None = None,
+        **kwargs,
+    ):
+        self.output = widgets.Output()
+        self.run_button = widgets.Button(
+            description='Run',
+            disabled=False,
+            button_style='success',
+            tooltip='Run',
         )
-        or widget.enabled
-    }
-
-
-def run_workflow(_: widgets.Button) -> None:
-    workflow_constructor = cast(Callable[[], sciline.Pipeline], workflow_select.value)
-    selected_workflow = workflow_constructor()
-    outputs = possible_outputs_widget.value + typical_outputs_widget.value
-    registry = get_parameters(selected_workflow, outputs)
-
-    values = collect_values(parameter_box, registry.keys())
-
-    workflow = assign_parameter_values(selected_workflow, values)
-
-    with output:
-        compute_result = workflow.compute(
-            outputs, scheduler=sciline.scheduler.NaiveScheduler()
+        output_clear_button = widgets.Button(
+            description='Clear Output',
+            button_style='warning',
+            tooltip='Clear Output',
         )
-        results.clear()
-        results.update(compute_result)
-        for i in compute_result.values():
-            display.display(display.HTML(i._repr_html_()))
+
+        def run_workflow(_: widgets.Button) -> None:
+            self.output.clear_output()
+            with self.output:
+                compute_result = workflow_runner()
+                if result_registry is not None:
+                    result_registry.clear()
+                    result_registry.update(compute_result)
+                for i in compute_result.values():
+                    display.display(display.HTML(i._repr_html_()))
+
+        def clear_output(_: widgets.Button) -> None:
+            self.output.clear_output()
+
+        self.run_button.on_click(run_workflow)
+        output_clear_button.on_click(clear_output)
+        button_box = widgets.HBox([self.run_button, output_clear_button])
+        super().__init__([button_box, self.output], **kwargs)
 
 
-run_button.on_click(run_workflow)
+def _workflow_runner_template(
+    workflow_constructor: Callable[[], sciline.Pipeline],
+    output_selection_box: OutputSelectionWidget,
+    input_selection_box: ParameterBox,
+) -> dict[type, Any]:
+    """Template function that constructs a workflow from inputs of widgets."""
+    workflow = workflow_constructor()
+    target_outputs = output_selection_box.value
+    values = input_selection_box.collect_values()
+    return assign_parameter_values(workflow, values).compute(
+        target_outputs, scheduler=sciline.scheduler.NaiveScheduler()
+    )
 
-layout = TwoByTwoLayout(
-    top_left=workflow_box,
-    bottom_left=widgets.VBox([run_button, output]),
-    bottom_right=parameter_box,
-)
-"""Widget for selecting a workflow and its parameters.
 
-To render this in a voila server, create a notebook which imports this
-layout and then render it.
-```python
-    from ess.reduce import ui
-    ui.layout
-```
-Results will be in ui.results
-"""
-results = {}
+def connect_refresh_button(
+    refresh_button: widgets.Button, output_widget: widgets.Output
+) -> None:
+    def refresh_output(_: widgets.Button):
+        output_widget.clear_output()
+
+    refresh_button.on_click(refresh_output)
+
+
+def connect_output_selection_and_parameter_run_button(
+    *output_selection_widgets: widgets.Widget,
+    parameter_refresh_button: widgets.Button,
+    run_button: widgets.Button,
+) -> None:
+    # Disable run button when output selection changes
+    def observe_selection_change(_) -> None:
+        run_button.disabled = True
+        run_button.tooltip = 'To run the workflow, refresh parameters.'
+
+    for output_selection_widget in output_selection_widgets:
+        output_selection_widget.observe(observe_selection_change)
+
+    # Enable run button when parameters are generated
+    original_run_button_tooltip = run_button.tooltip
+
+    def observe_parameter_refrheshed(_) -> None:
+        run_button.disabled = False
+        run_button.tooltip = original_run_button_tooltip
+
+    parameter_refresh_button.on_click(observe_parameter_refrheshed)
+
+
+def workflow_widget_from_constructor(
+    workflow_constructor: Callable[[], sciline.Pipeline],
+    result_registry: dict | None = None,
+) -> TwoByTwoLayout:
+    """Create a widget for a workflow constructed from a workflow constructor."""
+    workflow = workflow_constructor()
+    output_selection_box = OutputSelectionWidget(workflow)
+    registry_getter = partial(_registry_getter_template, workflow, output_selection_box)
+    parameter_box = ParameterBox(registry_getter)
+    workflow_runner = partial(
+        _workflow_runner_template,
+        workflow_constructor,
+        output_selection_box,
+        parameter_box,
+    )
+    result_box = ResultBox(workflow_runner, result_registry)
+    connect_refresh_button(parameter_box.parameter_refresh_button, result_box.output)
+    connect_output_selection_and_parameter_run_button(
+        output_selection_box.typical_outputs_widget,
+        output_selection_box.possible_outputs_widget,
+        parameter_refresh_button=parameter_box.parameter_refresh_button,
+        run_button=result_box.run_button,
+    )
+    for box in (output_selection_box, parameter_box, result_box):
+        box.layout.border = '1px solid black'
+
+    return TwoByTwoLayout(
+        top_left=output_selection_box,
+        top_right=parameter_box,
+        bottom_left=result_box,
+        grid_gap="10px",
+        layout=default_layout,
+    )
+
+
+def workflow_widget(result_registry: dict | None = None) -> widgets.Widget:
+    """Create a widget for a workflow selected from a dropdown."""
+    workflow_select = widgets.Dropdown(
+        options=[(workflow.__name__, workflow) for workflow in workflow_registry],
+        description='Workflow:',
+        value=None,
+        layout=default_layout,
+        tooltip='Select a workflow.',
+    )
+
+    def refresh_workflow_box(change) -> None:
+        workflow_box.children = [
+            workflow_widget_from_constructor(change.new, result_registry)
+        ]
+
+    workflow_select.observe(refresh_workflow_box, names='value')
+
+    workflow_selection_box = widgets.HBox([workflow_select], layout=default_layout)
+    workflow_box = widgets.Box(layout=default_layout)
+    return widgets.VBox([workflow_selection_box, workflow_box])
