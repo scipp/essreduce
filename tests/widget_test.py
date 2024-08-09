@@ -5,8 +5,9 @@ from typing import Any, NewType
 
 import sciline as sl
 from ess.reduce.parameter import Parameter, parameter_registry
-from ess.reduce.ui import WorkflowWidget
+from ess.reduce.ui import WorkflowWidget, workflow_widget
 from ess.reduce.widgets import SwitchWidget, create_parameter_widget
+from ess.reduce.workflow import register_workflow, workflow_registry
 from ipywidgets import FloatText, IntText
 
 SwitchableInt = NewType('SwitchableInt', int)
@@ -35,6 +36,13 @@ def _(param: FloatParam) -> FloatText:
     return FloatText(value=param.default, description=param.name)
 
 
+def _refresh_widget_parameter(
+    *, widget: WorkflowWidget, output_selections: list[type]
+) -> None:
+    widget.output_selection_box.typical_outputs_widget.value = output_selections
+    widget.parameter_box.parameter_refresh_button.click()
+
+
 def _ready_widget(
     *,
     providers: list[Callable] | None = None,
@@ -46,8 +54,7 @@ def _ready_widget(
         sl.Pipeline(providers or [], params=params or {}),
         result_registry=result_registry,
     )
-    widget.output_selection_box.typical_outputs_widget.value = output_selections
-    widget.parameter_box.parameter_refresh_button.click()
+    _refresh_widget_parameter(widget=widget, output_selections=output_selections)
     return widget
 
 
@@ -138,3 +145,70 @@ def test_collect_values_from_enabled_switchable_widget() -> None:
     float_widget.value = 0.2
 
     assert widget.parameter_box.collect_values() == {SwitchableFloat: 0.2}
+
+
+def dummy_workflow_constructor() -> sl.Pipeline:
+    return sl.Pipeline([strict_provider])
+
+
+def test_register_workflow() -> None:
+    register_workflow(dummy_workflow_constructor)
+    assert dummy_workflow_constructor in workflow_registry
+    # Clean up
+    workflow_registry.discard(dummy_workflow_constructor)
+    assert dummy_workflow_constructor not in workflow_registry
+
+
+def _get_selection_widget(widget):
+    return widget.children[0].children[0]
+
+
+def test_workflow_registry_applied_to_selector() -> None:
+    expected_constructor_pair = (
+        'dummy_workflow_constructor',
+        dummy_workflow_constructor,
+    )
+
+    register_workflow(dummy_workflow_constructor)
+    selection_widget = _get_selection_widget(workflow_widget())
+    assert expected_constructor_pair in selection_widget.options
+
+    # Clean up
+    workflow_registry.discard(dummy_workflow_constructor)
+    selection_widget = _get_selection_widget(workflow_widget())
+    assert expected_constructor_pair not in selection_widget.options
+
+
+def dummy_second_workflow_constructor() -> sl.Pipeline:
+    return sl.Pipeline([provider_with_switch])
+
+
+def test_workflow_selection() -> None:
+    # Prepare
+    register_workflow(dummy_workflow_constructor)
+    register_workflow(dummy_second_workflow_constructor)
+    widget = workflow_widget()
+    selection_widget = _get_selection_widget(widget)
+    # Before selection
+    assert len(widget.children[1].children) == 0
+    # Select first workflow
+    selection_widget.value = dummy_workflow_constructor
+    assert len(widget.children[1].children) == 1
+    # Test created WorkflowWidget
+    first_widget = widget.children[1].children[0]
+    assert isinstance(first_widget, WorkflowWidget)
+    assert first_widget.output_selection_box.typical_outputs_widget.options == (str,)
+    _refresh_widget_parameter(widget=first_widget, output_selections=[str])
+    assert first_widget.parameter_box._input_widgets.keys() == {int, float}
+    # Select second workflow
+    selection_widget.value = dummy_second_workflow_constructor
+    second_widget = widget.children[1].children[0]
+    _refresh_widget_parameter(widget=second_widget, output_selections=[str])
+    assert second_widget.parameter_box._input_widgets.keys() == {
+        SwitchableInt,
+        SwitchableFloat,
+    }
+
+    # Clean up
+    workflow_registry.discard(dummy_workflow_constructor)
+    workflow_registry.discard(dummy_second_workflow_constructor)
