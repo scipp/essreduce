@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import contextmanager
 from typing import Any, NewType
 
 import sciline as sl
@@ -151,11 +152,25 @@ def dummy_workflow_constructor() -> sl.Pipeline:
     return sl.Pipeline([strict_provider])
 
 
+@contextmanager
+def temporary_workflow_registry(
+    *constructors: Callable[[], sl.Pipeline],
+) -> Generator[None, None, None]:
+    existance_flags = {
+        constructor: constructor in workflow_registry for constructor in constructors
+    }
+    for constructor in constructors:
+        register_workflow(constructor)
+    yield
+    for constructor, flag in existance_flags.items():
+        if not flag:
+            workflow_registry.discard(constructor)
+
+
 def test_register_workflow() -> None:
-    register_workflow(dummy_workflow_constructor)
-    assert dummy_workflow_constructor in workflow_registry
-    # Clean up
-    workflow_registry.discard(dummy_workflow_constructor)
+    with temporary_workflow_registry(dummy_workflow_constructor):
+        assert dummy_workflow_constructor in workflow_registry
+
     assert dummy_workflow_constructor not in workflow_registry
 
 
@@ -168,13 +183,10 @@ def test_workflow_registry_applied_to_selector() -> None:
         'dummy_workflow_constructor',
         dummy_workflow_constructor,
     )
+    with temporary_workflow_registry(dummy_workflow_constructor):
+        selection_widget = _get_selection_widget(workflow_widget())
+        assert expected_constructor_pair in selection_widget.options
 
-    register_workflow(dummy_workflow_constructor)
-    selection_widget = _get_selection_widget(workflow_widget())
-    assert expected_constructor_pair in selection_widget.options
-
-    # Clean up
-    workflow_registry.discard(dummy_workflow_constructor)
     selection_widget = _get_selection_widget(workflow_widget())
     assert expected_constructor_pair not in selection_widget.options
 
@@ -185,30 +197,29 @@ def dummy_second_workflow_constructor() -> sl.Pipeline:
 
 def test_workflow_selection() -> None:
     # Prepare
-    register_workflow(dummy_workflow_constructor)
-    register_workflow(dummy_second_workflow_constructor)
-    widget = workflow_widget()
-    selection_widget = _get_selection_widget(widget)
-    # Before selection
-    assert len(widget.children[1].children) == 0
-    # Select first workflow
-    selection_widget.value = dummy_workflow_constructor
-    assert len(widget.children[1].children) == 1
-    # Test created WorkflowWidget
-    first_widget = widget.children[1].children[0]
-    assert isinstance(first_widget, WorkflowWidget)
-    assert first_widget.output_selection_box.typical_outputs_widget.options == (str,)
-    _refresh_widget_parameter(widget=first_widget, output_selections=[str])
-    assert first_widget.parameter_box._input_widgets.keys() == {int, float}
-    # Select second workflow
-    selection_widget.value = dummy_second_workflow_constructor
-    second_widget = widget.children[1].children[0]
-    _refresh_widget_parameter(widget=second_widget, output_selections=[str])
-    assert second_widget.parameter_box._input_widgets.keys() == {
-        SwitchableInt,
-        SwitchableFloat,
-    }
-
-    # Clean up
-    workflow_registry.discard(dummy_workflow_constructor)
-    workflow_registry.discard(dummy_second_workflow_constructor)
+    with temporary_workflow_registry(
+        dummy_workflow_constructor, dummy_second_workflow_constructor
+    ):
+        widget = workflow_widget()
+        selection_widget = _get_selection_widget(widget)
+        # Before selection
+        assert len(widget.children[1].children) == 0
+        # Select first workflow
+        selection_widget.value = dummy_workflow_constructor
+        assert len(widget.children[1].children) == 1
+        # Test created WorkflowWidget
+        first_widget = widget.children[1].children[0]
+        assert isinstance(first_widget, WorkflowWidget)
+        assert first_widget.output_selection_box.typical_outputs_widget.options == (
+            str,
+        )
+        _refresh_widget_parameter(widget=first_widget, output_selections=[str])
+        assert first_widget.parameter_box._input_widgets.keys() == {int, float}
+        # Select second workflow
+        selection_widget.value = dummy_second_workflow_constructor
+        second_widget = widget.children[1].children[0]
+        _refresh_widget_parameter(widget=second_widget, output_selections=[str])
+        assert second_widget.parameter_box._input_widgets.keys() == {
+            SwitchableInt,
+            SwitchableFloat,
+        }
