@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 from collections.abc import Callable
-from functools import partial
 from typing import Any
 
 import ipywidgets as widgets
@@ -101,12 +100,6 @@ class ParameterBox(widgets.VBox):
         }
 
 
-def _registry_getter_template(
-    workflow: sl.Pipeline, output_selection_box: OutputSelectionWidget
-) -> dict[Key, Parameter]:
-    return get_parameters(workflow, output_selection_box.value)
-
-
 class ResultBox(widgets.VBox):
     def __init__(
         self,
@@ -146,18 +139,6 @@ class ResultBox(widgets.VBox):
         super().__init__([button_box, self.output], **kwargs)
 
 
-def _workflow_runner_template(
-    workflow_constructor: Callable[[], sl.Pipeline],
-    output_selection_box: OutputSelectionWidget,
-    input_selection_box: ParameterBox,
-) -> dict[type, Any]:
-    """Template function that constructs a workflow from inputs of widgets."""
-    workflow = workflow_constructor()
-    target_outputs = output_selection_box.value
-    values = input_selection_box.collect_values()
-    return assign_parameter_values(workflow, values).compute(target_outputs)
-
-
 def connect_refresh_button(
     refresh_button: widgets.Button, output_widget: widgets.Output
 ) -> None:
@@ -195,16 +176,19 @@ class WorkflowWidget(widgets.TwoByTwoLayout):
         self, workflow: sl.Pipeline, result_registry: dict | None = None, **kwargs
     ):
         self.output_selection_box = OutputSelectionWidget(workflow)
-        registry_getter = partial(
-            _registry_getter_template, workflow, self.output_selection_box
-        )
+
+        def registry_getter() -> dict[Key, Parameter]:
+            """Return the parameter registry for the workflow."""
+            return get_parameters(workflow, tuple(self.output_selection_box.value))
+
         self.parameter_box = ParameterBox(registry_getter)
-        workflow_runner = partial(
-            _workflow_runner_template,
-            workflow.copy,
-            self.output_selection_box,
-            self.parameter_box,
-        )
+
+        def workflow_runner() -> dict[type, Any]:
+            """Run the workflow with the current parameter values."""
+            return assign_parameter_values(
+                workflow.copy(), self.parameter_box.collect_values()
+            ).compute(self.output_selection_box.value)
+
         self.result_box = ResultBox(workflow_runner, result_registry)
         connect_refresh_button(
             self.parameter_box.parameter_refresh_button, self.result_box.output
