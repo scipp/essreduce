@@ -214,15 +214,6 @@ class WorkflowWidget(widgets.TwoByTwoLayout):
         )
 
 
-def workflow_widget_from_constructor(
-    workflow_constructor: Callable[[], sl.Pipeline],
-    result_registry: dict | None = None,
-) -> WorkflowWidget:
-    """Create a widget for a workflow constructed from a workflow constructor."""
-    workflow = workflow_constructor()
-    return WorkflowWidget(workflow, result_registry)
-
-
 def workflow_widget(result_registry: dict | None = None) -> widgets.Widget:
     """Create a widget for a workflow selected from a dropdown."""
     workflow_select = widgets.Dropdown(
@@ -234,9 +225,7 @@ def workflow_widget(result_registry: dict | None = None) -> widgets.Widget:
     )
 
     def refresh_workflow_box(change) -> None:
-        workflow_box.children = [
-            workflow_widget_from_constructor(change.new, result_registry)
-        ]
+        workflow_box.children = [WorkflowWidget(change.new(), result_registry)]
 
     workflow_select.observe(refresh_workflow_box, names='value')
 
