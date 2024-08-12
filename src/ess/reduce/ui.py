@@ -155,9 +155,7 @@ def _workflow_runner_template(
     workflow = workflow_constructor()
     target_outputs = output_selection_box.value
     values = input_selection_box.collect_values()
-    return assign_parameter_values(workflow, values).compute(
-        target_outputs, scheduler=sl.scheduler.NaiveScheduler()
-    )
+    return assign_parameter_values(workflow, values).compute(target_outputs)
 
 
 def connect_refresh_button(
