@@ -135,7 +135,7 @@ def test_collect_values_from_disabled_switchable_widget() -> None:
 
     assert not _get_param_widget(widget, SwitchableFloat).enabled
     assert not _get_param_widget(widget, SwitchableInt).enabled
-    assert widget.parameter_box.collect_values() == {}
+    assert widget.parameter_box.value == {}
 
 
 def test_collect_values_from_enabled_switchable_widget() -> None:
@@ -145,7 +145,7 @@ def test_collect_values_from_enabled_switchable_widget() -> None:
     float_widget.enabled = True
     float_widget.value = 0.2
 
-    assert widget.parameter_box.collect_values() == {SwitchableFloat: 0.2}
+    assert widget.parameter_box.value == {SwitchableFloat: 0.2}
 
 
 def dummy_workflow_constructor() -> sl.Pipeline:

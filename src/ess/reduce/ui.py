@@ -6,7 +6,7 @@ from typing import Any
 import ipywidgets as widgets
 import sciline as sl
 from IPython import display
-from ipywidgets import Layout, TwoByTwoLayout
+from ipywidgets import Layout
 
 from .parameter import Parameter
 from .widgets import SwitchWidget, create_parameter_widget, default_layout
@@ -91,7 +91,9 @@ class ParameterBox(widgets.VBox):
 
         super().__init__([self.parameter_refresh_button, self._input_box], **kwargs)
 
-    def collect_values(self) -> dict[Key, Any]:
+    @property
+    def value(self) -> dict[Key, Any]:
+        """Return the current parameter values with matching types as a dictionary."""
         return {
             node: widget.value
             for node, widget_box in self._input_widgets.items()
@@ -186,7 +188,7 @@ class WorkflowWidget(widgets.TwoByTwoLayout):
         def workflow_runner() -> dict[type, Any]:
             """Run the workflow with the current parameter values."""
             return assign_parameter_values(
-                workflow.copy(), self.parameter_box.collect_values()
+                workflow.copy(), self.parameter_box.value
             ).compute(self.output_selection_box.value)
 
         self.result_box = ResultBox(workflow_runner, result_registry)
@@ -215,7 +217,7 @@ class WorkflowWidget(widgets.TwoByTwoLayout):
 def workflow_widget_from_constructor(
     workflow_constructor: Callable[[], sl.Pipeline],
     result_registry: dict | None = None,
-) -> TwoByTwoLayout:
+) -> WorkflowWidget:
     """Create a widget for a workflow constructed from a workflow constructor."""
     workflow = workflow_constructor()
     return WorkflowWidget(workflow, result_registry)
