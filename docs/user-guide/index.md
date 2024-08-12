@@ -6,5 +6,6 @@
 ---
 maxdepth: 2
 ---
+widget
 reduction-workflow-guidelines
 ```
