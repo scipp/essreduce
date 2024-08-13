@@ -168,9 +168,10 @@ def vector_parameter_widget(param: VectorParameter):
 
 __all__ = [
     'BoundsWidget',
-    'LinspaceWidget',
     'EssWidget',
-    'VectorWidget',
+    'LinspaceWidget',
+    'OptionalWidget',
     'SwitchWidget',
+    'VectorWidget',
     'create_parameter_widget',
 ]
