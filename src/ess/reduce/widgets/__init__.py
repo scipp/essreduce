@@ -23,6 +23,7 @@ from ._linspace_widget import LinspaceWidget
 from ._vector_widget import VectorWidget
 from ._bounds_widget import BoundsWidget
 from ._switchable_widget import SwitchWidget
+from ._optional_widget import OptionalWidget
 
 
 class EssWidget(Protocol):
@@ -56,7 +57,23 @@ def switchable_widget(
     return wrapper
 
 
+def optional_widget(
+    func: Callable[[Parameter], widgets.Widget],
+) -> Callable[[Parameter], widgets.Widget]:
+    """Wrap a widget in a optional widget."""
+
+    @wraps(func)
+    def wrapper(param: Parameter) -> widgets.Widget:
+        widget = func(param)
+        if param.optional:
+            return OptionalWidget(widget, name=param.name)
+        return widget
+
+    return wrapper
+
+
 @switchable_widget
+@optional_widget  # optional_widget should be applied first
 @singledispatch
 def create_parameter_widget(param: Parameter) -> widgets.Widget:
     """Create a widget for a parameter depending on the ``param`` type.
