@@ -7,12 +7,14 @@ from typing import Any, NewType
 import sciline as sl
 from ess.reduce.parameter import Parameter, parameter_registry
 from ess.reduce.ui import WorkflowWidget, workflow_widget
-from ess.reduce.widgets import SwitchWidget, create_parameter_widget
+from ess.reduce.widgets import OptionalWidget, SwitchWidget, create_parameter_widget
 from ess.reduce.workflow import register_workflow, workflow_registry
 from ipywidgets import FloatText, IntText
 
 SwitchableInt = NewType('SwitchableInt', int)
 SwitchableFloat = NewType('SwitchableFloat', float)
+OptionalInt = int | None
+OptionalFloat = float | None
 
 
 class IntParam(Parameter): ...
@@ -25,6 +27,8 @@ parameter_registry[SwitchableInt] = IntParam('_', '_', 1, switchable=True)
 parameter_registry[SwitchableFloat] = FloatParam('_', '_', 2.0, switchable=True)
 parameter_registry[int] = IntParam('_', '_', 1)
 parameter_registry[float] = FloatParam('_', '_', 2.0)
+parameter_registry[OptionalInt] = IntParam('_', '_', 1, optional=True)
+parameter_registry[OptionalFloat] = FloatParam('_', '_', 2.0, optional=True)
 
 
 @create_parameter_widget.register(IntParam)
@@ -65,6 +69,11 @@ def strict_provider(a: int, b: float) -> str:
 
 def provider_with_switch(a: SwitchableInt, b: SwitchableFloat) -> str:
     return f"{a} + {b}"
+
+
+def provider_with_optional(a: OptionalInt, b: OptionalFloat) -> str:
+    parts = [] if a is None else [str(a)]
+    return ' + '.join([*parts] if b is None else [*parts, str(b)])
 
 
 def _get_param_widget(widget: WorkflowWidget, param_type: type) -> Any:
@@ -146,6 +155,63 @@ def test_collect_values_from_enabled_switchable_widget() -> None:
     float_widget.value = 0.2
 
     assert widget.parameter_box.value == {SwitchableFloat: 0.2}
+
+
+def test_switchable_optional_parameter_switchable_first() -> None:
+    dummy_param = Parameter('a', 'a', 1, switchable=True, optional=True)
+    dummy_widget = create_parameter_widget(dummy_param)
+    assert isinstance(dummy_widget, SwitchWidget)
+    assert isinstance(dummy_widget.wrapped, OptionalWidget)
+
+
+def test_optional_widget_dispatch() -> None:
+    optional_param = Parameter('a', 'a', 1, optional=True)
+    assert isinstance(create_parameter_widget(optional_param), OptionalWidget)
+    non_optional_param = Parameter('b', 'b', 2, optional=False)
+    assert not isinstance(create_parameter_widget(non_optional_param), OptionalWidget)
+
+
+def test_optional_parameter_optional_widget() -> None:
+    widget = _ready_widget(providers=[provider_with_optional], output_selections=[str])
+
+    int_widget = _get_param_widget(widget, OptionalInt)
+    float_widget = _get_param_widget(widget, OptionalFloat)
+
+    assert isinstance(int_widget, OptionalWidget)
+    assert isinstance(float_widget, OptionalWidget)
+
+    assert float_widget.value is None
+    assert int_widget.value is None
+
+
+def test_collect_values_from_optional_widget() -> None:
+    widget = _ready_widget(providers=[provider_with_optional], output_selections=[str])
+
+    float_widget = _get_param_widget(widget, OptionalFloat)
+    float_widget.value = 0.2
+
+    assert widget.parameter_box.value == {OptionalFloat: 0.2, OptionalInt: None}
+
+
+def test_collect_values_from_optional_widget_compute_result() -> None:
+    result_registry = {}
+    widget = _ready_widget(
+        providers=[provider_with_optional],
+        output_selections=[str],
+        result_registry=result_registry,
+    )
+
+    float_widget = _get_param_widget(widget, OptionalFloat)
+    float_widget.value = 0.2
+    widget.result_box.run_button.click()
+
+    assert result_registry == {str: '0.2'}
+
+    int_widget = _get_param_widget(widget, OptionalInt)
+    int_widget.value = 2
+    widget.result_box.run_button.click()
+
+    assert result_registry == {str: '2 + 0.2'}
 
 
 def dummy_workflow_constructor() -> sl.Pipeline:
