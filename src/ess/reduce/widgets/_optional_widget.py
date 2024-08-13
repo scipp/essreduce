@@ -23,12 +23,8 @@ class OptionalWidget(HBox):
             style=default_style,
             layout=Layout(width="auto", min_width="80px"),
             options={str(None): None, "": self.name},
-            default_value=None,
-            tooltips={
-                str(None): "The parameter should be set as None",
-                name: "Click to enable",
-            },
         )
+        self._option_box.value = None
         if hasattr(wrapped, "disabled"):
             # Disable the wrapped widget by default if possible
             # since the option box is set to None by default
