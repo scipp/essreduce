@@ -77,7 +77,7 @@ def load_detector(
         and any auxiliary data stored in the same NeXus group.
     """
     return NeXusDetector(
-        _load_group_with_positions(
+        load_component(
             NeXusLocationSpec(
                 filename=file_path,
                 component_name=detector_name,
@@ -130,7 +130,7 @@ def load_monitor(
         and any auxiliary data stored in the same NeXus group.
     """
     return NeXusMonitor(
-        _load_group_with_positions(
+        load_component(
             NeXusLocationSpec(
                 filename=file_path,
                 component_name=monitor_name,
@@ -184,7 +184,7 @@ def load_source(
         the source NeXus group.
     """
     return NeXusSource(
-        _load_group_with_positions(
+        load_component(
             NeXusLocationSpec(
                 filename=file_path, component_name=source_name, entry_name=entry_name
             ),
@@ -229,7 +229,7 @@ def load_sample(
         the sample NeXus group.
     """
     return NeXusSample(
-        _load_group_with_positions(
+        load_component(
             NeXusLocationSpec(filename=file_path, entry_name=entry_name),
             nx_class=snx.NXsample,
             definitions=definitions,
@@ -237,11 +237,11 @@ def load_sample(
     )
 
 
-def _load_group_with_positions(
+def load_component(
     location: NeXusLocationSpec,
     *,
-    nx_class: Type[snx.NXobject],
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
+    nx_class: type[snx.NXobject],
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataGroup:
     file_path = location.filename
     selection = location.selection

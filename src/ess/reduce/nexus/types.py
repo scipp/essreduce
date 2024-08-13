@@ -2,10 +2,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import (
-    BinaryIO,
-    NewType,
-)
+from typing import Any, BinaryIO, Generic, NewType, TypeVar
 
 import scipp as sc
 import scippnexus as snx
@@ -52,6 +49,23 @@ NeXusEventData = NewType('NeXusEventData', sc.DataArray)
 NeXusComponentName = NewType('NeXusComponentName', str)
 """Name of a component in a NeXus file."""
 
+SourcePosition = NewType('SourcePosition', sc.Variable | None)
+"""Position of the neutron source."""
+
+SamplePosition = NewType('SamplePosition', sc.Variable | None)
+"""Position of the sample."""
+
+PositionOffset = NewType('PositionOffset', sc.Variable | None)
+"""Offset of the a position, SUBTRACTED from base position."""
+
+DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]])
+
+CalibratedDetector = NewType('CalibratedDetector', sc.DataArray)
+CalibratedMonitor = NewType('CalibratedMonitor', sc.DataArray)
+
+DetectorData = NewType('DetectorData', sc.DataArray)
+MonitorData = NewType('MonitorData', sc.DataArray)
+
 
 class NoNewDefinitionsType: ...
 
@@ -59,8 +73,11 @@ class NoNewDefinitionsType: ...
 NoNewDefinitions = NoNewDefinitionsType()
 
 
+Component = TypeVar('Component', bound=snx.NXobject)
+
+
 @dataclass
-class NeXusLocationSpec:
+class NeXusLocationSpec(Generic[Component]):
     """
     NeXus filename and optional parameters to identify (parts of) a component to load.
     """
