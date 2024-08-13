@@ -15,17 +15,44 @@ from .types import (
     CalibratedMonitor,
     DetectorBankSizes,
     DetectorData,
+    DetectorName,
+    DetectorPositionOffset,
     MonitorData,
+    MonitorName,
+    MonitorPositionOffset,
     NeXusDetector,
     NeXusEventData,
+    NeXusFileSpec,
     NeXusLocationSpec,
     NeXusMonitor,
     NeXusSample,
     NeXusSource,
-    PositionOffset,
     SamplePosition,
     SourcePosition,
 )
+
+
+def find_unique_sample(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsample]:
+    return NeXusLocationSpec[snx.NXsample](filename=filename)
+
+
+def find_unique_source(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsource]:
+    return NeXusLocationSpec[snx.NXsource](filename=filename)
+
+
+def find_monitor(
+    filename: NeXusFileSpec, name: MonitorName
+) -> NeXusLocationSpec[snx.NXmonitor]:
+    return NeXusLocationSpec[snx.NXmonitor](filename=filename, component_name=name)
+
+
+def find_detector(
+    filename: NeXusFileSpec, name: DetectorName
+) -> NeXusLocationSpec[snx.NXdetector]:
+    return NeXusLocationSpec[snx.NXdetector](filename=filename, component_name=name)
+
+
+# TODO how to distinguish det and mon event data? do we have to?
 
 
 def load_nexus_sample(location: NeXusLocationSpec[snx.NXsample]) -> NeXusSample:
@@ -117,7 +144,7 @@ def get_sample_position(sample: NeXusSample) -> SamplePosition:
 
 def get_calibrated_detector(
     detector: NeXusDetector,
-    offset: PositionOffset,
+    offset: DetectorPositionOffset,
     # TODO Want to be able to get det if no sample or source or no offset!
     source_position: SourcePosition,
     sample_position: SamplePosition,
@@ -165,7 +192,9 @@ def assemble_detector_data(
 
 
 def get_calibrated_monitor(
-    monitor: NeXusMonitor, offset: PositionOffset, source_position: SourcePosition
+    monitor: NeXusMonitor,
+    offset: MonitorPositionOffset,
+    source_position: SourcePosition,
 ) -> CalibratedMonitor:
     """
     Extract the data array corresponding to a monitor's signal field.
@@ -191,7 +220,7 @@ def assemble_monitor_data(
     Also adds variances to the event data if they are missing.
     """
     da = event_data.assign_coords(monitor.coords).assign_masks(monitor.masks)
-    return MonitorData(_add_variances(da=da))
+    return MonitorData(_add_variances(da))
 
 
 def _drop(
@@ -263,5 +292,20 @@ def LoadMonitorWorkflow() -> sciline.Pipeline:
             get_source_position,
             get_calibrated_monitor,
             assemble_monitor_data,
+        )
+    )
+
+
+def LoadDetectorWorkflow() -> sciline.Pipeline:
+    return sciline.Pipeline(
+        (
+            load_nexus_detector,
+            load_nexus_event_data,
+            load_nexus_source,
+            load_nexus_sample,
+            get_source_position,
+            get_sample_position,
+            get_calibrated_detector,
+            assemble_detector_data,
         )
     )

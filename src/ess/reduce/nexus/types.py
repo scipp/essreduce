@@ -55,8 +55,11 @@ SourcePosition = NewType('SourcePosition', sc.Variable | None)
 SamplePosition = NewType('SamplePosition', sc.Variable | None)
 """Position of the sample."""
 
-PositionOffset = NewType('PositionOffset', sc.Variable | None)
-"""Offset of the a position, SUBTRACTED from base position."""
+DetectorPositionOffset = NewType('DetectorPositionOffset', sc.Variable | None)
+"""Offset of the detector position, SUBTRACTED from base position."""
+
+MonitorPositionOffset = NewType('MonitorPositionOffset', sc.Variable | None)
+
 
 DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]])
 
@@ -76,13 +79,16 @@ NoNewDefinitions = NoNewDefinitionsType()
 Component = TypeVar('Component', bound=snx.NXobject)
 
 
+NeXusFileSpec = FilePath | NeXusFile | NeXusGroup
+
+
 @dataclass
 class NeXusLocationSpec(Generic[Component]):
     """
     NeXus filename and optional parameters to identify (parts of) a component to load.
     """
 
-    filename: FilePath | NeXusFile | NeXusGroup
+    filename: NeXusFileSpec
     entry_name: NeXusEntryName | None = None
     component_name: NeXusComponentName | None = None
     selection: snx.typing.ScippIndex = ()
