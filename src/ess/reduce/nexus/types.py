@@ -32,15 +32,18 @@ NeXusMonitorName = NewType('NeXusMonitorName', str)
 NeXusSourceName = NewType('NeXusSourceName', str)
 """Name of a source in a NeXus file."""
 
-RawDetector = NewType('RawDetector', sc.DataGroup)
-"""Full raw data from a NeXus detector."""
 RawDetectorData = NewType('RawDetectorData', sc.DataArray)
 """Data extracted from a RawDetector."""
-RawMonitor = NewType('RawMonitor', sc.DataGroup)
-"""Full raw data from a NeXus monitor."""
 RawMonitorData = NewType('RawMonitorData', sc.DataArray)
 """Data extracted from a RawMonitor."""
-RawSample = NewType('RawSample', sc.DataGroup)
+
+NeXusDetector = NewType('NeXusDetector', sc.DataGroup)
+"""Full raw data from a NeXus detector."""
+NeXusMonitor = NewType('NeXusMonitor', sc.DataGroup)
+"""Full raw data from a NeXus monitor."""
+NeXusSample = NewType('NeXusSample', sc.DataGroup)
 """Raw data from a NeXus sample."""
-RawSource = NewType('RawSource', sc.DataGroup)
+NeXusSource = NewType('NeXusSource', sc.DataGroup)
 """Raw data from a NeXus source."""
+NeXusEventData = NewType('NeXusEventData', sc.DataArray)
+"""Data array loaded from a NeXus NXevent_data group."""

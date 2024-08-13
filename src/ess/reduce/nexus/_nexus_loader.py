@@ -19,18 +19,18 @@ import scippnexus as snx
 from ..logging import get_logger
 from .types import (
     FilePath,
+    NeXusDetector,
     NeXusDetectorName,
     NeXusEntryName,
     NeXusFile,
     NeXusGroup,
+    NeXusMonitor,
     NeXusMonitorName,
+    NeXusSample,
+    NeXusSource,
     NeXusSourceName,
-    RawDetector,
     RawDetectorData,
-    RawMonitor,
     RawMonitorData,
-    RawSample,
-    RawSource,
 )
 
 
@@ -47,7 +47,7 @@ def load_detector(
     detector_name: NeXusDetectorName,
     entry_name: Optional[NeXusEntryName] = None,
     definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> RawDetector:
+) -> NeXusDetector:
     """Load a single detector (bank) from a NeXus file.
 
     The detector positions are computed automatically from NeXus transformations,
@@ -79,7 +79,7 @@ def load_detector(
         A data group containing the detector events or histogram
         and any auxiliary data stored in the same NeXus group.
     """
-    return RawDetector(
+    return NeXusDetector(
         _load_group_with_positions(
             file_path,
             selection=selection,
@@ -98,7 +98,7 @@ def load_monitor(
     monitor_name: NeXusMonitorName,
     entry_name: Optional[NeXusEntryName] = None,
     definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> RawMonitor:
+) -> NeXusMonitor:
     """Load a single monitor from a NeXus file.
 
     The monitor position is computed automatically from NeXus transformations,
@@ -130,7 +130,7 @@ def load_monitor(
         A data group containing the monitor events or histogram
         and any auxiliary data stored in the same NeXus group.
     """
-    return RawMonitor(
+    return NeXusMonitor(
         _load_group_with_positions(
             file_path,
             selection=selection,
@@ -148,7 +148,7 @@ def load_source(
     source_name: Optional[NeXusSourceName] = None,
     entry_name: Optional[NeXusEntryName] = None,
     definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> RawSource:
+) -> NeXusSource:
     """Load a source from a NeXus file.
 
     The source position is computed automatically from NeXus transformations,
@@ -182,7 +182,7 @@ def load_source(
         A data group containing all data stored in
         the source NeXus group.
     """
-    return RawSource(
+    return NeXusSource(
         _load_group_with_positions(
             file_path,
             selection=(),
@@ -198,7 +198,7 @@ def load_sample(
     file_path: Union[FilePath, NeXusFile, NeXusGroup],
     entry_name: Optional[NeXusEntryName] = None,
     definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> RawSample:
+) -> NeXusSample:
     """Load a sample from a NeXus file.
 
     The sample is located based on its NeXus class.
@@ -231,7 +231,7 @@ def load_sample(
     with _open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         loaded = cast(sc.DataGroup, _unique_child_group(entry, snx.NXsample, None)[()])
-    return RawSample(loaded)
+    return NeXusSample(loaded)
 
 
 def _load_group_with_positions(
@@ -307,7 +307,7 @@ def _unique_child_group(
     return next(iter(children.values()))  # type: ignore[return-value]
 
 
-def extract_detector_data(detector: RawDetector) -> RawDetectorData:
+def extract_detector_data(detector: NeXusDetector) -> RawDetectorData:
     """Get and return the events or histogram from a detector loaded from NeXus.
 
     This function looks for a data array in the detector group and returns that.
@@ -336,7 +336,7 @@ def extract_detector_data(detector: RawDetector) -> RawDetectorData:
     return RawDetectorData(_extract_events_or_histogram(detector))
 
 
-def extract_monitor_data(monitor: RawMonitor) -> RawMonitorData:
+def extract_monitor_data(monitor: NeXusMonitor) -> RawMonitorData:
     """Get and return the events or histogram from a monitor loaded from NeXus.
 
     This function looks for a data array in the monitor group and returns that.
