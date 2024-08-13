@@ -64,6 +64,7 @@ def _source_data() -> sc.DataGroup:
             'type': 'Spallation Neutron Source',
             'position': sc.vector([0, 0, 0], unit='m'),
             'transform': sc.spatial.translation(value=[0, 0, 0], unit='m'),
+            'nexus_component_name': 'source',
         }
     )
 
@@ -74,6 +75,7 @@ def _sample_data() -> sc.DataGroup:
             'name': 'water',
             'chemical_formula': 'H2O',
             'type': 'sample+can',
+            'nexus_component_name': 'sample',
         }
     )
 

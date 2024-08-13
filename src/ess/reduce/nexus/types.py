@@ -1,5 +1,6 @@
 """NeXus domain types for use with Sciline."""
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import (
     BinaryIO,
@@ -47,3 +48,24 @@ NeXusSource = NewType('NeXusSource', sc.DataGroup)
 """Raw data from a NeXus source."""
 NeXusEventData = NewType('NeXusEventData', sc.DataArray)
 """Data array loaded from a NeXus NXevent_data group."""
+
+NeXusComponentName = NewType('NeXusComponentName', str)
+"""Name of a component in a NeXus file."""
+
+
+class NoNewDefinitionsType: ...
+
+
+NoNewDefinitions = NoNewDefinitionsType()
+
+
+@dataclass
+class NeXusLocationSpec:
+    """
+    NeXus filename and optional parameters to identify (parts of) a component to load.
+    """
+
+    filename: FilePath | NeXusFile | NeXusGroup
+    entry_name: NeXusEntryName | None = None
+    component_name: NeXusComponentName | None = None
+    selection: snx.typing.ScippIndex = ()

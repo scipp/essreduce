@@ -24,20 +24,17 @@ from .types import (
     NeXusEntryName,
     NeXusFile,
     NeXusGroup,
+    NeXusLocationSpec,
     NeXusMonitor,
     NeXusMonitorName,
     NeXusSample,
     NeXusSource,
     NeXusSourceName,
+    NoNewDefinitions,
+    NoNewDefinitionsType,
     RawDetectorData,
     RawMonitorData,
 )
-
-
-class NoNewDefinitionsType: ...
-
-
-NoNewDefinitions = NoNewDefinitionsType()
 
 
 def load_detector(
@@ -81,11 +78,13 @@ def load_detector(
     """
     return NeXusDetector(
         _load_group_with_positions(
-            file_path,
-            selection=selection,
-            group_name=detector_name,
+            NeXusLocationSpec(
+                filename=file_path,
+                component_name=detector_name,
+                entry_name=entry_name,
+                selection=selection,
+            ),
             nx_class=snx.NXdetector,
-            entry_name=entry_name,
             definitions=definitions,
         )
     )
@@ -132,11 +131,13 @@ def load_monitor(
     """
     return NeXusMonitor(
         _load_group_with_positions(
-            file_path,
-            selection=selection,
-            group_name=monitor_name,
+            NeXusLocationSpec(
+                filename=file_path,
+                component_name=monitor_name,
+                entry_name=entry_name,
+                selection=selection,
+            ),
             nx_class=snx.NXmonitor,
-            entry_name=entry_name,
             definitions=definitions,
         )
     )
@@ -184,11 +185,10 @@ def load_source(
     """
     return NeXusSource(
         _load_group_with_positions(
-            file_path,
-            selection=(),
-            group_name=source_name,
+            NeXusLocationSpec(
+                filename=file_path, component_name=source_name, entry_name=entry_name
+            ),
             nx_class=snx.NXsource,
-            entry_name=entry_name,
             definitions=definitions,
         )
     )
@@ -228,28 +228,33 @@ def load_sample(
         A data group containing all data stored in
         the sample NeXus group.
     """
-    with _open_nexus_file(file_path, definitions=definitions) as f:
-        entry = _unique_child_group(f, snx.NXentry, entry_name)
-        loaded = cast(sc.DataGroup, _unique_child_group(entry, snx.NXsample, None)[()])
-    return NeXusSample(loaded)
+    return NeXusSample(
+        _load_group_with_positions(
+            NeXusLocationSpec(filename=file_path, entry_name=entry_name),
+            nx_class=snx.NXsample,
+            definitions=definitions,
+        )
+    )
 
 
 def _load_group_with_positions(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    location: NeXusLocationSpec,
     *,
-    selection,
-    group_name: Optional[str],
     nx_class: Type[snx.NXobject],
-    entry_name: Optional[NeXusEntryName] = None,
     definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataGroup:
+    file_path = location.filename
+    selection = location.selection
+    entry_name = location.entry_name
+    group_name = location.component_name
     with _open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
-        instrument = _unique_child_group(entry, snx.NXinstrument, None)
-        loaded = cast(
-            sc.DataGroup,
-            _unique_child_group(instrument, nx_class, group_name)[selection],
-        )
+        if nx_class is snx.NXsample:
+            instrument = entry
+        else:
+            instrument = _unique_child_group(entry, snx.NXinstrument, None)
+        component = _unique_child_group(instrument, nx_class, group_name)
+        loaded = cast(sc.DataGroup, component[selection])
 
         transform_out_name = 'transform'
         if transform_out_name in loaded:
@@ -263,10 +268,10 @@ def _load_group_with_positions(
                 f"Loaded data contains an item '{position_out_name}' but we want to "
                 "store the computed positions under that name."
             )
-
         loaded = snx.compute_positions(
             loaded, store_position=position_out_name, store_transform=transform_out_name
         )
+        loaded['nexus_component_name'] = component.name.split('/')[-1]
         return loaded
 
 
