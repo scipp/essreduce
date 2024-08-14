@@ -43,8 +43,10 @@ NeXusSample = NewType('NeXusSample', sc.DataGroup)
 """Raw data from a NeXus sample."""
 NeXusSource = NewType('NeXusSource', sc.DataGroup)
 """Raw data from a NeXus source."""
-NeXusEventData = NewType('NeXusEventData', sc.DataArray)
-"""Data array loaded from a NeXus NXevent_data group."""
+NeXusDetectorEventData = NewType('NeXusDetectorEventData', sc.DataArray)
+"""Data array loaded from a NeXus NXevent_data group within an NXdetector."""
+NeXusMonitorEventData = NewType('NeXusMonitorEventData', sc.DataArray)
+"""Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
 
 NeXusComponentName = NewType('NeXusComponentName', str)
 """Name of a component in a NeXus file."""
@@ -68,6 +70,8 @@ CalibratedMonitor = NewType('CalibratedMonitor', sc.DataArray)
 
 DetectorData = NewType('DetectorData', sc.DataArray)
 MonitorData = NewType('MonitorData', sc.DataArray)
+
+PulseSelection = NewType('PulseSelection', snx.typing.ScippIndex)
 
 
 class NoNewDefinitionsType: ...

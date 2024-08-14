@@ -5,6 +5,7 @@
 
 from typing import Any
 
+import pandas as pd
 import sciline
 import scipp as sc
 import scippnexus as snx
@@ -15,44 +16,47 @@ from .types import (
     CalibratedMonitor,
     DetectorBankSizes,
     DetectorData,
-    DetectorName,
     DetectorPositionOffset,
     MonitorData,
-    MonitorName,
     MonitorPositionOffset,
     NeXusDetector,
-    NeXusEventData,
+    NeXusDetectorEventData,
+    NeXusDetectorName,
     NeXusFileSpec,
     NeXusLocationSpec,
     NeXusMonitor,
+    NeXusMonitorEventData,
+    NeXusMonitorName,
     NeXusSample,
     NeXusSource,
+    PulseSelection,
     SamplePosition,
     SourcePosition,
 )
 
 
-def find_unique_sample(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsample]:
+def unique_sample_spec(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsample]:
     return NeXusLocationSpec[snx.NXsample](filename=filename)
 
 
-def find_unique_source(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsource]:
+def unique_source_spec(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsource]:
     return NeXusLocationSpec[snx.NXsource](filename=filename)
 
 
-def find_monitor(
-    filename: NeXusFileSpec, name: MonitorName
+def monitor_by_name(
+    filename: NeXusFileSpec, name: NeXusMonitorName, selection: PulseSelection
 ) -> NeXusLocationSpec[snx.NXmonitor]:
-    return NeXusLocationSpec[snx.NXmonitor](filename=filename, component_name=name)
+    return NeXusLocationSpec[snx.NXmonitor](
+        filename=filename, component_name=name, selection=selection
+    )
 
 
-def find_detector(
-    filename: NeXusFileSpec, name: DetectorName
+def detector_by_name(
+    filename: NeXusFileSpec, name: NeXusDetectorName, selection: PulseSelection
 ) -> NeXusLocationSpec[snx.NXdetector]:
-    return NeXusLocationSpec[snx.NXdetector](filename=filename, component_name=name)
-
-
-# TODO how to distinguish det and mon event data? do we have to?
+    return NeXusLocationSpec[snx.NXdetector](
+        filename=filename, component_name=name, selection=selection
+    )
 
 
 def load_nexus_sample(location: NeXusLocationSpec[snx.NXsample]) -> NeXusSample:
@@ -121,15 +125,28 @@ def load_nexus_monitor(location: NeXusLocationSpec[snx.NXmonitor]) -> NeXusMonit
     )
 
 
-def load_nexus_event_data(
-    location: NeXusLocationSpec[snx.NXevent_data],
-) -> NeXusEventData:
-    return NeXusEventData(
+def load_nexus_detector_event_data(
+    location: NeXusLocationSpec[snx.NXdetector],
+) -> NeXusDetectorEventData:
+    return NeXusDetectorEventData(
         nexus.load_event_data(
             file_path=location.filename,
             entry_name=location.entry_name,
             selection=location.selection,
-            component_name=location.component,
+            component_name=location.component_name,
+        )
+    )
+
+
+def load_nexus_monitor_event_data(
+    location: NeXusLocationSpec[snx.NXmonitor],
+) -> NeXusMonitorEventData:
+    return NeXusMonitorEventData(
+        nexus.load_event_data(
+            file_path=location.filename,
+            entry_name=location.entry_name,
+            selection=location.selection,
+            component_name=location.component_name,
         )
     )
 
@@ -139,7 +156,7 @@ def get_source_position(source: NeXusSource) -> SourcePosition:
 
 
 def get_sample_position(sample: NeXusSample) -> SamplePosition:
-    return SamplePosition(sample["position"])
+    return SamplePosition(sample.get("position", sc.vector([0, 0, 0], unit="m")))
 
 
 def get_calibrated_detector(
@@ -148,7 +165,7 @@ def get_calibrated_detector(
     # TODO Want to be able to get det if no sample or source or no offset!
     source_position: SourcePosition,
     sample_position: SamplePosition,
-    bank_sizes: DetectorBankSizes | None = None,
+    bank_sizes: DetectorBankSizes,
 ) -> CalibratedDetector:
     """
     Extract the data array corresponding to a detector's signal field.
@@ -174,7 +191,7 @@ def get_calibrated_detector(
 
 
 def assemble_detector_data(
-    detector: CalibratedDetector, event_data: NeXusEventData
+    detector: CalibratedDetector, event_data: NeXusDetectorEventData
 ) -> DetectorData:
     """
     Assemble a detector data array with event data and source- and sample-position.
@@ -212,7 +229,7 @@ def get_calibrated_monitor(
 
 
 def assemble_monitor_data(
-    monitor: CalibratedMonitor, event_data: NeXusEventData
+    monitor: CalibratedMonitor, event_data: NeXusMonitorEventData
 ) -> MonitorData:
     """
     Assemble a monitor data array with event data.
@@ -284,23 +301,31 @@ def _add_variances(da: sc.DataArray) -> sc.DataArray:
 
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:
-    return sciline.Pipeline(
+    wf = sciline.Pipeline(
         (
+            unique_source_spec,
+            monitor_by_name,
             load_nexus_monitor,
-            load_nexus_event_data,
+            load_nexus_monitor_event_data,
             load_nexus_source,
             get_source_position,
             get_calibrated_monitor,
             assemble_monitor_data,
         )
     )
+    wf[PulseSelection] = PulseSelection(())
+    wf[MonitorPositionOffset] = MonitorPositionOffset(None)
+    return wf
 
 
 def LoadDetectorWorkflow() -> sciline.Pipeline:
-    return sciline.Pipeline(
+    wf = sciline.Pipeline(
         (
+            unique_source_spec,
+            unique_sample_spec,
+            detector_by_name,
             load_nexus_detector,
-            load_nexus_event_data,
+            load_nexus_detector_event_data,
             load_nexus_source,
             load_nexus_sample,
             get_source_position,
@@ -309,3 +334,27 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
             assemble_detector_data,
         )
     )
+    wf[PulseSelection] = PulseSelection(())
+    wf[DetectorBankSizes] = DetectorBankSizes({})
+    wf[DetectorPositionOffset] = DetectorPositionOffset(None)
+    return wf
+
+
+def LoadNeXusWorkflow(filename: NeXusFileSpec) -> sciline.Pipeline:
+    """Opens and inspects a NeXus file, returning a summary of its contents."""
+    wf = sciline.Pipeline()
+    wf[DetectorData] = LoadDetectorWorkflow()
+    wf[MonitorData] = LoadMonitorWorkflow()
+    wf[NeXusFileSpec] = filename
+    wf.insert(nexus.read_nexus_file_info)
+    info = wf.compute(nexus.NeXusFileInfo)
+    dets = [name for name, det in info.detectors.items() if det.n_pixel is not None]
+    det_df = pd.DataFrame({NeXusDetectorName: dets}, index=dets).rename_axis('detector')
+    mons = list(info.monitors)
+    mon_df = pd.DataFrame({NeXusMonitorName: mons}, index=mons).rename_axis('monitor')
+    # TODO Mechanism for chunking
+    pulse_sel = pd.DataFrame(
+        {PulseSelection: [slice(None, 1), slice(None, 1)]}
+    ).rename_axis('pulse')
+    wf = wf.map(det_df).map(mon_df).map(pulse_sel)
+    return wf

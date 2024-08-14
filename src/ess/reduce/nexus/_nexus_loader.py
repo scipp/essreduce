@@ -4,6 +4,8 @@
 """NeXus loaders."""
 
 from contextlib import nullcontext
+from dataclasses import dataclass
+from math import prod
 from typing import (
     ContextManager,
     Mapping,
@@ -23,6 +25,7 @@ from .types import (
     NeXusDetectorName,
     NeXusEntryName,
     NeXusFile,
+    NeXusFileSpec,
     NeXusGroup,
     NeXusLocationSpec,
     NeXusMonitor,
@@ -498,3 +501,131 @@ def group_event_data(
     ):
         raise ValueError("Grouping only implemented for contiguous data with no masks.")
     return data.group(event_id).fold(dim='event_id', sizes=detector_number.sizes)
+
+
+def _format_time(time: sc.Variable | None) -> str:
+    if time is None:
+        return 'None'
+    return f"{time:c}"
+
+
+@dataclass
+class NeXusDetectorInfo:
+    name: str
+    start_time: sc.Variable | None
+    end_time: sc.Variable | None
+    n_pulse: int | None
+    n_pixel: int | None
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.name}: n_pulse={self.n_pulse}, n_pixel={self.n_pixel}, "
+            f"start_time={_format_time(self.start_time)}, "
+            f"end_time={_format_time(self.end_time)}"
+        )
+
+
+@dataclass
+class NeXusMonitorInfo:
+    name: str
+    start_time: sc.Variable | None
+    end_time: sc.Variable | None
+    n_pulse: int | None
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.name}: n_pulse={self.n_pulse}, "
+            f"start_time={_format_time(self.start_time)}, "
+            f"end_time={_format_time(self.end_time)}"
+        )
+
+
+@dataclass
+class NeXusFileInfo:
+    detectors: dict[str, NeXusDetectorInfo]
+    monitors: dict[str, NeXusMonitorInfo]
+
+    def __repr__(self) -> str:
+        s = "NeXusFileInfo(\n"
+        s += "  Detectors:\n"
+        s += "\n".join(f"    {det}" for det in self.detectors.values())
+        s += "\n  Monitors:\n"
+        s += "\n".join(f"    {mon}" for mon in self.monitors.values())
+        s += ')'
+        return s
+
+
+def _parse_name(group: snx.Group) -> str:
+    return group.name.split('/')[-1]
+
+
+def _parse_pixel_count(group: snx.Group) -> int | None:
+    if (detector_number := group.get('detector_number')) is not None:
+        return prod(detector_number.shape)
+
+
+def _parse_pulse_count(group: snx.Group) -> int | None:
+    try:
+        events = _unique_child_group(group, snx.NXevent_data, None)
+    except RuntimeError:
+        return None
+    try:
+        return events['event_index'].shape[0]
+    except KeyError:
+        return None
+
+
+def _get_start_time(group: snx.Group) -> sc.Variable | None:
+    try:
+        events = _unique_child_group(group, snx.NXevent_data, None)
+    except RuntimeError:
+        return None
+    try:
+        return events['event_time_zero'][0]
+    except KeyError:
+        return None
+
+
+def _get_end_time(group: snx.Group) -> sc.Variable | None:
+    try:
+        events = _unique_child_group(group, snx.NXevent_data, None)
+    except RuntimeError:
+        return None
+    try:
+        return events['event_time_zero'][-1]
+    except KeyError:
+        return None
+
+
+def _parse_detector(group: snx.Group) -> NeXusDetectorInfo:
+    return NeXusDetectorInfo(
+        name=_parse_name(group),
+        start_time=_get_start_time(group),
+        end_time=_get_end_time(group),
+        n_pulse=_parse_pulse_count(group),
+        n_pixel=_parse_pixel_count(group),
+    )
+
+
+def _parse_monitor(group: snx.Group) -> NeXusMonitorInfo:
+    return NeXusMonitorInfo(
+        name=_parse_name(group),
+        start_time=_get_start_time(group),
+        end_time=_get_end_time(group),
+        n_pulse=_parse_pulse_count(group),
+    )
+
+
+def read_nexus_file_info(file_path: NeXusFileSpec) -> NeXusFileInfo:
+    with _open_nexus_file(file_path) as f:
+        entry = _unique_child_group(f, snx.NXentry, None)
+        instrument = _unique_child_group(entry, snx.NXinstrument, None)
+        detectors = {}
+        monitors = {}
+        for name, group in instrument.items():
+            if group.nx_class == snx.NXdetector:
+                detectors[name] = _parse_detector(group)
+            elif group.nx_class == snx.NXmonitor:
+                monitors[name] = _parse_monitor(group)
+
+        return NeXusFileInfo(detectors=detectors, monitors=monitors)
