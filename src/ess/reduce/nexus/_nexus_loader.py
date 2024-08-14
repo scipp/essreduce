@@ -545,6 +545,24 @@ class NeXusFileInfo:
     detectors: dict[str, NeXusDetectorInfo]
     monitors: dict[str, NeXusMonitorInfo]
 
+    @property
+    def start_time(self) -> sc.Variable | None:
+        times = [
+            comp.start_time
+            for comp in (*self.detectors.values(), *self.monitors.values())
+            if comp.start_time is not None
+        ]
+        return sc.reduce(times).min() if times else None
+
+    @property
+    def end_time(self) -> sc.Variable | None:
+        times = [
+            comp.end_time
+            for comp in (*self.detectors.values(), *self.monitors.values())
+            if comp.end_time is not None
+        ]
+        return sc.reduce(times).max() if times else None
+
     def __repr__(self) -> str:
         s = "NeXusFileInfo(\n"
         s += "  Detectors:\n"
@@ -567,7 +585,7 @@ def _parse_pixel_count(group: snx.Group) -> int | None:
 def _parse_pulse_count(group: snx.Group) -> int | None:
     try:
         events = _unique_child_group(group, snx.NXevent_data, None)
-    except RuntimeError:
+    except ValueError:
         return None
     try:
         return events['event_index'].shape[0]
@@ -578,7 +596,7 @@ def _parse_pulse_count(group: snx.Group) -> int | None:
 def _get_start_time(group: snx.Group) -> sc.Variable | None:
     try:
         events = _unique_child_group(group, snx.NXevent_data, None)
-    except RuntimeError:
+    except ValueError:
         return None
     try:
         return events['event_time_zero'][0]
@@ -589,7 +607,7 @@ def _get_start_time(group: snx.Group) -> sc.Variable | None:
 def _get_end_time(group: snx.Group) -> sc.Variable | None:
     try:
         events = _unique_child_group(group, snx.NXevent_data, None)
-    except RuntimeError:
+    except ValueError:
         return None
     try:
         return events['event_time_zero'][-1]
@@ -622,10 +640,12 @@ def read_nexus_file_info(file_path: NeXusFileSpec) -> NeXusFileInfo:
         instrument = _unique_child_group(entry, snx.NXinstrument, None)
         detectors = {}
         monitors = {}
-        for name, group in instrument.items():
-            if group.nx_class == snx.NXdetector:
-                detectors[name] = _parse_detector(group)
-            elif group.nx_class == snx.NXmonitor:
-                monitors[name] = _parse_monitor(group)
+        for name, obj in instrument.items():
+            if not isinstance(obj, snx.Group):
+                continue
+            if obj.nx_class == snx.NXdetector:
+                detectors[name] = _parse_detector(obj)
+            elif obj.nx_class == snx.NXmonitor:
+                monitors[name] = _parse_monitor(obj)
 
         return NeXusFileInfo(detectors=detectors, monitors=monitors)

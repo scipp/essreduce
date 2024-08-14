@@ -47,7 +47,7 @@ def monitor_by_name(
     filename: NeXusFileSpec, name: NeXusMonitorName, selection: PulseSelection
 ) -> NeXusLocationSpec[snx.NXmonitor]:
     return NeXusLocationSpec[snx.NXmonitor](
-        filename=filename, component_name=name, selection=selection
+        filename=filename, component_name=name, selection={'event_time_zero': selection}
     )
 
 
@@ -55,7 +55,7 @@ def detector_by_name(
     filename: NeXusFileSpec, name: NeXusDetectorName, selection: PulseSelection
 ) -> NeXusLocationSpec[snx.NXdetector]:
     return NeXusLocationSpec[snx.NXdetector](
-        filename=filename, component_name=name, selection=selection
+        filename=filename, component_name=name, selection={'event_time_zero': selection}
     )
 
 
@@ -340,7 +340,9 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
     return wf
 
 
-def LoadNeXusWorkflow(filename: NeXusFileSpec) -> sciline.Pipeline:
+def LoadNeXusWorkflow(
+    filename: NeXusFileSpec, chunk_length: sc.Variable | None = None
+) -> sciline.Pipeline:
     """Opens and inspects a NeXus file, returning a summary of its contents."""
     wf = sciline.Pipeline()
     wf[DetectorData] = LoadDetectorWorkflow()
@@ -348,13 +350,26 @@ def LoadNeXusWorkflow(filename: NeXusFileSpec) -> sciline.Pipeline:
     wf[NeXusFileSpec] = filename
     wf.insert(nexus.read_nexus_file_info)
     info = wf.compute(nexus.NeXusFileInfo)
+    # TODO What should we do when detector or monitor is incomplete? Parts of the
+    # workflow may make sense, but as a whole it will not run.
     dets = [name for name, det in info.detectors.items() if det.n_pixel is not None]
     det_df = pd.DataFrame({NeXusDetectorName: dets}, index=dets).rename_axis('detector')
     mons = list(info.monitors)
     mon_df = pd.DataFrame({NeXusMonitorName: mons}, index=mons).rename_axis('monitor')
-    # TODO Mechanism for chunking
-    pulse_sel = pd.DataFrame(
-        {PulseSelection: [slice(None, 1), slice(None, 1)]}
-    ).rename_axis('pulse')
-    wf = wf.map(det_df).map(mon_df).map(pulse_sel)
+    wf = wf.map(det_df).map(mon_df)
+    if chunk_length is not None:
+        # start_time and end_time are taken from event_time_zero, so we always want to
+        # include the end
+        # TODO dtype and units
+        bounds = sc.arange(
+            'chunk', info.start_time, info.end_time + chunk_length, chunk_length
+        )
+        if bounds.sizes['chunk'] < 2:
+            slices = [slice(None)]
+        else:
+            slices = [slice(bounds[i], bounds[i + 1]) for i in range(len(bounds) - 1)]
+        # Be sure to not drop anything, use open range
+        slices[0] = slice(None, slices[0].stop)
+        slices[-1] = slice(slices[-1].start, None)
+        wf = wf.map(pd.DataFrame({PulseSelection: slices}).rename_axis('chunk'))
     return wf
