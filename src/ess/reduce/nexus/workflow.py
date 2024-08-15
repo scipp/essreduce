@@ -35,6 +35,11 @@ from .types import (
     SourcePosition,
 )
 
+origin = sc.vector([0, 0, 0], unit="m")
+"""The origin, used as default sample position."""
+no_offset = sc.vector([0, 0, 0], unit="m")
+"""Offset that does not change the position."""
+
 
 def unique_sample_spec(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsample]:
     return NeXusLocationSpec[snx.NXsample](filename=filename)
@@ -170,7 +175,7 @@ def get_source_position(source: NeXusSource) -> SourcePosition:
 
 
 def get_sample_position(sample: NeXusSample) -> SamplePosition:
-    return SamplePosition(sample.get("position", sc.vector([0, 0, 0], unit="m")))
+    return SamplePosition(sample.get("position", origin))
 
 
 def get_calibrated_detector(
@@ -197,7 +202,7 @@ def get_calibrated_detector(
     position = detector['position']
     return CalibratedDetector(
         da.assign_coords(
-            position=position if offset is None else position - offset,
+            position=position if offset is no_offset else position - offset,
             source_position=source_position,
             sample_position=sample_position,
         )
@@ -236,7 +241,7 @@ def get_calibrated_monitor(
     position = monitor['position']
     return CalibratedMonitor(
         nexus.extract_monitor_data(monitor).assign_coords(
-            position=position if offset is None else position - offset,
+            position=position if offset is no_offset else position - offset,
             source_position=source_position,
         )
     )
@@ -328,7 +333,7 @@ def LoadMonitorWorkflow() -> sciline.Pipeline:
         )
     )
     wf[PulseSelection] = PulseSelection(())
-    wf[MonitorPositionOffset] = MonitorPositionOffset(None)
+    wf[MonitorPositionOffset] = MonitorPositionOffset(no_offset)
     return wf
 
 
@@ -350,7 +355,7 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
     )
     wf[PulseSelection] = PulseSelection(())
     wf[DetectorBankSizes] = DetectorBankSizes({})
-    wf[DetectorPositionOffset] = DetectorPositionOffset(None)
+    wf[DetectorPositionOffset] = DetectorPositionOffset(no_offset)
     return wf
 
 

@@ -4,7 +4,6 @@
 """Workflow and workflow components for interacting with NeXus files."""
 
 import sciline
-import scipp as sc
 import scippnexus as snx
 
 from . import generic_types as gt
@@ -14,13 +13,11 @@ from .types import DetectorBankSizes, NeXusDetectorName, PulseSelection
 
 
 def _no_monitor_position_offset() -> gt.MonitorPositionOffset[RunType, MonitorType]:
-    return gt.MonitorPositionOffset[RunType, MonitorType](
-        sc.vector([0.0, 0.0, 0.0], unit='m')
-    )
+    return gt.MonitorPositionOffset[RunType, MonitorType](workflow.no_offset)
 
 
 def _no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
-    return gt.DetectorPositionOffset[RunType](sc.vector([0.0, 0.0, 0.0], unit='m'))
+    return gt.DetectorPositionOffset[RunType](workflow.no_offset)
 
 
 def unique_sample_spec(
@@ -188,4 +185,6 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
 
 def GenericNeXusWorkflow() -> sciline.Pipeline:
     wf = sciline.Pipeline((*_monitor_providers, *_detector_providers))
+    wf[PulseSelection] = PulseSelection(())
+    wf[DetectorBankSizes] = DetectorBankSizes({})
     return wf

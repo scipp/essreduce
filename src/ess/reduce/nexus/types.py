@@ -48,16 +48,16 @@ NeXusDetectorEventData = NewType('NeXusDetectorEventData', sc.DataArray)
 NeXusMonitorEventData = NewType('NeXusMonitorEventData', sc.DataArray)
 """Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
 
-SourcePosition = NewType('SourcePosition', sc.Variable | None)
+SourcePosition = NewType('SourcePosition', sc.Variable)
 """Position of the neutron source."""
 
-SamplePosition = NewType('SamplePosition', sc.Variable | None)
+SamplePosition = NewType('SamplePosition', sc.Variable)
 """Position of the sample."""
 
-DetectorPositionOffset = NewType('DetectorPositionOffset', sc.Variable | None)
+DetectorPositionOffset = NewType('DetectorPositionOffset', sc.Variable)
 """Offset of the detector position, SUBTRACTED from base position."""
 
-MonitorPositionOffset = NewType('MonitorPositionOffset', sc.Variable | None)
+MonitorPositionOffset = NewType('MonitorPositionOffset', sc.Variable)
 
 
 DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]])
