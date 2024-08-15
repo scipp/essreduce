@@ -33,11 +33,15 @@ from .types import (
     NeXusSample,
     NeXusSource,
     NeXusSourceName,
-    NoNewDefinitions,
-    NoNewDefinitionsType,
     RawDetectorData,
     RawMonitorData,
 )
+
+
+class NoNewDefinitionsType: ...
+
+
+NoNewDefinitions = NoNewDefinitionsType()
 
 
 def load_detector(

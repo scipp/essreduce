@@ -73,15 +73,7 @@ PulseSelection = NewType('PulseSelection', slice)
 
 GravityVector = NewType('GravityVector', sc.Variable)
 
-
-class NoNewDefinitionsType: ...
-
-
-NoNewDefinitions = NoNewDefinitionsType()
-
-
 Component = TypeVar('Component', bound=snx.NXobject)
-
 
 NeXusFileSpec = FilePath | NeXusFile | NeXusGroup
 
