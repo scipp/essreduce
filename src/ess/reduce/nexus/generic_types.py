@@ -114,13 +114,13 @@ class SamplePosition(sciline.Scope[RunType, sc.Variable], sc.Variable):
 
 
 class DetectorPositionOffset(sciline.Scope[RunType, sc.Variable], sc.Variable):
-    """Offset of the detector position, SUBTRACTED from base position."""
+    """Offset for the detector position, added to base position."""
 
 
 class MonitorPositionOffset(
     sciline.ScopeTwoParams[RunType, MonitorType, sc.Variable], sc.Variable
 ):
-    """Offset of the monitor position, SUBTRACTED from base position."""
+    """Offset for the monitor position, added to base position."""
 
 
 class CalibratedDetector(sciline.Scope[RunType, sc.DataArray], sc.DataArray):

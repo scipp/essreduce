@@ -55,9 +55,10 @@ SamplePosition = NewType('SamplePosition', sc.Variable)
 """Position of the sample."""
 
 DetectorPositionOffset = NewType('DetectorPositionOffset', sc.Variable)
-"""Offset of the detector position, SUBTRACTED from base position."""
+"""Offset for the detector position, added to base position."""
 
 MonitorPositionOffset = NewType('MonitorPositionOffset', sc.Variable)
+"""Offset for the monitor position, added to base position."""
 
 
 DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]])

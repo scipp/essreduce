@@ -98,7 +98,7 @@ def test_get_calibrated_detector_folds_detector_number_if_mapping_given(
     assert detector.sizes == sizes
 
 
-def test_get_calibrated_detector_subtracts_offset_from_position(
+def test_get_calibrated_detector_adds_offset_to_position(
     nexus_detector,
     source_position,
 ) -> None:
@@ -111,7 +111,7 @@ def test_get_calibrated_detector_subtracts_offset_from_position(
         gravity=workflow.gravity_vector_neg_y(),
         bank_sizes={},
     )
-    assert_identical(detector.coords['position'], sc.vector([0.9, 1.8, 2.7], unit='m'))
+    assert_identical(detector.coords['position'], sc.vector([1.1, 2.2, 3.3], unit='m'))
 
 
 def test_get_calibrated_detector_forwards_coords(
@@ -246,7 +246,7 @@ def test_get_calibrated_monitor_subtracts_offset_from_position(
         offset=offset,
         source_position=sc.vector([0.0, 0.0, -10.0], unit='m'),
     )
-    assert_identical(monitor.coords['position'], sc.vector([0.9, 1.8, 2.7], unit='m'))
+    assert_identical(monitor.coords['position'], sc.vector([1.1, 2.2, 3.3], unit='m'))
 
 
 @pytest.fixture()

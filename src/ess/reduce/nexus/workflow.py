@@ -307,7 +307,7 @@ def get_calibrated_detector(
     detector:
         NeXus detector group.
     offset:
-        Offset to subtract from the detector position.
+        Offset to add to the detector position.
     source_position:
         Position of the neutron source.
     sample_position:
@@ -325,7 +325,7 @@ def get_calibrated_detector(
     position = detector['position']
     return CalibratedDetector(
         da.assign_coords(
-            position=position - offset,
+            position=position + offset,
             source_position=source_position,
             sample_position=sample_position,
             gravity=gravity,
@@ -374,13 +374,13 @@ def get_calibrated_monitor(
     monitor:
         NeXus monitor group.
     offset:
-        Offset to subtract from the monitor position.
+        Offset to add to the monitor position.
     source_position:
         Position of the neutron source.
     """
     return CalibratedMonitor(
         nexus.extract_monitor_data(monitor).assign_coords(
-            position=monitor['position'] - offset,
+            position=monitor['position'] + offset,
             source_position=source_position,
         )
     )
