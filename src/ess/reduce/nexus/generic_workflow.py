@@ -1,7 +1,15 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
-"""Workflow and workflow components for interacting with NeXus files."""
+"""
+Generic workflow and components for interacting with NeXus files.
+
+In contrast to the :py:mod:`ess.reduce.nexus.workflow` module, this module provides
+generic components that can be used to build a workflow with a generic run type and
+monitor type. This can be used by instrument-specific workflows as a common base
+implementation of interaction with ESS NeXus files, without the need of writing
+instrument-specific wrappers or implementations.
+"""
 
 import sciline
 import scippnexus as snx
@@ -197,12 +205,14 @@ _detector_providers = (
 
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:
+    """Generic workflow for loading monitor data from a NeXus file."""
     wf = sciline.Pipeline((*_common_providers, *_monitor_providers))
     wf[PulseSelection] = PulseSelection(())
     return wf
 
 
 def LoadDetectorWorkflow() -> sciline.Pipeline:
+    """Generic workflow for loading detector data from a NeXus file."""
     wf = sciline.Pipeline((*_common_providers, *_detector_providers))
     wf[PulseSelection] = PulseSelection(())
     wf[DetectorBankSizes] = DetectorBankSizes({})
@@ -210,6 +220,7 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
 
 
 def GenericNeXusWorkflow() -> sciline.Pipeline:
+    """Generic workflow for loading detector and monitor data from a NeXus file."""
     wf = sciline.Pipeline(
         (*_common_providers, *_monitor_providers, *_detector_providers)
     )

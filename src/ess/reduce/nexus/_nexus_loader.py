@@ -635,6 +635,7 @@ def _parse_monitor(group: snx.Group) -> NeXusMonitorInfo:
 
 
 def read_nexus_file_info(file_path: NeXusFileSpec) -> NeXusFileInfo:
+    """Opens and inspects a NeXus file, returning a summary of its contents."""
     with _open_nexus_file(file_path) as f:
         entry = _unique_child_group(f, snx.NXentry, None)
         instrument = _unique_child_group(entry, snx.NXinstrument, None)
