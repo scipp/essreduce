@@ -60,7 +60,16 @@ Incident = NewType('Incident', int)
 """Incident monitor"""
 Transmission = NewType('Transmission', int)
 """Transmission monitor"""
-MonitorType = TypeVar('MonitorType', Incident, Transmission)
+MonitorType = TypeVar(
+    'MonitorType',
+    Monitor1,
+    Monitor2,
+    Monitor3,
+    Monitor4,
+    Monitor5,
+    Incident,
+    Transmission,
+)
 """TypeVar used for specifying Incident or Transmission monitor type"""
 
 

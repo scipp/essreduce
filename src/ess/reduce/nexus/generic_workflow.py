@@ -4,12 +4,23 @@
 """Workflow and workflow components for interacting with NeXus files."""
 
 import sciline
+import scipp as sc
 import scippnexus as snx
 
 from . import generic_types as gt
 from . import workflow
 from .generic_types import MonitorType, RunType
 from .types import DetectorBankSizes, NeXusDetectorName, PulseSelection
+
+
+def _no_monitor_position_offset() -> gt.MonitorPositionOffset[RunType, MonitorType]:
+    return gt.MonitorPositionOffset[RunType, MonitorType](
+        sc.vector([0.0, 0.0, 0.0], unit='m')
+    )
+
+
+def _no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
+    return gt.DetectorPositionOffset[RunType](sc.vector([0.0, 0.0, 0.0], unit='m'))
 
 
 def unique_sample_spec(
@@ -135,6 +146,7 @@ def assemble_monitor_data(
 
 
 _monitor_providers = (
+    _no_monitor_position_offset,
     unique_source_spec,
     monitor_by_name,
     load_nexus_monitor,
@@ -146,6 +158,7 @@ _monitor_providers = (
 )
 
 _detector_providers = (
+    _no_detector_position_offset,
     unique_source_spec,
     unique_sample_spec,
     detector_by_name,

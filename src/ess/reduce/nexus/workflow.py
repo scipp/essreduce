@@ -3,6 +3,7 @@
 
 """Workflow and workflow components for interacting with NeXus files."""
 
+from dataclasses import replace
 from typing import Any
 
 import pandas as pd
@@ -60,9 +61,19 @@ def detector_by_name(
 
 
 def load_nexus_sample(location: NeXusLocationSpec[snx.NXsample]) -> NeXusSample:
-    # TODO Should we return default sample position of no sample?
-    # sc.DataGroup({'position': sc.vector(value=[0, 0, 0], unit='m')})
-    return NeXusSample(nexus.load_component(location, nx_class=snx.NXsample))
+    """
+    Load a NeXus sample group from a file.
+
+    If there is no sample group in the file, an empty group is returned. This should
+    not happen, but handling it gracefully makes testing and working with
+    pre-production files easier. There should be little harm in returning an empty
+    group. Subsequent extract of the sample position will then default to the origin.
+    """
+    try:
+        dg = nexus.load_component(location, nx_class=snx.NXsample)
+    except ValueError:
+        dg = sc.DataGroup()
+    return NeXusSample(dg)
 
 
 def load_nexus_source(location: NeXusLocationSpec[snx.NXsource]) -> NeXusSource:
@@ -92,6 +103,9 @@ def load_nexus_detector(location: NeXusLocationSpec[snx.NXdetector]) -> NeXusDet
     """
     definitions = snx.base_definitions()
     definitions["NXdetector"] = _StrippedDetector
+    # The selection is only used for selecting a range of event data.
+    location = replace(location, selection=())
+
     return NeXusDetector(
         nexus.load_component(location, nx_class=snx.NXdetector, definitions=definitions)
     )
