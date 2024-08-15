@@ -12,11 +12,11 @@ from .generic_types import MonitorType, RunType
 from .types import DetectorBankSizes, GravityVector, NeXusDetectorName, PulseSelection
 
 
-def _no_monitor_position_offset() -> gt.MonitorPositionOffset[RunType, MonitorType]:
+def no_monitor_position_offset() -> gt.MonitorPositionOffset[RunType, MonitorType]:
     return gt.MonitorPositionOffset[RunType, MonitorType](workflow.no_offset)
 
 
-def _no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
+def no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
     return gt.DetectorPositionOffset[RunType](workflow.no_offset)
 
 
@@ -149,10 +149,27 @@ def assemble_monitor_data(
     )
 
 
+# Use the same docstrings. The functions defined here are just wrappers with modified
+# annotations adding generic in run and/or monitor around the functions in workflow.py.
+
+load_nexus_sample.__doc__ = workflow.load_nexus_sample.__doc__
+load_nexus_source.__doc__ = workflow.load_nexus_source.__doc__
+load_nexus_detector.__doc__ = workflow.load_nexus_detector.__doc__
+load_nexus_monitor.__doc__ = workflow.load_nexus_monitor.__doc__
+load_nexus_detector_event_data.__doc__ = workflow.load_nexus_detector_event_data.__doc__
+load_nexus_monitor_event_data.__doc__ = workflow.load_nexus_monitor_event_data.__doc__
+get_source_position.__doc__ = workflow.get_source_position.__doc__
+get_sample_position.__doc__ = workflow.get_sample_position.__doc__
+get_calibrated_detector.__doc__ = workflow.get_calibrated_detector.__doc__
+assemble_detector_data.__doc__ = workflow.assemble_detector_data.__doc__
+get_calibrated_monitor.__doc__ = workflow.get_calibrated_monitor.__doc__
+assemble_monitor_data.__doc__ = workflow.assemble_monitor_data.__doc__
+
+
 _common_providers = (workflow.gravity_vector_neg_y,)
 
 _monitor_providers = (
-    _no_monitor_position_offset,
+    no_monitor_position_offset,
     unique_source_spec,
     monitor_by_name,
     load_nexus_monitor,
@@ -164,7 +181,7 @@ _monitor_providers = (
 )
 
 _detector_providers = (
-    _no_detector_position_offset,
+    no_detector_position_offset,
     unique_source_spec,
     unique_sample_spec,
     detector_by_name,
