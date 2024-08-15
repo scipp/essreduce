@@ -147,6 +147,76 @@ def test_get_calibrated_detector_forwards_masks(
 
 
 @pytest.fixture()
+def calibrated_detector() -> workflow.CalibratedDetector:
+    detector_number = sc.arange('detector_number', 6, unit=None)
+    return workflow.CalibratedDetector(
+        sc.DataArray(
+            sc.empty_like(detector_number),
+            coords={
+                'position': sc.vector([1.0, 2.0, 3.0], unit='m'),
+                'detector_number': detector_number,
+            },
+        ).fold('detector_number', sizes={'xpixel': 2, 'ypixel': 3})
+    )
+
+
+@pytest.fixture()
+def detector_event_data() -> workflow.NeXusDetectorEventData:
+    content = sc.DataArray(
+        sc.ones(dims=['event'], shape=[17], unit='counts'),
+        coords={'event_id': sc.arange('event', 17, unit=None) % sc.index(6)},
+    )
+    weights = sc.bins(data=content, dim='event')
+    return workflow.NeXusDetectorEventData(
+        sc.DataArray(
+            weights,
+            coords={
+                'event_time_zero': sc.linspace(
+                    dim=weights.dim, start=0, stop=1, num=weights.size, unit='s'
+                )
+            },
+        )
+    )
+
+
+def test_assemble_detector_data_groups_events_by_detector_number(
+    calibrated_detector, detector_event_data
+) -> None:
+    detector = workflow.assemble_detector_data(calibrated_detector, detector_event_data)
+    assert detector.bins is not None
+    assert_identical(
+        detector.coords['detector_number'],
+        calibrated_detector.coords['detector_number'],
+    )
+    # 17 events with arange%6 event_id, so 2 events in last bin
+    assert_identical(
+        detector.data.bins.size(),
+        sc.array(dims=('xpixel', 'ypixel'), values=[[3, 3, 3], [3, 3, 2]], unit=None),
+    )
+
+
+def test_assemble_detector_data_adds_variances_to_weights(
+    calibrated_detector, detector_event_data
+) -> None:
+    detector = workflow.assemble_detector_data(calibrated_detector, detector_event_data)
+    assert detector_event_data.values[0].variances is None
+    assert detector.values[0].variances is not None
+    assert_identical(sc.variances(detector), sc.values(detector))
+
+
+def test_assemble_detector_preserves_coords(calibrated_detector, detector_event_data):
+    calibrated_detector.coords['abc'] = sc.scalar(1.2)
+    detector = workflow.assemble_detector_data(calibrated_detector, detector_event_data)
+    assert 'abc' in detector.coords
+
+
+def test_assemble_detector_preserves_masks(calibrated_detector, detector_event_data):
+    calibrated_detector.masks['mymask'] = sc.scalar(False)
+    detector = workflow.assemble_detector_data(calibrated_detector, detector_event_data)
+    assert 'mymask' in detector.masks
+
+
+@pytest.fixture()
 def nexus_monitor() -> workflow.NeXusMonitor:
     data = sc.DataArray(sc.scalar(1.2), coords={'something': sc.scalar(13)})
     return workflow.NeXusMonitor(
