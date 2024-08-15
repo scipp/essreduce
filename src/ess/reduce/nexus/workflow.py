@@ -191,7 +191,6 @@ def get_calibrated_detector(
     detector: NeXusDetector,
     *,
     offset: DetectorPositionOffset,
-    # TODO Want to be able to get det if no sample or source or no offset!
     source_position: SourcePosition,
     sample_position: SamplePosition,
     gravity: GravityVector,
@@ -250,10 +249,9 @@ def get_calibrated_monitor(
     The returned data array includes coords pertaining directly to the
     signal values array, but not additional information about the monitor.
     """
-    position = monitor['position']
     return CalibratedMonitor(
         nexus.extract_monitor_data(monitor).assign_coords(
-            position=position if offset is no_offset else position - offset,
+            position=monitor['position'] - offset,
             source_position=source_position,
         )
     )
