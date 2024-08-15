@@ -6,7 +6,6 @@
 from dataclasses import replace
 from typing import Any
 
-import pandas as pd
 import sciline
 import scipp as sc
 import scippnexus as snx
@@ -522,6 +521,8 @@ def LoadNeXusWorkflow(filename: NeXusFileSpec) -> sciline.Pipeline:
     filename:
         NeXus file to load.
     """
+    import pandas as pd
+
     wf = sciline.Pipeline()
     wf[DetectorData] = LoadDetectorWorkflow()
     wf[MonitorData] = LoadMonitorWorkflow()
@@ -551,6 +552,8 @@ def with_chunks(wf: sciline.Pipeline, chunk_length: sc.Variable) -> sciline.Pipe
     chunk_length:
         Length of chunks as a time difference, i.e., with a time unit.
     """
+    import pandas as pd
+
     info = wf.compute(nexus.NeXusFileInfo)
     # start_time and end_time are taken from event_time_zero, so we always want to
     # include the end
