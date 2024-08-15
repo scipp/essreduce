@@ -39,6 +39,114 @@ def test_get_source_position_raises_exception_if_position_not_found(
 
 
 @pytest.fixture()
+def nexus_detector() -> workflow.NeXusDetector:
+    detector_number = sc.arange('detector_number', 6, unit=None)
+    data = sc.DataArray(
+        sc.empty_like(detector_number),
+        coords={
+            'detector_number': detector_number,
+        },
+    )
+    return workflow.NeXusDetector(
+        sc.DataGroup(
+            data=data,
+            position=sc.vector([1.0, 2.0, 3.0], unit='m'),
+            nexus_component_name='detector1',
+        )
+    )
+
+
+@pytest.fixture()
+def source_position() -> sc.Variable:
+    return sc.vector([0.0, 0.0, -10.0], unit='m')
+
+
+def test_get_calibrated_detector_extracts_data_field_from_nexus_monitor(
+    nexus_detector,
+    source_position,
+) -> None:
+    detector = workflow.get_calibrated_detector(
+        nexus_detector,
+        offset=workflow.no_offset,
+        source_position=source_position,
+        sample_position=workflow.origin,
+        gravity=workflow.gravity_vector_neg_y(),
+        bank_sizes={},
+    )
+    assert_identical(
+        detector.drop_coords(
+            ('position', 'sample_position', 'source_position', 'gravity')
+        ),
+        nexus_detector['data'],
+    )
+
+
+def test_get_calibrated_detector_folds_detector_number_if_mapping_given(
+    nexus_detector,
+    source_position,
+) -> None:
+    sizes = {'xpixel': 2, 'ypixel': 3}
+    bank_sizes = {'detector1': sizes}
+    detector = workflow.get_calibrated_detector(
+        nexus_detector,
+        offset=workflow.no_offset,
+        source_position=source_position,
+        sample_position=workflow.origin,
+        gravity=workflow.gravity_vector_neg_y(),
+        bank_sizes=bank_sizes,
+    )
+    assert detector.sizes == sizes
+
+
+def test_get_calibrated_detector_subtracts_offset_from_position(
+    nexus_detector,
+    source_position,
+) -> None:
+    offset = sc.vector([0.1, 0.2, 0.3], unit='m')
+    detector = workflow.get_calibrated_detector(
+        nexus_detector,
+        offset=offset,
+        source_position=source_position,
+        sample_position=workflow.origin,
+        gravity=workflow.gravity_vector_neg_y(),
+        bank_sizes={},
+    )
+    assert_identical(detector.coords['position'], sc.vector([0.9, 1.8, 2.7], unit='m'))
+
+
+def test_get_calibrated_detector_forwards_coords(
+    nexus_detector,
+    source_position,
+) -> None:
+    nexus_detector['data'].coords['abc'] = sc.scalar(1.2)
+    detector = workflow.get_calibrated_detector(
+        nexus_detector,
+        offset=workflow.no_offset,
+        source_position=source_position,
+        sample_position=workflow.origin,
+        gravity=workflow.gravity_vector_neg_y(),
+        bank_sizes={},
+    )
+    assert 'abc' in detector.coords
+
+
+def test_get_calibrated_detector_forwards_masks(
+    nexus_detector,
+    source_position,
+) -> None:
+    nexus_detector['data'].masks['mymask'] = sc.scalar(False)
+    detector = workflow.get_calibrated_detector(
+        nexus_detector,
+        offset=workflow.no_offset,
+        source_position=source_position,
+        sample_position=workflow.origin,
+        gravity=workflow.gravity_vector_neg_y(),
+        bank_sizes={},
+    )
+    assert 'mymask' in detector.masks
+
+
+@pytest.fixture()
 def nexus_monitor() -> workflow.NeXusMonitor:
     data = sc.DataArray(sc.scalar(1.2), coords={'something': sc.scalar(13)})
     return workflow.NeXusMonitor(

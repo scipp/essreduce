@@ -212,7 +212,7 @@ def get_calibrated_detector(
     position = detector['position']
     return CalibratedDetector(
         da.assign_coords(
-            position=position if offset is no_offset else position - offset,
+            position=position - offset,
             source_position=source_position,
             sample_position=sample_position,
             gravity=gravity,
