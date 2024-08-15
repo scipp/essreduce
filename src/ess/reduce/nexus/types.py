@@ -68,7 +68,9 @@ CalibratedMonitor = NewType('CalibratedMonitor', sc.DataArray)
 DetectorData = NewType('DetectorData', sc.DataArray)
 MonitorData = NewType('MonitorData', sc.DataArray)
 
-PulseSelection = NewType('PulseSelection', snx.typing.ScippIndex)
+PulseSelection = NewType('PulseSelection', slice)
+
+GravityVector = NewType('GravityVector', sc.Variable)
 
 
 class NoNewDefinitionsType: ...

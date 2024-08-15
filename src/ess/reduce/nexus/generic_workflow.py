@@ -9,7 +9,7 @@ import scippnexus as snx
 from . import generic_types as gt
 from . import workflow
 from .generic_types import MonitorType, RunType
-from .types import DetectorBankSizes, NeXusDetectorName, PulseSelection
+from .types import DetectorBankSizes, GravityVector, NeXusDetectorName, PulseSelection
 
 
 def _no_monitor_position_offset() -> gt.MonitorPositionOffset[RunType, MonitorType]:
@@ -102,14 +102,21 @@ def get_sample_position(sample: gt.NeXusSample[RunType]) -> gt.SamplePosition[Ru
 
 def get_calibrated_detector(
     detector: gt.NeXusDetector[RunType],
+    *,
     offset: gt.DetectorPositionOffset[RunType],
     source_position: gt.SourcePosition[RunType],
     sample_position: gt.SamplePosition[RunType],
+    gravity: GravityVector,
     bank_sizes: DetectorBankSizes,
 ) -> gt.CalibratedDetector[RunType]:
     return gt.CalibratedDetector[RunType](
         workflow.get_calibrated_detector(
-            detector, offset, source_position, sample_position, bank_sizes
+            detector,
+            offset=offset,
+            source_position=source_position,
+            sample_position=sample_position,
+            gravity=gravity,
+            bank_sizes=bank_sizes,
         )
     )
 
@@ -142,6 +149,8 @@ def assemble_monitor_data(
     )
 
 
+_common_providers = (workflow.gravity_vector_neg_y,)
+
 _monitor_providers = (
     _no_monitor_position_offset,
     unique_source_spec,
@@ -171,20 +180,22 @@ _detector_providers = (
 
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:
-    wf = sciline.Pipeline(_monitor_providers)
+    wf = sciline.Pipeline((*_common_providers, *_monitor_providers))
     wf[PulseSelection] = PulseSelection(())
     return wf
 
 
 def LoadDetectorWorkflow() -> sciline.Pipeline:
-    wf = sciline.Pipeline(_detector_providers)
+    wf = sciline.Pipeline((*_common_providers, *_detector_providers))
     wf[PulseSelection] = PulseSelection(())
     wf[DetectorBankSizes] = DetectorBankSizes({})
     return wf
 
 
 def GenericNeXusWorkflow() -> sciline.Pipeline:
-    wf = sciline.Pipeline((*_monitor_providers, *_detector_providers))
+    wf = sciline.Pipeline(
+        (*_common_providers, *_monitor_providers, *_detector_providers)
+    )
     wf[PulseSelection] = PulseSelection(())
     wf[DetectorBankSizes] = DetectorBankSizes({})
     return wf

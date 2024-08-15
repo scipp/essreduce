@@ -10,6 +10,7 @@ import pandas as pd
 import sciline
 import scipp as sc
 import scippnexus as snx
+from scipp.constants import g
 
 from . import _nexus_loader as nexus
 from .types import (
@@ -18,6 +19,7 @@ from .types import (
     DetectorBankSizes,
     DetectorData,
     DetectorPositionOffset,
+    GravityVector,
     MonitorData,
     MonitorPositionOffset,
     NeXusDetector,
@@ -39,6 +41,13 @@ origin = sc.vector([0, 0, 0], unit="m")
 """The origin, used as default sample position."""
 no_offset = sc.vector([0, 0, 0], unit="m")
 """Offset that does not change the position."""
+
+
+def gravity_vector_neg_y() -> GravityVector:
+    """
+    Gravity vector for default instrument coordinate system where y is up.
+    """
+    return GravityVector(sc.vector(value=[0, -1, 0]) * g)
 
 
 def unique_sample_spec(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsample]:
@@ -180,10 +189,12 @@ def get_sample_position(sample: NeXusSample) -> SamplePosition:
 
 def get_calibrated_detector(
     detector: NeXusDetector,
+    *,
     offset: DetectorPositionOffset,
     # TODO Want to be able to get det if no sample or source or no offset!
     source_position: SourcePosition,
     sample_position: SamplePosition,
+    gravity: GravityVector,
     bank_sizes: DetectorBankSizes,
 ) -> CalibratedDetector:
     """
@@ -194,17 +205,18 @@ def get_calibrated_detector(
     data array is reshaped to the logical detector shape, which by folding the data
     array along the detector_number dimension.
     """
-    # Note: We apply offset as early as possible to prevent a source of bugs.
-    # TODO gravity=gravity_vector(),
     da = nexus.extract_detector_data(detector)
     if (sizes := (bank_sizes or {}).get(detector['nexus_component_name'])) is not None:
         da = da.fold(dim="detector_number", sizes=sizes)
+    # Note: We apply offset as early as possible, i.e., right in this function
+    # the detector array from the raw loader NeXus group, to prevent a source of bugs.
     position = detector['position']
     return CalibratedDetector(
         da.assign_coords(
             position=position if offset is no_offset else position - offset,
             source_position=source_position,
             sample_position=sample_position,
+            gravity=gravity,
         )
     )
 
