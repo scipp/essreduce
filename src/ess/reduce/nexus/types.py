@@ -48,9 +48,6 @@ NeXusDetectorEventData = NewType('NeXusDetectorEventData', sc.DataArray)
 NeXusMonitorEventData = NewType('NeXusMonitorEventData', sc.DataArray)
 """Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
 
-NeXusComponentName = NewType('NeXusComponentName', str)
-"""Name of a component in a NeXus file."""
-
 SourcePosition = NewType('SourcePosition', sc.Variable | None)
 """Position of the neutron source."""
 
@@ -94,5 +91,5 @@ class NeXusLocationSpec(Generic[Component]):
 
     filename: NeXusFileSpec
     entry_name: NeXusEntryName | None = None
-    component_name: NeXusComponentName | None = None
+    component_name: str | None = None
     selection: snx.typing.ScippIndex = ()
