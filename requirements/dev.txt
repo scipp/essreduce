@@ -26,7 +26,7 @@ arrow==1.3.0
     # via isoduration
 async-lru==2.0.4
     # via jupyterlab
-cffi==1.16.0
+cffi==1.17.0
     # via argon2-cffi-bindings
 click==8.1.7
     # via
@@ -34,7 +34,7 @@ click==8.1.7
     #   pip-tools
 copier==9.3.1
     # via -r dev.in
-dunamai==1.21.2
+dunamai==1.22.0
     # via copier
 fqdn==1.5.1
     # via jsonschema
@@ -123,11 +123,11 @@ types-python-dateutil==2.9.0.20240316
     # via arrow
 uri-template==1.3.0
     # via jsonschema
-webcolors==24.6.0
+webcolors==24.8.0
     # via jsonschema
 websocket-client==1.8.0
     # via jupyter-server
-wheel==0.43.0
+wheel==0.44.0
     # via pip-tools
 
 # The following packages are considered to be unsafe in a requirements file:

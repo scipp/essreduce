@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-from ess.loki import data as loki_data
+from ess.reduce import data
 from ess.reduce.nexus import generic_types as gt
 from ess.reduce.nexus import types as ct  # common types
 from ess.reduce.nexus.generic_workflow import (
@@ -12,7 +12,7 @@ from ess.reduce.nexus.generic_workflow import (
 
 def test_load_monitor_workflow() -> None:
     wf = LoadMonitorWorkflow()
-    wf[gt.NeXusFileSpec[gt.SampleRun]] = loki_data.loki_tutorial_sample_run_60250()
+    wf[gt.NeXusFileSpec[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[gt.NeXusMonitorName[gt.Monitor1]] = 'monitor_1'
     da = wf.compute(gt.MonitorData[gt.SampleRun, gt.Monitor1])
     assert 'position' in da.coords
@@ -23,7 +23,7 @@ def test_load_monitor_workflow() -> None:
 
 def test_load_detector_workflow() -> None:
     wf = LoadDetectorWorkflow()
-    wf[gt.NeXusFileSpec[gt.SampleRun]] = loki_data.loki_tutorial_sample_run_60250()
+    wf[gt.NeXusFileSpec[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[ct.NeXusDetectorName] = 'larmor_detector'
     da = wf.compute(gt.DetectorData[gt.SampleRun])
     assert 'position' in da.coords
@@ -35,7 +35,7 @@ def test_load_detector_workflow() -> None:
 
 def test_generic_nexus_workflow() -> None:
     wf = GenericNeXusWorkflow()
-    wf[gt.NeXusFileSpec[gt.SampleRun]] = loki_data.loki_tutorial_sample_run_60250()
+    wf[gt.NeXusFileSpec[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[gt.NeXusMonitorName[gt.Monitor1]] = 'monitor_1'
     wf[ct.NeXusDetectorName] = 'larmor_detector'
     da = wf.compute(gt.DetectorData[gt.SampleRun])
