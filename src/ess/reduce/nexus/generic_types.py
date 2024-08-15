@@ -7,7 +7,7 @@ import sciline
 import scipp as sc
 import scippnexus as snx
 
-from .types import FilePath, NeXusFile, NeXusGroup
+from .types import FilePath, NeXusFile, NeXusGroup, NeXusLocationSpec
 
 # 1  TypeVars used to parametrize the generic parts of the workflow
 
@@ -143,12 +143,18 @@ class NeXusFileSpec(Generic[RunType]):
 
 
 @dataclass
-class NeXusLocationSpec(Generic[Component, RunType]):
+class NeXusComponentLocationSpec(
+    NeXusLocationSpec[Component], Generic[Component, RunType]
+):
     """
-    NeXus filename and optional parameters to identify (parts of) a component to load.
+    NeXus filename and optional parameters to identify (parts of) a detector to load.
     """
 
-    filename: NeXusFileSpec[RunType]
-    entry_name: str | None = None
-    component_name: str | None = None
-    selection: snx.typing.ScippIndex = ()
+
+@dataclass
+class NeXusMonitorLocationSpec(
+    NeXusLocationSpec[snx.NXmonitor], Generic[RunType, MonitorType]
+):
+    """
+    NeXus filename and optional parameters to identify (parts of) a monitor to load.
+    """
