@@ -31,13 +31,13 @@ def no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
 def unique_sample_spec(
     filename: gt.Filename[RunType],
 ) -> gt.NeXusComponentLocationSpec[snx.NXsample, RunType]:
-    return gt.NeXusComponentLocationSpec[snx.NXsample, RunType](filename=filename)
+    return gt.NeXusComponentLocationSpec[snx.NXsample, RunType](filename=filename.value)
 
 
 def unique_source_spec(
     filename: gt.Filename[RunType],
 ) -> gt.NeXusComponentLocationSpec[snx.NXsource, RunType]:
-    return gt.NeXusComponentLocationSpec[snx.NXsource, RunType](filename=filename)
+    return gt.NeXusComponentLocationSpec[snx.NXsource, RunType](filename=filename.value)
 
 
 def monitor_by_name(
@@ -46,7 +46,9 @@ def monitor_by_name(
     selection: PulseSelection,
 ) -> gt.NeXusMonitorLocationSpec[RunType, MonitorType]:
     return gt.NeXusMonitorLocationSpec[RunType, MonitorType](
-        filename=filename, component_name=name, selection={'event_time_zero': selection}
+        filename=filename.value,
+        component_name=name,
+        selection={'event_time_zero': selection},
     )
 
 
@@ -56,7 +58,9 @@ def detector_by_name(
     selection: PulseSelection,
 ) -> gt.NeXusComponentLocationSpec[snx.NXdetector, RunType]:
     return gt.NeXusComponentLocationSpec[snx.NXdetector, RunType](
-        filename=filename, component_name=name, selection={'event_time_zero': selection}
+        filename=filename.value,
+        component_name=name,
+        selection={'event_time_zero': selection},
     )
 
 
