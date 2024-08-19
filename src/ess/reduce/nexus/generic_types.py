@@ -13,13 +13,15 @@ from .types import FilePath, NeXusFile, NeXusGroup, NeXusLocationSpec
 
 # 1.1  Run types
 BackgroundRun = NewType('BackgroundRun', int)
-"""Background run: the run with only the solvent which the sample is placed in."""
+"""Background run such as a run with only a solvent which the sample is placed in."""
 EmptyBeamRun = NewType('EmptyBeamRun', int)
-"""Run (sometimes called 'direct run') where the sample holder was empty.
-It is used for reading the data from the transmission monitor."""
-SampleRun = NewType('SampleRun', int)
-"""Sample run: the run with the sample placed in the solvent inside the sample holder.
 """
+Run with empty sample holder, sometimes called 'direct run'.
+
+It is used for reading the data from the transmission monitor.
+"""
+SampleRun = NewType('SampleRun', int)
+"""Sample run."""
 
 ScatteringRunType = TypeVar(
     'ScatteringRunType',
@@ -29,9 +31,12 @@ ScatteringRunType = TypeVar(
 
 
 class TransmissionRun(Generic[ScatteringRunType]):
-    """Mapping between ScatteringRunType and transmission run.
+    """
+    Mapping between ScatteringRunType and transmission run.
+
     In the case where no transmission run is provided, the transmission run should be
-    the same as the measurement (sample or background) run."""
+    the same as the measurement (sample or background) run.
+    """
 
 
 RunType = TypeVar(
@@ -70,7 +75,7 @@ MonitorType = TypeVar(
     Incident,
     Transmission,
 )
-"""TypeVar used for specifying Incident or Transmission monitor type"""
+"""TypeVar used for specifying the monitor type such as Incident or Transmission"""
 
 
 class NeXusMonitorName(sciline.Scope[MonitorType, str], str):
