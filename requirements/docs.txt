@@ -10,15 +10,13 @@ accessible-pygments==0.0.5
     # via pydata-sphinx-theme
 alabaster==1.0.0
     # via sphinx
-appnope==0.1.4
-    # via ipykernel
 asttokens==2.4.1
     # via stack-data
 attrs==24.2.0
     # via
     #   jsonschema
     #   referencing
-babel==2.15.0
+babel==2.16.0
     # via
     #   pydata-sphinx-theme
     #   sphinx
@@ -125,7 +123,7 @@ nbformat==5.10.4
     #   nbclient
     #   nbconvert
     #   nbsphinx
-nbsphinx==0.9.4
+nbsphinx==0.9.5
     # via -r docs.in
 nest-asyncio==1.6.0
     # via ipykernel
@@ -178,7 +176,7 @@ rpds-py==0.20.0
     #   referencing
 snowballstemmer==2.2.0
     # via sphinx
-soupsieve==2.5
+soupsieve==2.6
     # via beautifulsoup4
 sphinx==8.0.2
     # via

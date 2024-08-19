@@ -20,9 +20,7 @@ scipp==24.6.0
     # via
     #   -r nightly.in
     #   scippnexus
-scippnexus==24.6.0
+scippnexus==24.8.1
     # via -r nightly.in
 scipy==1.14.0
     # via scippnexus
-six==1.16.0
-    # via python-dateutil

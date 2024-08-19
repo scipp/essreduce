@@ -4,33 +4,28 @@
 """NeXus loaders."""
 
 from contextlib import nullcontext
-from typing import (
-    ContextManager,
-    Mapping,
-    Optional,
-    Type,
-    Union,
-    cast,
-)
+from dataclasses import dataclass
+from math import prod
+from typing import ContextManager, Mapping, Type, cast
 
 import scipp as sc
 import scippnexus as snx
 
 from ..logging import get_logger
 from .types import (
-    FilePath,
+    Filename,
+    NeXusDetector,
     NeXusDetectorName,
     NeXusEntryName,
-    NeXusFile,
     NeXusGroup,
+    NeXusLocationSpec,
+    NeXusMonitor,
     NeXusMonitorName,
+    NeXusSample,
+    NeXusSource,
     NeXusSourceName,
-    RawDetector,
     RawDetectorData,
-    RawMonitor,
     RawMonitorData,
-    RawSample,
-    RawSource,
 )
 
 
@@ -41,13 +36,13 @@ NoNewDefinitions = NoNewDefinitionsType()
 
 
 def load_detector(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    file_path: Filename,
     selection=(),
     *,
     detector_name: NeXusDetectorName,
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> RawDetector:
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+) -> NeXusDetector:
     """Load a single detector (bank) from a NeXus file.
 
     The detector positions are computed automatically from NeXus transformations,
@@ -79,26 +74,28 @@ def load_detector(
         A data group containing the detector events or histogram
         and any auxiliary data stored in the same NeXus group.
     """
-    return RawDetector(
-        _load_group_with_positions(
-            file_path,
-            selection=selection,
-            group_name=detector_name,
+    return NeXusDetector(
+        load_component(
+            NeXusLocationSpec(
+                filename=file_path,
+                component_name=detector_name,
+                entry_name=entry_name,
+                selection=selection,
+            ),
             nx_class=snx.NXdetector,
-            entry_name=entry_name,
             definitions=definitions,
         )
     )
 
 
 def load_monitor(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    file_path: Filename,
     selection=(),
     *,
     monitor_name: NeXusMonitorName,
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> RawMonitor:
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+) -> NeXusMonitor:
     """Load a single monitor from a NeXus file.
 
     The monitor position is computed automatically from NeXus transformations,
@@ -130,25 +127,27 @@ def load_monitor(
         A data group containing the monitor events or histogram
         and any auxiliary data stored in the same NeXus group.
     """
-    return RawMonitor(
-        _load_group_with_positions(
-            file_path,
-            selection=selection,
-            group_name=monitor_name,
+    return NeXusMonitor(
+        load_component(
+            NeXusLocationSpec(
+                filename=file_path,
+                component_name=monitor_name,
+                entry_name=entry_name,
+                selection=selection,
+            ),
             nx_class=snx.NXmonitor,
-            entry_name=entry_name,
             definitions=definitions,
         )
     )
 
 
 def load_source(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    file_path: Filename,
     *,
-    source_name: Optional[NeXusSourceName] = None,
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> RawSource:
+    source_name: NeXusSourceName | None = None,
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+) -> NeXusSource:
     """Load a source from a NeXus file.
 
     The source position is computed automatically from NeXus transformations,
@@ -182,23 +181,22 @@ def load_source(
         A data group containing all data stored in
         the source NeXus group.
     """
-    return RawSource(
-        _load_group_with_positions(
-            file_path,
-            selection=(),
-            group_name=source_name,
+    return NeXusSource(
+        load_component(
+            NeXusLocationSpec(
+                filename=file_path, component_name=source_name, entry_name=entry_name
+            ),
             nx_class=snx.NXsource,
-            entry_name=entry_name,
             definitions=definitions,
         )
     )
 
 
 def load_sample(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> RawSample:
+    file_path: Filename,
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+) -> NeXusSample:
     """Load a sample from a NeXus file.
 
     The sample is located based on its NeXus class.
@@ -228,28 +226,33 @@ def load_sample(
         A data group containing all data stored in
         the sample NeXus group.
     """
-    with _open_nexus_file(file_path, definitions=definitions) as f:
-        entry = _unique_child_group(f, snx.NXentry, entry_name)
-        loaded = cast(sc.DataGroup, _unique_child_group(entry, snx.NXsample, None)[()])
-    return RawSample(loaded)
-
-
-def _load_group_with_positions(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    *,
-    selection,
-    group_name: Optional[str],
-    nx_class: Type[snx.NXobject],
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
-) -> sc.DataGroup:
-    with _open_nexus_file(file_path, definitions=definitions) as f:
-        entry = _unique_child_group(f, snx.NXentry, entry_name)
-        instrument = _unique_child_group(entry, snx.NXinstrument, None)
-        loaded = cast(
-            sc.DataGroup,
-            _unique_child_group(instrument, nx_class, group_name)[selection],
+    return NeXusSample(
+        load_component(
+            NeXusLocationSpec(filename=file_path, entry_name=entry_name),
+            nx_class=snx.NXsample,
+            definitions=definitions,
         )
+    )
+
+
+def load_component(
+    location: NeXusLocationSpec,
+    *,
+    nx_class: type[snx.NXobject],
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+) -> sc.DataGroup:
+    file_path = location.filename
+    selection = location.selection
+    entry_name = location.entry_name
+    group_name = location.component_name
+    with _open_nexus_file(file_path, definitions=definitions) as f:
+        entry = _unique_child_group(f, snx.NXentry, entry_name)
+        if nx_class is snx.NXsample:
+            instrument = entry
+        else:
+            instrument = _unique_child_group(entry, snx.NXinstrument, None)
+        component = _unique_child_group(instrument, nx_class, group_name)
+        loaded = cast(sc.DataGroup, component[selection])
 
         transform_out_name = 'transform'
         if transform_out_name in loaded:
@@ -263,16 +266,16 @@ def _load_group_with_positions(
                 f"Loaded data contains an item '{position_out_name}' but we want to "
                 "store the computed positions under that name."
             )
-
         loaded = snx.compute_positions(
             loaded, store_position=position_out_name, store_transform=transform_out_name
         )
+        loaded['nexus_component_name'] = component.name.split('/')[-1]
         return loaded
 
 
 def _open_nexus_file(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
+    file_path: Filename,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> ContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         if definitions is not NoNewDefinitions:
@@ -286,7 +289,7 @@ def _open_nexus_file(
 
 
 def _unique_child_group(
-    group: snx.Group, nx_class: Type[snx.NXobject], name: Optional[str]
+    group: snx.Group, nx_class: Type[snx.NXobject], name: str | None
 ) -> snx.Group:
     if name is not None:
         child = group[name]
@@ -307,7 +310,7 @@ def _unique_child_group(
     return next(iter(children.values()))  # type: ignore[return-value]
 
 
-def extract_detector_data(detector: RawDetector) -> RawDetectorData:
+def extract_detector_data(detector: NeXusDetector) -> RawDetectorData:
     """Get and return the events or histogram from a detector loaded from NeXus.
 
     This function looks for a data array in the detector group and returns that.
@@ -336,7 +339,7 @@ def extract_detector_data(detector: RawDetector) -> RawDetectorData:
     return RawDetectorData(_extract_events_or_histogram(detector))
 
 
-def extract_monitor_data(monitor: RawMonitor) -> RawMonitorData:
+def extract_monitor_data(monitor: NeXusMonitor) -> RawMonitorData:
     """Get and return the events or histogram from a monitor loaded from NeXus.
 
     This function looks for a data array in the monitor group and returns that.
@@ -397,7 +400,7 @@ def _extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
 
 def _select_unique_array(
     arrays: dict[str, sc.DataArray], mapping_name: str
-) -> Optional[sc.DataArray]:
+) -> sc.DataArray | None:
     if not arrays:
         return None
     if len(arrays) > 1:
@@ -410,7 +413,7 @@ def _select_unique_array(
 
 
 def load_event_data(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    file_path: Filename,
     selection=(),
     *,
     entry_name: NeXusEntryName | None = None,
@@ -493,3 +496,152 @@ def group_event_data(
     ):
         raise ValueError("Grouping only implemented for contiguous data with no masks.")
     return data.group(event_id).fold(dim='event_id', sizes=detector_number.sizes)
+
+
+def _format_time(time: sc.Variable | None) -> str:
+    if time is None:
+        return 'None'
+    return f"{time:c}"
+
+
+@dataclass
+class NeXusDetectorInfo:
+    name: str
+    start_time: sc.Variable | None
+    end_time: sc.Variable | None
+    n_pulse: int | None
+    n_pixel: int | None
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.name}: n_pulse={self.n_pulse}, n_pixel={self.n_pixel}, "
+            f"start_time={_format_time(self.start_time)}, "
+            f"end_time={_format_time(self.end_time)}"
+        )
+
+
+@dataclass
+class NeXusMonitorInfo:
+    name: str
+    start_time: sc.Variable | None
+    end_time: sc.Variable | None
+    n_pulse: int | None
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.name}: n_pulse={self.n_pulse}, "
+            f"start_time={_format_time(self.start_time)}, "
+            f"end_time={_format_time(self.end_time)}"
+        )
+
+
+@dataclass
+class NeXusFileInfo:
+    detectors: dict[str, NeXusDetectorInfo]
+    monitors: dict[str, NeXusMonitorInfo]
+
+    @property
+    def start_time(self) -> sc.Variable | None:
+        times = [
+            comp.start_time
+            for comp in (*self.detectors.values(), *self.monitors.values())
+            if comp.start_time is not None
+        ]
+        return sc.reduce(times).min() if times else None
+
+    @property
+    def end_time(self) -> sc.Variable | None:
+        times = [
+            comp.end_time
+            for comp in (*self.detectors.values(), *self.monitors.values())
+            if comp.end_time is not None
+        ]
+        return sc.reduce(times).max() if times else None
+
+    def __repr__(self) -> str:
+        s = "NeXusFileInfo(\n"
+        s += "  Detectors:\n"
+        s += "\n".join(f"    {det}" for det in self.detectors.values())
+        s += "\n  Monitors:\n"
+        s += "\n".join(f"    {mon}" for mon in self.monitors.values())
+        s += ')'
+        return s
+
+
+def _parse_name(group: snx.Group) -> str:
+    return group.name.split('/')[-1]
+
+
+def _parse_pixel_count(group: snx.Group) -> int | None:
+    if (detector_number := group.get('detector_number')) is not None:
+        return prod(detector_number.shape)
+
+
+def _parse_pulse_count(group: snx.Group) -> int | None:
+    try:
+        events = _unique_child_group(group, snx.NXevent_data, None)
+    except ValueError:
+        return None
+    try:
+        return events['event_index'].shape[0]
+    except KeyError:
+        return None
+
+
+def _get_start_time(group: snx.Group) -> sc.Variable | None:
+    try:
+        events = _unique_child_group(group, snx.NXevent_data, None)
+    except ValueError:
+        return None
+    try:
+        return events['event_time_zero'][0]
+    except KeyError:
+        return None
+
+
+def _get_end_time(group: snx.Group) -> sc.Variable | None:
+    try:
+        events = _unique_child_group(group, snx.NXevent_data, None)
+    except ValueError:
+        return None
+    try:
+        return events['event_time_zero'][-1]
+    except KeyError:
+        return None
+
+
+def _parse_detector(group: snx.Group) -> NeXusDetectorInfo:
+    return NeXusDetectorInfo(
+        name=_parse_name(group),
+        start_time=_get_start_time(group),
+        end_time=_get_end_time(group),
+        n_pulse=_parse_pulse_count(group),
+        n_pixel=_parse_pixel_count(group),
+    )
+
+
+def _parse_monitor(group: snx.Group) -> NeXusMonitorInfo:
+    return NeXusMonitorInfo(
+        name=_parse_name(group),
+        start_time=_get_start_time(group),
+        end_time=_get_end_time(group),
+        n_pulse=_parse_pulse_count(group),
+    )
+
+
+def read_nexus_file_info(file_path: Filename) -> NeXusFileInfo:
+    """Opens and inspects a NeXus file, returning a summary of its contents."""
+    with _open_nexus_file(file_path) as f:
+        entry = _unique_child_group(f, snx.NXentry, None)
+        instrument = _unique_child_group(entry, snx.NXinstrument, None)
+        detectors = {}
+        monitors = {}
+        for name, obj in instrument.items():
+            if not isinstance(obj, snx.Group):
+                continue
+            if obj.nx_class == snx.NXdetector:
+                detectors[name] = _parse_detector(obj)
+            elif obj.nx_class == snx.NXmonitor:
+                monitors[name] = _parse_monitor(obj)
+
+        return NeXusFileInfo(detectors=detectors, monitors=monitors)

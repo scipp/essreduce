@@ -1,10 +1,8 @@
 """NeXus domain types for use with Sciline."""
 
+from dataclasses import dataclass
 from pathlib import Path
-from typing import (
-    BinaryIO,
-    NewType,
-)
+from typing import Any, BinaryIO, Generic, NewType, TypeVar
 
 import scipp as sc
 import scippnexus as snx
@@ -32,15 +30,61 @@ NeXusMonitorName = NewType('NeXusMonitorName', str)
 NeXusSourceName = NewType('NeXusSourceName', str)
 """Name of a source in a NeXus file."""
 
-RawDetector = NewType('RawDetector', sc.DataGroup)
-"""Full raw data from a NeXus detector."""
 RawDetectorData = NewType('RawDetectorData', sc.DataArray)
 """Data extracted from a RawDetector."""
-RawMonitor = NewType('RawMonitor', sc.DataGroup)
-"""Full raw data from a NeXus monitor."""
 RawMonitorData = NewType('RawMonitorData', sc.DataArray)
 """Data extracted from a RawMonitor."""
-RawSample = NewType('RawSample', sc.DataGroup)
+
+NeXusDetector = NewType('NeXusDetector', sc.DataGroup)
+"""Full raw data from a NeXus detector."""
+NeXusMonitor = NewType('NeXusMonitor', sc.DataGroup)
+"""Full raw data from a NeXus monitor."""
+NeXusSample = NewType('NeXusSample', sc.DataGroup)
 """Raw data from a NeXus sample."""
-RawSource = NewType('RawSource', sc.DataGroup)
+NeXusSource = NewType('NeXusSource', sc.DataGroup)
 """Raw data from a NeXus source."""
+NeXusDetectorEventData = NewType('NeXusDetectorEventData', sc.DataArray)
+"""Data array loaded from a NeXus NXevent_data group within an NXdetector."""
+NeXusMonitorEventData = NewType('NeXusMonitorEventData', sc.DataArray)
+"""Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
+
+SourcePosition = NewType('SourcePosition', sc.Variable)
+"""Position of the neutron source."""
+
+SamplePosition = NewType('SamplePosition', sc.Variable)
+"""Position of the sample."""
+
+DetectorPositionOffset = NewType('DetectorPositionOffset', sc.Variable)
+"""Offset for the detector position, added to base position."""
+
+MonitorPositionOffset = NewType('MonitorPositionOffset', sc.Variable)
+"""Offset for the monitor position, added to base position."""
+
+
+DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]])
+
+CalibratedDetector = NewType('CalibratedDetector', sc.DataArray)
+CalibratedMonitor = NewType('CalibratedMonitor', sc.DataArray)
+
+DetectorData = NewType('DetectorData', sc.DataArray)
+MonitorData = NewType('MonitorData', sc.DataArray)
+
+PulseSelection = NewType('PulseSelection', slice)
+
+GravityVector = NewType('GravityVector', sc.Variable)
+
+Component = TypeVar('Component', bound=snx.NXobject)
+
+Filename = FilePath | NeXusFile | NeXusGroup
+
+
+@dataclass
+class NeXusLocationSpec(Generic[Component]):
+    """
+    NeXus filename and optional parameters to identify (parts of) a component to load.
+    """
+
+    filename: Filename
+    entry_name: NeXusEntryName | None = None
+    component_name: str | None = None
+    selection: snx.typing.ScippIndex = ()
