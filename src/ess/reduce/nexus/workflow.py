@@ -326,10 +326,9 @@ def get_calibrated_detector(
         da = da.fold(dim="detector_number", sizes=sizes)
     # Note: We apply offset as early as possible, i.e., right in this function
     # the detector array from the raw loader NeXus group, to prevent a source of bugs.
-    position = detector['position']
     return CalibratedDetector(
         da.assign_coords(
-            position=position + offset,
+            position=da.coords['position'] + offset,
             source_position=source_position,
             sample_position=sample_position,
             gravity=gravity,
