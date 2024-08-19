@@ -75,7 +75,7 @@ GravityVector = NewType('GravityVector', sc.Variable)
 
 Component = TypeVar('Component', bound=snx.NXobject)
 
-NeXusFileSpec = FilePath | NeXusFile | NeXusGroup
+Filename = FilePath | NeXusFile | NeXusGroup
 
 
 @dataclass
@@ -84,7 +84,7 @@ class NeXusLocationSpec(Generic[Component]):
     NeXus filename and optional parameters to identify (parts of) a component to load.
     """
 
-    filename: NeXusFileSpec
+    filename: Filename
     entry_name: NeXusEntryName | None = None
     component_name: str | None = None
     selection: snx.typing.ScippIndex = ()

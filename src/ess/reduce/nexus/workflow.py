@@ -18,13 +18,13 @@ from .types import (
     DetectorBankSizes,
     DetectorData,
     DetectorPositionOffset,
+    Filename,
     GravityVector,
     MonitorData,
     MonitorPositionOffset,
     NeXusDetector,
     NeXusDetectorEventData,
     NeXusDetectorName,
-    NeXusFileSpec,
     NeXusLocationSpec,
     NeXusMonitor,
     NeXusMonitorEventData,
@@ -49,7 +49,7 @@ def gravity_vector_neg_y() -> GravityVector:
     return GravityVector(sc.vector(value=[0, -1, 0]) * g)
 
 
-def unique_sample_spec(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsample]:
+def unique_sample_spec(filename: Filename) -> NeXusLocationSpec[snx.NXsample]:
     """
     Create a location spec for a unique sample group in a NeXus file.
 
@@ -61,7 +61,7 @@ def unique_sample_spec(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsampl
     return NeXusLocationSpec[snx.NXsample](filename=filename)
 
 
-def unique_source_spec(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsource]:
+def unique_source_spec(filename: Filename) -> NeXusLocationSpec[snx.NXsource]:
     """
     Create a location spec for a unique source group in a NeXus file.
 
@@ -74,7 +74,7 @@ def unique_source_spec(filename: NeXusFileSpec) -> NeXusLocationSpec[snx.NXsourc
 
 
 def monitor_by_name(
-    filename: NeXusFileSpec, name: NeXusMonitorName, selection: PulseSelection
+    filename: Filename, name: NeXusMonitorName, selection: PulseSelection
 ) -> NeXusLocationSpec[snx.NXmonitor]:
     """
     Create a location spec for a monitor group in a NeXus file.
@@ -94,7 +94,7 @@ def monitor_by_name(
 
 
 def detector_by_name(
-    filename: NeXusFileSpec, name: NeXusDetectorName, selection: PulseSelection
+    filename: Filename, name: NeXusDetectorName, selection: PulseSelection
 ) -> NeXusLocationSpec[snx.NXdetector]:
     """
     Create a location spec for a detector group in a NeXus file.
@@ -511,7 +511,7 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
     return wf
 
 
-def LoadNeXusWorkflow(filename: NeXusFileSpec) -> sciline.Pipeline:
+def LoadNeXusWorkflow(filename: Filename) -> sciline.Pipeline:
     """
     Workflow for loading detector and monitor data from a NeXus file.
 
@@ -530,7 +530,7 @@ def LoadNeXusWorkflow(filename: NeXusFileSpec) -> sciline.Pipeline:
     wf = sciline.Pipeline()
     wf[DetectorData] = LoadDetectorWorkflow()
     wf[MonitorData] = LoadMonitorWorkflow()
-    wf[NeXusFileSpec] = filename
+    wf[Filename] = filename
     wf.insert(nexus.read_nexus_file_info)
     wf[nexus.NeXusFileInfo] = info = wf.compute(nexus.NeXusFileInfo)
     # Note: There is a good reason against auto-mapping here:

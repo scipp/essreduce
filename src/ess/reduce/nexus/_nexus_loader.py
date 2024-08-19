@@ -6,26 +6,17 @@
 from contextlib import nullcontext
 from dataclasses import dataclass
 from math import prod
-from typing import (
-    ContextManager,
-    Mapping,
-    Optional,
-    Type,
-    Union,
-    cast,
-)
+from typing import ContextManager, Mapping, Type, cast
 
 import scipp as sc
 import scippnexus as snx
 
 from ..logging import get_logger
 from .types import (
-    FilePath,
+    Filename,
     NeXusDetector,
     NeXusDetectorName,
     NeXusEntryName,
-    NeXusFile,
-    NeXusFileSpec,
     NeXusGroup,
     NeXusLocationSpec,
     NeXusMonitor,
@@ -45,12 +36,12 @@ NoNewDefinitions = NoNewDefinitionsType()
 
 
 def load_detector(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    file_path: Filename,
     selection=(),
     *,
     detector_name: NeXusDetectorName,
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> NeXusDetector:
     """Load a single detector (bank) from a NeXus file.
 
@@ -98,12 +89,12 @@ def load_detector(
 
 
 def load_monitor(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    file_path: Filename,
     selection=(),
     *,
     monitor_name: NeXusMonitorName,
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> NeXusMonitor:
     """Load a single monitor from a NeXus file.
 
@@ -151,11 +142,11 @@ def load_monitor(
 
 
 def load_source(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    file_path: Filename,
     *,
-    source_name: Optional[NeXusSourceName] = None,
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
+    source_name: NeXusSourceName | None = None,
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> NeXusSource:
     """Load a source from a NeXus file.
 
@@ -202,9 +193,9 @@ def load_source(
 
 
 def load_sample(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    entry_name: Optional[NeXusEntryName] = None,
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
+    file_path: Filename,
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> NeXusSample:
     """Load a sample from a NeXus file.
 
@@ -283,8 +274,8 @@ def load_component(
 
 
 def _open_nexus_file(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
-    definitions: Optional[Mapping] | NoNewDefinitionsType = NoNewDefinitions,
+    file_path: Filename,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> ContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         if definitions is not NoNewDefinitions:
@@ -298,7 +289,7 @@ def _open_nexus_file(
 
 
 def _unique_child_group(
-    group: snx.Group, nx_class: Type[snx.NXobject], name: Optional[str]
+    group: snx.Group, nx_class: Type[snx.NXobject], name: str | None
 ) -> snx.Group:
     if name is not None:
         child = group[name]
@@ -409,7 +400,7 @@ def _extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
 
 def _select_unique_array(
     arrays: dict[str, sc.DataArray], mapping_name: str
-) -> Optional[sc.DataArray]:
+) -> sc.DataArray | None:
     if not arrays:
         return None
     if len(arrays) > 1:
@@ -422,7 +413,7 @@ def _select_unique_array(
 
 
 def load_event_data(
-    file_path: Union[FilePath, NeXusFile, NeXusGroup],
+    file_path: Filename,
     selection=(),
     *,
     entry_name: NeXusEntryName | None = None,
@@ -638,7 +629,7 @@ def _parse_monitor(group: snx.Group) -> NeXusMonitorInfo:
     )
 
 
-def read_nexus_file_info(file_path: NeXusFileSpec) -> NeXusFileInfo:
+def read_nexus_file_info(file_path: Filename) -> NeXusFileInfo:
     """Opens and inspects a NeXus file, returning a summary of its contents."""
     with _open_nexus_file(file_path) as f:
         entry = _unique_child_group(f, snx.NXentry, None)
