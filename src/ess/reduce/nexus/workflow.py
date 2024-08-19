@@ -150,6 +150,9 @@ def load_nexus_detector(location: NeXusLocationSpec[snx.NXdetector]) -> NeXusDet
     """
     Load detector from NeXus, but with event data replaced by placeholders.
 
+    As the event data can be large and is not needed at this stage, it is replaced by
+    a placeholder. A placeholder is used to allow for returning a scipp.DataArray, which
+    is what most downstream code will expect.
     Currently the placeholder is the detector number, but this may change in the future.
 
     The returned object is a scipp.DataGroup, as it may contain additional information
@@ -186,6 +189,9 @@ def load_nexus_monitor(location: NeXusLocationSpec[snx.NXmonitor]) -> NeXusMonit
     """
     Load monitor from NeXus, but with event data replaced by placeholders.
 
+    As the event data can be large and is not needed at this stage, it is replaced by
+    a placeholder. A placeholder is used to allow for returning a scipp.DataArray, which
+    is what most downstream code will expect.
     Currently the placeholder is a size-0 array, but this may change in the future.
 
     The returned object is a scipp.DataGroup, as it may contain additional information
@@ -299,8 +305,6 @@ def get_calibrated_detector(
     signal values array, but not additional information about the detector. The
     data array is reshaped to the logical detector shape, which by folding the data
     array along the detector_number dimension.
-
-    Also add variances to the event data if they are missing.
 
     Parameters
     ----------
