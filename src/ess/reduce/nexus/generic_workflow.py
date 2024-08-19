@@ -29,19 +29,19 @@ def no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
 
 
 def unique_sample_spec(
-    filename: gt.NeXusFileSpec[RunType],
+    filename: gt.Filename[RunType],
 ) -> gt.NeXusComponentLocationSpec[snx.NXsample, RunType]:
     return gt.NeXusComponentLocationSpec[snx.NXsample, RunType](filename=filename)
 
 
 def unique_source_spec(
-    filename: gt.NeXusFileSpec[RunType],
+    filename: gt.Filename[RunType],
 ) -> gt.NeXusComponentLocationSpec[snx.NXsource, RunType]:
     return gt.NeXusComponentLocationSpec[snx.NXsource, RunType](filename=filename)
 
 
 def monitor_by_name(
-    filename: gt.NeXusFileSpec[RunType],
+    filename: gt.Filename[RunType],
     name: gt.NeXusMonitorName[MonitorType],
     selection: PulseSelection,
 ) -> gt.NeXusMonitorLocationSpec[RunType, MonitorType]:
@@ -51,7 +51,7 @@ def monitor_by_name(
 
 
 def detector_by_name(
-    filename: gt.NeXusFileSpec[RunType],
+    filename: gt.Filename[RunType],
     name: NeXusDetectorName,
     selection: PulseSelection,
 ) -> gt.NeXusComponentLocationSpec[snx.NXdetector, RunType]:

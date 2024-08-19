@@ -12,7 +12,7 @@ from ess.reduce.nexus.generic_workflow import (
 
 def test_load_monitor_workflow() -> None:
     wf = LoadMonitorWorkflow()
-    wf[gt.NeXusFileSpec[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[gt.Filename[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[gt.NeXusMonitorName[gt.Monitor1]] = 'monitor_1'
     da = wf.compute(gt.MonitorData[gt.SampleRun, gt.Monitor1])
     assert 'position' in da.coords
@@ -23,7 +23,7 @@ def test_load_monitor_workflow() -> None:
 
 def test_load_detector_workflow() -> None:
     wf = LoadDetectorWorkflow()
-    wf[gt.NeXusFileSpec[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[gt.Filename[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[ct.NeXusDetectorName] = 'larmor_detector'
     da = wf.compute(gt.DetectorData[gt.SampleRun])
     assert 'position' in da.coords
@@ -35,7 +35,7 @@ def test_load_detector_workflow() -> None:
 
 def test_generic_nexus_workflow() -> None:
     wf = GenericNeXusWorkflow()
-    wf[gt.NeXusFileSpec[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[gt.Filename[gt.SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[gt.NeXusMonitorName[gt.Monitor1]] = 'monitor_1'
     wf[ct.NeXusDetectorName] = 'larmor_detector'
     da = wf.compute(gt.DetectorData[gt.SampleRun])

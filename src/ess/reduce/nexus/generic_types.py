@@ -152,7 +152,7 @@ Component = TypeVar('Component', bound=snx.NXobject)
 
 
 @dataclass
-class NeXusFileSpec(Generic[RunType]):
+class Filename(Generic[RunType]):
     value: FilePath | NeXusFile | NeXusGroup
 
 
