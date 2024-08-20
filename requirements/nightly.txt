@@ -5,18 +5,75 @@
 #
 #    pip-compile-multi
 #
--r basetest.txt
+asttokens==2.4.1
+    # via stack-data
+certifi==2024.7.4
+    # via requests
+charset-normalizer==3.3.2
+    # via requests
+comm==0.2.2
+    # via ipywidgets
 cyclebane==24.6.0
     # via sciline
+decorator==5.1.1
+    # via ipython
+executing==2.0.1
+    # via stack-data
 h5py==3.11.0
     # via scippnexus
+idna==3.7
+    # via requests
+iniconfig==2.0.0
+    # via pytest
+ipython==8.26.0
+    # via ipywidgets
+ipywidgets==8.1.3
+    # via -r basetest.in
+jedi==0.19.1
+    # via ipython
+jupyterlab-widgets==3.0.11
+    # via ipywidgets
+matplotlib-inline==0.1.7
+    # via ipython
 networkx==3.3
     # via cyclebane
+numpy==2.0.1
+    # via
+    #   -r basetest.in
+    #   h5py
+    #   scipp
+    #   scipy
+packaging==24.1
+    # via
+    #   pooch
+    #   pytest
+parso==0.8.4
+    # via jedi
+pexpect==4.9.0
+    # via ipython
+platformdirs==4.2.2
+    # via pooch
+pluggy==1.5.0
+    # via pytest
+pooch==1.8.2
+    # via -r basetest.in
+prompt-toolkit==3.0.47
+    # via ipython
+ptyprocess==0.7.0
+    # via pexpect
+pure-eval==0.2.3
+    # via stack-data
+pygments==2.18.0
+    # via ipython
+pytest==8.3.2
+    # via -r basetest.in
 python-dateutil==2.9.0.post0
     # via scippnexus
+requests==2.32.3
+    # via pooch
 sciline==24.6.2
     # via -r nightly.in
-scipp==24.6.0
+scipp==24.8.0
     # via
     #   -r nightly.in
     #   scippnexus
@@ -24,3 +81,21 @@ scippnexus==24.8.1
     # via -r nightly.in
 scipy==1.14.0
     # via scippnexus
+six==1.16.0
+    # via
+    #   asttokens
+    #   python-dateutil
+stack-data==0.6.3
+    # via ipython
+traitlets==5.14.3
+    # via
+    #   comm
+    #   ipython
+    #   ipywidgets
+    #   matplotlib-inline
+urllib3==2.2.2
+    # via requests
+wcwidth==0.2.13
+    # via prompt-toolkit
+widgetsnbextension==4.0.11
+    # via ipywidgets
