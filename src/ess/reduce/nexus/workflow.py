@@ -322,7 +322,9 @@ def get_calibrated_detector(
         Dictionary of detector bank sizes.
     """
     da = nexus.extract_detector_data(detector)
-    if (sizes := (bank_sizes or {}).get(detector['nexus_component_name'])) is not None:
+    if (
+        sizes := (bank_sizes or {}).get(detector.get('nexus_component_name'))
+    ) is not None:
         da = da.fold(dim="detector_number", sizes=sizes)
     # Note: We apply offset as early as possible, i.e., right in this function
     # the detector array from the raw loader NeXus group, to prevent a source of bugs.

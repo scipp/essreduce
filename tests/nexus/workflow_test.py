@@ -102,6 +102,21 @@ def test_get_calibrated_detector_folds_detector_number_if_mapping_given(
     assert detector.sizes == sizes
 
 
+def test_get_calibrated_detector_works_if_nexus_component_name_is_missing(
+    nexus_detector, source_position
+):
+    del nexus_detector['nexus_component_name']
+    detector = workflow.get_calibrated_detector(
+        nexus_detector,
+        offset=workflow.no_offset,
+        source_position=source_position,
+        sample_position=workflow.origin,
+        gravity=workflow.gravity_vector_neg_y(),
+        bank_sizes={},
+    )
+    assert detector.sizes == nexus_detector['data'].sizes
+
+
 def test_get_calibrated_detector_adds_offset_to_position(
     nexus_detector,
     source_position,
