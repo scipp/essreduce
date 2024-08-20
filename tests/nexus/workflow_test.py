@@ -41,15 +41,21 @@ def test_get_source_position_raises_exception_if_position_not_found(
 @pytest.fixture()
 def nexus_detector() -> workflow.NeXusDetector:
     detector_number = sc.arange('detector_number', 6, unit=None)
+    x = sc.linspace('detector_number', 0, 1, num=6, unit='m')
+    position = sc.spatial.as_vectors(x, sc.zeros_like(x), sc.zeros_like(x))
     data = sc.DataArray(
         sc.empty_like(detector_number),
         coords={
             'detector_number': detector_number,
+            'position': position,
         },
     )
     return workflow.NeXusDetector(
         sc.DataGroup(
             data=data,
+            # Note that this position (the overall detector position) will be ignored,
+            # only the pixel positions (typically defined relative to this in an
+            # actual NeXus file) will be used.
             position=sc.vector([1.0, 2.0, 3.0], unit='m'),
             nexus_component_name='detector1',
         )
@@ -74,9 +80,7 @@ def test_get_calibrated_detector_extracts_data_field_from_nexus_detector(
         bank_sizes={},
     )
     assert_identical(
-        detector.drop_coords(
-            ('position', 'sample_position', 'source_position', 'gravity')
-        ),
+        detector.drop_coords(('sample_position', 'source_position', 'gravity')),
         nexus_detector['data'],
     )
 
@@ -111,7 +115,9 @@ def test_get_calibrated_detector_adds_offset_to_position(
         gravity=workflow.gravity_vector_neg_y(),
         bank_sizes={},
     )
-    assert_identical(detector.coords['position'], sc.vector([1.1, 2.2, 3.3], unit='m'))
+    position = nexus_detector['data'].coords['position'] + offset
+    assert detector.coords['position'].sizes == {'detector_number': 6}
+    assert_identical(detector.coords['position'], position)
 
 
 def test_get_calibrated_detector_forwards_coords(
