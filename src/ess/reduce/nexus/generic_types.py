@@ -1,6 +1,7 @@
 """Domain types for use with Sciline, parametrized by run- and monitor-type."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Generic, NewType, TypeVar
 
 import sciline
@@ -151,8 +152,11 @@ class MonitorData(
 Component = TypeVar('Component', bound=snx.NXobject)
 
 
+class Filename(sciline.Scope[RunType, Path], Path): ...
+
+
 @dataclass
-class Filename(Generic[RunType]):
+class NeXusFileSpec(Generic[RunType]):
     value: FilePath | NeXusFile | NeXusGroup
 
 

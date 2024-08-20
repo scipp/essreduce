@@ -61,7 +61,7 @@ def source_position() -> sc.Variable:
     return sc.vector([0.0, 0.0, -10.0], unit='m')
 
 
-def test_get_calibrated_detector_extracts_data_field_from_nexus_monitor(
+def test_get_calibrated_detector_extracts_data_field_from_nexus_detector(
     nexus_detector,
     source_position,
 ) -> None:
