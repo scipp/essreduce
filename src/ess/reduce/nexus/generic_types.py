@@ -8,7 +8,7 @@ import sciline
 import scipp as sc
 import scippnexus as snx
 
-from .types import FilePath, NeXusFile, NeXusGroup, NeXusLocationSpec
+from .types import Component, FilePath, NeXusFile, NeXusGroup, NeXusLocationSpec
 
 # 1  TypeVars used to parametrize the generic parts of the workflow
 
@@ -147,9 +147,6 @@ class MonitorData(
     sciline.ScopeTwoParams[RunType, MonitorType, sc.DataArray], sc.DataArray
 ):
     """Calibrated monitor merged with neutron event data."""
-
-
-Component = TypeVar('Component', bound=snx.NXobject)
 
 
 class Filename(sciline.Scope[RunType, Path], Path): ...

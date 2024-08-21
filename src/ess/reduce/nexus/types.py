@@ -25,7 +25,7 @@ NeXusDetectorName = NewType('NeXusDetectorName', str)
 """Name of a detector (bank) in a NeXus file."""
 NeXusEntryName = NewType('NeXusEntryName', str)
 """Name of an entry in a NeXus file."""
-NeXusMonitorName = NewType('NeXusMonitorName', str)
+AnyNeXusMonitorName = NewType('AnyNeXusMonitorName', str)
 """Name of a monitor in a NeXus file."""
 NeXusSourceName = NewType('NeXusSourceName', str)
 """Name of a source in a NeXus file."""
@@ -35,39 +35,39 @@ RawDetectorData = NewType('RawDetectorData', sc.DataArray)
 RawMonitorData = NewType('RawMonitorData', sc.DataArray)
 """Data extracted from a RawMonitor."""
 
-NeXusDetector = NewType('NeXusDetector', sc.DataGroup)
+AnyRunNeXusDetector = NewType('AnyRunNeXusDetector', sc.DataGroup)
 """Full raw data from a NeXus detector."""
-NeXusMonitor = NewType('NeXusMonitor', sc.DataGroup)
+AnyRunAnyNeXusMonitor = NewType('AnyRunAnyNeXusMonitor', sc.DataGroup)
 """Full raw data from a NeXus monitor."""
-NeXusSample = NewType('NeXusSample', sc.DataGroup)
+AnyRunNeXusSample = NewType('AnyRunNeXusSample', sc.DataGroup)
 """Raw data from a NeXus sample."""
-NeXusSource = NewType('NeXusSource', sc.DataGroup)
+AnyRunNeXusSource = NewType('AnyRunNeXusSource', sc.DataGroup)
 """Raw data from a NeXus source."""
-NeXusDetectorEventData = NewType('NeXusDetectorEventData', sc.DataArray)
+AnyRunNeXusDetectorEventData = NewType('AnyRunNeXusDetectorEventData', sc.DataArray)
 """Data array loaded from a NeXus NXevent_data group within an NXdetector."""
-NeXusMonitorEventData = NewType('NeXusMonitorEventData', sc.DataArray)
+AnyRunAnyNeXusMonitorEventData = NewType('AnyRunAnyNeXusMonitorEventData', sc.DataArray)
 """Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
 
-SourcePosition = NewType('SourcePosition', sc.Variable)
+AnyRunSourcePosition = NewType('AnyRunSourcePosition', sc.Variable)
 """Position of the neutron source."""
 
-SamplePosition = NewType('SamplePosition', sc.Variable)
+AnyRunSamplePosition = NewType('AnyRunSamplePosition', sc.Variable)
 """Position of the sample."""
 
-DetectorPositionOffset = NewType('DetectorPositionOffset', sc.Variable)
+AnyRunDetectorPositionOffset = NewType('AnyRunDetectorPositionOffset', sc.Variable)
 """Offset for the detector position, added to base position."""
 
-MonitorPositionOffset = NewType('MonitorPositionOffset', sc.Variable)
+AnyRunAnyMonitorPositionOffset = NewType('AnyRunAnyMonitorPositionOffset', sc.Variable)
 """Offset for the monitor position, added to base position."""
 
 
 DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]])
 
-CalibratedDetector = NewType('CalibratedDetector', sc.DataArray)
-CalibratedMonitor = NewType('CalibratedMonitor', sc.DataArray)
+AnyRunCalibratedDetector = NewType('AnyRunCalibratedDetector', sc.DataArray)
+AnyRunAnyCalibratedMonitor = NewType('AnyRunAnyCalibratedMonitor', sc.DataArray)
 
-DetectorData = NewType('DetectorData', sc.DataArray)
-MonitorData = NewType('MonitorData', sc.DataArray)
+AnyRunDetectorData = NewType('AnyRunDetectorData', sc.DataArray)
+AnyRunAnyMonitorData = NewType('AnyRunAnyMonitorData', sc.DataArray)
 
 PulseSelection = NewType('PulseSelection', slice)
 
@@ -75,7 +75,7 @@ GravityVector = NewType('GravityVector', sc.Variable)
 
 Component = TypeVar('Component', bound=snx.NXobject)
 
-Filename = FilePath | NeXusFile | NeXusGroup
+AnyRunFilename = FilePath | NeXusFile | NeXusGroup
 
 
 @dataclass
@@ -84,7 +84,7 @@ class NeXusLocationSpec(Generic[Component]):
     NeXus filename and optional parameters to identify (parts of) a component to load.
     """
 
-    filename: Filename
+    filename: AnyRunFilename
     entry_name: NeXusEntryName | None = None
     component_name: str | None = None
     selection: snx.typing.ScippIndex = ()

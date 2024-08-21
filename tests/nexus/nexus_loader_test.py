@@ -364,7 +364,7 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name, selection):
     monitor = nexus.load_monitor(
         nexus_file,
         **({'selection': selection} if selection is not None else {}),
-        monitor_name=nexus.types.NeXusMonitorName('monitor'),
+        monitor_name=nexus.types.AnyNeXusMonitorName('monitor'),
         entry_name=entry_name,
     )
     expected = expected_monitor[selection] if selection else expected_monitor
@@ -382,7 +382,7 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
     # NeXus details that we don't need to test as long as the positions are ok:
     del source['depends_on']
     del source['transformations']
-    sc.testing.assert_identical(source, nexus.types.NeXusSource(expected_source))
+    sc.testing.assert_identical(source, nexus.types.AnyRunNeXusSource(expected_source))
 
 
 @pytest.mark.parametrize(
@@ -414,7 +414,7 @@ def test_load_new_definitions_applied(nexus_file, loader, cls, name):
 @pytest.mark.parametrize('entry_name', [None, nexus.types.NeXusEntryName('entry-001')])
 def test_load_sample(nexus_file, expected_sample, entry_name):
     sample = nexus.load_sample(nexus_file, entry_name=entry_name)
-    sc.testing.assert_identical(sample, nexus.types.NeXusSample(expected_sample))
+    sc.testing.assert_identical(sample, nexus.types.AnyRunNeXusSample(expected_sample))
 
 
 def test_extract_detector_data():
@@ -425,7 +425,7 @@ def test_extract_detector_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_detector_data(nexus.types.NeXusDetector(detector))
+    data = nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
     sc.testing.assert_identical(data, nexus.types.RawDetectorData(detector['jdl2ab']))
 
 
@@ -437,7 +437,7 @@ def test_extract_monitor_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_monitor_data(nexus.types.NeXusMonitor(monitor))
+    data = nexus.extract_monitor_data(nexus.types.AnyRunAnyNeXusMonitor(monitor))
     sc.testing.assert_identical(data, nexus.types.RawMonitorData(monitor['(eed)']))
 
 
@@ -453,7 +453,7 @@ def test_extract_detector_data_requires_unique_dense_data():
     with pytest.raises(
         ValueError, match="Cannot uniquely identify the data to extract"
     ):
-        nexus.extract_detector_data(nexus.types.NeXusDetector(detector))
+        nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
 
 
 def test_extract_detector_data_requires_unique_event_data():
@@ -468,7 +468,7 @@ def test_extract_detector_data_requires_unique_event_data():
     with pytest.raises(
         ValueError, match="Cannot uniquely identify the data to extract"
     ):
-        nexus.extract_detector_data(nexus.types.NeXusDetector(detector))
+        nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
 
 
 def test_extract_detector_data_favors_event_data_over_histogram_data():
@@ -480,5 +480,5 @@ def test_extract_detector_data_favors_event_data_over_histogram_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_detector_data(nexus.types.NeXusDetector(detector))
+    data = nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
     sc.testing.assert_identical(data, nexus.types.RawDetectorData(detector['lob']))
