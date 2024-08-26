@@ -31,5 +31,3 @@ scippnexus @ git+https://github.com/scipp/scippnexus@main
     # via -r nightly.in
 scipy==1.14.1
     # via scippnexus
-six==1.16.0
-    # via python-dateutil
