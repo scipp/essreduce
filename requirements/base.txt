@@ -11,7 +11,7 @@ h5py==3.11.0
     # via scippnexus
 networkx==3.3
     # via cyclebane
-numpy==2.0.1
+numpy==2.1.0
     # via
     #   h5py
     #   scipp
@@ -20,13 +20,13 @@ python-dateutil==2.9.0.post0
     # via scippnexus
 sciline==24.6.2
     # via -r base.in
-scipp==24.6.0
+scipp==24.8.0
     # via
     #   -r base.in
     #   scippnexus
 scippnexus==24.8.1
     # via -r base.in
-scipy==1.14.0
+scipy==1.14.1
     # via scippnexus
 six==1.16.0
     # via python-dateutil
