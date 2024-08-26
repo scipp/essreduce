@@ -3,10 +3,11 @@
 
 """NeXus loaders."""
 
-from contextlib import nullcontext
+from collections.abc import Mapping
+from contextlib import AbstractContextManager, nullcontext
 from dataclasses import dataclass
 from math import prod
-from typing import ContextManager, Mapping, Type, cast
+from typing import cast
 
 import scipp as sc
 import scippnexus as snx
@@ -276,7 +277,7 @@ def load_component(
 def _open_nexus_file(
     file_path: AnyRunFilename,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> ContextManager:
+) -> AbstractContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         if definitions is not NoNewDefinitions:
             raise ValueError(
@@ -289,7 +290,7 @@ def _open_nexus_file(
 
 
 def _unique_child_group(
-    group: snx.Group, nx_class: Type[snx.NXobject], name: str | None
+    group: snx.Group, nx_class: type[snx.NXobject], name: str | None
 ) -> snx.Group:
     if name is not None:
         child = group[name]

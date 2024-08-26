@@ -2,8 +2,8 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
-from collections.abc import MutableSet
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable, MutableSet
+from typing import Any, TypeVar
 
 import networkx as nx
 from sciline import Pipeline

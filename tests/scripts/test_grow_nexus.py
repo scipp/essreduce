@@ -4,6 +4,7 @@ import tempfile
 import h5py
 import numpy as np
 import pytest
+
 from ess.reduce.scripts.grow_nexus import grow_nexus_file
 
 

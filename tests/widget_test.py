@@ -5,11 +5,12 @@ from contextlib import contextmanager
 from typing import Any, NewType
 
 import sciline as sl
+from ipywidgets import FloatText, IntText
+
 from ess.reduce.parameter import Parameter, parameter_registry
 from ess.reduce.ui import WorkflowWidget, workflow_widget
 from ess.reduce.widgets import OptionalWidget, SwitchWidget, create_parameter_widget
 from ess.reduce.workflow import register_workflow, workflow_registry
-from ipywidgets import FloatText, IntText
 
 SwitchableInt = NewType('SwitchableInt', int)
 SwitchableFloat = NewType('SwitchableFloat', float)

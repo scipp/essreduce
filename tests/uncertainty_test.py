@@ -4,8 +4,9 @@
 import numpy as np
 import pytest
 import scipp as sc
-from ess.reduce import uncertainty as unc
 from scipp.testing import assert_identical
+
+from ess.reduce import uncertainty as unc
 
 
 def test_fail_mode_always_returns_original():
