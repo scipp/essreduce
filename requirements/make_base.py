@@ -1,7 +1,6 @@
 import sys
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List
 
 import tomli
 
@@ -20,7 +19,7 @@ CUSTOM_AUTO_SEPARATOR = """
 """
 
 
-def write_dependencies(dependency_name: str, dependencies: List[str]) -> None:
+def write_dependencies(dependency_name: str, dependencies: list[str]) -> None:
     path = Path(f"{dependency_name}.in")
     if path.exists():
         sections = path.read_text().split(CUSTOM_AUTO_SEPARATOR)
@@ -43,8 +42,14 @@ with open("../pyproject.toml", "rb") as toml_file:
     if dependencies is None:
         raise RuntimeError("No dependencies found in pyproject.toml")
     dependencies = [dep.strip().strip('"') for dep in dependencies]
+    test_dependencies = (
+        pyproject["project"].get("optional-dependencies", {}).get("test", [])
+    )
+    test_dependencies = [dep.strip().strip('"') for dep in test_dependencies]
+
 
 write_dependencies("base", dependencies)
+write_dependencies("basetest", test_dependencies)
 
 
 def as_nightly(repo: str) -> str:
@@ -56,7 +61,8 @@ def as_nightly(repo: str) -> str:
         version = f"cp{sys.version_info.major}{sys.version_info.minor}"
         base = "https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly"
         suffix = "manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-        return "-".join([base, version, version, suffix])
+        prefix = "scipp @ "
+        return prefix + "-".join([base, version, version, suffix])
     return f"{repo} @ git+https://github.com/{org}/{repo}@main"
 
 
