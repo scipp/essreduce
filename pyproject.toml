@@ -39,8 +39,9 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "pytest",
     "ipywidgets",
+    "pooch",
+    "pytest",
 ]
 
 [project.scripts]
