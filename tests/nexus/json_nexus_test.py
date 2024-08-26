@@ -8,6 +8,7 @@ import pytest
 import scipp as sc
 import scipp.testing
 import scippnexus as snx
+
 from ess.reduce.nexus.json_nexus import json_nexus_group
 
 

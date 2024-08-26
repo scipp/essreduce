@@ -11,6 +11,7 @@ import pytest
 import scipp as sc
 import scipp.testing
 import scippnexus as snx
+
 from ess.reduce import nexus
 
 year_zero = sc.datetime('1970-01-01T00:00:00')

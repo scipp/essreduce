@@ -2,8 +2,9 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 import pytest
 import scipp as sc
-from ess.reduce.nexus import workflow
 from scipp.testing import assert_identical
+
+from ess.reduce.nexus import workflow
 
 
 @pytest.fixture(params=[{}, {'aux': 1}])
