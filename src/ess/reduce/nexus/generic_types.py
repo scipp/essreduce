@@ -23,11 +23,14 @@ It is used for reading the data from the transmission monitor.
 """
 SampleRun = NewType('SampleRun', int)
 """Sample run."""
+VanadiumRun = NewType('VanadiumRun', int)
+"""Vanadium run."""
 
 ScatteringRunType = TypeVar(
     'ScatteringRunType',
-    SampleRun,
     BackgroundRun,
+    SampleRun,
+    VanadiumRun,
 )
 
 
@@ -48,6 +51,7 @@ RunType = TypeVar(
     # Note that mypy does not seem to like this nesting, may need to find a workaround
     TransmissionRun[SampleRun],
     TransmissionRun[BackgroundRun],
+    VanadiumRun,
 )
 """TypeVar used for specifying BackgroundRun, EmptyBeamRun or SampleRun"""
 
