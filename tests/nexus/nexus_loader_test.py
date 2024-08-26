@@ -4,7 +4,6 @@
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
-from typing import Union
 
 import numpy as np
 import pytest
@@ -92,7 +91,7 @@ def _write_transformation(group: snx.Group, offset: sc.Variable) -> None:
     t1.attrs['vector'] = sc.vector([0, 0, 1]).value
 
 
-def _write_nexus_data(store: Union[Path, BytesIO]) -> None:
+def _write_nexus_data(store: Path | BytesIO) -> None:
     with snx.File(store, 'w') as root:
         entry = root.create_class('entry-001', snx.NXentry)
         instrument = entry.create_class('reducer', snx.NXinstrument)

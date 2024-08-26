@@ -1,6 +1,5 @@
 import argparse
 import shutil
-from typing import Optional
 
 import h5py
 
@@ -51,9 +50,7 @@ def _grow_nexus_file_impl(file: h5py.File, detector_scale: int, monitor_scale: i
                     )
 
 
-def grow_nexus_file(
-    *, filename: str, detector_scale: int, monitor_scale: Optional[int]
-):
+def grow_nexus_file(*, filename: str, detector_scale: int, monitor_scale: int | None):
     with h5py.File(filename, 'a') as f:
         _grow_nexus_file_impl(
             f,
