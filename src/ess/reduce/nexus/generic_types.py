@@ -1,13 +1,14 @@
 """Domain types for use with Sciline, parametrized by run- and monitor-type."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Generic, NewType, TypeVar
 
 import sciline
 import scipp as sc
 import scippnexus as snx
 
-from .types import FilePath, NeXusFile, NeXusGroup, NeXusLocationSpec
+from .types import Component, FilePath, NeXusFile, NeXusGroup, NeXusLocationSpec
 
 # 1  TypeVars used to parametrize the generic parts of the workflow
 
@@ -148,11 +149,11 @@ class MonitorData(
     """Calibrated monitor merged with neutron event data."""
 
 
-Component = TypeVar('Component', bound=snx.NXobject)
+class Filename(sciline.Scope[RunType, Path], Path): ...
 
 
 @dataclass
-class Filename(Generic[RunType]):
+class NeXusFileSpec(Generic[RunType]):
     value: FilePath | NeXusFile | NeXusGroup
 
 

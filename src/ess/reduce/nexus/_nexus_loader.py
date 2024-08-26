@@ -13,16 +13,16 @@ import scippnexus as snx
 
 from ..logging import get_logger
 from .types import (
-    Filename,
-    NeXusDetector,
+    AnyNeXusMonitorName,
+    AnyRunAnyNeXusMonitor,
+    AnyRunFilename,
+    AnyRunNeXusDetector,
+    AnyRunNeXusSample,
+    AnyRunNeXusSource,
     NeXusDetectorName,
     NeXusEntryName,
     NeXusGroup,
     NeXusLocationSpec,
-    NeXusMonitor,
-    NeXusMonitorName,
-    NeXusSample,
-    NeXusSource,
     NeXusSourceName,
     RawDetectorData,
     RawMonitorData,
@@ -36,13 +36,13 @@ NoNewDefinitions = NoNewDefinitionsType()
 
 
 def load_detector(
-    file_path: Filename,
+    file_path: AnyRunFilename,
     selection=(),
     *,
     detector_name: NeXusDetectorName,
     entry_name: NeXusEntryName | None = None,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> NeXusDetector:
+) -> AnyRunNeXusDetector:
     """Load a single detector (bank) from a NeXus file.
 
     The detector positions are computed automatically from NeXus transformations,
@@ -74,7 +74,7 @@ def load_detector(
         A data group containing the detector events or histogram
         and any auxiliary data stored in the same NeXus group.
     """
-    return NeXusDetector(
+    return AnyRunNeXusDetector(
         load_component(
             NeXusLocationSpec(
                 filename=file_path,
@@ -89,13 +89,13 @@ def load_detector(
 
 
 def load_monitor(
-    file_path: Filename,
+    file_path: AnyRunFilename,
     selection=(),
     *,
-    monitor_name: NeXusMonitorName,
+    monitor_name: AnyNeXusMonitorName,
     entry_name: NeXusEntryName | None = None,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> NeXusMonitor:
+) -> AnyRunAnyNeXusMonitor:
     """Load a single monitor from a NeXus file.
 
     The monitor position is computed automatically from NeXus transformations,
@@ -127,7 +127,7 @@ def load_monitor(
         A data group containing the monitor events or histogram
         and any auxiliary data stored in the same NeXus group.
     """
-    return NeXusMonitor(
+    return AnyRunAnyNeXusMonitor(
         load_component(
             NeXusLocationSpec(
                 filename=file_path,
@@ -142,12 +142,12 @@ def load_monitor(
 
 
 def load_source(
-    file_path: Filename,
+    file_path: AnyRunFilename,
     *,
     source_name: NeXusSourceName | None = None,
     entry_name: NeXusEntryName | None = None,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> NeXusSource:
+) -> AnyRunNeXusSource:
     """Load a source from a NeXus file.
 
     The source position is computed automatically from NeXus transformations,
@@ -181,7 +181,7 @@ def load_source(
         A data group containing all data stored in
         the source NeXus group.
     """
-    return NeXusSource(
+    return AnyRunNeXusSource(
         load_component(
             NeXusLocationSpec(
                 filename=file_path, component_name=source_name, entry_name=entry_name
@@ -193,10 +193,10 @@ def load_source(
 
 
 def load_sample(
-    file_path: Filename,
+    file_path: AnyRunFilename,
     entry_name: NeXusEntryName | None = None,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> NeXusSample:
+) -> AnyRunNeXusSample:
     """Load a sample from a NeXus file.
 
     The sample is located based on its NeXus class.
@@ -226,7 +226,7 @@ def load_sample(
         A data group containing all data stored in
         the sample NeXus group.
     """
-    return NeXusSample(
+    return AnyRunNeXusSample(
         load_component(
             NeXusLocationSpec(filename=file_path, entry_name=entry_name),
             nx_class=snx.NXsample,
@@ -274,7 +274,7 @@ def load_component(
 
 
 def _open_nexus_file(
-    file_path: Filename,
+    file_path: AnyRunFilename,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> ContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
@@ -310,7 +310,7 @@ def _unique_child_group(
     return next(iter(children.values()))  # type: ignore[return-value]
 
 
-def extract_detector_data(detector: NeXusDetector) -> RawDetectorData:
+def extract_detector_data(detector: AnyRunNeXusDetector) -> RawDetectorData:
     """Get and return the events or histogram from a detector loaded from NeXus.
 
     This function looks for a data array in the detector group and returns that.
@@ -339,7 +339,7 @@ def extract_detector_data(detector: NeXusDetector) -> RawDetectorData:
     return RawDetectorData(_extract_events_or_histogram(detector))
 
 
-def extract_monitor_data(monitor: NeXusMonitor) -> RawMonitorData:
+def extract_monitor_data(monitor: AnyRunAnyNeXusMonitor) -> RawMonitorData:
     """Get and return the events or histogram from a monitor loaded from NeXus.
 
     This function looks for a data array in the monitor group and returns that.
@@ -413,7 +413,7 @@ def _select_unique_array(
 
 
 def load_event_data(
-    file_path: Filename,
+    file_path: AnyRunFilename,
     selection=(),
     *,
     entry_name: NeXusEntryName | None = None,
@@ -629,7 +629,7 @@ def _parse_monitor(group: snx.Group) -> NeXusMonitorInfo:
     )
 
 
-def read_nexus_file_info(file_path: Filename) -> NeXusFileInfo:
+def read_nexus_file_info(file_path: AnyRunFilename) -> NeXusFileInfo:
     """Opens and inspects a NeXus file, returning a summary of its contents."""
     with _open_nexus_file(file_path) as f:
         entry = _unique_child_group(f, snx.NXentry, None)

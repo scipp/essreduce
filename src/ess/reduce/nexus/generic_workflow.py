@@ -20,6 +20,10 @@ from .generic_types import MonitorType, RunType
 from .types import DetectorBankSizes, GravityVector, NeXusDetectorName, PulseSelection
 
 
+def file_path_to_file_spec(filename: gt.Filename[RunType]) -> gt.NeXusFileSpec[RunType]:
+    return gt.NeXusFileSpec[RunType](filename)
+
+
 def no_monitor_position_offset() -> gt.MonitorPositionOffset[RunType, MonitorType]:
     return gt.MonitorPositionOffset[RunType, MonitorType](workflow.no_offset)
 
@@ -29,34 +33,38 @@ def no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
 
 
 def unique_sample_spec(
-    filename: gt.Filename[RunType],
+    filename: gt.NeXusFileSpec[RunType],
 ) -> gt.NeXusComponentLocationSpec[snx.NXsample, RunType]:
-    return gt.NeXusComponentLocationSpec[snx.NXsample, RunType](filename=filename)
+    return gt.NeXusComponentLocationSpec[snx.NXsample, RunType](filename=filename.value)
 
 
 def unique_source_spec(
-    filename: gt.Filename[RunType],
+    filename: gt.NeXusFileSpec[RunType],
 ) -> gt.NeXusComponentLocationSpec[snx.NXsource, RunType]:
-    return gt.NeXusComponentLocationSpec[snx.NXsource, RunType](filename=filename)
+    return gt.NeXusComponentLocationSpec[snx.NXsource, RunType](filename=filename.value)
 
 
 def monitor_by_name(
-    filename: gt.Filename[RunType],
+    filename: gt.NeXusFileSpec[RunType],
     name: gt.NeXusMonitorName[MonitorType],
     selection: PulseSelection,
 ) -> gt.NeXusMonitorLocationSpec[RunType, MonitorType]:
     return gt.NeXusMonitorLocationSpec[RunType, MonitorType](
-        filename=filename, component_name=name, selection={'event_time_zero': selection}
+        filename=filename.value,
+        component_name=name,
+        selection={'event_time_zero': selection},
     )
 
 
 def detector_by_name(
-    filename: gt.Filename[RunType],
+    filename: gt.NeXusFileSpec[RunType],
     name: NeXusDetectorName,
     selection: PulseSelection,
 ) -> gt.NeXusComponentLocationSpec[snx.NXdetector, RunType]:
     return gt.NeXusComponentLocationSpec[snx.NXdetector, RunType](
-        filename=filename, component_name=name, selection={'event_time_zero': selection}
+        filename=filename.value,
+        component_name=name,
+        selection={'event_time_zero': selection},
     )
 
 
@@ -174,7 +182,7 @@ get_calibrated_monitor.__doc__ = workflow.get_calibrated_monitor.__doc__
 assemble_monitor_data.__doc__ = workflow.assemble_monitor_data.__doc__
 
 
-_common_providers = (workflow.gravity_vector_neg_y,)
+_common_providers = (workflow.gravity_vector_neg_y, file_path_to_file_spec)
 
 _monitor_providers = (
     no_monitor_position_offset,

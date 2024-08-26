@@ -13,27 +13,27 @@ from scipp.constants import g
 
 from . import _nexus_loader as nexus
 from .types import (
-    CalibratedDetector,
-    CalibratedMonitor,
+    AnyNeXusMonitorName,
+    AnyRunAnyCalibratedMonitor,
+    AnyRunAnyMonitorData,
+    AnyRunAnyMonitorPositionOffset,
+    AnyRunAnyNeXusMonitor,
+    AnyRunAnyNeXusMonitorEventData,
+    AnyRunCalibratedDetector,
+    AnyRunDetectorData,
+    AnyRunDetectorPositionOffset,
+    AnyRunFilename,
+    AnyRunNeXusDetector,
+    AnyRunNeXusDetectorEventData,
+    AnyRunNeXusSample,
+    AnyRunNeXusSource,
+    AnyRunSamplePosition,
+    AnyRunSourcePosition,
     DetectorBankSizes,
-    DetectorData,
-    DetectorPositionOffset,
-    Filename,
     GravityVector,
-    MonitorData,
-    MonitorPositionOffset,
-    NeXusDetector,
-    NeXusDetectorEventData,
     NeXusDetectorName,
     NeXusLocationSpec,
-    NeXusMonitor,
-    NeXusMonitorEventData,
-    NeXusMonitorName,
-    NeXusSample,
-    NeXusSource,
     PulseSelection,
-    SamplePosition,
-    SourcePosition,
 )
 
 origin = sc.vector([0, 0, 0], unit="m")
@@ -49,7 +49,7 @@ def gravity_vector_neg_y() -> GravityVector:
     return GravityVector(sc.vector(value=[0, -1, 0]) * g)
 
 
-def unique_sample_spec(filename: Filename) -> NeXusLocationSpec[snx.NXsample]:
+def unique_sample_spec(filename: AnyRunFilename) -> NeXusLocationSpec[snx.NXsample]:
     """
     Create a location spec for a unique sample group in a NeXus file.
 
@@ -61,7 +61,7 @@ def unique_sample_spec(filename: Filename) -> NeXusLocationSpec[snx.NXsample]:
     return NeXusLocationSpec[snx.NXsample](filename=filename)
 
 
-def unique_source_spec(filename: Filename) -> NeXusLocationSpec[snx.NXsource]:
+def unique_source_spec(filename: AnyRunFilename) -> NeXusLocationSpec[snx.NXsource]:
     """
     Create a location spec for a unique source group in a NeXus file.
 
@@ -74,7 +74,7 @@ def unique_source_spec(filename: Filename) -> NeXusLocationSpec[snx.NXsource]:
 
 
 def monitor_by_name(
-    filename: Filename, name: NeXusMonitorName, selection: PulseSelection
+    filename: AnyRunFilename, name: AnyNeXusMonitorName, selection: PulseSelection
 ) -> NeXusLocationSpec[snx.NXmonitor]:
     """
     Create a location spec for a monitor group in a NeXus file.
@@ -94,7 +94,7 @@ def monitor_by_name(
 
 
 def detector_by_name(
-    filename: Filename, name: NeXusDetectorName, selection: PulseSelection
+    filename: AnyRunFilename, name: NeXusDetectorName, selection: PulseSelection
 ) -> NeXusLocationSpec[snx.NXdetector]:
     """
     Create a location spec for a detector group in a NeXus file.
@@ -113,7 +113,7 @@ def detector_by_name(
     )
 
 
-def load_nexus_sample(location: NeXusLocationSpec[snx.NXsample]) -> NeXusSample:
+def load_nexus_sample(location: NeXusLocationSpec[snx.NXsample]) -> AnyRunNeXusSample:
     """
     Load a NeXus sample group from a file.
 
@@ -131,10 +131,10 @@ def load_nexus_sample(location: NeXusLocationSpec[snx.NXsample]) -> NeXusSample:
         dg = nexus.load_component(location, nx_class=snx.NXsample)
     except ValueError:
         dg = sc.DataGroup()
-    return NeXusSample(dg)
+    return AnyRunNeXusSample(dg)
 
 
-def load_nexus_source(location: NeXusLocationSpec[snx.NXsource]) -> NeXusSource:
+def load_nexus_source(location: NeXusLocationSpec[snx.NXsource]) -> AnyRunNeXusSource:
     """
     Load a NeXus source group from a file.
 
@@ -143,10 +143,12 @@ def load_nexus_source(location: NeXusLocationSpec[snx.NXsource]) -> NeXusSource:
     location:
         Location spec for the source group.
     """
-    return NeXusSource(nexus.load_component(location, nx_class=snx.NXsource))
+    return AnyRunNeXusSource(nexus.load_component(location, nx_class=snx.NXsource))
 
 
-def load_nexus_detector(location: NeXusLocationSpec[snx.NXdetector]) -> NeXusDetector:
+def load_nexus_detector(
+    location: NeXusLocationSpec[snx.NXdetector],
+) -> AnyRunNeXusDetector:
     """
     Load detector from NeXus, but with event data replaced by placeholders.
 
@@ -180,12 +182,14 @@ def load_nexus_detector(location: NeXusLocationSpec[snx.NXdetector]) -> NeXusDet
     # The selection is only used for selecting a range of event data.
     location = replace(location, selection=())
 
-    return NeXusDetector(
+    return AnyRunNeXusDetector(
         nexus.load_component(location, nx_class=snx.NXdetector, definitions=definitions)
     )
 
 
-def load_nexus_monitor(location: NeXusLocationSpec[snx.NXmonitor]) -> NeXusMonitor:
+def load_nexus_monitor(
+    location: NeXusLocationSpec[snx.NXmonitor],
+) -> AnyRunAnyNeXusMonitor:
     """
     Load monitor from NeXus, but with event data replaced by placeholders.
 
@@ -216,14 +220,14 @@ def load_nexus_monitor(location: NeXusLocationSpec[snx.NXmonitor]) -> NeXusMonit
     """
     definitions = snx.base_definitions()
     definitions["NXmonitor"] = _StrippedMonitor
-    return NeXusMonitor(
+    return AnyRunAnyNeXusMonitor(
         nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
     )
 
 
 def load_nexus_detector_event_data(
     location: NeXusLocationSpec[snx.NXdetector],
-) -> NeXusDetectorEventData:
+) -> AnyRunNeXusDetectorEventData:
     """
     Load event data from a NeXus detector group.
 
@@ -232,7 +236,7 @@ def load_nexus_detector_event_data(
     location:
         Location spec for the detector group.
     """
-    return NeXusDetectorEventData(
+    return AnyRunNeXusDetectorEventData(
         nexus.load_event_data(
             file_path=location.filename,
             entry_name=location.entry_name,
@@ -244,7 +248,7 @@ def load_nexus_detector_event_data(
 
 def load_nexus_monitor_event_data(
     location: NeXusLocationSpec[snx.NXmonitor],
-) -> NeXusMonitorEventData:
+) -> AnyRunAnyNeXusMonitorEventData:
     """
     Load event data from a NeXus monitor group.
 
@@ -253,7 +257,7 @@ def load_nexus_monitor_event_data(
     location:
         Location spec for the monitor group.
     """
-    return NeXusMonitorEventData(
+    return AnyRunAnyNeXusMonitorEventData(
         nexus.load_event_data(
             file_path=location.filename,
             entry_name=location.entry_name,
@@ -263,7 +267,7 @@ def load_nexus_monitor_event_data(
     )
 
 
-def get_source_position(source: NeXusSource) -> SourcePosition:
+def get_source_position(source: AnyRunNeXusSource) -> AnyRunSourcePosition:
     """
     Extract the source position from a NeXus source group.
 
@@ -272,10 +276,10 @@ def get_source_position(source: NeXusSource) -> SourcePosition:
     source:
         NeXus source group.
     """
-    return SourcePosition(source["position"])
+    return AnyRunSourcePosition(source["position"])
 
 
-def get_sample_position(sample: NeXusSample) -> SamplePosition:
+def get_sample_position(sample: AnyRunNeXusSample) -> AnyRunSamplePosition:
     """
     Extract the sample position from a NeXus sample group.
 
@@ -286,18 +290,18 @@ def get_sample_position(sample: NeXusSample) -> SamplePosition:
     sample:
         NeXus sample group.
     """
-    return SamplePosition(sample.get("position", origin))
+    return AnyRunSamplePosition(sample.get("position", origin))
 
 
 def get_calibrated_detector(
-    detector: NeXusDetector,
+    detector: AnyRunNeXusDetector,
     *,
-    offset: DetectorPositionOffset,
-    source_position: SourcePosition,
-    sample_position: SamplePosition,
+    offset: AnyRunDetectorPositionOffset,
+    source_position: AnyRunSourcePosition,
+    sample_position: AnyRunSamplePosition,
     gravity: GravityVector,
     bank_sizes: DetectorBankSizes,
-) -> CalibratedDetector:
+) -> AnyRunCalibratedDetector:
     """
     Extract the data array corresponding to a detector's signal field.
 
@@ -322,14 +326,15 @@ def get_calibrated_detector(
         Dictionary of detector bank sizes.
     """
     da = nexus.extract_detector_data(detector)
-    if (sizes := (bank_sizes or {}).get(detector['nexus_component_name'])) is not None:
+    if (
+        sizes := (bank_sizes or {}).get(detector.get('nexus_component_name'))
+    ) is not None:
         da = da.fold(dim="detector_number", sizes=sizes)
     # Note: We apply offset as early as possible, i.e., right in this function
     # the detector array from the raw loader NeXus group, to prevent a source of bugs.
-    position = detector['position']
-    return CalibratedDetector(
+    return AnyRunCalibratedDetector(
         da.assign_coords(
-            position=position + offset,
+            position=da.coords['position'] + offset,
             source_position=source_position,
             sample_position=sample_position,
             gravity=gravity,
@@ -338,8 +343,8 @@ def get_calibrated_detector(
 
 
 def assemble_detector_data(
-    detector: CalibratedDetector, event_data: NeXusDetectorEventData
-) -> DetectorData:
+    detector: AnyRunCalibratedDetector, event_data: AnyRunNeXusDetectorEventData
+) -> AnyRunDetectorData:
     """
     Assemble a detector data array with event data and source- and sample-position.
 
@@ -355,7 +360,7 @@ def assemble_detector_data(
     grouped = nexus.group_event_data(
         event_data=event_data, detector_number=detector.coords['detector_number']
     )
-    return DetectorData(
+    return AnyRunDetectorData(
         _add_variances(grouped)
         .assign_coords(detector.coords)
         .assign_masks(detector.masks)
@@ -363,10 +368,10 @@ def assemble_detector_data(
 
 
 def get_calibrated_monitor(
-    monitor: NeXusMonitor,
-    offset: MonitorPositionOffset,
-    source_position: SourcePosition,
-) -> CalibratedMonitor:
+    monitor: AnyRunAnyNeXusMonitor,
+    offset: AnyRunAnyMonitorPositionOffset,
+    source_position: AnyRunSourcePosition,
+) -> AnyRunAnyCalibratedMonitor:
     """
     Extract the data array corresponding to a monitor's signal field.
 
@@ -382,7 +387,7 @@ def get_calibrated_monitor(
     source_position:
         Position of the neutron source.
     """
-    return CalibratedMonitor(
+    return AnyRunAnyCalibratedMonitor(
         nexus.extract_monitor_data(monitor).assign_coords(
             position=monitor['position'] + offset,
             source_position=source_position,
@@ -391,8 +396,9 @@ def get_calibrated_monitor(
 
 
 def assemble_monitor_data(
-    monitor: CalibratedMonitor, event_data: NeXusMonitorEventData
-) -> MonitorData:
+    monitor: AnyRunAnyCalibratedMonitor,
+    event_data: AnyRunAnyNeXusMonitorEventData,
+) -> AnyRunAnyMonitorData:
     """
     Assemble a monitor data array with event data.
 
@@ -406,7 +412,7 @@ def assemble_monitor_data(
         Event data array.
     """
     da = event_data.assign_coords(monitor.coords).assign_masks(monitor.masks)
-    return MonitorData(_add_variances(da))
+    return AnyRunAnyMonitorData(_add_variances(da))
 
 
 def _drop(
@@ -484,7 +490,7 @@ def LoadMonitorWorkflow() -> sciline.Pipeline:
         )
     )
     wf[PulseSelection] = PulseSelection(())
-    wf[MonitorPositionOffset] = MonitorPositionOffset(no_offset)
+    wf[AnyRunAnyMonitorPositionOffset] = AnyRunAnyMonitorPositionOffset(no_offset)
     return wf
 
 
@@ -507,11 +513,11 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
     )
     wf[PulseSelection] = PulseSelection(())
     wf[DetectorBankSizes] = DetectorBankSizes({})
-    wf[DetectorPositionOffset] = DetectorPositionOffset(no_offset)
+    wf[AnyRunDetectorPositionOffset] = AnyRunDetectorPositionOffset(no_offset)
     return wf
 
 
-def LoadNeXusWorkflow(filename: Filename) -> sciline.Pipeline:
+def LoadNeXusWorkflow(filename: AnyRunFilename) -> sciline.Pipeline:
     """
     Workflow for loading detector and monitor data from a NeXus file.
 
@@ -528,9 +534,9 @@ def LoadNeXusWorkflow(filename: Filename) -> sciline.Pipeline:
     import pandas as pd
 
     wf = sciline.Pipeline()
-    wf[DetectorData] = LoadDetectorWorkflow()
-    wf[MonitorData] = LoadMonitorWorkflow()
-    wf[Filename] = filename
+    wf[AnyRunDetectorData] = LoadDetectorWorkflow()
+    wf[AnyRunAnyMonitorData] = LoadMonitorWorkflow()
+    wf[AnyRunFilename] = filename
     wf.insert(nexus.read_nexus_file_info)
     wf[nexus.NeXusFileInfo] = info = wf.compute(nexus.NeXusFileInfo)
     # Note: There is a good reason against auto-mapping here:
@@ -541,7 +547,9 @@ def LoadNeXusWorkflow(filename: Filename) -> sciline.Pipeline:
     dets = [name for name, det in info.detectors.items() if det.n_pixel is not None]
     det_df = pd.DataFrame({NeXusDetectorName: dets}, index=dets).rename_axis('detector')
     mons = list(info.monitors)
-    mon_df = pd.DataFrame({NeXusMonitorName: mons}, index=mons).rename_axis('monitor')
+    mon_df = pd.DataFrame({AnyNeXusMonitorName: mons}, index=mons).rename_axis(
+        'monitor'
+    )
     return wf.map(det_df).map(mon_df)
 
 
