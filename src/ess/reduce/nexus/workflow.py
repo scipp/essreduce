@@ -334,7 +334,7 @@ def get_calibrated_detector(
     # the detector array from the raw loader NeXus group, to prevent a source of bugs.
     return AnyRunCalibratedDetector(
         da.assign_coords(
-            position=da.coords['position'] + offset,
+            position=da.coords['position'] + offset.to(unit=da.coords['position'].unit),
             source_position=source_position,
             sample_position=sample_position,
             gravity=gravity,
@@ -389,7 +389,7 @@ def get_calibrated_monitor(
     """
     return AnyRunAnyCalibratedMonitor(
         nexus.extract_monitor_data(monitor).assign_coords(
-            position=monitor['position'] + offset,
+            position=monitor['position'] + offset.to(unit=monitor['position'].unit),
             source_position=source_position,
         )
     )
