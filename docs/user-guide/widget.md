@@ -25,5 +25,8 @@ voila {PATH_TO_THE_NOTEBOOK}
 
 ## Widget from a Workflow in a Notebook
 ```python
-from ess.reduce.
+%matplotlib widget
+from ess.reduce.ui import workflow_widget
+
+workflow_widget()
 ```
