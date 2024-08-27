@@ -278,7 +278,7 @@ def test_workflow_selection() -> None:
         first_widget = widget.children[1].children[0]
         assert isinstance(first_widget, WorkflowWidget)
         assert first_widget.output_selection_box.typical_outputs_widget.options == (
-            str,
+            ('str', str),
         )
         _refresh_widget_parameter(widget=first_widget, output_selections=[str])
         assert first_widget.parameter_box._input_widgets.keys() == {int, float}
