@@ -34,7 +34,7 @@ class OutputSelectionWidget(widgets.VBox):
     def __init__(self, workflow: sl.Pipeline, **kwargs):
         self.typical_outputs_widget = widgets.SelectMultiple(
             options=get_typical_outputs(workflow),
-            layout=Layout(width='90%', height='auto'),
+            layout=Layout(width='90%', height='250px'),
         )
         self.possible_outputs_widget = widgets.SelectMultiple(
             options=get_possible_outputs(workflow),

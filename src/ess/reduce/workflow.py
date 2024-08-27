@@ -2,11 +2,12 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSet
+from collections.abc import Callable, MutableSet, Sequence
 from typing import Any, TypeVar
 
 import networkx as nx
 from sciline import Pipeline
+from sciline._utils import key_name
 from sciline.typing import Key
 
 from .parameter import Parameter, keep_default, parameter_mappers, parameter_registry
@@ -52,12 +53,17 @@ def get_typical_outputs(pipeline: Pipeline) -> tuple[Key, ...]:
     if (typical_outputs := getattr(pipeline, "typical_outputs", None)) is None:
         graph = pipeline.underlying_graph
         sink_nodes = [node for node, degree in graph.out_degree if degree == 0]
-        return tuple(sink_nodes)
-    return tuple(typical_outputs)
+        return _with_pretty_names(sink_nodes)
+    return _with_pretty_names(typical_outputs)
 
 
 def get_possible_outputs(pipeline: Pipeline) -> tuple[Key, ...]:
-    return tuple(pipeline.underlying_graph.nodes)
+    return sorted(_with_pretty_names(tuple(pipeline.underlying_graph.nodes)))
+
+
+def _with_pretty_names(outputs: Sequence[Key]) -> tuple[tuple[str, Key], ...]:
+    """Add a more readable string representation without full module path."""
+    return tuple((key_name(output), output) for output in outputs)
 
 
 def get_parameters(
