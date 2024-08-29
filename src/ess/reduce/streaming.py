@@ -162,7 +162,7 @@ class Streaming:
         # Find and pre-compute static nodes as far down the graph as possible
         # See also https://github.com/scipp/sciline/issues/148.
         nodes = _find_descendants(workflow, dynamic_keys)
-        parents = _find_parents(workflow, nodes) - _find_input_nodes(workflow) - nodes
+        parents = _find_parents(workflow, nodes) - nodes
         for key, value in base_workflow.compute(parents).items():
             workflow[key] = value
 
@@ -191,12 +191,7 @@ def _find_descendants(
     descendants = set()
     for key in keys:
         descendants |= nx.descendants(graph, key)
-    return descendants
-
-
-def _find_input_nodes(workflow: sciline.Pipeline) -> set[sciline.typing.Key]:
-    graph = workflow.underlying_graph
-    return {key for key in graph if graph.in_degree(key) == 0}
+    return descendants | set(keys)
 
 
 def _find_parents(

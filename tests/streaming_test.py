@@ -125,6 +125,7 @@ def test_streaming() -> None:
     base_workflow = sciline.Pipeline(
         (make_static_a, make_accum_a, make_accum_b, make_target)
     )
+    orig_workflow = base_workflow.copy()
 
     streaming_wf = streaming.Streaming(
         base_workflow=base_workflow,
@@ -140,8 +141,8 @@ def test_streaming() -> None:
     assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 15.0))
     assert make_static_a.call_count == 1
 
-    wf = base_workflow.copy()
-    wf[DynamicA] = sc.scalar(1 + 2 + 3)
-    wf[DynamicB] = sc.scalar(4 + 5 + 6)
-    expected = wf.compute(Target)
-    assert sc.identical(expected, sc.scalar(2 * 6.0 / 15.0))
+    # Consistency check: Run the original workflow with the same inputs, all at once
+    orig_workflow[DynamicA] = sc.scalar(1 + 2 + 3)
+    orig_workflow[DynamicB] = sc.scalar(4 + 5 + 6)
+    expected = orig_workflow.compute(Target)
+    assert sc.identical(expected, result[Target])
