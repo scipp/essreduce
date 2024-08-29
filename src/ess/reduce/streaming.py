@@ -158,13 +158,17 @@ class Streaming:
             workflow[key] = base_workflow[key]
         for key in dynamic_keys:
             workflow[key] = None  # hack to prune branches
-        # Find static nodes as far down the graph as possible
+
+        # Find and pre-compute static nodes as far down the graph as possible
+        # See also https://github.com/scipp/sciline/issues/148.
         nodes = _find_descendants(workflow, dynamic_keys)
         parents = _find_parents(workflow, nodes) - _find_input_nodes(workflow) - nodes
         for key, value in base_workflow.compute(parents).items():
             workflow[key] = value
+
         self._process_chunk_workflow = workflow.copy()
         self._finalize_workflow = workflow.copy()
+        # TODO: We may need to have a way to specify the accumulator for each key
         self._accumulators = {key: accumulator() for key in accumulation_keys}
         self._target_keys = target_keys
 
