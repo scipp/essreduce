@@ -121,13 +121,13 @@ def make_target(accum_a: AccumA, accum_b: AccumB) -> Target:
     return Target(accum_a / accum_b)
 
 
-def test_streaming() -> None:
+def test_StreamProcessor() -> None:
     base_workflow = sciline.Pipeline(
         (make_static_a, make_accum_a, make_accum_b, make_target)
     )
     orig_workflow = base_workflow.copy()
 
-    streaming_wf = streaming.Streaming(
+    streaming_wf = streaming.StreamProcessor(
         base_workflow=base_workflow,
         dynamic_keys=(DynamicA, DynamicB),
         accumulation_keys=(AccumA, AccumB),

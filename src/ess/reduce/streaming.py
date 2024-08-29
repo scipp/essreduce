@@ -128,8 +128,15 @@ class RollingAccumulator(Accumulator[T]):
             self._values.pop(0)
 
 
-class Streaming:
-    """Wrap a base workflow for streaming processing of chunks."""
+class StreamProcessor:
+    """
+    Wrap a base workflow for streaming processing of chunks.
+
+    Note that this class can not determine if the workflow is valid for streamed
+    processing based on the input keys. In particular, it is the responsibility of the
+    user to ensure that the workflow is "linear" with respect to the dynamic keys up to
+    the accumulation keys.
+    """
 
     def __init__(
         self,
@@ -140,6 +147,8 @@ class Streaming:
         accumulator: type[Accumulator] = EternalAccumulator,
     ) -> None:
         """
+        Create a stream processor.
+
         Parameters
         ----------
         base_workflow:
