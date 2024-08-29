@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
+from typing import NewType
+
+import sciline
 import scipp as sc
 
 from ess.reduce import streaming
 
 
-def test_eternal_accumulator_sums_everything():
+def test_eternal_accumulator_sums_everything() -> None:
     accum = streaming.EternalAccumulator()
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
     for i in range(10):
@@ -14,7 +17,7 @@ def test_eternal_accumulator_sums_everything():
     assert sc.identical(accum.value, sc.sum(var))
 
 
-def test_eternal_accumulator_sums_everything_with_preprocess():
+def test_eternal_accumulator_sums_everything_with_preprocess() -> None:
     accum = streaming.EternalAccumulator(preprocess=lambda x: x**0.5)
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
     for i in range(10):
@@ -22,7 +25,7 @@ def test_eternal_accumulator_sums_everything_with_preprocess():
     assert sc.identical(accum.value, sc.sum(var**0.5))
 
 
-def test_eternal_accumulator_works_if_output_value_is_modified():
+def test_eternal_accumulator_works_if_output_value_is_modified() -> None:
     accum = streaming.EternalAccumulator()
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
     for i in range(10):
@@ -32,7 +35,7 @@ def test_eternal_accumulator_works_if_output_value_is_modified():
     assert sc.identical(accum.value, sc.sum(var))
 
 
-def test_eternal_accumulator_does_not_modify_pushed_values():
+def test_eternal_accumulator_does_not_modify_pushed_values() -> None:
     accum = streaming.EternalAccumulator()
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
     original = var.copy()
@@ -41,7 +44,7 @@ def test_eternal_accumulator_does_not_modify_pushed_values():
     assert sc.identical(var, original)
 
 
-def test_rolling_accumulator_sums_over_window():
+def test_rolling_accumulator_sums_over_window() -> None:
     accum = streaming.RollingAccumulator(window=3)
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
     accum.push(var[0].copy())
@@ -56,7 +59,7 @@ def test_rolling_accumulator_sums_over_window():
     assert sc.identical(accum.value, var[2:5].sum())
 
 
-def test_rolling_accumulator_sums_over_window_with_preprocess():
+def test_rolling_accumulator_sums_over_window_with_preprocess() -> None:
     accum = streaming.RollingAccumulator(window=3, preprocess=lambda x: x**0.5)
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
     accum.push(var[0].copy())
@@ -71,7 +74,7 @@ def test_rolling_accumulator_sums_over_window_with_preprocess():
     assert sc.identical(accum.value, (var[2:5] ** 0.5).sum())
 
 
-def test_rolling_accumulator_works_if_output_value_is_modified():
+def test_rolling_accumulator_works_if_output_value_is_modified() -> None:
     accum = streaming.RollingAccumulator(window=3)
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
     for i in range(10):
@@ -81,10 +84,64 @@ def test_rolling_accumulator_works_if_output_value_is_modified():
     assert sc.identical(accum.value, var[7:10].sum())
 
 
-def test_rolling_accumulator_does_not_modify_pushed_values():
+def test_rolling_accumulator_does_not_modify_pushed_values() -> None:
     accum = streaming.RollingAccumulator(window=3)
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
     original = var.copy()
     for i in range(10):
         accum.push(var[i])
     assert sc.identical(var, original)
+
+
+DynamicA = NewType('DynamicA', float)
+DynamicB = NewType('DynamicB', float)
+StaticA = NewType('StaticA', float)
+AccumA = NewType('AccumA', float)
+AccumB = NewType('AccumB', float)
+Target = NewType('Target', float)
+
+
+def make_static_a() -> StaticA:
+    make_static_a.call_count += 1
+    return StaticA(2.0)
+
+
+make_static_a.call_count = 0
+
+
+def make_accum_a(value: DynamicA, static: StaticA) -> AccumA:
+    return AccumA(value * static)
+
+
+def make_accum_b(value: DynamicB) -> AccumB:
+    return AccumB(value)
+
+
+def make_target(accum_a: AccumA, accum_b: AccumB) -> Target:
+    return Target(accum_a / accum_b)
+
+
+def test_streaming() -> None:
+    base_workflow = sciline.Pipeline(
+        (make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+
+    streaming_wf = streaming.Streaming(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        accumulation_keys=(AccumA, AccumB),
+        target_keys=(Target,),
+    )
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 9.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 15.0))
+    assert make_static_a.call_count == 1
+
+    wf = base_workflow.copy()
+    wf[DynamicA] = sc.scalar(1 + 2 + 3)
+    wf[DynamicB] = sc.scalar(4 + 5 + 6)
+    expected = wf.compute(Target)
+    assert sc.identical(expected, sc.scalar(2 * 6.0 / 15.0))
