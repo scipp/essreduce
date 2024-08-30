@@ -121,7 +121,7 @@ def make_target(accum_a: AccumA, accum_b: AccumB) -> Target:
     return Target(accum_a / accum_b)
 
 
-def test_StreamProcessor() -> None:
+def test_StreamProcessor_overall_behavior() -> None:
     base_workflow = sciline.Pipeline(
         (make_static_a, make_accum_a, make_accum_b, make_target)
     )
@@ -130,8 +130,8 @@ def test_StreamProcessor() -> None:
     streaming_wf = streaming.StreamProcessor(
         base_workflow=base_workflow,
         dynamic_keys=(DynamicA, DynamicB),
-        accumulation_keys=(AccumA, AccumB),
         target_keys=(Target,),
+        accumulators=(AccumA, AccumB),
     )
     result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
     assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
@@ -146,3 +146,33 @@ def test_StreamProcessor() -> None:
     orig_workflow[DynamicB] = sc.scalar(4 + 5 + 6)
     expected = orig_workflow.compute(Target)
     assert sc.identical(expected, result[Target])
+
+
+def test_StreamProcessor_uses_custom_accumulator() -> None:
+    class Always42Accumulator(streaming.Accumulator[sc.Variable]):
+        def _do_push(self, value: sc.Variable) -> None:
+            pass
+
+        @property
+        def value(self) -> sc.Variable:
+            return sc.scalar(42)
+
+    base_workflow = sciline.Pipeline(
+        (make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators={
+            AccumA: streaming.EternalAccumulator(),
+            AccumB: Always42Accumulator(),
+        },
+    )
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 42.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 42.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 42.0))

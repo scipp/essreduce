@@ -141,10 +141,11 @@ class StreamProcessor:
     def __init__(
         self,
         base_workflow: sciline.Pipeline,
+        *,
         dynamic_keys: tuple[sciline.typing.Key, ...],
-        accumulation_keys: tuple[sciline.typing.Key, ...],
         target_keys: tuple[sciline.typing.Key, ...],
-        accumulator: type[Accumulator] = EternalAccumulator,
+        accumulators: dict[sciline.typing.Key, Accumulator]
+        | tuple[sciline.typing.Key, ...],
     ) -> None:
         """
         Create a stream processor.
@@ -155,12 +156,12 @@ class StreamProcessor:
             Workflow to be used for processing chunks.
         dynamic_keys:
             Keys that are expected to be updated with each chunk.
-        accumulation_keys:
-            Keys for which to accumulate values.
         target_keys:
             Keys to be computed and returned.
-        accumulator:
-            Accumulator class to use for accumulation.
+        accumulators:
+            Keys at which to accumulate values and their accumulators. If a tuple is
+            passed, :py:class:`EternalAccumulator` is used for all keys. Otherwise, a
+            dict mapping keys to accumulator instances can be passed.
         """
         workflow = sciline.Pipeline()
         for key in target_keys:
@@ -177,8 +178,11 @@ class StreamProcessor:
 
         self._process_chunk_workflow = workflow.copy()
         self._finalize_workflow = workflow.copy()
-        # TODO: We may need to have a way to specify the accumulator for each key
-        self._accumulators = {key: accumulator() for key in accumulation_keys}
+        self._accumulators = (
+            accumulators
+            if isinstance(accumulators, dict)
+            else {key: EternalAccumulator() for key in accumulators}
+        )
         self._target_keys = target_keys
 
     def add_chunk(
