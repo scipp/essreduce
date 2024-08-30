@@ -183,6 +183,13 @@ class StreamProcessor:
             if isinstance(accumulators, dict)
             else {key: EternalAccumulator() for key in accumulators}
         )
+        # Depending on the target_keys, some accumulators can be unused and should not
+        # be computed when adding a chunk.
+        self._accumulators = {
+            key: value
+            for key, value in self._accumulators.items()
+            if key in self._process_chunk_workflow.underlying_graph
+        }
         self._target_keys = target_keys
 
     def add_chunk(
