@@ -197,6 +197,10 @@ class StreamProcessor:
     ) -> dict[sciline.typing.Key, Any]:
         for key, value in chunks.items():
             self._process_chunk_workflow[key] = value
+            # There can be dynamic keys that do not "terminate" in any accumulator. In
+            # that case, we need to make sure they can be and are used when computing
+            # the target keys.
+            self._finalize_workflow[key] = value
         to_accumulate = self._process_chunk_workflow.compute(self._accumulators)
         for key, processed in to_accumulate.items():
             self._accumulators[key].push(processed)

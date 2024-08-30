@@ -201,3 +201,24 @@ def test_StreamProcessor_does_not_compute_unused_static_nodes() -> None:
     result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
     assert sc.identical(result[Target], sc.scalar(1.5 * 4.0))
     assert derived_static_a.call_count == 0
+
+
+def test_StreamProcess_with_zero_accumulators_for_buffered_workflow_calls() -> None:
+    base_workflow = sciline.Pipeline(
+        (make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+    make_static_a.call_count = 0
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(),
+    )
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    assert sc.identical(result[Target], sc.scalar(2 * 2.0 / 5.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 6.0))
+    assert make_static_a.call_count == 1
