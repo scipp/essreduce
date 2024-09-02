@@ -157,6 +157,13 @@ class Filename(sciline.Scope[RunType, Path], Path): ...
 
 
 @dataclass
+class PulseSelection(Generic[RunType]):
+    """Range of neutron pulses to load from NXevent_data groups."""
+
+    value: slice
+
+
+@dataclass
 class NeXusFileSpec(Generic[RunType]):
     value: FilePath | NeXusFile | NeXusGroup
 
