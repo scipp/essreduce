@@ -17,15 +17,15 @@ import scippnexus as snx
 from . import generic_types as gt
 from . import workflow
 from .generic_types import MonitorType, PulseSelection, RunType
-from .types import (
-    DetectorBankSizes,
-    GravityVector,
-    NeXusDetectorName,
-)
+from .types import DetectorBankSizes, GravityVector, NeXusDetectorName, PreopenNeXusFile
 
 
-def file_path_to_file_spec(filename: gt.Filename[RunType]) -> gt.NeXusFileSpec[RunType]:
-    return gt.NeXusFileSpec[RunType](filename)
+def file_path_to_file_spec(
+    filename: gt.Filename[RunType], preopen: PreopenNeXusFile
+) -> gt.NeXusFileSpec[RunType]:
+    return gt.NeXusFileSpec[RunType](
+        snx.File(filename, definitions=workflow.definitions) if preopen else filename
+    )
 
 
 def no_monitor_position_offset() -> gt.MonitorPositionOffset[RunType, MonitorType]:
@@ -238,16 +238,25 @@ _detector_providers = (
     assemble_detector_data,
 )
 
+_default_params = {
+    PulseSelection: PulseSelection(()),
+    PreopenNeXusFile: PreopenNeXusFile(False),
+}
+
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading monitor data from a NeXus file."""
-    wf = sciline.Pipeline((*_common_providers, *_monitor_providers))
+    wf = sciline.Pipeline(
+        (*_common_providers, *_monitor_providers), params=_default_params
+    )
     return wf
 
 
 def LoadDetectorWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading detector data from a NeXus file."""
-    wf = sciline.Pipeline((*_common_providers, *_detector_providers))
+    wf = sciline.Pipeline(
+        (*_common_providers, *_detector_providers), params=_default_params
+    )
     wf[DetectorBankSizes] = DetectorBankSizes({})
     return wf
 
@@ -255,7 +264,8 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
 def GenericNeXusWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading detector and monitor data from a NeXus file."""
     wf = sciline.Pipeline(
-        (*_common_providers, *_monitor_providers, *_detector_providers)
+        (*_common_providers, *_monitor_providers, *_detector_providers),
+        params=_default_params,
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
     return wf
