@@ -238,34 +238,27 @@ _detector_providers = (
     assemble_detector_data,
 )
 
-_default_params = {
-    PulseSelection: PulseSelection(()),
-    PreopenNeXusFile: PreopenNeXusFile(False),
-}
-
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading monitor data from a NeXus file."""
-    wf = sciline.Pipeline(
-        (*_common_providers, *_monitor_providers), params=_default_params
-    )
+    wf = sciline.Pipeline((*_common_providers, *_monitor_providers))
+    wf[PreopenNeXusFile] = PreopenNeXusFile(False)
     return wf
 
 
 def LoadDetectorWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading detector data from a NeXus file."""
-    wf = sciline.Pipeline(
-        (*_common_providers, *_detector_providers), params=_default_params
-    )
+    wf = sciline.Pipeline((*_common_providers, *_detector_providers))
     wf[DetectorBankSizes] = DetectorBankSizes({})
+    wf[PreopenNeXusFile] = PreopenNeXusFile(False)
     return wf
 
 
 def GenericNeXusWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading detector and monitor data from a NeXus file."""
     wf = sciline.Pipeline(
-        (*_common_providers, *_monitor_providers, *_detector_providers),
-        params=_default_params,
+        (*_common_providers, *_monitor_providers, *_detector_providers)
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
+    wf[PreopenNeXusFile] = PreopenNeXusFile(False)
     return wf
