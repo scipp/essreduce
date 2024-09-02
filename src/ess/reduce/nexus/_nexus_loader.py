@@ -67,7 +67,10 @@ def _open_nexus_file(
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> AbstractContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
-        if definitions is not NoNewDefinitions:
+        if (
+            definitions is not NoNewDefinitions
+            and definitions != file_path._definitions
+        ):
             raise ValueError(
                 "Cannot apply new definitions to open nexus file or nexus group."
             )
