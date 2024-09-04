@@ -38,7 +38,7 @@ def no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
 
 def all_pulses() -> PulseSelection[RunType]:
     """Select all neutron pulses in the event data."""
-    return PulseSelection[RunType](())
+    return PulseSelection[RunType](slice(None, None))
 
 
 def unique_sample_spec(

@@ -489,7 +489,7 @@ def LoadMonitorWorkflow() -> sciline.Pipeline:
             assemble_monitor_data,
         )
     )
-    wf[AnyRunPulseSelection] = AnyRunPulseSelection(())
+    wf[AnyRunPulseSelection] = AnyRunPulseSelection(slice(None, None))
     wf[AnyRunAnyMonitorPositionOffset] = AnyRunAnyMonitorPositionOffset(no_offset)
     return wf
 
@@ -511,7 +511,7 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
             assemble_detector_data,
         )
     )
-    wf[AnyRunPulseSelection] = AnyRunPulseSelection(())
+    wf[AnyRunPulseSelection] = AnyRunPulseSelection(slice(None, None))
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[AnyRunDetectorPositionOffset] = AnyRunDetectorPositionOffset(no_offset)
     return wf
