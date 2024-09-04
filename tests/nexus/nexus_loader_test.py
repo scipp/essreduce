@@ -456,6 +456,16 @@ def test_extract_detector_data_requires_unique_dense_data():
         nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
 
 
+def test_extract_detector_data_ignores_position_data_array():
+    detector = sc.DataGroup(jdl2ab=sc.data.data_xy(), position=sc.data.data_xy())
+    nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
+
+
+def test_extract_detector_data_ignores_transform_data_array():
+    detector = sc.DataGroup(jdl2ab=sc.data.data_xy(), transform=sc.data.data_xy())
+    nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
+
+
 def test_extract_detector_data_requires_unique_event_data():
     detector = sc.DataGroup(
         {
