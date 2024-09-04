@@ -375,10 +375,14 @@ def _extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
         for key, value in dg.items()
         if isinstance(value, sc.DataArray) and value.bins is not None
     }
+    # Transformations and thus the position can be time dependent, in which case they
+    # are stored as DataArray instead of Variable. We do not want to select these.
     histogram_data_arrays = {
         key: value
         for key, value in dg.items()
-        if isinstance(value, sc.DataArray) and value.bins is None
+        if isinstance(value, sc.DataArray)
+        and value.bins is None
+        and key not in ('position', 'transform')
     }
     if (array := _select_unique_array(event_data_arrays, 'event')) is not None:
         if histogram_data_arrays:
