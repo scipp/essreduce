@@ -358,7 +358,7 @@ def get_calibrated_detector(
     bank_sizes:
         Dictionary of detector bank sizes.
     """
-    da = nexus.extract_detector_data(detector)
+    da = nexus.extract_events_or_histogram(detector)
     if (
         sizes := (bank_sizes or {}).get(detector.get('nexus_component_name'))
     ) is not None:
@@ -421,7 +421,7 @@ def get_calibrated_monitor(
         Position of the neutron source.
     """
     return AnyRunAnyCalibratedMonitor(
-        nexus.extract_monitor_data(monitor).assign_coords(
+        nexus.extract_events_or_histogram(monitor).assign_coords(
             position=monitor['position'] + offset.to(unit=monitor['position'].unit),
             source_position=source_position,
         )
