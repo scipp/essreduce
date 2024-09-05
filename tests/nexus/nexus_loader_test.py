@@ -331,7 +331,7 @@ def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
         nexus.load_component(loc, nx_class=snx.NXdetector, definitions={})
 
 
-def test_load_detector_new_definitions_applied(nexus_file, expected_bank12):
+def test_load_detector_new_definitions_applied(nexus_file):
     if not isinstance(nexus_file, snx.Group):
         new_definition_used = False
 
