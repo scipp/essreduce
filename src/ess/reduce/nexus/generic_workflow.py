@@ -54,11 +54,19 @@ def unique_source_spec(
 
 
 def monitor_by_name(
+    filename: gt.NeXusFileSpec[RunType], name: gt.NeXusMonitorName[MonitorType]
+) -> gt.NeXusMonitorLocationSpec[RunType, MonitorType]:
+    return gt.NeXusMonitorLocationSpec[RunType, MonitorType](
+        filename=filename.value, component_name=name
+    )
+
+
+def monitor_events_by_name(
     filename: gt.NeXusFileSpec[RunType],
     name: gt.NeXusMonitorName[MonitorType],
     selection: PulseSelection[RunType],
-) -> gt.NeXusMonitorLocationSpec[RunType, MonitorType]:
-    return gt.NeXusMonitorLocationSpec[RunType, MonitorType](
+) -> gt.NeXusMonitorEventLocationSpec[RunType, MonitorType]:
+    return gt.NeXusMonitorEventLocationSpec[RunType, MonitorType](
         filename=filename.value,
         component_name=name,
         selection={'event_time_zero': selection.value},
@@ -66,11 +74,19 @@ def monitor_by_name(
 
 
 def detector_by_name(
+    filename: gt.NeXusFileSpec[RunType], name: NeXusDetectorName
+) -> gt.NeXusComponentLocationSpec[snx.NXdetector, RunType]:
+    return gt.NeXusComponentLocationSpec[snx.NXdetector, RunType](
+        filename=filename.value, component_name=name
+    )
+
+
+def detector_events_by_name(
     filename: gt.NeXusFileSpec[RunType],
     name: NeXusDetectorName,
     selection: PulseSelection[RunType],
-) -> gt.NeXusComponentLocationSpec[snx.NXdetector, RunType]:
-    return gt.NeXusComponentLocationSpec[snx.NXdetector, RunType](
+) -> gt.NeXusDetectorEventLocationSpec[RunType]:
+    return gt.NeXusDetectorEventLocationSpec[RunType](
         filename=filename.value,
         component_name=name,
         selection={'event_time_zero': selection.value},
@@ -102,7 +118,7 @@ def load_nexus_monitor(
 
 
 def load_nexus_detector_event_data(
-    location: gt.NeXusComponentLocationSpec[snx.NXdetector, RunType],
+    location: gt.NeXusDetectorEventLocationSpec[RunType],
 ) -> gt.NeXusDetectorEventData[RunType]:
     return gt.NeXusDetectorEventData[RunType](
         workflow.load_nexus_detector_event_data(location)
@@ -110,7 +126,7 @@ def load_nexus_detector_event_data(
 
 
 def load_nexus_monitor_event_data(
-    location: gt.NeXusMonitorLocationSpec[RunType, MonitorType],
+    location: gt.NeXusMonitorEventLocationSpec[RunType, MonitorType],
 ) -> gt.NeXusMonitorEventData[RunType, MonitorType]:
     return gt.NeXusMonitorEventData[RunType, MonitorType](
         workflow.load_nexus_monitor_event_data(location)
@@ -197,6 +213,7 @@ _monitor_providers = (
     no_monitor_position_offset,
     unique_source_spec,
     monitor_by_name,
+    monitor_events_by_name,
     load_nexus_monitor,
     load_nexus_monitor_event_data,
     load_nexus_source,
@@ -210,6 +227,7 @@ _detector_providers = (
     unique_source_spec,
     unique_sample_spec,
     detector_by_name,
+    detector_events_by_name,
     load_nexus_detector,
     load_nexus_detector_event_data,
     load_nexus_source,
