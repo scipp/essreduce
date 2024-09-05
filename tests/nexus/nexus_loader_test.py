@@ -533,3 +533,9 @@ def test_extract_detector_data_favors_event_data_over_histogram_data():
     )
     data = nexus.extract_signal_data_array(nexus.types.AnyRunNeXusDetector(detector))
     sc.testing.assert_identical(data, nexus.types.RawDetectorData(detector['lob']))
+
+
+def compute_component_position_returns_input_if_no_depends_on() -> None:
+    dg = sc.DataGroup(position=sc.vector([1, 2, 3], unit='m'))
+    result = nexus.compute_component_position(dg)
+    assert result is dg

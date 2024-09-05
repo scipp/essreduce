@@ -51,6 +51,11 @@ def load_component(
 
 
 def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
+    # In some downstream packages we use some of the Nexus components which attempt
+    # to compute positions without having actual Nexus data defining depends_on chains.
+    # We assume positions have been set in the non-Nexus input somehow and return early.
+    if 'depends_on' not in dg:
+        return dg
     transform_out_name = 'transform'
     if transform_out_name in dg:
         raise RuntimeError(
