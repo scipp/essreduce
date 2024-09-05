@@ -255,21 +255,24 @@ def load_component(
         component = _unique_child_group(instrument, nx_class, group_name)
         loaded = cast(sc.DataGroup, component[selection])
         loaded['nexus_component_name'] = component.name.split('/')[-1]
+    return compute_component_position(loaded)
 
+
+def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
     transform_out_name = 'transform'
-    if transform_out_name in loaded:
+    if transform_out_name in dg:
         raise RuntimeError(
             f"Loaded data contains an item '{transform_out_name}' but we want to "
             "store the combined NeXus transformations under that name."
         )
     position_out_name = 'position'
-    if position_out_name in loaded:
+    if position_out_name in dg:
         raise RuntimeError(
             f"Loaded data contains an item '{position_out_name}' but we want to "
             "store the computed positions under that name."
         )
     return snx.compute_positions(
-        loaded, store_position=position_out_name, store_transform=transform_out_name
+        dg, store_position=position_out_name, store_transform=transform_out_name
     )
 
 
