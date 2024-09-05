@@ -27,13 +27,13 @@ from .types import (
     AnyRunNeXusDetectorEventData,
     AnyRunNeXusSample,
     AnyRunNeXusSource,
+    AnyRunPulseSelection,
     AnyRunSamplePosition,
     AnyRunSourcePosition,
     DetectorBankSizes,
     GravityVector,
     NeXusDetectorName,
     NeXusLocationSpec,
-    PulseSelection,
 )
 
 origin = sc.vector([0, 0, 0], unit="m")
@@ -74,7 +74,7 @@ def unique_source_spec(filename: AnyRunFilename) -> NeXusLocationSpec[snx.NXsour
 
 
 def monitor_by_name(
-    filename: AnyRunFilename, name: AnyNeXusMonitorName, selection: PulseSelection
+    filename: AnyRunFilename, name: AnyNeXusMonitorName, selection: AnyRunPulseSelection
 ) -> NeXusLocationSpec[snx.NXmonitor]:
     """
     Create a location spec for a monitor group in a NeXus file.
@@ -94,7 +94,7 @@ def monitor_by_name(
 
 
 def detector_by_name(
-    filename: AnyRunFilename, name: NeXusDetectorName, selection: PulseSelection
+    filename: AnyRunFilename, name: NeXusDetectorName, selection: AnyRunPulseSelection
 ) -> NeXusLocationSpec[snx.NXdetector]:
     """
     Create a location spec for a detector group in a NeXus file.
@@ -489,7 +489,7 @@ def LoadMonitorWorkflow() -> sciline.Pipeline:
             assemble_monitor_data,
         )
     )
-    wf[PulseSelection] = PulseSelection(())
+    wf[AnyRunPulseSelection] = AnyRunPulseSelection(slice(None, None))
     wf[AnyRunAnyMonitorPositionOffset] = AnyRunAnyMonitorPositionOffset(no_offset)
     return wf
 
@@ -511,7 +511,7 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
             assemble_detector_data,
         )
     )
-    wf[PulseSelection] = PulseSelection(())
+    wf[AnyRunPulseSelection] = AnyRunPulseSelection(slice(None, None))
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[AnyRunDetectorPositionOffset] = AnyRunDetectorPositionOffset(no_offset)
     return wf
@@ -579,4 +579,4 @@ def with_chunks(wf: sciline.Pipeline, chunk_length: sc.Variable) -> sciline.Pipe
     # Be sure to not drop anything, use open range
     slices[0] = slice(None, slices[0].stop)
     slices[-1] = slice(slices[-1].start, None)
-    return wf.map(pd.DataFrame({PulseSelection: slices}).rename_axis('chunk'))
+    return wf.map(pd.DataFrame({AnyRunPulseSelection: slices}).rename_axis('chunk'))

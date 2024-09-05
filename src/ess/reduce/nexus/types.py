@@ -69,7 +69,7 @@ AnyRunAnyCalibratedMonitor = NewType('AnyRunAnyCalibratedMonitor', sc.DataArray)
 AnyRunDetectorData = NewType('AnyRunDetectorData', sc.DataArray)
 AnyRunAnyMonitorData = NewType('AnyRunAnyMonitorData', sc.DataArray)
 
-PulseSelection = NewType('PulseSelection', slice)
+AnyRunPulseSelection = NewType('AnyRunPulseSelection', slice)
 
 GravityVector = NewType('GravityVector', sc.Variable)
 
