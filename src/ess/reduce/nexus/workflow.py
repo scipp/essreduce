@@ -311,7 +311,21 @@ def get_source_position(source: AnyRunNeXusSource) -> AnyRunSourcePosition:
     return AnyRunSourcePosition(dg["position"])
 
 
-def get_sample_position(sample: AnyRunNeXusSample) -> AnyRunSamplePosition:
+def load_nexus_sample_transformation_chain(
+    location: NeXusLocationSpec[snx.NXsample],
+) -> SampleTransformationChain[RunType]:
+    # or just get from NeXusSample?
+    # How to handle streaming case, can we auto-build a workflow based on the depend_on
+    # chain? Or store chain as a dict, so we can update values? But that is not possible
+    # without keeping offsets and vectors from file?
+    pass
+
+
+def get_sample_position(
+    sample: AnyRunNeXusSample,
+    transformation_chain: SampleTransformationChain[RunType],
+    pulse_selection: PulseSelection[RunType],
+) -> AnyRunSamplePosition:
     """
     Extract the sample position from a NeXus sample group.
 
@@ -321,9 +335,33 @@ def get_sample_position(sample: AnyRunNeXusSample) -> AnyRunSamplePosition:
     ----------
     sample:
         NeXus sample group.
+    transformation_chain:
+        Chain of transformations to apply to the sample position. Usually extracted from
+        the NeXus sample group, but may be determined dynamically in stream processing.
     """
+    # Simple plan:
+    # 1. add PulseSelection arg
+    # 2. if position is static, return
+    # 3. otherwise, use sc.lookup(mode='previous') on pulse selection start/stop
+    #    use first/last if start/stop is None
+    # 4. check if consistent (configurable tolerance?!), return
+    #
+    # Extension: do we need to check any values in between?
+    # Complication: Would this work with a stream, where some NXlog will change,
+    # effecting as position change? The code to compute the transforms is run by
+    # load_nexus_sample, which uses load_component, i.e., this happens before we
+    # get here.
+    # Should we split compute_positions into a separate provider? It is not actually
+    # needed before getting the position?
+    # But what is the plan now... should depends_on be an arg here?
+
+    # TODO No, plan fail... some bits expect 'transform' stored in NeXusDetector etc.!
+    # -> can be fixed, store in ScippNexus, extract from CalibratedDetector coords!
     dg = nexus.compute_component_position(sample)
-    return AnyRunSamplePosition(dg.get("position", origin))
+    position = dg.get("position", origin)
+    if 'time' not in position.dims:
+        return AnyRunSamplePosition(position)
+    raise NotImplementedError("Dynamic sample position not yet supported.")
 
 
 def get_calibrated_detector(
