@@ -251,6 +251,7 @@ def test_load_detector(nexus_file, expected_bank12, entry_name, selection):
     if selection is not None:
         loc.selection = selection
     detector = nexus.load_component(loc, nx_class=snx.NXdetector)
+    detector = nexus.compute_component_position(detector)
     if selection:
         expected = expected_bank12.bins[selection]
         expected.coords.pop(selection[0])
@@ -282,7 +283,8 @@ def test_load_and_group_event_data_consistent_with_load_via_detector(
     )
     if selection:
         loc.selection = selection
-    detector = nexus.load_component(loc, nx_class=snx.NXdetector)['bank12_events']
+    detector = nexus.load_component(loc, nx_class=snx.NXdetector)
+    detector = nexus.compute_component_position(detector)['bank12_events']
     events = nexus.load_data(
         nexus_file,
         selection=selection,
@@ -300,7 +302,8 @@ def test_group_event_data_does_not_modify_input(nexus_file):
         filename=nexus_file,
         component_name=nexus.types.NeXusDetectorName('bank12'),
     )
-    detector = nexus.load_component(loc, nx_class=snx.NXdetector)['bank12_events']
+    detector = nexus.load_component(loc, nx_class=snx.NXdetector)
+    detector = nexus.compute_component_position(detector)['bank12_events']
     events = nexus.load_data(
         nexus_file,
         component_name=nexus.types.NeXusDetectorName('bank12'),
@@ -328,7 +331,7 @@ def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
         nexus.load_component(loc, nx_class=snx.NXdetector, definitions={})
 
 
-def test_load_detector_new_definitions_applied(nexus_file, expected_bank12):
+def test_load_detector_new_definitions_applied(nexus_file):
     if not isinstance(nexus_file, snx.Group):
         new_definition_used = False
 
@@ -381,6 +384,7 @@ def test_load_detector_select_entry_if_not_unique(nexus_file, expected_bank12):
         entry_name=nexus.types.NeXusEntryName('entry-001'),
     )
     detector = nexus.load_component(loc, nx_class=snx.NXdetector)
+    detector = nexus.compute_component_position(detector)
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
 
 
@@ -402,6 +406,7 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name, selection):
     if selection is not None:
         loc.selection = selection
     monitor = nexus.load_component(loc, nx_class=snx.NXmonitor)
+    monitor = nexus.compute_component_position(monitor)
     expected = expected_monitor[selection] if selection else expected_monitor
     sc.testing.assert_identical(monitor['data'], expected)
 
@@ -415,6 +420,7 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
         component_name=source_name,
     )
     source = nexus.load_component(loc, nx_class=snx.NXsource)
+    source = nexus.compute_component_position(source)
     # NeXus details that we don't need to test as long as the positions are ok:
     del source['depends_on']
     del source['transformations']
@@ -460,7 +466,7 @@ def test_extract_detector_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_events_or_histogram(detector)
+    data = nexus.extract_signal_data_array(detector)
     sc.testing.assert_identical(data, detector['jdl2ab'])
 
 
@@ -472,7 +478,7 @@ def test_extract_monitor_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_events_or_histogram(monitor)
+    data = nexus.extract_signal_data_array(monitor)
     sc.testing.assert_identical(data, monitor['(eed)'])
 
 
@@ -488,17 +494,17 @@ def test_extract_detector_data_requires_unique_dense_data():
     with pytest.raises(
         ValueError, match="Cannot uniquely identify the data to extract"
     ):
-        nexus.extract_events_or_histogram(detector)
+        nexus.extract_signal_data_array(detector)
 
 
 def test_extract_detector_data_ignores_position_data_array():
     detector = sc.DataGroup(jdl2ab=sc.data.data_xy(), position=sc.data.data_xy())
-    nexus.extract_events_or_histogram(detector)
+    nexus.extract_signal_data_array(detector)
 
 
 def test_extract_detector_data_ignores_transform_data_array():
     detector = sc.DataGroup(jdl2ab=sc.data.data_xy(), transform=sc.data.data_xy())
-    nexus.extract_events_or_histogram(detector)
+    nexus.extract_signal_data_array(detector)
 
 
 def test_extract_detector_data_requires_unique_event_data():
@@ -513,7 +519,7 @@ def test_extract_detector_data_requires_unique_event_data():
     with pytest.raises(
         ValueError, match="Cannot uniquely identify the data to extract"
     ):
-        nexus.extract_events_or_histogram(detector)
+        nexus.extract_signal_data_array(detector)
 
 
 def test_extract_detector_data_favors_event_data_over_histogram_data():
@@ -525,5 +531,11 @@ def test_extract_detector_data_favors_event_data_over_histogram_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_events_or_histogram(detector)
+    data = nexus.extract_signal_data_array(detector)
     sc.testing.assert_identical(data, detector['lob'])
+
+
+def compute_component_position_returns_input_if_no_depends_on() -> None:
+    dg = sc.DataGroup(position=sc.vector([1, 2, 3], unit='m'))
+    result = nexus.compute_component_position(dg)
+    assert result is dg

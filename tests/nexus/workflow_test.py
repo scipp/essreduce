@@ -5,7 +5,7 @@ import scipp as sc
 from scipp.testing import assert_identical
 
 from ess.reduce import data
-from ess.reduce.nexus import workflow
+from ess.reduce.nexus import compute_component_position, workflow
 from ess.reduce.nexus.types import (
     DetectorData,
     Filename,
@@ -28,6 +28,7 @@ def group_with_no_position(request) -> workflow.NeXusSample[SampleRun]:
 
 
 def test_sample_position_returns_position_of_group() -> None:
+    depends_on = sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m')
     position = sc.vector([1.0, 2.0, 3.0], unit='m')
     sample_group = workflow.NeXusSample[SampleRun](sc.DataGroup(position=position))
     assert_identical(workflow.get_sample_position(sample_group), position)
@@ -42,6 +43,7 @@ def test_get_sample_position_returns_origin_if_position_not_found(
 
 
 def test_get_source_position_returns_position_of_group() -> None:
+    depends_on = sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m')
     position = sc.vector([1.0, 2.0, 3.0], unit='m')
     source_group = workflow.NeXusSource[SampleRun](sc.DataGroup(position=position))
     assert_identical(workflow.get_source_position(source_group), position)
@@ -57,22 +59,17 @@ def test_get_source_position_raises_exception_if_position_not_found(
 @pytest.fixture()
 def nexus_detector() -> workflow.NeXusDetector[SampleRun]:
     detector_number = sc.arange('detector_number', 6, unit=None)
-    x = sc.linspace('detector_number', 0, 1, num=6, unit='m')
-    position = sc.spatial.as_vectors(x, sc.zeros_like(x), sc.zeros_like(x))
     data = sc.DataArray(
         sc.empty_like(detector_number),
         coords={
             'detector_number': detector_number,
-            'position': position,
+            'x_pixel_offset': sc.linspace('detector_number', 0, 1, num=6, unit='m'),
         },
     )
     return workflow.NeXusDetector[SampleRun](
         sc.DataGroup(
             data=data,
-            # Note that this position (the overall detector position) will be ignored,
-            # only the pixel positions (typically defined relative to this in an
-            # actual NeXus file) will be used.
-            position=sc.vector([1.0, 2.0, 3.0], unit='m'),
+            depends_on=sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m'),
             nexus_component_name='detector1',
         )
     )
@@ -97,7 +94,7 @@ def test_get_calibrated_detector_extracts_data_field_from_nexus_detector(
     )
     assert_identical(
         detector.drop_coords(('sample_position', 'source_position', 'gravity')),
-        nexus_detector['data'],
+        compute_component_position(nexus_detector)['data'],
     )
 
 
@@ -146,7 +143,9 @@ def test_get_calibrated_detector_adds_offset_to_position(
         gravity=workflow.gravity_vector_neg_y(),
         bank_sizes={},
     )
-    position = nexus_detector['data'].coords['position'] + offset
+    position = (
+        compute_component_position(nexus_detector)['data'].coords['position'] + offset
+    )
     assert detector.coords['position'].sizes == {'detector_number': 6}
     assert_identical(detector.coords['position'], position)
 
@@ -264,7 +263,10 @@ def test_assemble_detector_preserves_masks(calibrated_detector, detector_event_d
 def nexus_monitor() -> workflow.NeXusMonitor[SampleRun, Monitor1]:
     data = sc.DataArray(sc.scalar(1.2), coords={'something': sc.scalar(13)})
     return workflow.NeXusMonitor[SampleRun, Monitor1](
-        sc.DataGroup(data=data, position=sc.vector([1.0, 2.0, 3.0], unit='m'))
+        sc.DataGroup(
+            data=data,
+            depends_on=sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m'),
+        )
     )
 
 
@@ -277,7 +279,8 @@ def test_get_calibrated_monitor_extracts_data_field_from_nexus_monitor(
         source_position=sc.vector([0.0, 0.0, -10.0], unit='m'),
     )
     assert_identical(
-        monitor.drop_coords(('position', 'source_position')), nexus_monitor['data']
+        monitor.drop_coords(('position', 'source_position')),
+        compute_component_position(nexus_monitor)['data'],
     )
 
 

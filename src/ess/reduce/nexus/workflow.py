@@ -292,6 +292,8 @@ def load_nexus_monitor(
     location:
         Location spec for the monitor group.
     """
+    definitions = snx.base_definitions()
+    definitions["NXmonitor"] = _StrippedMonitor
     return NeXusMonitor[RunType, MonitorType](
         nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
     )
@@ -348,7 +350,8 @@ def get_source_position(source: NeXusSource[RunType]) -> SourcePosition[RunType]
     source:
         NeXus source group.
     """
-    return SourcePosition[RunType](source["position"])
+    dg = nexus.compute_component_position(source)
+    return SourcePosition[RunType](dg["position"])
 
 
 def get_sample_position(sample: NeXusSample[RunType]) -> SamplePosition[RunType]:
@@ -362,7 +365,8 @@ def get_sample_position(sample: NeXusSample[RunType]) -> SamplePosition[RunType]
     sample:
         NeXus sample group.
     """
-    return SamplePosition[RunType](sample.get("position", origin))
+    dg = nexus.compute_component_position(sample)
+    return SamplePosition[RunType](dg.get("position", origin))
 
 
 def get_calibrated_detector(
@@ -397,7 +401,8 @@ def get_calibrated_detector(
     bank_sizes:
         Dictionary of detector bank sizes.
     """
-    da = nexus.extract_events_or_histogram(detector)
+    detector = nexus.compute_component_position(detector)
+    da = nexus.extract_signal_data_array(detector)
     if (
         sizes := (bank_sizes or {}).get(detector.get('nexus_component_name'))
     ) is not None:
@@ -459,8 +464,9 @@ def get_calibrated_monitor(
     source_position:
         Position of the neutron source.
     """
+    monitor = nexus.compute_component_position(monitor)
     return CalibratedMonitor[RunType, MonitorType](
-        nexus.extract_events_or_histogram(monitor).assign_coords(
+        nexus.extract_signal_data_array(monitor).assign_coords(
             position=monitor['position'] + offset.to(unit=monitor['position'].unit),
             source_position=source_position,
         )
