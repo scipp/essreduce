@@ -16,8 +16,12 @@ import scippnexus as snx
 
 from . import generic_types as gt
 from . import workflow
-from .generic_types import MonitorType, RunType
-from .types import DetectorBankSizes, GravityVector, NeXusDetectorName, PulseSelection
+from .generic_types import MonitorType, PulseSelection, RunType
+from .types import (
+    DetectorBankSizes,
+    GravityVector,
+    NeXusDetectorName,
+)
 
 
 def file_path_to_file_spec(filename: gt.Filename[RunType]) -> gt.NeXusFileSpec[RunType]:
@@ -30,6 +34,11 @@ def no_monitor_position_offset() -> gt.MonitorPositionOffset[RunType, MonitorTyp
 
 def no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
     return gt.DetectorPositionOffset[RunType](workflow.no_offset)
+
+
+def all_pulses() -> PulseSelection[RunType]:
+    """Select all neutron pulses in the event data."""
+    return PulseSelection[RunType](slice(None, None))
 
 
 def unique_sample_spec(
@@ -45,26 +54,42 @@ def unique_source_spec(
 
 
 def monitor_by_name(
-    filename: gt.NeXusFileSpec[RunType],
-    name: gt.NeXusMonitorName[MonitorType],
-    selection: PulseSelection,
+    filename: gt.NeXusFileSpec[RunType], name: gt.NeXusMonitorName[MonitorType]
 ) -> gt.NeXusMonitorLocationSpec[RunType, MonitorType]:
     return gt.NeXusMonitorLocationSpec[RunType, MonitorType](
+        filename=filename.value, component_name=name
+    )
+
+
+def monitor_events_by_name(
+    filename: gt.NeXusFileSpec[RunType],
+    name: gt.NeXusMonitorName[MonitorType],
+    selection: PulseSelection[RunType],
+) -> gt.NeXusMonitorEventLocationSpec[RunType, MonitorType]:
+    return gt.NeXusMonitorEventLocationSpec[RunType, MonitorType](
         filename=filename.value,
         component_name=name,
-        selection={'event_time_zero': selection},
+        selection={'event_time_zero': selection.value},
     )
 
 
 def detector_by_name(
-    filename: gt.NeXusFileSpec[RunType],
-    name: NeXusDetectorName,
-    selection: PulseSelection,
+    filename: gt.NeXusFileSpec[RunType], name: NeXusDetectorName
 ) -> gt.NeXusComponentLocationSpec[snx.NXdetector, RunType]:
     return gt.NeXusComponentLocationSpec[snx.NXdetector, RunType](
+        filename=filename.value, component_name=name
+    )
+
+
+def detector_events_by_name(
+    filename: gt.NeXusFileSpec[RunType],
+    name: NeXusDetectorName,
+    selection: PulseSelection[RunType],
+) -> gt.NeXusDetectorEventLocationSpec[RunType]:
+    return gt.NeXusDetectorEventLocationSpec[RunType](
         filename=filename.value,
         component_name=name,
-        selection={'event_time_zero': selection},
+        selection={'event_time_zero': selection.value},
     )
 
 
@@ -93,7 +118,7 @@ def load_nexus_monitor(
 
 
 def load_nexus_detector_event_data(
-    location: gt.NeXusComponentLocationSpec[snx.NXdetector, RunType],
+    location: gt.NeXusDetectorEventLocationSpec[RunType],
 ) -> gt.NeXusDetectorEventData[RunType]:
     return gt.NeXusDetectorEventData[RunType](
         workflow.load_nexus_detector_event_data(location)
@@ -101,7 +126,7 @@ def load_nexus_detector_event_data(
 
 
 def load_nexus_monitor_event_data(
-    location: gt.NeXusMonitorLocationSpec[RunType, MonitorType],
+    location: gt.NeXusMonitorEventLocationSpec[RunType, MonitorType],
 ) -> gt.NeXusMonitorEventData[RunType, MonitorType]:
     return gt.NeXusMonitorEventData[RunType, MonitorType](
         workflow.load_nexus_monitor_event_data(location)
@@ -182,12 +207,13 @@ get_calibrated_monitor.__doc__ = workflow.get_calibrated_monitor.__doc__
 assemble_monitor_data.__doc__ = workflow.assemble_monitor_data.__doc__
 
 
-_common_providers = (workflow.gravity_vector_neg_y, file_path_to_file_spec)
+_common_providers = (workflow.gravity_vector_neg_y, file_path_to_file_spec, all_pulses)
 
 _monitor_providers = (
     no_monitor_position_offset,
     unique_source_spec,
     monitor_by_name,
+    monitor_events_by_name,
     load_nexus_monitor,
     load_nexus_monitor_event_data,
     load_nexus_source,
@@ -201,6 +227,7 @@ _detector_providers = (
     unique_source_spec,
     unique_sample_spec,
     detector_by_name,
+    detector_events_by_name,
     load_nexus_detector,
     load_nexus_detector_event_data,
     load_nexus_source,
@@ -215,14 +242,12 @@ _detector_providers = (
 def LoadMonitorWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading monitor data from a NeXus file."""
     wf = sciline.Pipeline((*_common_providers, *_monitor_providers))
-    wf[PulseSelection] = PulseSelection(())
     return wf
 
 
 def LoadDetectorWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading detector data from a NeXus file."""
     wf = sciline.Pipeline((*_common_providers, *_detector_providers))
-    wf[PulseSelection] = PulseSelection(())
     wf[DetectorBankSizes] = DetectorBankSizes({})
     return wf
 
@@ -232,6 +257,5 @@ def GenericNeXusWorkflow() -> sciline.Pipeline:
     wf = sciline.Pipeline(
         (*_common_providers, *_monitor_providers, *_detector_providers)
     )
-    wf[PulseSelection] = PulseSelection(())
     wf[DetectorBankSizes] = DetectorBankSizes({})
     return wf

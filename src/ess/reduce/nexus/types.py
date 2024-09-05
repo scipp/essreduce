@@ -69,7 +69,8 @@ AnyRunAnyCalibratedMonitor = NewType('AnyRunAnyCalibratedMonitor', sc.DataArray)
 AnyRunDetectorData = NewType('AnyRunDetectorData', sc.DataArray)
 AnyRunAnyMonitorData = NewType('AnyRunAnyMonitorData', sc.DataArray)
 
-PulseSelection = NewType('PulseSelection', slice)
+AnyRunPulseSelection = NewType('AnyRunPulseSelection', slice)
+"""Range of neutron pulses to load from NXevent_data groups."""
 
 GravityVector = NewType('GravityVector', sc.Variable)
 
@@ -88,3 +89,8 @@ class NeXusLocationSpec(Generic[Component]):
     entry_name: NeXusEntryName | None = None
     component_name: str | None = None
     selection: snx.typing.ScippIndex = ()
+
+
+@dataclass
+class NeXusEventDataLocationSpec(NeXusLocationSpec[Component]):
+    """NeXus filename and parameters to identify (parts of) events to load."""

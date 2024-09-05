@@ -29,5 +29,6 @@
 
    logging
    nexus
+   streaming
    uncertainty
 ```

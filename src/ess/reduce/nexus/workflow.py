@@ -27,13 +27,14 @@ from .types import (
     AnyRunNeXusDetectorEventData,
     AnyRunNeXusSample,
     AnyRunNeXusSource,
+    AnyRunPulseSelection,
     AnyRunSamplePosition,
     AnyRunSourcePosition,
     DetectorBankSizes,
     GravityVector,
     NeXusDetectorName,
+    NeXusEventDataLocationSpec,
     NeXusLocationSpec,
-    PulseSelection,
 )
 
 origin = sc.vector([0, 0, 0], unit="m")
@@ -74,7 +75,7 @@ def unique_source_spec(filename: AnyRunFilename) -> NeXusLocationSpec[snx.NXsour
 
 
 def monitor_by_name(
-    filename: AnyRunFilename, name: AnyNeXusMonitorName, selection: PulseSelection
+    filename: AnyRunFilename, name: AnyNeXusMonitorName
 ) -> NeXusLocationSpec[snx.NXmonitor]:
     """
     Create a location spec for a monitor group in a NeXus file.
@@ -85,16 +86,32 @@ def monitor_by_name(
         NeXus file to use for the location spec.
     name:
         Name of the monitor group.
+    """
+    return NeXusLocationSpec[snx.NXmonitor](filename=filename, component_name=name)
+
+
+def monitor_events_by_name(
+    filename: AnyRunFilename, name: AnyNeXusMonitorName, selection: AnyRunPulseSelection
+) -> NeXusEventDataLocationSpec[snx.NXmonitor]:
+    """
+    Create a location spec for monitor event data in a NeXus file.
+
+    Parameters
+    ----------
+    filename:
+        NeXus file to use for the location spec.
+    name:
+        Name of the monitor group.
     selection:
         Selection (start and stop as a Python slice object) for the monitor event data.
     """
-    return NeXusLocationSpec[snx.NXmonitor](
+    return NeXusEventDataLocationSpec[snx.NXmonitor](
         filename=filename, component_name=name, selection={'event_time_zero': selection}
     )
 
 
 def detector_by_name(
-    filename: AnyRunFilename, name: NeXusDetectorName, selection: PulseSelection
+    filename: AnyRunFilename, name: NeXusDetectorName
 ) -> NeXusLocationSpec[snx.NXdetector]:
     """
     Create a location spec for a detector group in a NeXus file.
@@ -105,10 +122,26 @@ def detector_by_name(
         NeXus file to use for the location spec.
     name:
         Name of the detector group.
+    """
+    return NeXusLocationSpec[snx.NXdetector](filename=filename, component_name=name)
+
+
+def detector_events_by_name(
+    filename: AnyRunFilename, name: NeXusDetectorName, selection: AnyRunPulseSelection
+) -> NeXusEventDataLocationSpec[snx.NXdetector]:
+    """
+    Create a location spec for detector event data in a NeXus file.
+
+    Parameters
+    ----------
+    filename:
+        NeXus file to use for the location spec.
+    name:
+        Name of the detector group.
     selection:
         Selection (start and stop as a Python slice object) for the detector event data.
     """
-    return NeXusLocationSpec[snx.NXdetector](
+    return NeXusEventDataLocationSpec[snx.NXdetector](
         filename=filename, component_name=name, selection={'event_time_zero': selection}
     )
 
@@ -226,7 +259,7 @@ def load_nexus_monitor(
 
 
 def load_nexus_detector_event_data(
-    location: NeXusLocationSpec[snx.NXdetector],
+    location: NeXusEventDataLocationSpec[snx.NXdetector],
 ) -> AnyRunNeXusDetectorEventData:
     """
     Load event data from a NeXus detector group.
@@ -247,7 +280,7 @@ def load_nexus_detector_event_data(
 
 
 def load_nexus_monitor_event_data(
-    location: NeXusLocationSpec[snx.NXmonitor],
+    location: NeXusEventDataLocationSpec[snx.NXmonitor],
 ) -> AnyRunAnyNeXusMonitorEventData:
     """
     Load event data from a NeXus monitor group.
@@ -481,6 +514,7 @@ def LoadMonitorWorkflow() -> sciline.Pipeline:
         (
             unique_source_spec,
             monitor_by_name,
+            monitor_events_by_name,
             load_nexus_monitor,
             load_nexus_monitor_event_data,
             load_nexus_source,
@@ -489,7 +523,7 @@ def LoadMonitorWorkflow() -> sciline.Pipeline:
             assemble_monitor_data,
         )
     )
-    wf[PulseSelection] = PulseSelection(())
+    wf[AnyRunPulseSelection] = AnyRunPulseSelection(slice(None, None))
     wf[AnyRunAnyMonitorPositionOffset] = AnyRunAnyMonitorPositionOffset(no_offset)
     return wf
 
@@ -501,6 +535,7 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
             unique_source_spec,
             unique_sample_spec,
             detector_by_name,
+            detector_events_by_name,
             load_nexus_detector,
             load_nexus_detector_event_data,
             load_nexus_source,
@@ -511,7 +546,7 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
             assemble_detector_data,
         )
     )
-    wf[PulseSelection] = PulseSelection(())
+    wf[AnyRunPulseSelection] = AnyRunPulseSelection(slice(None, None))
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[AnyRunDetectorPositionOffset] = AnyRunDetectorPositionOffset(no_offset)
     return wf
@@ -579,4 +614,4 @@ def with_chunks(wf: sciline.Pipeline, chunk_length: sc.Variable) -> sciline.Pipe
     # Be sure to not drop anything, use open range
     slices[0] = slice(None, slices[0].stop)
     slices[-1] = slice(slices[-1].start, None)
-    return wf.map(pd.DataFrame({PulseSelection: slices}).rename_axis('chunk'))
+    return wf.map(pd.DataFrame({AnyRunPulseSelection: slices}).rename_axis('chunk'))
