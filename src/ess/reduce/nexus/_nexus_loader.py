@@ -47,7 +47,7 @@ def load_component(
         component = _unique_child_group(instrument, nx_class, group_name)
         loaded = cast(sc.DataGroup, component[selection])
         loaded['nexus_component_name'] = component.name.split('/')[-1]
-    return compute_component_position(loaded)
+    return loaded
 
 
 def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
@@ -121,7 +121,7 @@ def _contains_nx_class(group: snx.Group, nx_class: type[snx.NXobject]) -> bool:
         return False
 
 
-def extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
+def extract_signal_data_array(dg: sc.DataGroup) -> sc.DataArray:
     event_data_arrays = {
         key: value
         for key, value in dg.items()

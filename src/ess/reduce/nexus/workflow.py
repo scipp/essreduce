@@ -162,6 +162,7 @@ def load_nexus_sample(location: NeXusLocationSpec[snx.NXsample]) -> AnyRunNeXusS
     """
     try:
         dg = nexus.load_component(location, nx_class=snx.NXsample)
+        dg = nexus.compute_component_position(dg)
     except ValueError:
         dg = sc.DataGroup()
     return AnyRunNeXusSample(dg)
@@ -176,7 +177,9 @@ def load_nexus_source(location: NeXusLocationSpec[snx.NXsource]) -> AnyRunNeXusS
     location:
         Location spec for the source group.
     """
-    return AnyRunNeXusSource(nexus.load_component(location, nx_class=snx.NXsource))
+    dg = nexus.load_component(location, nx_class=snx.NXsource)
+    dg = nexus.compute_component_position(dg)
+    return AnyRunNeXusSource(dg)
 
 
 def load_nexus_detector(
@@ -212,10 +215,11 @@ def load_nexus_detector(
     """
     # The selection is only used for selecting a range of event data.
     location = replace(location, selection=())
-
-    return AnyRunNeXusDetector(
-        nexus.load_component(location, nx_class=snx.NXdetector, definitions=definitions)
+    det = nexus.load_component(
+        location, nx_class=snx.NXdetector, definitions=definitions
     )
+    det = nexus.compute_component_position(det)
+    return AnyRunNeXusDetector(det)
 
 
 def load_nexus_monitor(
@@ -249,9 +253,13 @@ def load_nexus_monitor(
     location:
         Location spec for the monitor group.
     """
-    return AnyRunAnyNeXusMonitor(
-        nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
+    definitions = snx.base_definitions()
+    definitions["NXmonitor"] = _StrippedMonitor
+    mon = nexus.load_component(
+        location, nx_class=snx.NXmonitor, definitions=definitions
     )
+    mon = nexus.compute_component_position(mon)
+    return AnyRunAnyNeXusMonitor(mon)
 
 
 def load_nexus_detector_data(
@@ -354,7 +362,7 @@ def get_calibrated_detector(
     bank_sizes:
         Dictionary of detector bank sizes.
     """
-    da = nexus.extract_events_or_histogram(detector)
+    da = nexus.extract_signal_data_array(detector)
     if (
         sizes := (bank_sizes or {}).get(detector.get('nexus_component_name'))
     ) is not None:
@@ -417,7 +425,7 @@ def get_calibrated_monitor(
         Position of the neutron source.
     """
     return AnyRunAnyCalibratedMonitor(
-        nexus.extract_events_or_histogram(monitor).assign_coords(
+        nexus.extract_signal_data_array(monitor).assign_coords(
             position=monitor['position'] + offset.to(unit=monitor['position'].unit),
             source_position=source_position,
         )
