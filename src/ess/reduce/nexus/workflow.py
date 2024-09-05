@@ -162,7 +162,6 @@ def load_nexus_sample(location: NeXusLocationSpec[snx.NXsample]) -> AnyRunNeXusS
     """
     try:
         dg = nexus.load_component(location, nx_class=snx.NXsample)
-        dg = nexus.compute_component_position(dg)
     except ValueError:
         dg = sc.DataGroup()
     return AnyRunNeXusSample(dg)
@@ -178,7 +177,6 @@ def load_nexus_source(location: NeXusLocationSpec[snx.NXsource]) -> AnyRunNeXusS
         Location spec for the source group.
     """
     dg = nexus.load_component(location, nx_class=snx.NXsource)
-    dg = nexus.compute_component_position(dg)
     return AnyRunNeXusSource(dg)
 
 
@@ -215,11 +213,9 @@ def load_nexus_detector(
     """
     # The selection is only used for selecting a range of event data.
     location = replace(location, selection=())
-    det = nexus.load_component(
-        location, nx_class=snx.NXdetector, definitions=definitions
+    return AnyRunNeXusDetector(
+        nexus.load_component(location, nx_class=snx.NXdetector, definitions=definitions)
     )
-    det = nexus.compute_component_position(det)
-    return AnyRunNeXusDetector(det)
 
 
 def load_nexus_monitor(
@@ -255,11 +251,9 @@ def load_nexus_monitor(
     """
     definitions = snx.base_definitions()
     definitions["NXmonitor"] = _StrippedMonitor
-    mon = nexus.load_component(
-        location, nx_class=snx.NXmonitor, definitions=definitions
+    return AnyRunAnyNeXusMonitor(
+        nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
     )
-    mon = nexus.compute_component_position(mon)
-    return AnyRunAnyNeXusMonitor(mon)
 
 
 def load_nexus_detector_data(
@@ -313,7 +307,8 @@ def get_source_position(source: AnyRunNeXusSource) -> AnyRunSourcePosition:
     source:
         NeXus source group.
     """
-    return AnyRunSourcePosition(source["position"])
+    dg = nexus.compute_component_position(source)
+    return AnyRunSourcePosition(dg["position"])
 
 
 def get_sample_position(sample: AnyRunNeXusSample) -> AnyRunSamplePosition:
@@ -327,7 +322,8 @@ def get_sample_position(sample: AnyRunNeXusSample) -> AnyRunSamplePosition:
     sample:
         NeXus sample group.
     """
-    return AnyRunSamplePosition(sample.get("position", origin))
+    dg = nexus.compute_component_position(sample)
+    return AnyRunSamplePosition(dg.get("position", origin))
 
 
 def get_calibrated_detector(
@@ -362,6 +358,7 @@ def get_calibrated_detector(
     bank_sizes:
         Dictionary of detector bank sizes.
     """
+    detector = nexus.compute_component_position(detector)
     da = nexus.extract_signal_data_array(detector)
     if (
         sizes := (bank_sizes or {}).get(detector.get('nexus_component_name'))
@@ -424,6 +421,7 @@ def get_calibrated_monitor(
     source_position:
         Position of the neutron source.
     """
+    monitor = nexus.compute_component_position(monitor)
     return AnyRunAnyCalibratedMonitor(
         nexus.extract_signal_data_array(monitor).assign_coords(
             position=monitor['position'] + offset.to(unit=monitor['position'].unit),
