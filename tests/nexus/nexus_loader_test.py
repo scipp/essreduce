@@ -12,6 +12,7 @@ import scipp.testing
 import scippnexus as snx
 
 from ess.reduce import nexus
+from ess.reduce.nexus.types import NeXusLocationSpec
 
 year_zero = sc.datetime('1970-01-01T00:00:00')
 
@@ -219,12 +220,14 @@ def expected_sample() -> sc.DataGroup:
     ],
 )
 def test_load_detector(nexus_file, expected_bank12, entry_name, selection):
-    detector = nexus.load_detector(
-        nexus_file,
-        **({'selection': selection} if selection is not None else {}),
-        detector_name=nexus.types.NeXusDetectorName('bank12'),
+    loc = NeXusLocationSpec(
+        filename=nexus_file,
         entry_name=entry_name,
+        component_name=nexus.types.NeXusDetectorName('bank12'),
     )
+    if selection is not None:
+        loc.selection = selection
+    detector = nexus.load_component(loc, nx_class=snx.NXdetector)
     if selection:
         expected = expected_bank12.bins[selection]
         expected.coords.pop(selection[0])
@@ -250,11 +253,13 @@ def test_load_detector(nexus_file, expected_bank12, entry_name, selection):
 def test_load_and_group_event_data_consistent_with_load_via_detector(
     nexus_file, selection
 ):
-    detector = nexus.load_detector(
-        nexus_file,
-        selection=selection,
-        detector_name=nexus.types.NeXusDetectorName('bank12'),
-    )['bank12_events']
+    loc = NeXusLocationSpec(
+        filename=nexus_file,
+        component_name=nexus.types.NeXusDetectorName('bank12'),
+    )
+    if selection:
+        loc.selection = selection
+    detector = nexus.load_component(loc, nx_class=snx.NXdetector)['bank12_events']
     events = nexus.load_event_data(
         nexus_file,
         selection=selection,
@@ -268,10 +273,11 @@ def test_load_and_group_event_data_consistent_with_load_via_detector(
 
 
 def test_group_event_data_does_not_modify_input(nexus_file):
-    detector = nexus.load_detector(
-        nexus_file,
-        detector_name=nexus.types.NeXusDetectorName('bank12'),
-    )['bank12_events']
+    loc = NeXusLocationSpec(
+        filename=nexus_file,
+        component_name=nexus.types.NeXusDetectorName('bank12'),
+    )
+    detector = nexus.load_component(loc, nx_class=snx.NXdetector)['bank12_events']
     events = nexus.load_event_data(
         nexus_file,
         component_name=nexus.types.NeXusDetectorName('bank12'),
@@ -284,19 +290,15 @@ def test_group_event_data_does_not_modify_input(nexus_file):
 
 
 def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
+    loc = NeXusLocationSpec(
+        filename=nexus_file,
+        component_name=nexus.types.NeXusDetectorName('bank12'),
+    )
     if isinstance(nexus_file, snx.Group):
         with pytest.raises(ValueError, match="new definitions"):
-            nexus.load_detector(
-                nexus_file,
-                detector_name=nexus.types.NeXusDetectorName('bank12'),
-                definitions={},
-            )
+            nexus.load_component(loc, nx_class=snx.NXdetector, definitions={})
     else:
-        nexus.load_detector(
-            nexus_file,
-            detector_name=nexus.types.NeXusDetectorName('bank12'),
-            definitions={},
-        )
+        nexus.load_component(loc, nx_class=snx.NXdetector, definitions={})
 
 
 def test_load_detector_new_definitions_applied(nexus_file, expected_bank12):
@@ -308,13 +310,15 @@ def test_load_detector_new_definitions_applied(nexus_file, expected_bank12):
             new_definition_used = True
             return snx.base_definitions()['NXdetector'](*args, **kwargs)
 
-        nexus.load_detector(
-            nexus_file,
-            detector_name=nexus.types.NeXusDetectorName('bank12'),
-            definitions=dict(
-                snx.base_definitions(),
-                NXdetector=detector,
-            ),
+        loc = NeXusLocationSpec(
+            filename=nexus_file,
+            component_name=nexus.types.NeXusDetectorName('bank12'),
+        )
+
+        nexus.load_component(
+            loc,
+            nx_class=snx.NXdetector,
+            definitions=dict(snx.base_definitions(), NXdetector=detector),
         )
         assert new_definition_used
 
@@ -327,12 +331,13 @@ def test_load_detector_requires_entry_name_if_not_unique(nexus_file):
     with snx.File(nexus_file, 'r+') as f:
         f.create_class('entry', snx.NXentry)
 
+    loc = NeXusLocationSpec(
+        filename=nexus.types.FilePath(nexus_file),
+        component_name=nexus.types.NeXusDetectorName('bank12'),
+        entry_name=None,
+    )
     with pytest.raises(ValueError, match="Expected exactly one"):
-        nexus.load_detector(
-            nexus.types.FilePath(nexus_file),
-            detector_name=nexus.types.NeXusDetectorName('bank12'),
-            entry_name=None,
-        )
+        nexus.load_component(loc, nx_class=snx.NXdetector)
 
 
 def test_load_detector_select_entry_if_not_unique(nexus_file, expected_bank12):
@@ -343,11 +348,12 @@ def test_load_detector_select_entry_if_not_unique(nexus_file, expected_bank12):
     with snx.File(nexus_file, 'r+') as f:
         f.create_class('entry', snx.NXentry)
 
-    detector = nexus.load_detector(
-        nexus.types.FilePath(nexus_file),
-        detector_name=nexus.types.NeXusDetectorName('bank12'),
+    loc = NeXusLocationSpec(
+        filename=nexus.types.FilePath(nexus_file),
+        component_name=nexus.types.NeXusDetectorName('bank12'),
         entry_name=nexus.types.NeXusEntryName('entry-001'),
     )
+    detector = nexus.load_component(loc, nx_class=snx.NXdetector)
     sc.testing.assert_identical(detector['bank12_events'], expected_bank12)
 
 
@@ -361,12 +367,14 @@ def test_load_detector_select_entry_if_not_unique(nexus_file, expected_bank12):
     ],
 )
 def test_load_monitor(nexus_file, expected_monitor, entry_name, selection):
-    monitor = nexus.load_monitor(
-        nexus_file,
-        **({'selection': selection} if selection is not None else {}),
-        monitor_name=nexus.types.AnyNeXusMonitorName('monitor'),
+    loc = NeXusLocationSpec(
+        filename=nexus_file,
         entry_name=entry_name,
+        component_name=nexus.types.AnyNeXusMonitorName('monitor'),
     )
+    if selection is not None:
+        loc.selection = selection
+    monitor = nexus.load_component(loc, nx_class=snx.NXmonitor)
     expected = expected_monitor[selection] if selection else expected_monitor
     sc.testing.assert_identical(monitor['data'], expected)
 
@@ -374,11 +382,12 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name, selection):
 @pytest.mark.parametrize('entry_name', [None, nexus.types.NeXusEntryName('entry-001')])
 @pytest.mark.parametrize('source_name', [None, nexus.types.NeXusSourceName('source')])
 def test_load_source(nexus_file, expected_source, entry_name, source_name):
-    source = nexus.load_source(
-        nexus_file,
+    loc = NeXusLocationSpec(
+        filename=nexus_file,
         entry_name=entry_name,
-        source_name=source_name,
+        component_name=source_name,
     )
+    source = nexus.load_component(loc, nx_class=snx.NXsource)
     # NeXus details that we don't need to test as long as the positions are ok:
     del source['depends_on']
     del source['transformations']
@@ -388,8 +397,8 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
 @pytest.mark.parametrize(
     ('loader', 'cls', 'name'),
     [
-        (nexus.load_source, snx.NXsource, 'NXsource'),
-        (nexus.load_sample, snx.NXsample, 'NXsample'),
+        (nexus.load_component, snx.NXsource, 'NXsource'),
+        (nexus.load_component, snx.NXsample, 'NXsample'),
     ],
 )
 def test_load_new_definitions_applied(nexus_file, loader, cls, name):
@@ -401,19 +410,18 @@ def test_load_new_definitions_applied(nexus_file, loader, cls, name):
             new_definition_used = True
             return cls(*args, **kwargs)
 
-        loader(
-            nexus_file,
-            definitions={
-                **snx.base_definitions(),
-                name: new,
-            },
-        )
+        loc = NeXusLocationSpec(filename=nexus_file)
+        loader(loc, nx_class=cls, definitions={**snx.base_definitions(), name: new})
         assert new_definition_used
 
 
 @pytest.mark.parametrize('entry_name', [None, nexus.types.NeXusEntryName('entry-001')])
 def test_load_sample(nexus_file, expected_sample, entry_name):
-    sample = nexus.load_sample(nexus_file, entry_name=entry_name)
+    loc = NeXusLocationSpec(
+        filename=nexus_file,
+        entry_name=entry_name,
+    )
+    sample = nexus.load_component(loc, nx_class=snx.NXsample)
     sc.testing.assert_identical(sample, nexus.types.AnyRunNeXusSample(expected_sample))
 
 
@@ -425,7 +433,7 @@ def test_extract_detector_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
+    data = nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
     sc.testing.assert_identical(data, nexus.types.RawDetectorData(detector['jdl2ab']))
 
 
@@ -437,7 +445,7 @@ def test_extract_monitor_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_monitor_data(nexus.types.AnyRunAnyNeXusMonitor(monitor))
+    data = nexus.extract_events_or_histogram(nexus.types.AnyRunAnyNeXusMonitor(monitor))
     sc.testing.assert_identical(data, nexus.types.RawMonitorData(monitor['(eed)']))
 
 
@@ -453,17 +461,17 @@ def test_extract_detector_data_requires_unique_dense_data():
     with pytest.raises(
         ValueError, match="Cannot uniquely identify the data to extract"
     ):
-        nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
+        nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
 
 
 def test_extract_detector_data_ignores_position_data_array():
     detector = sc.DataGroup(jdl2ab=sc.data.data_xy(), position=sc.data.data_xy())
-    nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
+    nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
 
 
 def test_extract_detector_data_ignores_transform_data_array():
     detector = sc.DataGroup(jdl2ab=sc.data.data_xy(), transform=sc.data.data_xy())
-    nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
+    nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
 
 
 def test_extract_detector_data_requires_unique_event_data():
@@ -478,7 +486,7 @@ def test_extract_detector_data_requires_unique_event_data():
     with pytest.raises(
         ValueError, match="Cannot uniquely identify the data to extract"
     ):
-        nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
+        nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
 
 
 def test_extract_detector_data_favors_event_data_over_histogram_data():
@@ -490,5 +498,5 @@ def test_extract_detector_data_favors_event_data_over_histogram_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_detector_data(nexus.types.AnyRunNeXusDetector(detector))
+    data = nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
     sc.testing.assert_identical(data, nexus.types.RawDetectorData(detector['lob']))

@@ -13,227 +13,13 @@ import scipp as sc
 import scippnexus as snx
 
 from ..logging import get_logger
-from .types import (
-    AnyNeXusMonitorName,
-    AnyRunAnyNeXusMonitor,
-    AnyRunFilename,
-    AnyRunNeXusDetector,
-    AnyRunNeXusSample,
-    AnyRunNeXusSource,
-    NeXusDetectorName,
-    NeXusEntryName,
-    NeXusGroup,
-    NeXusLocationSpec,
-    NeXusSourceName,
-    RawDetectorData,
-    RawMonitorData,
-)
+from .types import AnyRunFilename, NeXusEntryName, NeXusGroup, NeXusLocationSpec
 
 
 class NoNewDefinitionsType: ...
 
 
 NoNewDefinitions = NoNewDefinitionsType()
-
-
-def load_detector(
-    file_path: AnyRunFilename,
-    selection=(),
-    *,
-    detector_name: NeXusDetectorName,
-    entry_name: NeXusEntryName | None = None,
-    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> AnyRunNeXusDetector:
-    """Load a single detector (bank) from a NeXus file.
-
-    The detector positions are computed automatically from NeXus transformations,
-    and the combined transformation is stored under the name 'transform'.
-
-    Parameters
-    ----------
-    file_path:
-        Indicates where to load data from.
-        One of:
-
-        - Path to a NeXus file on disk.
-        - File handle or buffer for reading binary data.
-        - A ScippNexus group of the root of a NeXus file.
-    detector_name:
-        Name of the detector (bank) to load.
-        Must be a group in an instrument group in the entry (see below).
-    entry_name:
-        Name of the entry that contains the detector.
-        If ``None``, the entry will be located based
-        on its NeXus class, but there cannot be more than 1.
-    definitions:
-        Definitions used by scippnexus loader, see :py:`scippnexus.File`
-        for documentation.
-
-    Returns
-    -------
-    :
-        A data group containing the detector events or histogram
-        and any auxiliary data stored in the same NeXus group.
-    """
-    return AnyRunNeXusDetector(
-        load_component(
-            NeXusLocationSpec(
-                filename=file_path,
-                component_name=detector_name,
-                entry_name=entry_name,
-                selection=selection,
-            ),
-            nx_class=snx.NXdetector,
-            definitions=definitions,
-        )
-    )
-
-
-def load_monitor(
-    file_path: AnyRunFilename,
-    selection=(),
-    *,
-    monitor_name: AnyNeXusMonitorName,
-    entry_name: NeXusEntryName | None = None,
-    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> AnyRunAnyNeXusMonitor:
-    """Load a single monitor from a NeXus file.
-
-    The monitor position is computed automatically from NeXus transformations,
-    and the combined transformation is stored under the name 'transform'.
-
-    Parameters
-    ----------
-    file_path:
-        Indicates where to load data from.
-        One of:
-
-        - Path to a NeXus file on disk.
-        - File handle or buffer for reading binary data.
-        - A ScippNexus group of the root of a NeXus file.
-    monitor_name:
-        Name of the monitor to load.
-        Must be a group in an instrument group in the entry (see below).
-    entry_name:
-        Name of the entry that contains the monitor.
-        If ``None``, the entry will be located based
-        on its NeXus class, but there cannot be more than 1.
-    definitions:
-        Definitions used by scippnexus loader, see :py:`scippnexus.File`
-        for documentation.
-
-    Returns
-    -------
-    :
-        A data group containing the monitor events or histogram
-        and any auxiliary data stored in the same NeXus group.
-    """
-    return AnyRunAnyNeXusMonitor(
-        load_component(
-            NeXusLocationSpec(
-                filename=file_path,
-                component_name=monitor_name,
-                entry_name=entry_name,
-                selection=selection,
-            ),
-            nx_class=snx.NXmonitor,
-            definitions=definitions,
-        )
-    )
-
-
-def load_source(
-    file_path: AnyRunFilename,
-    *,
-    source_name: NeXusSourceName | None = None,
-    entry_name: NeXusEntryName | None = None,
-    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> AnyRunNeXusSource:
-    """Load a source from a NeXus file.
-
-    The source position is computed automatically from NeXus transformations,
-    and the combined transformation is stored under the name 'transform'.
-
-    Parameters
-    ----------
-    file_path:
-        Indicates where to load data from.
-        One of:
-
-        - Path to a NeXus file on disk.
-        - File handle or buffer for reading binary data.
-        - A ScippNexus group of the root of a NeXus file.
-    source_name:
-        Name of the source to load.
-        Must be a group in an instrument group in the entry (see below).
-        If ``None``, the source will be located based
-        on its NeXus class.
-    entry_name:
-        Name of the instrument that contains the source.
-        If ``None``, the entry will be located based
-        on its NeXus class, but there cannot be more than 1.
-    definitions:
-        Definitions used by scippnexus loader, see :py:`scippnexus.File`
-        for documentation.
-
-    Returns
-    -------
-    :
-        A data group containing all data stored in
-        the source NeXus group.
-    """
-    return AnyRunNeXusSource(
-        load_component(
-            NeXusLocationSpec(
-                filename=file_path, component_name=source_name, entry_name=entry_name
-            ),
-            nx_class=snx.NXsource,
-            definitions=definitions,
-        )
-    )
-
-
-def load_sample(
-    file_path: AnyRunFilename,
-    entry_name: NeXusEntryName | None = None,
-    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> AnyRunNeXusSample:
-    """Load a sample from a NeXus file.
-
-    The sample is located based on its NeXus class.
-    There can be only one sample in a NeXus file or
-    in the entry indicated by ``entry_name``.
-
-    Parameters
-    ----------
-    file_path:
-        Indicates where to load data from.
-        One of:
-
-        - Path to a NeXus file on disk.
-        - File handle or buffer for reading binary data.
-        - A ScippNexus group of the root of a NeXus file.
-    entry_name:
-        Name of the instrument that contains the source.
-        If ``None``, the entry will be located based
-        on its NeXus class, but there cannot be more than 1.
-    definitions:
-        Definitions used by scippnexus loader, see :py:`scippnexus.File`
-        for documentation.
-
-    Returns
-    -------
-    :
-        A data group containing all data stored in
-        the sample NeXus group.
-    """
-    return AnyRunNeXusSample(
-        load_component(
-            NeXusLocationSpec(filename=file_path, entry_name=entry_name),
-            nx_class=snx.NXsample,
-            definitions=definitions,
-        )
-    )
 
 
 def load_component(
@@ -254,24 +40,26 @@ def load_component(
             instrument = _unique_child_group(entry, snx.NXinstrument, None)
         component = _unique_child_group(instrument, nx_class, group_name)
         loaded = cast(sc.DataGroup, component[selection])
-
-        transform_out_name = 'transform'
-        if transform_out_name in loaded:
-            raise RuntimeError(
-                f"Loaded data contains an item '{transform_out_name}' but we want to "
-                "store the combined NeXus transformations under that name."
-            )
-        position_out_name = 'position'
-        if position_out_name in loaded:
-            raise RuntimeError(
-                f"Loaded data contains an item '{position_out_name}' but we want to "
-                "store the computed positions under that name."
-            )
-        loaded = snx.compute_positions(
-            loaded, store_position=position_out_name, store_transform=transform_out_name
-        )
         loaded['nexus_component_name'] = component.name.split('/')[-1]
-        return loaded
+    return compute_component_position(loaded)
+
+
+def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
+    transform_out_name = 'transform'
+    if transform_out_name in dg:
+        raise RuntimeError(
+            f"Loaded data contains an item '{transform_out_name}' but we want to "
+            "store the combined NeXus transformations under that name."
+        )
+    position_out_name = 'position'
+    if position_out_name in dg:
+        raise RuntimeError(
+            f"Loaded data contains an item '{position_out_name}' but we want to "
+            "store the computed positions under that name."
+        )
+    return snx.compute_positions(
+        dg, store_position=position_out_name, store_transform=transform_out_name
+    )
 
 
 def _open_nexus_file(
@@ -311,65 +99,7 @@ def _unique_child_group(
     return next(iter(children.values()))  # type: ignore[return-value]
 
 
-def extract_detector_data(detector: AnyRunNeXusDetector) -> RawDetectorData:
-    """Get and return the events or histogram from a detector loaded from NeXus.
-
-    This function looks for a data array in the detector group and returns that.
-
-    Parameters
-    ----------
-    detector:
-        A detector loaded from NeXus.
-
-    Returns
-    -------
-    :
-        A data array containing the events or histogram.
-
-    Raises
-    ------
-    ValueError
-        If there is more than one data array.
-
-    See also
-    --------
-    load_detector:
-        Load a detector from a NeXus file in a format compatible with
-        ``extract_detector_data``.
-    """
-    return RawDetectorData(_extract_events_or_histogram(detector))
-
-
-def extract_monitor_data(monitor: AnyRunAnyNeXusMonitor) -> RawMonitorData:
-    """Get and return the events or histogram from a monitor loaded from NeXus.
-
-    This function looks for a data array in the monitor group and returns that.
-
-    Parameters
-    ----------
-    monitor:
-        A monitor loaded from NeXus.
-
-    Returns
-    -------
-    :
-        A data array containing the events or histogram.
-
-    Raises
-    ------
-    ValueError
-        If there is more than one data array.
-
-    See also
-    --------
-    load_monitor:
-        Load a monitor from a NeXus file in a format compatible with
-        ``extract_monitor_data``.
-    """
-    return RawMonitorData(_extract_events_or_histogram(monitor))
-
-
-def _extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
+def extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
     event_data_arrays = {
         key: value
         for key, value in dg.items()
