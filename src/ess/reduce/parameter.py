@@ -8,6 +8,7 @@ from enum import Enum
 from typing import Generic, TypeVar
 
 import scipp as sc
+from sciline._utils import key_name
 from sciline.typing import Key
 
 T = TypeVar('T')
@@ -56,7 +57,7 @@ class Parameter(Generic[T]):
         # TODO __doc__ not correct when using Generic
         # use sciline type->string helper
         return cls(
-            name=str(t),
+            name=key_name(t),
             description=t.__doc__,
             default=default,
             optional=optional,
