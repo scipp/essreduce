@@ -300,7 +300,7 @@ def monitor_event_data() -> workflow.AnyRunAnyNeXusMonitorEventData:
 def test_assemble_monitor_data_adds_events_as_values_and_coords(
     calibrated_monitor, monitor_event_data
 ) -> None:
-    monitor_data = workflow.assemble_monitor_data(
+    monitor_data = workflow.assemble_monitor_event_data(
         calibrated_monitor, monitor_event_data
     )
     assert_identical(
@@ -311,7 +311,7 @@ def test_assemble_monitor_data_adds_events_as_values_and_coords(
 def test_assemble_monitor_data_adds_variances_to_weights(
     calibrated_monitor, monitor_event_data
 ) -> None:
-    monitor_data = workflow.assemble_monitor_data(
+    monitor_data = workflow.assemble_monitor_event_data(
         calibrated_monitor, monitor_event_data
     )
     assert_identical(
@@ -322,7 +322,7 @@ def test_assemble_monitor_data_adds_variances_to_weights(
 
 def test_assemble_monitor_preserves_coords(calibrated_monitor, monitor_event_data):
     calibrated_monitor.coords['abc'] = sc.scalar(1.2)
-    monitor_data = workflow.assemble_monitor_data(
+    monitor_data = workflow.assemble_monitor_event_data(
         calibrated_monitor, monitor_event_data
     )
     assert 'abc' in monitor_data.coords
@@ -330,7 +330,7 @@ def test_assemble_monitor_preserves_coords(calibrated_monitor, monitor_event_dat
 
 def test_assemble_monitor_preserves_masks(calibrated_monitor, monitor_event_data):
     calibrated_monitor.masks['mymask'] = sc.scalar(False)
-    monitor_data = workflow.assemble_monitor_data(
+    monitor_data = workflow.assemble_monitor_event_data(
         calibrated_monitor, monitor_event_data
     )
     assert 'mymask' in monitor_data.masks

@@ -11,6 +11,9 @@ implementation of interaction with ESS NeXus files, without the need of writing
 instrument-specific wrappers or implementations.
 """
 
+from collections.abc import Callable
+from typing import Any
+
 import sciline
 import scippnexus as snx
 
@@ -70,6 +73,16 @@ def monitor_events_by_name(
         filename=filename.value,
         component_name=name,
         selection={'event_time_zero': selection.value},
+    )
+
+
+def monitor_histogram_by_name(
+    filename: gt.NeXusFileSpec[RunType],
+    name: gt.NeXusMonitorName[MonitorType],
+) -> gt.NeXusMonitorHistLocationSpec[RunType, MonitorType]:
+    return gt.NeXusMonitorHistLocationSpec[RunType, MonitorType](
+        filename=filename.value,
+        component_name=name,
     )
 
 
@@ -133,6 +146,14 @@ def load_nexus_monitor_event_data(
     )
 
 
+def load_nexus_monitor_histogram_data(
+    location: gt.NeXusMonitorHistLocationSpec[RunType, MonitorType],
+) -> gt.NeXusMonitorHistData[RunType, MonitorType]:
+    return gt.NeXusMonitorHistData[RunType, MonitorType](
+        workflow.load_nexus_monitor_histogram_data(location)
+    )
+
+
 def get_source_position(source: gt.NeXusSource[RunType]) -> gt.SourcePosition[RunType]:
     return gt.SourcePosition[RunType](workflow.get_source_position(source))
 
@@ -181,12 +202,21 @@ def get_calibrated_monitor(
     )
 
 
-def assemble_monitor_data(
+def assemble_monitor_event_data(
     monitor: gt.CalibratedMonitor[RunType, MonitorType],
     event_data: gt.NeXusMonitorEventData[RunType, MonitorType],
 ) -> gt.MonitorData[RunType, MonitorType]:
     return gt.MonitorData[RunType, MonitorType](
-        workflow.assemble_monitor_data(monitor, event_data)
+        workflow.assemble_monitor_event_data(monitor, event_data)
+    )
+
+
+def assemble_monitor_histogram_data(
+    monitor: gt.CalibratedMonitor[RunType, MonitorType],
+    hist_data: gt.NeXusMonitorHistData[RunType, MonitorType],
+) -> gt.MonitorData[RunType, MonitorType]:
+    return gt.MonitorData[RunType, MonitorType](
+        workflow.assemble_monitor_histogram_data(monitor, hist_data)
     )
 
 
@@ -199,28 +229,50 @@ load_nexus_detector.__doc__ = workflow.load_nexus_detector.__doc__
 load_nexus_monitor.__doc__ = workflow.load_nexus_monitor.__doc__
 load_nexus_detector_event_data.__doc__ = workflow.load_nexus_detector_event_data.__doc__
 load_nexus_monitor_event_data.__doc__ = workflow.load_nexus_monitor_event_data.__doc__
+load_nexus_monitor_histogram_data.__doc__ = (
+    workflow.load_nexus_monitor_histogram_data.__doc__
+)
 get_source_position.__doc__ = workflow.get_source_position.__doc__
 get_sample_position.__doc__ = workflow.get_sample_position.__doc__
 get_calibrated_detector.__doc__ = workflow.get_calibrated_detector.__doc__
 assemble_detector_data.__doc__ = workflow.assemble_detector_data.__doc__
 get_calibrated_monitor.__doc__ = workflow.get_calibrated_monitor.__doc__
-assemble_monitor_data.__doc__ = workflow.assemble_monitor_data.__doc__
+assemble_monitor_event_data.__doc__ = workflow.assemble_monitor_event_data.__doc__
+assemble_monitor_histogram_data.__doc__ = (
+    workflow.assemble_monitor_histogram_data.__doc__
+)
+monitor_events_by_name.__doc__ = workflow.monitor_events_by_name.__doc__
+monitor_histogram_by_name.__doc__ = workflow.monitor_histogram_by_name.__doc__
 
 
 _common_providers = (workflow.gravity_vector_neg_y, file_path_to_file_spec, all_pulses)
 
-_monitor_providers = (
-    no_monitor_position_offset,
-    unique_source_spec,
-    monitor_by_name,
-    monitor_events_by_name,
-    load_nexus_monitor,
-    load_nexus_monitor_event_data,
-    load_nexus_source,
-    get_source_position,
-    get_calibrated_monitor,
-    assemble_monitor_data,
-)
+
+def _monitor_providers(*, event_monitor: bool) -> tuple[Callable[..., Any], ...]:
+    if event_monitor:
+        data_providers = (
+            assemble_monitor_event_data,
+            load_nexus_monitor_event_data,
+            monitor_events_by_name,
+        )
+    else:
+        data_providers = (
+            assemble_monitor_histogram_data,
+            load_nexus_monitor_histogram_data,
+            monitor_histogram_by_name,
+        )
+
+    return (
+        no_monitor_position_offset,
+        unique_source_spec,
+        monitor_by_name,
+        load_nexus_monitor,
+        load_nexus_source,
+        get_source_position,
+        get_calibrated_monitor,
+        *data_providers,
+    )
+
 
 _detector_providers = (
     no_detector_position_offset,
@@ -239,9 +291,11 @@ _detector_providers = (
 )
 
 
-def LoadMonitorWorkflow() -> sciline.Pipeline:
+def LoadMonitorWorkflow(*, event_monitor: bool = True) -> sciline.Pipeline:
     """Generic workflow for loading monitor data from a NeXus file."""
-    wf = sciline.Pipeline((*_common_providers, *_monitor_providers))
+    wf = sciline.Pipeline(
+        (*_common_providers, *_monitor_providers(event_monitor=event_monitor))
+    )
     return wf
 
 
@@ -252,10 +306,14 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
     return wf
 
 
-def GenericNeXusWorkflow() -> sciline.Pipeline:
+def GenericNeXusWorkflow(*, event_monitor: bool = True) -> sciline.Pipeline:
     """Generic workflow for loading detector and monitor data from a NeXus file."""
     wf = sciline.Pipeline(
-        (*_common_providers, *_monitor_providers, *_detector_providers)
+        (
+            *_common_providers,
+            *_monitor_providers(event_monitor=event_monitor),
+            *_detector_providers,
+        )
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
     return wf

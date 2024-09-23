@@ -112,6 +112,24 @@ def monitor_events_by_name(
     )
 
 
+def monitor_histogram_by_name(
+    filename: AnyRunFilename, name: AnyNeXusMonitorName
+) -> NeXusHistDataLocationSpec[snx.NXmonitor]:
+    """
+    Create a location spec for monitor histogram data in a NeXus file.
+
+    Parameters
+    ----------
+    filename:
+        NeXus file to use for the location spec.
+    name:
+        Name of the monitor group.
+    """
+    return NeXusHistDataLocationSpec[snx.NXmonitor](
+        filename=filename, component_name=name
+    )
+
+
 def detector_by_name(
     filename: AnyRunFilename, name: NeXusDetectorName
 ) -> NeXusLocationSpec[snx.NXdetector]:
@@ -451,7 +469,27 @@ def get_calibrated_monitor(
     )
 
 
-def assemble_monitor_data(
+def _assemble_monitor_data(
+    monitor: AnyRunAnyCalibratedMonitor,
+    data: AnyRunAnyNeXusMonitorEventData | AnyRunAnyNeXusMonitorHistData,
+) -> AnyRunAnyMonitorData:
+    """
+    Assemble a monitor data array with event data.
+
+    Also adds variances to the event data if they are missing.
+
+    Parameters
+    ----------
+    monitor:
+        Calibrated monitor data array.
+    data:
+        Event or histogram data array.
+    """
+    da = data.assign_coords(monitor.coords).assign_masks(monitor.masks)
+    return AnyRunAnyMonitorData(_add_variances(da))
+
+
+def assemble_monitor_event_data(
     monitor: AnyRunAnyCalibratedMonitor,
     event_data: AnyRunAnyNeXusMonitorEventData,
 ) -> AnyRunAnyMonitorData:
@@ -467,8 +505,26 @@ def assemble_monitor_data(
     event_data:
         Event data array.
     """
-    da = event_data.assign_coords(monitor.coords).assign_masks(monitor.masks)
-    return AnyRunAnyMonitorData(_add_variances(da))
+    return _assemble_monitor_data(monitor, event_data)
+
+
+def assemble_monitor_histogram_data(
+    monitor: AnyRunAnyCalibratedMonitor,
+    hist_data: AnyRunAnyNeXusMonitorEventData,
+) -> AnyRunAnyMonitorData:
+    """
+    Assemble a monitor data array with event data.
+
+    Also adds variances to the event data if they are missing.
+
+    Parameters
+    ----------
+    monitor:
+        Calibrated monitor data array.
+    hist_data:
+        Histogram data array.
+    """
+    return _assemble_monitor_data(monitor, hist_data)
 
 
 def _drop(
@@ -531,19 +587,30 @@ def _add_variances(da: sc.DataArray) -> sc.DataArray:
     return out
 
 
-def LoadMonitorWorkflow() -> sciline.Pipeline:
+def LoadMonitorWorkflow(*, event_monitor: bool = True) -> sciline.Pipeline:
     """Workflow for loading monitor data from a NeXus file."""
+    if event_monitor:
+        data_providers = (
+            assemble_monitor_event_data,
+            load_nexus_monitor_event_data,
+            monitor_events_by_name,
+        )
+    else:
+        data_providers = (
+            assemble_monitor_histogram_data,
+            load_nexus_monitor_histogram_data,
+            monitor_histogram_by_name,
+        )
+
     wf = sciline.Pipeline(
         (
             unique_source_spec,
             monitor_by_name,
-            monitor_events_by_name,
             load_nexus_monitor,
-            load_nexus_monitor_event_data,
             load_nexus_source,
             get_source_position,
             get_calibrated_monitor,
-            assemble_monitor_data,
+            *data_providers,
         )
     )
     wf[AnyRunPulseSelection] = AnyRunPulseSelection(slice(None, None))
@@ -575,7 +642,9 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
     return wf
 
 
-def LoadNeXusWorkflow(filename: AnyRunFilename) -> sciline.Pipeline:
+def LoadNeXusWorkflow(
+    filename: AnyRunFilename, *, event_monitor: bool = True
+) -> sciline.Pipeline:
     """
     Workflow for loading detector and monitor data from a NeXus file.
 
@@ -588,12 +657,15 @@ def LoadNeXusWorkflow(filename: AnyRunFilename) -> sciline.Pipeline:
     ----------
     filename:
         NeXus file to load.
+    event_monitor:
+        When ``True``, monitors are loaded as event data from ``NXevent_data`` groups.
+        Otherwise, monitors are loaded as histogrammed data from ``NXdata`` groups.
     """
     import pandas as pd
 
     wf = sciline.Pipeline()
     wf[AnyRunDetectorData] = LoadDetectorWorkflow()
-    wf[AnyRunAnyMonitorData] = LoadMonitorWorkflow()
+    wf[AnyRunAnyMonitorData] = LoadMonitorWorkflow(event_monitor=event_monitor)
     wf[AnyRunFilename] = filename
     wf.insert(nexus.read_nexus_file_info)
     wf[nexus.NeXusFileInfo] = info = wf.compute(nexus.NeXusFileInfo)

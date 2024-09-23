@@ -115,6 +115,12 @@ class NeXusMonitorEventData(
     """Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
 
 
+class NeXusMonitorHistData(
+    sciline.ScopeTwoParams[RunType, MonitorType, sc.DataArray], sc.DataArray
+):
+    """Data array loaded from a NeXus NXdata group within an NXmonitor."""
+
+
 class SourcePosition(sciline.Scope[RunType, sc.Variable], sc.Variable):
     """Position of the neutron source."""
 
@@ -198,3 +204,10 @@ class NeXusMonitorEventLocationSpec(
     NeXusLocationSpec[snx.NXevent_data], Generic[RunType, MonitorType]
 ):
     """NeXus filename and parameters to identify (parts of) monitor events to load."""
+
+
+@dataclass
+class NeXusMonitorHistLocationSpec(
+    NeXusLocationSpec[snx.NXdata], Generic[RunType, MonitorType]
+):
+    """NeXus filename and parameters to identify a monitor histogram to load."""
