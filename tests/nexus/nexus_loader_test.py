@@ -500,3 +500,8 @@ def test_extract_detector_data_favors_event_data_over_histogram_data():
     )
     data = nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
     sc.testing.assert_identical(data, nexus.types.RawDetectorData(detector['lob']))
+
+
+def test_load_histogram_data_loads_expected_data(nexus_file):
+    loaded = nexus.load_hist_data(nexus_file, component_name='monitor')
+    sc.testing.assert_identical(loaded, _monitor_histogram())

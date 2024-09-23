@@ -147,6 +147,49 @@ def _select_unique_array(
     return next(iter(arrays.values()))
 
 
+def load_hist_data(
+    file_path: AnyRunFilename,
+    selection=(),
+    *,
+    entry_name: NeXusEntryName | None = None,
+    component_name: str,
+    definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
+) -> sc.DataArray:
+    """Load NXdata of a detector or monitor from a NeXus file.
+
+    Parameters
+    ----------
+    file_path:
+        Indicates where to load data from.
+        One of:
+
+        - Path to a NeXus file on disk.
+        - File handle or buffer for reading binary data.
+        - A ScippNexus group of the root of a NeXus file.
+    component_name:
+        Name of the NXdetector or NXmonitor containing the NXevent_data to load.
+        Must be a group in an instrument group in the entry (see below).
+    entry_name:
+        Name of the entry that contains the detector.
+        If ``None``, the entry will be located based
+        on its NeXus class, but there cannot be more than 1.
+    definitions:
+        Definitions used by scippnexus loader, see :py:`scippnexus.File`
+        for documentation.
+
+    Returns
+    -------
+    :
+        Data array with events grouped by event_time_zero, as in the NeXus file.
+    """
+    with _open_nexus_file(file_path, definitions=definitions) as f:
+        entry = _unique_child_group(f, snx.NXentry, entry_name)
+        instrument = _unique_child_group(entry, snx.NXinstrument, None)
+        component = instrument[component_name]
+        event_data = _unique_child_group(component, snx.NXdata, None)
+        return event_data[selection]
+
+
 def load_event_data(
     file_path: AnyRunFilename,
     selection=(),

@@ -47,6 +47,8 @@ AnyRunNeXusDetectorEventData = NewType('AnyRunNeXusDetectorEventData', sc.DataAr
 """Data array loaded from a NeXus NXevent_data group within an NXdetector."""
 AnyRunAnyNeXusMonitorEventData = NewType('AnyRunAnyNeXusMonitorEventData', sc.DataArray)
 """Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
+AnyRunAnyNeXusMonitorHistData = NewType('AnyRunAnyNeXusMonitorHistData', sc.DataArray)
+"""Data array loaded from a NeXus NXdata group within an NXmonitor."""
 
 AnyRunSourcePosition = NewType('AnyRunSourcePosition', sc.Variable)
 """Position of the neutron source."""
@@ -94,3 +96,8 @@ class NeXusLocationSpec(Generic[Component]):
 @dataclass
 class NeXusEventDataLocationSpec(NeXusLocationSpec[Component]):
     """NeXus filename and parameters to identify (parts of) events to load."""
+
+
+@dataclass
+class NeXusHistDataLocationSpec(NeXusLocationSpec[Component]):
+    """NeXus filename and parameters to identify (parts of) a histogram to load."""

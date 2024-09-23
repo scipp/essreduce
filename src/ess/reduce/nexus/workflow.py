@@ -19,6 +19,7 @@ from .types import (
     AnyRunAnyMonitorPositionOffset,
     AnyRunAnyNeXusMonitor,
     AnyRunAnyNeXusMonitorEventData,
+    AnyRunAnyNeXusMonitorHistData,
     AnyRunCalibratedDetector,
     AnyRunDetectorData,
     AnyRunDetectorPositionOffset,
@@ -34,6 +35,7 @@ from .types import (
     GravityVector,
     NeXusDetectorName,
     NeXusEventDataLocationSpec,
+    NeXusHistDataLocationSpec,
     NeXusLocationSpec,
 )
 
@@ -292,6 +294,27 @@ def load_nexus_monitor_event_data(
     """
     return AnyRunAnyNeXusMonitorEventData(
         nexus.load_event_data(
+            file_path=location.filename,
+            entry_name=location.entry_name,
+            selection=location.selection,
+            component_name=location.component_name,
+        )
+    )
+
+
+def load_nexus_monitor_histogram_data(
+    location: NeXusHistDataLocationSpec[snx.NXmonitor],
+) -> AnyRunAnyNeXusMonitorHistData:
+    """
+    Load histogram data from a NeXus monitor group.
+
+    Parameters
+    ----------
+    location:
+        Location spec for the monitor group.
+    """
+    return AnyRunAnyNeXusMonitorHistData(
+        nexus.load_hist_data(
             file_path=location.filename,
             entry_name=location.entry_name,
             selection=location.selection,
