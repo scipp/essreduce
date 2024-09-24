@@ -61,12 +61,12 @@ def monitor_by_name(
     )
 
 
-def monitor_events_by_name(
+def monitor_data_by_name(
     filename: gt.NeXusFileSpec[RunType],
     name: gt.NeXusMonitorName[MonitorType],
     selection: PulseSelection[RunType],
-) -> gt.NeXusMonitorEventLocationSpec[RunType, MonitorType]:
-    return gt.NeXusMonitorEventLocationSpec[RunType, MonitorType](
+) -> gt.NeXusMonitorDataLocationSpec[RunType, MonitorType]:
+    return gt.NeXusMonitorDataLocationSpec[RunType, MonitorType](
         filename=filename.value,
         component_name=name,
         selection=selection,
@@ -81,12 +81,12 @@ def detector_by_name(
     )
 
 
-def detector_events_by_name(
+def detector_data_by_name(
     filename: gt.NeXusFileSpec[RunType],
     name: NeXusDetectorName,
     selection: PulseSelection[RunType],
-) -> gt.NeXusDetectorEventLocationSpec[RunType]:
-    return gt.NeXusDetectorEventLocationSpec[RunType](
+) -> gt.NeXusDetectorDataLocationSpec[RunType]:
+    return gt.NeXusDetectorDataLocationSpec[RunType](
         filename=filename.value,
         component_name=name,
         selection=selection,
@@ -117,19 +117,17 @@ def load_nexus_monitor(
     return gt.NeXusMonitor[RunType, MonitorType](workflow.load_nexus_monitor(location))
 
 
-def load_nexus_detector_event_data(
-    location: gt.NeXusDetectorEventLocationSpec[RunType],
-) -> gt.NeXusDetectorEventData[RunType]:
-    return gt.NeXusDetectorEventData[RunType](
-        workflow.load_nexus_detector_event_data(location)
-    )
+def load_nexus_detector_data(
+    location: gt.NeXusDetectorDataLocationSpec[RunType],
+) -> gt.NeXusDetectorData[RunType]:
+    return gt.NeXusDetectorData[RunType](workflow.load_nexus_detector_data(location))
 
 
-def load_nexus_monitor_event_data(
-    location: gt.NeXusMonitorEventLocationSpec[RunType, MonitorType],
-) -> gt.NeXusMonitorEventData[RunType, MonitorType]:
-    return gt.NeXusMonitorEventData[RunType, MonitorType](
-        workflow.load_nexus_monitor_event_data(location)
+def load_nexus_monitor_data(
+    location: gt.NeXusMonitorDataLocationSpec[RunType, MonitorType],
+) -> gt.NeXusMonitorData[RunType, MonitorType]:
+    return gt.NeXusMonitorData[RunType, MonitorType](
+        workflow.load_nexus_monitor_data(location)
     )
 
 
@@ -164,11 +162,9 @@ def get_calibrated_detector(
 
 def assemble_detector_data(
     detector: gt.CalibratedDetector[RunType],
-    event_data: gt.NeXusDetectorEventData[RunType],
+    data: gt.NeXusDetectorData[RunType],
 ) -> gt.DetectorData[RunType]:
-    return gt.DetectorData[RunType](
-        workflow.assemble_detector_data(detector, event_data)
-    )
+    return gt.DetectorData[RunType](workflow.assemble_detector_data(detector, data))
 
 
 def get_calibrated_monitor(
@@ -183,10 +179,10 @@ def get_calibrated_monitor(
 
 def assemble_monitor_data(
     monitor: gt.CalibratedMonitor[RunType, MonitorType],
-    event_data: gt.NeXusMonitorEventData[RunType, MonitorType],
+    data: gt.NeXusMonitorData[RunType, MonitorType],
 ) -> gt.MonitorData[RunType, MonitorType]:
     return gt.MonitorData[RunType, MonitorType](
-        workflow.assemble_monitor_data(monitor, event_data)
+        workflow.assemble_monitor_data(monitor, data)
     )
 
 
@@ -197,8 +193,8 @@ load_nexus_sample.__doc__ = workflow.load_nexus_sample.__doc__
 load_nexus_source.__doc__ = workflow.load_nexus_source.__doc__
 load_nexus_detector.__doc__ = workflow.load_nexus_detector.__doc__
 load_nexus_monitor.__doc__ = workflow.load_nexus_monitor.__doc__
-load_nexus_detector_event_data.__doc__ = workflow.load_nexus_detector_event_data.__doc__
-load_nexus_monitor_event_data.__doc__ = workflow.load_nexus_monitor_event_data.__doc__
+load_nexus_detector_data.__doc__ = workflow.load_nexus_detector_data.__doc__
+load_nexus_monitor_data.__doc__ = workflow.load_nexus_monitor_data.__doc__
 get_source_position.__doc__ = workflow.get_source_position.__doc__
 get_sample_position.__doc__ = workflow.get_sample_position.__doc__
 get_calibrated_detector.__doc__ = workflow.get_calibrated_detector.__doc__
@@ -213,9 +209,9 @@ _monitor_providers = (
     no_monitor_position_offset,
     unique_source_spec,
     monitor_by_name,
-    monitor_events_by_name,
+    monitor_data_by_name,
     load_nexus_monitor,
-    load_nexus_monitor_event_data,
+    load_nexus_monitor_data,
     load_nexus_source,
     get_source_position,
     get_calibrated_monitor,
@@ -227,9 +223,9 @@ _detector_providers = (
     unique_source_spec,
     unique_sample_spec,
     detector_by_name,
-    detector_events_by_name,
+    detector_data_by_name,
     load_nexus_detector,
-    load_nexus_detector_event_data,
+    load_nexus_detector_data,
     load_nexus_source,
     load_nexus_sample,
     get_source_position,

@@ -18,13 +18,13 @@ from .types import (
     AnyRunAnyMonitorData,
     AnyRunAnyMonitorPositionOffset,
     AnyRunAnyNeXusMonitor,
-    AnyRunAnyNeXusMonitorEventData,
+    AnyRunAnyNeXusMonitorData,
     AnyRunCalibratedDetector,
     AnyRunDetectorData,
     AnyRunDetectorPositionOffset,
     AnyRunFilename,
     AnyRunNeXusDetector,
-    AnyRunNeXusDetectorEventData,
+    AnyRunNeXusDetectorData,
     AnyRunNeXusSample,
     AnyRunNeXusSource,
     AnyRunPulseSelection,
@@ -32,8 +32,8 @@ from .types import (
     AnyRunSourcePosition,
     DetectorBankSizes,
     GravityVector,
+    NeXusDataLocationSpec,
     NeXusDetectorName,
-    NeXusEventDataLocationSpec,
     NeXusLocationSpec,
 )
 
@@ -90,11 +90,11 @@ def monitor_by_name(
     return NeXusLocationSpec[snx.NXmonitor](filename=filename, component_name=name)
 
 
-def monitor_events_by_name(
+def monitor_data_by_name(
     filename: AnyRunFilename, name: AnyNeXusMonitorName, selection: AnyRunPulseSelection
-) -> NeXusEventDataLocationSpec[snx.NXmonitor]:
+) -> NeXusDataLocationSpec[snx.NXmonitor]:
     """
-    Create a location spec for monitor event data in a NeXus file.
+    Create a location spec for monitor data in a NeXus file.
 
     Parameters
     ----------
@@ -103,10 +103,10 @@ def monitor_events_by_name(
     name:
         Name of the monitor group.
     selection:
-        Selection (start and stop as a Python slice object) for the monitor event data.
+        Selection (start and stop as a Python slice object) for the monitor data.
     """
-    return NeXusEventDataLocationSpec[snx.NXmonitor](
-        filename=filename, component_name=name, selection={'event_time_zero': selection}
+    return NeXusDataLocationSpec[snx.NXmonitor](
+        filename=filename, component_name=name, selection=selection.as_snx_selection()
     )
 
 
@@ -126,11 +126,11 @@ def detector_by_name(
     return NeXusLocationSpec[snx.NXdetector](filename=filename, component_name=name)
 
 
-def detector_events_by_name(
+def detector_data_by_name(
     filename: AnyRunFilename, name: NeXusDetectorName, selection: AnyRunPulseSelection
-) -> NeXusEventDataLocationSpec[snx.NXdetector]:
+) -> NeXusDataLocationSpec[snx.NXdetector]:
     """
-    Create a location spec for detector event data in a NeXus file.
+    Create a location spec for detector data in a NeXus file.
 
     Parameters
     ----------
@@ -139,10 +139,10 @@ def detector_events_by_name(
     name:
         Name of the detector group.
     selection:
-        Selection (start and stop as a Python slice object) for the detector event data.
+        Selection (start and stop as a Python slice object) for the detector data.
     """
-    return NeXusEventDataLocationSpec[snx.NXdetector](
-        filename=filename, component_name=name, selection={'event_time_zero': selection}
+    return NeXusDataLocationSpec[snx.NXdetector](
+        filename=filename, component_name=name, selection=selection.as_snx_selection()
     )
 
 
@@ -254,18 +254,18 @@ def load_nexus_monitor(
     )
 
 
-def load_nexus_detector_event_data(
-    location: NeXusEventDataLocationSpec[snx.NXdetector],
-) -> AnyRunNeXusDetectorEventData:
+def load_nexus_detector_data(
+    location: NeXusDataLocationSpec[snx.NXdetector],
+) -> AnyRunNeXusDetectorData:
     """
-    Load event data from a NeXus detector group.
+    Load event or histogram data from a NeXus detector group.
 
     Parameters
     ----------
     location:
         Location spec for the detector group.
     """
-    return AnyRunNeXusDetectorEventData(
+    return AnyRunNeXusDetectorData(
         nexus.load_data(
             file_path=location.filename,
             entry_name=location.entry_name,
@@ -275,18 +275,18 @@ def load_nexus_detector_event_data(
     )
 
 
-def load_nexus_monitor_event_data(
-    location: NeXusEventDataLocationSpec[snx.NXmonitor],
-) -> AnyRunAnyNeXusMonitorEventData:
+def load_nexus_monitor_data(
+    location: NeXusDataLocationSpec[snx.NXmonitor],
+) -> AnyRunAnyNeXusMonitorData:
     """
-    Load event data from a NeXus monitor group.
+    Load event or histogram data from a NeXus monitor group.
 
     Parameters
     ----------
     location:
         Location spec for the monitor group.
     """
-    return AnyRunAnyNeXusMonitorEventData(
+    return AnyRunAnyNeXusMonitorData(
         nexus.load_data(
             file_path=location.filename,
             entry_name=location.entry_name,
@@ -372,7 +372,7 @@ def get_calibrated_detector(
 
 
 def assemble_detector_data(
-    detector: AnyRunCalibratedDetector, event_data: AnyRunNeXusDetectorEventData
+    detector: AnyRunCalibratedDetector, event_data: AnyRunNeXusDetectorData
 ) -> AnyRunDetectorData:
     """
     Assemble a detector data array with event data and source- and sample-position.
@@ -426,7 +426,7 @@ def get_calibrated_monitor(
 
 def assemble_monitor_data(
     monitor: AnyRunAnyCalibratedMonitor,
-    event_data: AnyRunAnyNeXusMonitorEventData,
+    event_data: AnyRunAnyNeXusMonitorData,
 ) -> AnyRunAnyMonitorData:
     """
     Assemble a monitor data array with event data.
@@ -515,9 +515,9 @@ def LoadMonitorWorkflow() -> sciline.Pipeline:
         (
             unique_source_spec,
             monitor_by_name,
-            monitor_events_by_name,
+            monitor_data_by_name,
             load_nexus_monitor,
-            load_nexus_monitor_event_data,
+            load_nexus_monitor_data,
             load_nexus_source,
             get_source_position,
             get_calibrated_monitor,
@@ -536,9 +536,9 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
             unique_source_spec,
             unique_sample_spec,
             detector_by_name,
-            detector_events_by_name,
+            detector_data_by_name,
             load_nexus_detector,
-            load_nexus_detector_event_data,
+            load_nexus_detector_data,
             load_nexus_source,
             load_nexus_sample,
             get_source_position,
