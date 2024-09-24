@@ -266,7 +266,7 @@ def load_nexus_detector_event_data(
         Location spec for the detector group.
     """
     return AnyRunNeXusDetectorEventData(
-        nexus.load_event_data(
+        nexus.load_data(
             file_path=location.filename,
             entry_name=location.entry_name,
             selection=location.selection,
@@ -287,7 +287,7 @@ def load_nexus_monitor_event_data(
         Location spec for the monitor group.
     """
     return AnyRunAnyNeXusMonitorEventData(
-        nexus.load_event_data(
+        nexus.load_data(
             file_path=location.filename,
             entry_name=location.entry_name,
             selection=location.selection,

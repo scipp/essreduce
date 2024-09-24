@@ -98,8 +98,21 @@ def _unique_child_group(
 
     children = group[nx_class]
     if len(children) != 1:
-        raise ValueError(f'Expected exactly one {nx_class} group, got {len(children)}')
+        raise ValueError(
+            f"Expected exactly one {nx_class.__name__} group '{group.name}', "
+            f"got {len(children)}"
+        )
     return next(iter(children.values()))  # type: ignore[return-value]
+
+
+def _contains_nx_class(group: snx.Group, nx_class: type[snx.NXobject]) -> bool:
+    # See https://github.com/scipp/scippnexus/issues/241
+    try:
+        return bool(group[nx_class])
+    except KeyError:
+        # This does not happen with the current implementation in ScippNexus.
+        # The fallback is here to future-proof this function.
+        return False
 
 
 def extract_events_or_histogram(dg: sc.DataGroup) -> sc.DataArray:
@@ -150,15 +163,20 @@ def _select_unique_array(
     return next(iter(arrays.values()))
 
 
-def load_event_data(
+def load_data(
     file_path: AnyRunFilename,
-    selection=(),
+    selection: snx.typing.ScippIndex = (),
     *,
     entry_name: NeXusEntryName | None = None,
     component_name: str,
     definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataArray:
-    """Load NXevent_data of a detector or monitor from a NeXus file.
+    """Load data of a detector or monitor from a NeXus file.
+
+    Loads either event data from an ``NXevent_data`` group or histogram
+    data from an ``NXdata`` group depending on which ``group`` contains.
+    Event data is grouped by ``'event_time_zero'`` as in the NeXus file.
+    Histogram data is returned as encoded in the file.
 
     Parameters
     ----------
@@ -169,6 +187,10 @@ def load_event_data(
         - Path to a NeXus file on disk.
         - File handle or buffer for reading binary data.
         - A ScippNexus group of the root of a NeXus file.
+    selection:
+        Select which aprt of the data to load.
+        By default, load all data.
+        Supports anything that ScippNexus supports.
     component_name:
         Name of the NXdetector or NXmonitor containing the NXevent_data to load.
         Must be a group in an instrument group in the entry (see below).
@@ -183,14 +205,23 @@ def load_event_data(
     Returns
     -------
     :
-        Data array with events grouped by event_time_zero, as in the NeXus file.
+        Data array with events or a histogram.
     """
     with _open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         instrument = _unique_child_group(entry, snx.NXinstrument, None)
         component = instrument[component_name]
-        event_data = _unique_child_group(component, snx.NXevent_data, None)
-        return event_data[selection]
+        if _contains_nx_class(component, snx.NXevent_data):
+            data = _unique_child_group(component, snx.NXevent_data, None)
+        elif _contains_nx_class(component, snx.NXdata):
+            data = _unique_child_group(component, snx.NXdata, None)
+        else:
+            raise ValueError(
+                f"NeXus group '{component.name}' contains neither "
+                "NXevent_data nor NXdata."
+            )
+
+        return data[selection]
 
 
 def group_event_data(
