@@ -37,7 +37,7 @@ def no_detector_position_offset() -> gt.DetectorPositionOffset[RunType]:
 
 
 def all_pulses() -> PulseSelection[RunType]:
-    """Select all neutron pulses in the event data."""
+    """Select all neutron pulses in the data."""
     return PulseSelection[RunType](slice(None, None))
 
 
@@ -69,7 +69,7 @@ def monitor_events_by_name(
     return gt.NeXusMonitorEventLocationSpec[RunType, MonitorType](
         filename=filename.value,
         component_name=name,
-        selection={'event_time_zero': selection.value},
+        selection=selection,
     )
 
 
@@ -89,7 +89,7 @@ def detector_events_by_name(
     return gt.NeXusDetectorEventLocationSpec[RunType](
         filename=filename.value,
         component_name=name,
-        selection={'event_time_zero': selection.value},
+        selection=selection,
     )
 
 

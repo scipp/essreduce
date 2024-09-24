@@ -8,7 +8,14 @@ import sciline
 import scipp as sc
 import scippnexus as snx
 
-from .types import Component, FilePath, NeXusFile, NeXusGroup, NeXusLocationSpec
+from .types import (
+    AnyRunPulseSelection,
+    Component,
+    FilePath,
+    NeXusFile,
+    NeXusGroup,
+    NeXusLocationSpec,
+)
 
 # 1  TypeVars used to parametrize the generic parts of the workflow
 
@@ -156,11 +163,8 @@ class MonitorData(
 class Filename(sciline.Scope[RunType, Path], Path): ...
 
 
-@dataclass
-class PulseSelection(Generic[RunType]):
-    """Range of neutron pulses to load from NXevent_data groups."""
-
-    value: slice
+class PulseSelection(AnyRunPulseSelection, Generic[RunType]):
+    """Range of neutron pulses to load from NXevent_data or NXdata groups."""
 
 
 @dataclass

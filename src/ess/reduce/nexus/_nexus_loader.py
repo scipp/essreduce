@@ -13,7 +13,13 @@ import scipp as sc
 import scippnexus as snx
 
 from ..logging import get_logger
-from .types import AnyRunFilename, NeXusEntryName, NeXusGroup, NeXusLocationSpec
+from .types import (
+    AnyRunFilename,
+    AnyRunPulseSelection,
+    NeXusEntryName,
+    NeXusGroup,
+    NeXusLocationSpec,
+)
 
 
 class NoNewDefinitionsType: ...
@@ -163,9 +169,23 @@ def _select_unique_array(
     return next(iter(arrays.values()))
 
 
+def _to_snx_selection(
+    selection: snx.typing.ScippIndex | AnyRunPulseSelection, *, for_events: bool
+) -> snx.typing.ScippIndex:
+    match selection:
+        case AnyRunPulseSelection(slice(start=None, stop=None)):
+            return ()
+        case AnyRunPulseSelection(sel):
+            if for_events:
+                return {'event_time_zero': sel}
+            return {'time': sel}
+        case _:
+            return selection
+
+
 def load_data(
     file_path: AnyRunFilename,
-    selection: snx.typing.ScippIndex = (),
+    selection: snx.typing.ScippIndex | AnyRunPulseSelection = (),
     *,
     entry_name: NeXusEntryName | None = None,
     component_name: str,
@@ -213,15 +233,17 @@ def load_data(
         component = instrument[component_name]
         if _contains_nx_class(component, snx.NXevent_data):
             data = _unique_child_group(component, snx.NXevent_data, None)
+            sel = _to_snx_selection(selection, for_events=True)
         elif _contains_nx_class(component, snx.NXdata):
             data = _unique_child_group(component, snx.NXdata, None)
+            sel = _to_snx_selection(selection, for_events=False)
         else:
             raise ValueError(
                 f"NeXus group '{component.name}' contains neither "
                 "NXevent_data nor NXdata."
             )
 
-        return data[selection]
+        return data[sel]
 
 
 def group_event_data(
