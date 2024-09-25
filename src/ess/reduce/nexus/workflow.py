@@ -106,7 +106,7 @@ def monitor_data_by_name(
         Selection (start and stop as a Python slice object) for the monitor data.
     """
     return NeXusDataLocationSpec[snx.NXmonitor](
-        filename=filename, component_name=name, selection=selection.as_snx_selection()
+        filename=filename, component_name=name, selection=selection
     )
 
 
@@ -142,7 +142,7 @@ def detector_data_by_name(
         Selection (start and stop as a Python slice object) for the detector data.
     """
     return NeXusDataLocationSpec[snx.NXdetector](
-        filename=filename, component_name=name, selection=selection.as_snx_selection()
+        filename=filename, component_name=name, selection=selection
     )
 
 
