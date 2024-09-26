@@ -292,7 +292,7 @@ def group_event_data(
 def _format_time(time: sc.Variable | None) -> str:
     if time is None:
         return 'None'
-    return f"{time:c}"
+    return f"{time:c}" if time.dtype != 'datetime64' else str(time.value)
 
 
 @dataclass
