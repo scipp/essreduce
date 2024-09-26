@@ -286,7 +286,9 @@ def group_event_data(
         or (begin[1:] != end[:-1]).any()
     ):
         raise ValueError("Grouping only implemented for contiguous data with no masks.")
-    return data.group(event_id).fold(dim='event_id', sizes=detector_number.sizes)
+    out = data.group(event_id).fold(dim='event_id', sizes=detector_number.sizes)
+    out.coords['detector_number'] = out.coords.pop('event_id')
+    return out
 
 
 def _format_time(time: sc.Variable | None) -> str:

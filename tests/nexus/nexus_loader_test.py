@@ -222,7 +222,6 @@ def test_load_data_loads_expected_event_data(nexus_file, expected_bank12):
     expected = expected_bank12.drop_coords(
         ['position', 'x_pixel_offset', 'y_pixel_offset', 'z_pixel_offset']
     )
-    expected.coords['event_id'] = expected.coords.pop('detector_number')
     sc.testing.assert_identical(grouped, expected)
 
 
