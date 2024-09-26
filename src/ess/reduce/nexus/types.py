@@ -78,6 +78,9 @@ Component = TypeVar('Component', bound=snx.NXobject)
 
 AnyRunFilename = FilePath | NeXusFile | NeXusGroup
 
+PreopenNeXusFile = NewType('PreopenNeXusFile', bool)
+"""Whether to preopen NeXus files before passing them to the rest of the workflow."""
+
 
 @dataclass
 class NeXusLocationSpec(Generic[Component]):

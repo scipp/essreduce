@@ -210,8 +210,6 @@ def load_nexus_detector(
     location:
         Location spec for the detector group.
     """
-    definitions = snx.base_definitions()
-    definitions["NXdetector"] = _StrippedDetector
     # The selection is only used for selecting a range of event data.
     location = replace(location, selection=())
 
@@ -251,8 +249,6 @@ def load_nexus_monitor(
     location:
         Location spec for the monitor group.
     """
-    definitions = snx.base_definitions()
-    definitions["NXmonitor"] = _StrippedMonitor
     return AnyRunAnyNeXusMonitor(
         nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
     )
@@ -506,6 +502,11 @@ def _add_variances(da: sc.DataArray) -> sc.DataArray:
         if content.variances is None:
             content.variances = content.values
     return out
+
+
+definitions = snx.base_definitions()
+definitions["NXdetector"] = _StrippedDetector
+definitions["NXmonitor"] = _StrippedMonitor
 
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:

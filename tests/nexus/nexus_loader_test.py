@@ -297,6 +297,10 @@ def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
     if isinstance(nexus_file, snx.Group):
         with pytest.raises(ValueError, match="new definitions"):
             nexus.load_component(loc, nx_class=snx.NXdetector, definitions={})
+        # Passing same definitions should work
+        nexus.load_component(
+            loc, nx_class=snx.NXdetector, definitions=nexus_file._definitions.copy()
+        )
     else:
         nexus.load_component(loc, nx_class=snx.NXdetector, definitions={})
 
