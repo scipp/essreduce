@@ -8,7 +8,14 @@ import sciline
 import scipp as sc
 import scippnexus as snx
 
-from .types import Component, FilePath, NeXusFile, NeXusGroup, NeXusLocationSpec
+from .types import (
+    AnyRunPulseSelection,
+    Component,
+    FilePath,
+    NeXusFile,
+    NeXusGroup,
+    NeXusLocationSpec,
+)
 
 # 1  TypeVars used to parametrize the generic parts of the workflow
 
@@ -105,14 +112,14 @@ class NeXusSource(sciline.Scope[RunType, sc.DataGroup], sc.DataGroup):
     """Raw data from a NeXus source."""
 
 
-class NeXusDetectorEventData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
-    """Data array loaded from a NeXus NXevent_data group within an NXdetector."""
+class NeXusDetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
+    """Data array loaded from an NXevent_data or NXdata group within an NXdetector."""
 
 
-class NeXusMonitorEventData(
+class NeXusMonitorData(
     sciline.ScopeTwoParams[RunType, MonitorType, sc.DataArray], sc.DataArray
 ):
-    """Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
+    """Data array loaded from an NXevent_data or NXdata group within an NXmonitor."""
 
 
 class SourcePosition(sciline.Scope[RunType, sc.Variable], sc.Variable):
@@ -144,23 +151,20 @@ class CalibratedMonitor(
 
 
 class DetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
-    """Calibrated detector merged with neutron event data."""
+    """Calibrated detector merged with neutron event or histogram data."""
 
 
 class MonitorData(
     sciline.ScopeTwoParams[RunType, MonitorType, sc.DataArray], sc.DataArray
 ):
-    """Calibrated monitor merged with neutron event data."""
+    """Calibrated monitor merged with neutron event or histogram data."""
 
 
 class Filename(sciline.Scope[RunType, Path], Path): ...
 
 
-@dataclass
-class PulseSelection(Generic[RunType]):
-    """Range of neutron pulses to load from NXevent_data groups."""
-
-    value: slice
+class PulseSelection(AnyRunPulseSelection, Generic[RunType]):
+    """Range of neutron pulses to load from NXevent_data or NXdata groups."""
 
 
 @dataclass
@@ -187,14 +191,14 @@ class NeXusMonitorLocationSpec(
 
 
 @dataclass
-class NeXusDetectorEventLocationSpec(
+class NeXusDetectorDataLocationSpec(
     NeXusLocationSpec[snx.NXevent_data], Generic[RunType]
 ):
-    """NeXus filename and parameters to identify (parts of) detector events to load."""
+    """NeXus filename and parameters to identify (parts of) detector data to load."""
 
 
 @dataclass
-class NeXusMonitorEventLocationSpec(
+class NeXusMonitorDataLocationSpec(
     NeXusLocationSpec[snx.NXevent_data], Generic[RunType, MonitorType]
 ):
-    """NeXus filename and parameters to identify (parts of) monitor events to load."""
+    """NeXus filename and parameters to identify (parts of) monitor data to load."""

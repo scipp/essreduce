@@ -12,7 +12,7 @@ The submodule :mod:`types` defines all domain types.
 
 from . import types
 from ._nexus_loader import (
-    load_event_data,
+    load_data,
     group_event_data,
     load_component,
     compute_component_position,
@@ -22,7 +22,7 @@ from ._nexus_loader import (
 __all__ = [
     'types',
     'group_event_data',
-    'load_event_data',
+    'load_data',
     'load_component',
     'compute_component_position',
     'extract_events_or_histogram',

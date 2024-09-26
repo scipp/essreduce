@@ -43,10 +43,10 @@ AnyRunNeXusSample = NewType('AnyRunNeXusSample', sc.DataGroup)
 """Raw data from a NeXus sample."""
 AnyRunNeXusSource = NewType('AnyRunNeXusSource', sc.DataGroup)
 """Raw data from a NeXus source."""
-AnyRunNeXusDetectorEventData = NewType('AnyRunNeXusDetectorEventData', sc.DataArray)
-"""Data array loaded from a NeXus NXevent_data group within an NXdetector."""
-AnyRunAnyNeXusMonitorEventData = NewType('AnyRunAnyNeXusMonitorEventData', sc.DataArray)
-"""Data array loaded from a NeXus NXevent_data group within an NXmonitor."""
+AnyRunNeXusDetectorData = NewType('AnyRunNeXusDetectorData', sc.DataArray)
+"""Data array loaded from a NeXus NXevent_data or NXdata group within an NXdetector."""
+AnyRunAnyNeXusMonitorData = NewType('AnyRunAnyNeXusMonitorData', sc.DataArray)
+"""Data array loaded from a NeXus NXevent_data or NXdata group within an NXmonitor."""
 
 AnyRunSourcePosition = NewType('AnyRunSourcePosition', sc.Variable)
 """Position of the neutron source."""
@@ -69,8 +69,13 @@ AnyRunAnyCalibratedMonitor = NewType('AnyRunAnyCalibratedMonitor', sc.DataArray)
 AnyRunDetectorData = NewType('AnyRunDetectorData', sc.DataArray)
 AnyRunAnyMonitorData = NewType('AnyRunAnyMonitorData', sc.DataArray)
 
-AnyRunPulseSelection = NewType('AnyRunPulseSelection', slice)
-"""Range of neutron pulses to load from NXevent_data groups."""
+
+@dataclass
+class AnyRunPulseSelection:
+    """Range of neutron pulses to load from NeXus."""
+
+    value: slice
+
 
 GravityVector = NewType('GravityVector', sc.Variable)
 
@@ -91,9 +96,9 @@ class NeXusLocationSpec(Generic[Component]):
     filename: AnyRunFilename
     entry_name: NeXusEntryName | None = None
     component_name: str | None = None
-    selection: snx.typing.ScippIndex = ()
+    selection: snx.typing.ScippIndex | AnyRunPulseSelection = ()
 
 
 @dataclass
-class NeXusEventDataLocationSpec(NeXusLocationSpec[Component]):
-    """NeXus filename and parameters to identify (parts of) events to load."""
+class NeXusDataLocationSpec(NeXusLocationSpec[Component]):
+    """NeXus filename and parameters to identify (parts of) data to load."""

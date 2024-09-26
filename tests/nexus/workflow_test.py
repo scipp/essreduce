@@ -183,13 +183,13 @@ def calibrated_detector() -> workflow.AnyRunCalibratedDetector:
 
 
 @pytest.fixture()
-def detector_event_data() -> workflow.AnyRunNeXusDetectorEventData:
+def detector_event_data() -> workflow.AnyRunNeXusDetectorData:
     content = sc.DataArray(
         sc.ones(dims=['event'], shape=[17], unit='counts'),
         coords={'event_id': sc.arange('event', 17, unit=None) % sc.index(6)},
     )
     weights = sc.bins(data=content, dim='event')
-    return workflow.AnyRunNeXusDetectorEventData(
+    return workflow.AnyRunNeXusDetectorData(
         sc.DataArray(
             weights,
             coords={
@@ -282,10 +282,10 @@ def calibrated_monitor() -> workflow.AnyRunAnyCalibratedMonitor:
 
 
 @pytest.fixture()
-def monitor_event_data() -> workflow.AnyRunAnyNeXusMonitorEventData:
+def monitor_event_data() -> workflow.AnyRunAnyNeXusMonitorData:
     content = sc.DataArray(sc.ones(dims=['event'], shape=[17], unit='counts'))
     weights = sc.bins(data=content, dim='event')
-    return workflow.AnyRunAnyNeXusMonitorEventData(
+    return workflow.AnyRunAnyNeXusMonitorData(
         sc.DataArray(
             weights,
             coords={

@@ -210,6 +210,30 @@ def expected_sample() -> sc.DataGroup:
     return _sample_data()
 
 
+def test_load_data_loads_expected_event_data(nexus_file, expected_bank12):
+    events = nexus.load_data(
+        nexus_file,
+        component_name=nexus.types.NeXusDetectorName('bank12'),
+    )
+    grouped = nexus.group_event_data(
+        event_data=events,
+        detector_number=expected_bank12.coords['detector_number'],
+    )
+    expected = expected_bank12.drop_coords(
+        ['position', 'x_pixel_offset', 'y_pixel_offset', 'z_pixel_offset']
+    )
+    expected.coords['event_id'] = expected.coords.pop('detector_number')
+    sc.testing.assert_identical(grouped, expected)
+
+
+def test_load_data_loads_expected_histogram_data(nexus_file, expected_monitor):
+    histogram = nexus.load_data(
+        nexus_file,
+        component_name=nexus.types.AnyNeXusMonitorName('monitor'),
+    )
+    sc.testing.assert_identical(histogram, expected_monitor)
+
+
 @pytest.mark.parametrize('entry_name', [None, nexus.types.NeXusEntryName('entry-001')])
 @pytest.mark.parametrize(
     'selection',
@@ -260,7 +284,7 @@ def test_load_and_group_event_data_consistent_with_load_via_detector(
     if selection:
         loc.selection = selection
     detector = nexus.load_component(loc, nx_class=snx.NXdetector)['bank12_events']
-    events = nexus.load_event_data(
+    events = nexus.load_data(
         nexus_file,
         selection=selection,
         component_name=nexus.types.NeXusDetectorName('bank12'),
@@ -278,7 +302,7 @@ def test_group_event_data_does_not_modify_input(nexus_file):
         component_name=nexus.types.NeXusDetectorName('bank12'),
     )
     detector = nexus.load_component(loc, nx_class=snx.NXdetector)['bank12_events']
-    events = nexus.load_event_data(
+    events = nexus.load_data(
         nexus_file,
         component_name=nexus.types.NeXusDetectorName('bank12'),
     )
