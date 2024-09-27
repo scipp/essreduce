@@ -217,6 +217,13 @@ def test_assemble_detector_data_groups_events_by_detector_number(
     )
 
 
+def test_assemble_detector_data_does_not_add_event_id_coord(
+    calibrated_detector, detector_event_data
+) -> None:
+    detector = workflow.assemble_detector_data(calibrated_detector, detector_event_data)
+    assert 'event_id' not in detector.coords
+
+
 def test_assemble_detector_data_adds_variances_to_weights(
     calibrated_detector, detector_event_data
 ) -> None:
