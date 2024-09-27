@@ -48,8 +48,8 @@ class BinEdgesWidget(ipw.HBox, ipw.ValueWidget):
             "start": ipw.FloatText(description='start:', value=start, **style),
             "stop": ipw.FloatText(description='stop:', value=stop, **style),
             "nbins": ipw.BoundedIntText(
-                description='nbins:', value=nbins, min=1, **style
-            ),
+                description='nbins:', value=nbins, min=1, max=int(1e9), **style
+            ),  # Note that a max value is required as it defaults to 100 without it.
             "spacing": ipw.Dropdown(
                 options=['linear', 'log'],
                 value='log' if log else 'linear',

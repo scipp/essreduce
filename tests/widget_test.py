@@ -5,9 +5,10 @@ from contextlib import contextmanager
 from typing import Any, NewType
 
 import sciline as sl
+import scipp as sc
 from ipywidgets import FloatText, IntText
 
-from ess.reduce.parameter import Parameter, parameter_registry
+from ess.reduce.parameter import BinEdgesParameter, Parameter, parameter_registry
 from ess.reduce.ui import WorkflowWidget, workflow_widget
 from ess.reduce.widgets import OptionalWidget, SwitchWidget, create_parameter_widget
 from ess.reduce.workflow import register_workflow, workflow_registry
@@ -290,3 +291,94 @@ def test_workflow_selection() -> None:
             SwitchableInt,
             SwitchableFloat,
         }
+
+
+WavelengthBins = NewType('WavelengthBins', sc.Variable)
+WavelengthBinsWithUnit = NewType('WavelengthBinsWithUnit', sc.Variable)
+QBins = NewType('QBins', sc.Variable)
+
+
+parameter_registry[WavelengthBins] = BinEdgesParameter(WavelengthBins, dim='wavelength')
+parameter_registry[WavelengthBinsWithUnit] = BinEdgesParameter(
+    WavelengthBinsWithUnit, dim='wavelength', unit='m'
+)
+parameter_registry[QBins] = BinEdgesParameter(
+    QBins, dim='Q', start=0.01, stop=0.6, nbins=150
+)
+
+
+def wavelength_bins_print_provider(bins: WavelengthBins) -> str:
+    return str(bins)
+
+
+def wavelength_bins_with_unit_print_provider(bins: WavelengthBinsWithUnit) -> str:
+    return str(bins)
+
+
+def q_bins_print_provider(bins: QBins) -> str:
+    return str(bins)
+
+
+def test_bin_edges_widget_simple() -> None:
+    widget = _ready_widget(
+        providers=[wavelength_bins_print_provider], output_selections=[str]
+    )
+    param_widget = _get_param_widget(widget, WavelengthBins)
+    assert sc.identical(
+        param_widget.value,
+        sc.linspace(dim='wavelength', start=0.0, stop=0.0, num=2, unit='angstrom'),
+    )
+    assert set(param_widget.fields['unit'].options) == {'angstrom', 'nm'}
+    assert param_widget.fields['nbins'].value == 1
+    assert param_widget.fields['spacing'].value == 'linear'
+    # Modify the values
+    param_widget.fields['start'].value = 1.0
+    param_widget.fields['stop'].value = 200.0
+    param_widget.fields['nbins'].value = 10
+    assert sc.identical(
+        param_widget.value,
+        sc.linspace(dim='wavelength', start=1.0, stop=200.0, num=11, unit='angstrom'),
+    )
+
+
+def test_bin_edges_widget_override_unit() -> None:
+    widget = _ready_widget(
+        providers=[wavelength_bins_with_unit_print_provider], output_selections=[str]
+    )
+    param_widget = _get_param_widget(widget, WavelengthBinsWithUnit)
+    assert sc.identical(
+        param_widget.value,
+        sc.linspace(dim='wavelength', start=0.0, stop=0.0, num=2, unit='m'),
+    )
+    assert set(param_widget.fields['unit'].options) == {'m'}
+    assert param_widget.fields['nbins'].value == 1
+
+
+def test_bin_edges_widget_log_spacing() -> None:
+    widget = _ready_widget(
+        providers=[wavelength_bins_print_provider], output_selections=[str]
+    )
+    param_widget = _get_param_widget(widget, WavelengthBins)
+    param_widget.fields['spacing'].value = 'log'
+    param_widget.fields['start'].value = 1.0e3
+    param_widget.fields['stop'].value = 1.0e5
+    param_widget.fields['nbins'].value = 7
+    assert sc.identical(
+        param_widget.value,
+        sc.logspace(dim='wavelength', start=3, stop=5, num=8, unit='angstrom'),
+    )
+    assert param_widget.fields['spacing'].value == 'log'
+
+
+def test_bin_edges_widget_with_default_values() -> None:
+    widget = _ready_widget(providers=[q_bins_print_provider], output_selections=[str])
+    param_widget = _get_param_widget(widget, QBins)
+    assert sc.identical(
+        param_widget.value,
+        sc.linspace(dim='Q', start=0.01, stop=0.6, num=151, unit='1/angstrom'),
+    )
+    assert set(param_widget.fields['unit'].options) == {'1/angstrom', '1/nm'}
+    assert param_widget.fields['start'].value == 0.01
+    assert param_widget.fields['stop'].value == 0.6
+    assert param_widget.fields['nbins'].value == 150
+    assert param_widget.fields['spacing'].value == 'linear'
