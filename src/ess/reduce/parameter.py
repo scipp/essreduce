@@ -90,13 +90,29 @@ class MultiFilenameParameter(Parameter[tuple[str, ...]]):
 class BinEdgesParameter(Parameter[sc.Variable]):
     """Widget for entering bin edges."""
 
-    # dim and unit displayed in widget to provide context of numbers
     dim: str
-    unit: str
+    start: float | None = None
+    stop: float | None = None
+    nbins: int = 1
+    unit: str | None = "undefined"  # If "undefined", the unit is deduced from the dim
+    log: bool = False
 
-    def __init__(self, t: type[T], dim: str, unit: str):
+    def __init__(
+        self,
+        t: type[T],
+        dim: str,
+        start: float | None = None,
+        stop: float | None = None,
+        nbins: int = 1,
+        unit: str | None = "undefined",
+        log: bool = False,
+    ):
         self.dim = dim
+        self.start = start
+        self.stop = stop
+        self.nbins = nbins
         self.unit = unit
+        self.log = log
         super().__init__(name=str(t), description=t.__doc__, default=None)
 
 

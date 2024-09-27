@@ -19,6 +19,7 @@ from ..parameter import (
 )
 from ._config import default_layout, default_style
 
+from ._binedges_widget import BinEdgesWidget
 from ._linspace_widget import LinspaceWidget
 from ._vector_widget import VectorWidget
 from ._bounds_widget import BoundsWidget
@@ -156,9 +157,14 @@ def param_with_bounds_widget(param: ParamWithBounds):
 
 @create_parameter_widget.register(BinEdgesParameter)
 def bin_edges_parameter_widget(param: BinEdgesParameter):
-    dim = param.dim
-    unit = param.unit
-    return LinspaceWidget(dim, unit)
+    return BinEdgesWidget(
+        dim=param.dim,
+        start=param.start,
+        stop=param.stop,
+        nbins=param.nbins,
+        unit=param.unit,
+        log=param.log,
+    )
 
 
 @create_parameter_widget.register(VectorParameter)
@@ -167,6 +173,7 @@ def vector_parameter_widget(param: VectorParameter):
 
 
 __all__ = [
+    'BinEdgesWidget',
     'BoundsWidget',
     'EssWidget',
     'LinspaceWidget',
