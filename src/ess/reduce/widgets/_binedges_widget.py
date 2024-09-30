@@ -63,17 +63,11 @@ class BinEdgesWidget(ipw.HBox, ipw.ValueWidget):
 
     @property
     def value(self) -> sc.Variable:
-        kwargs = {
-            "dim": self.fields['dim'].value,
-            "num": self.fields['nbins'].value + 1,
-            "unit": self.fields['unit'].value,
-            "start": self.fields['start'].value,
-            "stop": self.fields['stop'].value,
-        }
-
-        if self.fields["spacing"].value == "linear":
-            return sc.linspace(**kwargs)
-        else:
-            for key in ("start", "stop"):
-                kwargs[key] = np.log10(kwargs[key])
-            return sc.logspace(**kwargs)
+        func = sc.geomspace if self.fields["spacing"].value == "log" else sc.linspace
+        return func(
+            dim=self.fields["dim"].value,
+            start=self.fields["start"].value,
+            stop=self.fields["stop"].value,
+            num=self.fields["nbins"].value + 1,
+            unit=self.fields["unit"].value,
+        )

@@ -385,7 +385,7 @@ def test_bin_edges_widget_log_spacing() -> None:
     param_widget.fields['nbins'].value = 7
     assert sc.identical(
         param_widget.value,
-        sc.logspace(dim='wavelength', start=3, stop=5, num=8, unit='angstrom'),
+        sc.geomspace(dim='wavelength', start=1.0e3, stop=1.0e5, num=8, unit='angstrom'),
     )
     assert param_widget.fields['spacing'].value == 'log'
 
