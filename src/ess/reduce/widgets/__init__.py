@@ -158,6 +158,7 @@ def param_with_bounds_widget(param: ParamWithBounds):
 @create_parameter_widget.register(BinEdgesParameter)
 def bin_edges_parameter_widget(param: BinEdgesParameter):
     return BinEdgesWidget(
+        name=param.name,
         dim=param.dim,
         start=param.start,
         stop=param.stop,

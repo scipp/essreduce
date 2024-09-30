@@ -23,6 +23,7 @@ UNITS_LIBRARY = {
 class BinEdgesWidget(ipw.HBox, ipw.ValueWidget):
     def __init__(
         self,
+        name: str,
         dim: str,
         start: float | None = None,
         stop: float | None = None,
@@ -56,12 +57,7 @@ class BinEdgesWidget(ipw.HBox, ipw.ValueWidget):
                 layout={"width": "initial"},
             ),
         }
-        self.children = [
-            ipw.HTML(
-                f"Binning: &nbsp;&nbsp; <b>{self.fields['dim'].value}</b> "
-                "&nbsp;&nbsp; unit:"
-            )
-        ] + list(self.fields.values())[1:]
+        self.children = [ipw.Label(f"{name}:")] + list(self.fields.values())[1:]
 
     @property
     def value(self) -> sc.Variable:

@@ -113,7 +113,7 @@ class BinEdgesParameter(Parameter[sc.Variable]):
         self.nbins = nbins
         self.unit = unit
         self.log = log
-        super().__init__(name=str(t), description=t.__doc__, default=None)
+        super().__init__(name=key_name(t), description=t.__doc__, default=None)
 
 
 @dataclass
