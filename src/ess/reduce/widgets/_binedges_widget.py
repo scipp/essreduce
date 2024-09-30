@@ -39,6 +39,8 @@ class BinEdgesWidget(ipw.HBox, ipw.ValueWidget):
         units = UNITS_LIBRARY[dim] if unit == "undefined" else unit
         if isinstance(units, str):
             units = {"options": (units,)}
+        if not isinstance(units, dict):
+            units = {"options": units}
         self.fields = {
             "dim": ipw.Label(str(dim)),
             "unit": ipw.Dropdown(

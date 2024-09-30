@@ -296,6 +296,7 @@ def test_workflow_selection() -> None:
 WavelengthBins = NewType('WavelengthBins', sc.Variable)
 WavelengthBinsWithUnit = NewType('WavelengthBinsWithUnit', sc.Variable)
 QBins = NewType('QBins', sc.Variable)
+TemperatureBinsWithUnits = NewType('TemperatureBinsWithUnits', sc.Variable)
 
 
 parameter_registry[WavelengthBins] = BinEdgesParameter(WavelengthBins, dim='wavelength')
@@ -304,6 +305,9 @@ parameter_registry[WavelengthBinsWithUnit] = BinEdgesParameter(
 )
 parameter_registry[QBins] = BinEdgesParameter(
     QBins, dim='Q', start=0.01, stop=0.6, nbins=150
+)
+parameter_registry[TemperatureBinsWithUnits] = BinEdgesParameter(
+    TemperatureBinsWithUnits, dim='temperature', unit=('Kelvin', 'Celsius', 'Degrees')
 )
 
 
@@ -316,6 +320,10 @@ def wavelength_bins_with_unit_print_provider(bins: WavelengthBinsWithUnit) -> st
 
 
 def q_bins_print_provider(bins: QBins) -> str:
+    return str(bins)
+
+
+def temperature_bins_print_provider(bins: TemperatureBinsWithUnits) -> str:
     return str(bins)
 
 
@@ -352,6 +360,18 @@ def test_bin_edges_widget_override_unit() -> None:
     )
     assert set(param_widget.fields['unit'].options) == {'m'}
     assert param_widget.fields['nbins'].value == 1
+
+
+def test_bin_edges_widget_override_unit_multiple() -> None:
+    widget = _ready_widget(
+        providers=[temperature_bins_print_provider], output_selections=[str]
+    )
+    param_widget = _get_param_widget(widget, TemperatureBinsWithUnits)
+    assert sc.identical(
+        param_widget.value,
+        sc.linspace(dim='temperature', start=0.0, stop=0.0, num=2, unit='Kelvin'),
+    )
+    assert set(param_widget.fields['unit'].options) == {'Kelvin', 'Celsius', 'Degrees'}
 
 
 def test_bin_edges_widget_log_spacing() -> None:
