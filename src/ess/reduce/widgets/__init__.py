@@ -170,7 +170,7 @@ def bin_edges_parameter_widget(param: BinEdgesParameter):
 
 @create_parameter_widget.register(VectorParameter)
 def vector_parameter_widget(param: VectorParameter):
-    return VectorWidget(param.default)
+    return VectorWidget(name=param.name, variable=param.default)
 
 
 __all__ = [
