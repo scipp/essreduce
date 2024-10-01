@@ -228,7 +228,7 @@ def test_load_data_loads_expected_event_data(nexus_file, expected_bank12):
 def test_load_data_loads_expected_histogram_data(nexus_file, expected_monitor):
     histogram = nexus.load_data(
         nexus_file,
-        component_name=nexus.types.AnyNeXusMonitorName('monitor'),
+        component_name=nexus.types.NeXusMonitorName[nexus.types.Monitor1]('monitor'),
     )
     sc.testing.assert_identical(histogram, expected_monitor)
 
@@ -397,7 +397,7 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name, selection):
     loc = NeXusLocationSpec(
         filename=nexus_file,
         entry_name=entry_name,
-        component_name=nexus.types.AnyNeXusMonitorName('monitor'),
+        component_name=nexus.types.NeXusMonitorName[nexus.types.Monitor1]('monitor'),
     )
     if selection is not None:
         loc.selection = selection
@@ -418,7 +418,7 @@ def test_load_source(nexus_file, expected_source, entry_name, source_name):
     # NeXus details that we don't need to test as long as the positions are ok:
     del source['depends_on']
     del source['transformations']
-    sc.testing.assert_identical(source, nexus.types.AnyRunNeXusSource(expected_source))
+    sc.testing.assert_identical(source, expected_source)
 
 
 @pytest.mark.parametrize(
@@ -449,7 +449,7 @@ def test_load_sample(nexus_file, expected_sample, entry_name):
         entry_name=entry_name,
     )
     sample = nexus.load_component(loc, nx_class=snx.NXsample)
-    sc.testing.assert_identical(sample, nexus.types.AnyRunNeXusSample(expected_sample))
+    sc.testing.assert_identical(sample, expected_sample)
 
 
 def test_extract_detector_data():
@@ -460,8 +460,8 @@ def test_extract_detector_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
-    sc.testing.assert_identical(data, nexus.types.RawDetectorData(detector['jdl2ab']))
+    data = nexus.extract_events_or_histogram(detector)
+    sc.testing.assert_identical(data, detector['jdl2ab'])
 
 
 def test_extract_monitor_data():
@@ -472,8 +472,8 @@ def test_extract_monitor_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_events_or_histogram(nexus.types.AnyRunAnyNeXusMonitor(monitor))
-    sc.testing.assert_identical(data, nexus.types.RawMonitorData(monitor['(eed)']))
+    data = nexus.extract_events_or_histogram(monitor)
+    sc.testing.assert_identical(data, monitor['(eed)'])
 
 
 def test_extract_detector_data_requires_unique_dense_data():
@@ -488,17 +488,17 @@ def test_extract_detector_data_requires_unique_dense_data():
     with pytest.raises(
         ValueError, match="Cannot uniquely identify the data to extract"
     ):
-        nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
+        nexus.extract_events_or_histogram(detector)
 
 
 def test_extract_detector_data_ignores_position_data_array():
     detector = sc.DataGroup(jdl2ab=sc.data.data_xy(), position=sc.data.data_xy())
-    nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
+    nexus.extract_events_or_histogram(detector)
 
 
 def test_extract_detector_data_ignores_transform_data_array():
     detector = sc.DataGroup(jdl2ab=sc.data.data_xy(), transform=sc.data.data_xy())
-    nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
+    nexus.extract_events_or_histogram(detector)
 
 
 def test_extract_detector_data_requires_unique_event_data():
@@ -513,7 +513,7 @@ def test_extract_detector_data_requires_unique_event_data():
     with pytest.raises(
         ValueError, match="Cannot uniquely identify the data to extract"
     ):
-        nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
+        nexus.extract_events_or_histogram(detector)
 
 
 def test_extract_detector_data_favors_event_data_over_histogram_data():
@@ -525,5 +525,5 @@ def test_extract_detector_data_favors_event_data_over_histogram_data():
             ' _': sc.linspace('xx', 2, 3, 10),
         }
     )
-    data = nexus.extract_events_or_histogram(nexus.types.AnyRunNeXusDetector(detector))
-    sc.testing.assert_identical(data, nexus.types.RawDetectorData(detector['lob']))
+    data = nexus.extract_events_or_histogram(detector)
+    sc.testing.assert_identical(data, detector['lob'])

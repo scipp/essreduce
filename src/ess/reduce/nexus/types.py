@@ -189,7 +189,16 @@ class Filename(sciline.Scope[RunType, Path], Path): ...
 class PulseSelection(Generic[RunType]):
     """Range of neutron pulses to load from NXevent_data or NXdata groups."""
 
-    value: slice
+    value: snx.typing.ScippIndex | slice
+
+    def to_snx_selection(self, *, for_events: bool) -> snx.typing.ScippIndex:
+        if self.value == slice(None, None):
+            return ()
+        if isinstance(self.value, slice):
+            if for_events:
+                return {'event_time_zero': self.value}
+            return {'time': self.value}
+        return self.value
 
 
 @dataclass
@@ -198,15 +207,22 @@ class NeXusFileSpec(Generic[RunType]):
 
 
 @dataclass
-class NeXusComponentLocationSpec(Generic[Component, RunType]):
+class NeXusLocationSpec:
     """
-    NeXus filename and optional parameters to identify (parts of) a detector to load.
+    NeXus filename and optional parameters to identify (parts of) a component to load.
     """
 
     filename: FilePath | NeXusFile | NeXusGroup
     entry_name: NeXusEntryName | None = None
     component_name: str | None = None
-    selection: snx.typing.ScippIndex | PulseSelection[RunType] = ()
+    selection: snx.typing.ScippIndex | slice = ()
+
+
+@dataclass
+class NeXusComponentLocationSpec(NeXusLocationSpec, Generic[Component, RunType]):
+    """
+    NeXus filename and optional parameters to identify (parts of) a component to load.
+    """
 
 
 @dataclass
