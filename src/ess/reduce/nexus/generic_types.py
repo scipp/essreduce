@@ -2,20 +2,42 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Generic, NewType, TypeVar
+from typing import Any, BinaryIO, Generic, NewType, TypeVar
 
 import sciline
 import scipp as sc
 import scippnexus as snx
 
-from .types import (
-    AnyRunPulseSelection,
-    Component,
-    FilePath,
-    NeXusFile,
-    NeXusGroup,
-    NeXusLocationSpec,
-)
+FilePath = NewType('FilePath', Path)
+"""Full path to a NeXus file on disk."""
+NeXusFile = NewType('NeXusFile', BinaryIO)
+"""An open NeXus file.
+
+Can be any file handle for reading binary data.
+
+Note that this cannot be used as a parameter in Sciline as there are no
+concrete implementations of ``BinaryIO``.
+The type alias is provided for callers of load functions outside of pipelines.
+"""
+NeXusGroup = NewType('NeXusGroup', snx.Group)
+"""A ScippNexus group in an open file."""
+
+NeXusDetectorName = NewType('NeXusDetectorName', str)
+"""Name of a detector (bank) in a NeXus file."""
+NeXusEntryName = NewType('NeXusEntryName', str)
+"""Name of an entry in a NeXus file."""
+NeXusSourceName = NewType('NeXusSourceName', str)
+"""Name of a source in a NeXus file."""
+
+DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]])
+
+GravityVector = NewType('GravityVector', sc.Variable)
+
+Component = TypeVar('Component', bound=snx.NXobject)
+
+PreopenNeXusFile = NewType('PreopenNeXusFile', bool)
+"""Whether to preopen NeXus files before passing them to the rest of the workflow."""
+
 
 # 1  TypeVars used to parametrize the generic parts of the workflow
 
@@ -163,8 +185,11 @@ class MonitorData(
 class Filename(sciline.Scope[RunType, Path], Path): ...
 
 
-class PulseSelection(AnyRunPulseSelection, Generic[RunType]):
+@dataclass
+class PulseSelection(Generic[RunType]):
     """Range of neutron pulses to load from NXevent_data or NXdata groups."""
+
+    value: slice
 
 
 @dataclass
@@ -173,17 +198,20 @@ class NeXusFileSpec(Generic[RunType]):
 
 
 @dataclass
-class NeXusComponentLocationSpec(
-    NeXusLocationSpec[Component], Generic[Component, RunType]
-):
+class NeXusComponentLocationSpec(Generic[Component, RunType]):
     """
     NeXus filename and optional parameters to identify (parts of) a detector to load.
     """
 
+    filename: FilePath | NeXusFile | NeXusGroup
+    entry_name: NeXusEntryName | None = None
+    component_name: str | None = None
+    selection: snx.typing.ScippIndex | PulseSelection[RunType] = ()
+
 
 @dataclass
 class NeXusMonitorLocationSpec(
-    NeXusLocationSpec[snx.NXmonitor], Generic[RunType, MonitorType]
+    NeXusComponentLocationSpec[snx.NXmonitor, RunType], Generic[RunType, MonitorType]
 ):
     """
     NeXus filename and optional parameters to identify (parts of) a monitor to load.
@@ -192,13 +220,13 @@ class NeXusMonitorLocationSpec(
 
 @dataclass
 class NeXusDetectorDataLocationSpec(
-    NeXusLocationSpec[snx.NXevent_data], Generic[RunType]
+    NeXusComponentLocationSpec[snx.NXevent_data, RunType], Generic[RunType]
 ):
     """NeXus filename and parameters to identify (parts of) detector data to load."""
 
 
 @dataclass
 class NeXusMonitorDataLocationSpec(
-    NeXusLocationSpec[snx.NXevent_data], Generic[RunType, MonitorType]
+    NeXusComponentLocationSpec[snx.NXevent_data, RunType], Generic[RunType, MonitorType]
 ):
     """NeXus filename and parameters to identify (parts of) monitor data to load."""
