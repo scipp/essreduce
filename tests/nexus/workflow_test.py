@@ -5,16 +5,17 @@ import scipp as sc
 from scipp.testing import assert_identical
 
 from ess.reduce.nexus import workflow
+from ess.reduce.nexus.types import Monitor1, SampleRun
 
 
 @pytest.fixture(params=[{}, {'aux': 1}])
-def group_with_no_position(request) -> workflow.AnyRunNeXusSample:
-    return workflow.AnyRunNeXusSample(sc.DataGroup(request.param))
+def group_with_no_position(request) -> workflow.NeXusSample[SampleRun]:
+    return workflow.NeXusSample[SampleRun](sc.DataGroup(request.param))
 
 
 def test_sample_position_returns_position_of_group() -> None:
     position = sc.vector([1.0, 2.0, 3.0], unit='m')
-    sample_group = workflow.AnyRunNeXusSample(sc.DataGroup(position=position))
+    sample_group = workflow.NeXusSample[SampleRun](sc.DataGroup(position=position))
     assert_identical(workflow.get_sample_position(sample_group), position)
 
 
@@ -28,7 +29,7 @@ def test_get_sample_position_returns_origin_if_position_not_found(
 
 def test_get_source_position_returns_position_of_group() -> None:
     position = sc.vector([1.0, 2.0, 3.0], unit='m')
-    source_group = workflow.AnyRunNeXusSource(sc.DataGroup(position=position))
+    source_group = workflow.NeXusSource[SampleRun](sc.DataGroup(position=position))
     assert_identical(workflow.get_source_position(source_group), position)
 
 
@@ -40,7 +41,7 @@ def test_get_source_position_raises_exception_if_position_not_found(
 
 
 @pytest.fixture()
-def nexus_detector() -> workflow.AnyRunNeXusDetector:
+def nexus_detector() -> workflow.NeXusDetector[SampleRun]:
     detector_number = sc.arange('detector_number', 6, unit=None)
     x = sc.linspace('detector_number', 0, 1, num=6, unit='m')
     position = sc.spatial.as_vectors(x, sc.zeros_like(x), sc.zeros_like(x))
@@ -51,7 +52,7 @@ def nexus_detector() -> workflow.AnyRunNeXusDetector:
             'position': position,
         },
     )
-    return workflow.AnyRunNeXusDetector(
+    return workflow.NeXusDetector[SampleRun](
         sc.DataGroup(
             data=data,
             # Note that this position (the overall detector position) will be ignored,
@@ -169,9 +170,9 @@ def test_get_calibrated_detector_forwards_masks(
 
 
 @pytest.fixture()
-def calibrated_detector() -> workflow.AnyRunCalibratedDetector:
+def calibrated_detector() -> workflow.CalibratedDetector[SampleRun]:
     detector_number = sc.arange('detector_number', 6, unit=None)
-    return workflow.AnyRunCalibratedDetector(
+    return workflow.CalibratedDetector[SampleRun](
         sc.DataArray(
             sc.empty_like(detector_number),
             coords={
@@ -183,13 +184,13 @@ def calibrated_detector() -> workflow.AnyRunCalibratedDetector:
 
 
 @pytest.fixture()
-def detector_event_data() -> workflow.AnyRunNeXusDetectorData:
+def detector_event_data() -> workflow.NeXusDetectorData[SampleRun]:
     content = sc.DataArray(
         sc.ones(dims=['event'], shape=[17], unit='counts'),
         coords={'event_id': sc.arange('event', 17, unit=None) % sc.index(6)},
     )
     weights = sc.bins(data=content, dim='event')
-    return workflow.AnyRunNeXusDetectorData(
+    return workflow.NeXusDetectorData[SampleRun](
         sc.DataArray(
             weights,
             coords={
@@ -246,9 +247,9 @@ def test_assemble_detector_preserves_masks(calibrated_detector, detector_event_d
 
 
 @pytest.fixture()
-def nexus_monitor() -> workflow.AnyRunAnyNeXusMonitor:
+def nexus_monitor() -> workflow.NeXusMonitor[SampleRun, Monitor1]:
     data = sc.DataArray(sc.scalar(1.2), coords={'something': sc.scalar(13)})
-    return workflow.AnyRunAnyNeXusMonitor(
+    return workflow.NeXusMonitor[SampleRun, Monitor1](
         sc.DataGroup(data=data, position=sc.vector([1.0, 2.0, 3.0], unit='m'))
     )
 
@@ -279,8 +280,8 @@ def test_get_calibrated_monitor_subtracts_offset_from_position(
 
 
 @pytest.fixture()
-def calibrated_monitor() -> workflow.AnyRunAnyCalibratedMonitor:
-    return workflow.AnyRunAnyCalibratedMonitor(
+def calibrated_monitor() -> workflow.CalibratedMonitor[SampleRun, Monitor1]:
+    return workflow.CalibratedMonitor[SampleRun, Monitor1](
         sc.DataArray(
             sc.scalar(0),
             coords={'position': sc.vector([1.0, 2.0, 3.0], unit='m')},
@@ -289,10 +290,10 @@ def calibrated_monitor() -> workflow.AnyRunAnyCalibratedMonitor:
 
 
 @pytest.fixture()
-def monitor_event_data() -> workflow.AnyRunAnyNeXusMonitorData:
+def monitor_event_data() -> workflow.NeXusMonitorData[SampleRun, Monitor1]:
     content = sc.DataArray(sc.ones(dims=['event'], shape=[17], unit='counts'))
     weights = sc.bins(data=content, dim='event')
-    return workflow.AnyRunAnyNeXusMonitorData(
+    return workflow.NeXusMonitorData[SampleRun, Monitor1](
         sc.DataArray(
             weights,
             coords={
