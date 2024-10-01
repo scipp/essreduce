@@ -141,7 +141,7 @@ def monitor_data_by_name(
         Selection (start and stop as a Python slice object) for the monitor data.
     """
     return NeXusMonitorDataLocationSpec[RunType, MonitorType](
-        filename=filename.value, component_name=name, selection=selection
+        filename=filename.value, component_name=name, selection=selection.value
     )
 
 
@@ -181,7 +181,7 @@ def detector_data_by_name(
         Selection (start and stop as a Python slice object) for the detector data.
     """
     return NeXusDetectorDataLocationSpec[RunType](
-        filename=filename.value, component_name=name, selection=selection
+        filename=filename.value, component_name=name, selection=selection.value
     )
 
 

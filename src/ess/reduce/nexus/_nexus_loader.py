@@ -163,6 +163,16 @@ def _select_unique_array(
     return next(iter(arrays.values()))
 
 
+def _to_snx_selection(selection, *, for_events: bool) -> snx.typing.ScippIndex:
+    if selection == slice(None, None):
+        return ()
+    if isinstance(selection, slice):
+        if for_events:
+            return {'event_time_zero': selection}
+        return {'time': selection}
+    return selection
+
+
 def load_data(
     file_path: FilePath | NeXusFile | NeXusGroup,
     selection: snx.typing.ScippIndex | slice = (),
@@ -213,10 +223,10 @@ def load_data(
         component = instrument[component_name]
         if _contains_nx_class(component, snx.NXevent_data):
             data = _unique_child_group(component, snx.NXevent_data, None)
-            sel = selection.to_snx_selection(for_events=True)
+            sel = _to_snx_selection(selection, for_events=True)
         elif _contains_nx_class(component, snx.NXdata):
             data = _unique_child_group(component, snx.NXdata, None)
-            sel = selection.to_snx_selection(for_events=False)
+            sel = _to_snx_selection(selection, for_events=False)
         else:
             raise ValueError(
                 f"NeXus group '{component.name}' contains neither "
