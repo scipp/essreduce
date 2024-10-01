@@ -4,8 +4,22 @@ import pytest
 import scipp as sc
 from scipp.testing import assert_identical
 
+from ess.reduce import data
 from ess.reduce.nexus import workflow
-from ess.reduce.nexus.types import Monitor1, SampleRun
+from ess.reduce.nexus.types import (
+    DetectorData,
+    Filename,
+    Monitor1,
+    MonitorData,
+    NeXusDetectorName,
+    NeXusMonitorName,
+    SampleRun,
+)
+from ess.reduce.nexus.workflow import (
+    GenericNeXusWorkflow,
+    LoadDetectorWorkflow,
+    LoadMonitorWorkflow,
+)
 
 
 @pytest.fixture(params=[{}, {'aux': 1}])
@@ -342,3 +356,44 @@ def test_assemble_monitor_preserves_masks(calibrated_monitor, monitor_event_data
         calibrated_monitor, monitor_event_data
     )
     assert 'mymask' in monitor_data.masks
+
+
+def test_load_monitor_workflow() -> None:
+    wf = LoadMonitorWorkflow()
+    wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[NeXusMonitorName[Monitor1]] = 'monitor_1'
+    da = wf.compute(MonitorData[SampleRun, Monitor1])
+    assert 'position' in da.coords
+    assert 'source_position' in da.coords
+    assert da.bins is not None
+    assert da.dims == ('event_time_zero',)
+
+
+def test_load_detector_workflow() -> None:
+    wf = LoadDetectorWorkflow()
+    wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[NeXusDetectorName] = 'larmor_detector'
+    da = wf.compute(DetectorData[SampleRun])
+    assert 'position' in da.coords
+    assert 'sample_position' in da.coords
+    assert 'source_position' in da.coords
+    assert da.bins is not None
+    assert da.dims == ('detector_number',)
+
+
+def test_generic_nexus_workflow() -> None:
+    wf = GenericNeXusWorkflow()
+    wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[NeXusMonitorName[Monitor1]] = 'monitor_1'
+    wf[NeXusDetectorName] = 'larmor_detector'
+    da = wf.compute(DetectorData[SampleRun])
+    assert 'position' in da.coords
+    assert 'sample_position' in da.coords
+    assert 'source_position' in da.coords
+    assert da.bins is not None
+    assert da.dims == ('detector_number',)
+    da = wf.compute(MonitorData[SampleRun, Monitor1])
+    assert 'position' in da.coords
+    assert 'source_position' in da.coords
+    assert da.bins is not None
+    assert da.dims == ('event_time_zero',)
