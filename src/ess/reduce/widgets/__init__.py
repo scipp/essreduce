@@ -15,7 +15,8 @@ from ..parameter import (
     Parameter,
     ParamWithBounds,
     BinEdgesParameter,
-    VectorParameter,
+    Vector2dParameter,
+    Vector3dParameter,
 )
 from ._config import default_layout, default_style
 
@@ -168,9 +169,14 @@ def bin_edges_parameter_widget(param: BinEdgesParameter):
     )
 
 
-@create_parameter_widget.register(VectorParameter)
-def vector_parameter_widget(param: VectorParameter):
-    return VectorWidget(name=param.name, variable=param.default)
+@create_parameter_widget.register(Vector2dParameter)
+def vector_2d_parameter_widget(param: Vector2dParameter):
+    return VectorWidget(name=param.name, variable=param.default, components="xy")
+
+
+@create_parameter_widget.register(Vector3dParameter)
+def vector_3d_parameter_widget(param: Vector3dParameter):
+    return VectorWidget(name=param.name, variable=param.default, components="xyz")
 
 
 __all__ = [

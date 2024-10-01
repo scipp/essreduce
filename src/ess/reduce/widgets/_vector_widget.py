@@ -6,7 +6,7 @@ from ipywidgets import FloatText, HBox, Label, Text, ValueWidget
 
 
 class VectorWidget(HBox, ValueWidget):
-    def __init__(self, name: str, variable: sc.Variable):
+    def __init__(self, name: str, variable: sc.Variable, components: str):
         super().__init__()
 
         style = {
@@ -14,18 +14,15 @@ class VectorWidget(HBox, ValueWidget):
             "style": {"description_width": "initial"},
         }
         self.fields = {
-            "x": FloatText(description="x =", value=variable.fields.x.value, **style),
-            "y": FloatText(description="y =", value=variable.fields.y.value, **style),
-            "z": FloatText(description="z =", value=variable.fields.z.value, **style),
-            "unit": Text(description="unit:", value=str(variable.unit), **style),
+            c: FloatText(
+                description=f"{c} =", value=getattr(variable.fields, c).value, **style
+            )
+            for c in components
         }
-        self.children = [
-            Label(value=f"{name}: "),
-            self.fields['x'],
-            self.fields['y'],
-            self.fields['z'],
-            self.fields['unit'],
-        ]
+        self.fields["unit"] = Text(
+            description="unit:", value=str(variable.unit), **style
+        )
+        self.children = [Label(value=f"{name}: "), *list(self.fields.values())]
 
     @property
     def value(self):
@@ -33,7 +30,7 @@ class VectorWidget(HBox, ValueWidget):
             value=[
                 self.fields['x'].value,
                 self.fields['y'].value,
-                self.fields['z'].value,
+                self.fields.get('z', sc.scalar(0.0)).value,
             ],
             unit=self.fields['unit'].value,
         )
