@@ -2,6 +2,7 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 import pytest
 import scipp as sc
+import scippnexus as snx
 from scipp.testing import assert_identical
 
 from ess.reduce import data
@@ -27,8 +28,24 @@ def group_with_no_position(request) -> workflow.NeXusSample[SampleRun]:
     return workflow.NeXusSample[SampleRun](sc.DataGroup(request.param))
 
 
+@pytest.fixture()
+def depends_on() -> snx.TransformationChain:
+    translation = snx.nxtransformations.Transform(
+        name='/entry/instrument/comp1/transformations/trans1',
+        transformation_type='translation',
+        value=sc.scalar(1.0, unit='m'),
+        vector=sc.vector(value=[1.0, 2.0, 3.0], unit=''),
+        depends_on=snx.DependsOn(parent='', value='.'),
+        offset=None,
+    )
+    return snx.TransformationChain(
+        parent='/entry/instrument/comp1',
+        value='transformations/trans1',
+        transformations={translation.name: translation},
+    )
+
+
 def test_sample_position_returns_position_of_group() -> None:
-    depends_on = sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m')
     position = sc.vector([1.0, 2.0, 3.0], unit='m')
     sample_group = workflow.NeXusSample[SampleRun](sc.DataGroup(position=position))
     assert_identical(workflow.get_sample_position(sample_group), position)
@@ -42,22 +59,26 @@ def test_get_sample_position_returns_origin_if_position_not_found(
     )
 
 
-def test_get_source_position_returns_position_of_group() -> None:
-    depends_on = sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m')
+def test_get_source_position_returns_position_of_group(
+    depends_on: snx.TransformationChain,
+) -> None:
     position = sc.vector([1.0, 2.0, 3.0], unit='m')
-    source_group = workflow.NeXusSource[SampleRun](sc.DataGroup(position=position))
-    assert_identical(workflow.get_source_position(source_group), position)
+    source_group = workflow.NeXusSource[SampleRun](sc.DataGroup(depends_on=depends_on))
+    chain = workflow.get_source_transformation_chain(source_group)
+    assert_identical(workflow.get_source_position(chain), position)
 
 
-def test_get_source_position_raises_exception_if_position_not_found(
+def test_get_source_transformation_chain_raises_exception_if_position_not_found(
     group_with_no_position,
 ) -> None:
-    with pytest.raises(KeyError, match='position'):
-        workflow.get_source_position(group_with_no_position)
+    with pytest.raises(KeyError, match='depends_on'):
+        workflow.get_source_transformation_chain(group_with_no_position)
 
 
 @pytest.fixture()
-def nexus_detector() -> workflow.NeXusDetector[SampleRun]:
+def nexus_detector(
+    depends_on: snx.TransformationChain,
+) -> workflow.NeXusDetector[SampleRun]:
     detector_number = sc.arange('detector_number', 6, unit=None)
     data = sc.DataArray(
         sc.empty_like(detector_number),
@@ -67,11 +88,7 @@ def nexus_detector() -> workflow.NeXusDetector[SampleRun]:
         },
     )
     return workflow.NeXusDetector[SampleRun](
-        sc.DataGroup(
-            data=data,
-            depends_on=sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m'),
-            nexus_component_name='detector1',
-        )
+        sc.DataGroup(data=data, depends_on=depends_on, nexus_component_name='detector1')
     )
 
 
@@ -260,13 +277,12 @@ def test_assemble_detector_preserves_masks(calibrated_detector, detector_event_d
 
 
 @pytest.fixture()
-def nexus_monitor() -> workflow.NeXusMonitor[SampleRun, Monitor1]:
+def nexus_monitor(
+    depends_on: snx.TransformationChain,
+) -> workflow.NeXusMonitor[SampleRun, Monitor1]:
     data = sc.DataArray(sc.scalar(1.2), coords={'something': sc.scalar(13)})
     return workflow.NeXusMonitor[SampleRun, Monitor1](
-        sc.DataGroup(
-            data=data,
-            depends_on=sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m'),
-        )
+        sc.DataGroup(data=data, depends_on=depends_on)
     )
 
 

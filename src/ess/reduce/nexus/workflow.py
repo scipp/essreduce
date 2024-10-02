@@ -36,6 +36,7 @@ from .types import (
     NeXusMonitorName,
     NeXusSample,
     NeXusSource,
+    NeXusTransformationChain,
     PreopenNeXusFile,
     PulseSelection,
     RunType,
@@ -341,17 +342,33 @@ def load_nexus_monitor_data(
     )
 
 
-def get_source_position(source: NeXusSource[RunType]) -> SourcePosition[RunType]:
+def get_source_transformation_chain(
+    source: NeXusSource[RunType],
+) -> NeXusTransformationChain[snx.NXsource, RunType]:
     """
-    Extract the source position from a NeXus source group.
+    Extract the transformation chain from a NeXus source group.
 
     Parameters
     ----------
     source:
         NeXus source group.
     """
-    dg = nexus.compute_component_position(source)
-    return SourcePosition[RunType](dg["position"])
+    chain = source['depends_on']
+    return NeXusTransformationChain[snx.NXsource, RunType].from_base(chain)
+
+
+def get_source_position(
+    transformations: NeXusTransformationChain[snx.NXsource, RunType],
+) -> SourcePosition[RunType]:
+    """
+    Extract the source position of a NeXus source group.
+
+    Parameters
+    ----------
+    transformations:
+        NeXus transformation chain of the source group.
+    """
+    return SourcePosition[RunType](transformations.compute_position())
 
 
 def get_sample_position(sample: NeXusSample[RunType]) -> SamplePosition[RunType]:
@@ -558,7 +575,13 @@ definitions["NXdetector"] = _StrippedDetector
 definitions["NXmonitor"] = _StrippedMonitor
 
 
-_common_providers = (gravity_vector_neg_y, file_path_to_file_spec, all_pulses)
+_common_providers = (
+    gravity_vector_neg_y,
+    file_path_to_file_spec,
+    all_pulses,
+    get_source_transformation_chain,
+    get_source_position,
+)
 
 _monitor_providers = (
     no_monitor_position_offset,
@@ -568,7 +591,6 @@ _monitor_providers = (
     load_nexus_monitor,
     load_nexus_monitor_data,
     load_nexus_source,
-    get_source_position,
     get_calibrated_monitor,
     assemble_monitor_data,
 )
@@ -583,7 +605,6 @@ _detector_providers = (
     load_nexus_detector_data,
     load_nexus_source,
     load_nexus_sample,
-    get_source_position,
     get_sample_position,
     get_calibrated_detector,
     assemble_detector_data,

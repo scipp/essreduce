@@ -237,3 +237,20 @@ class NeXusMonitorDataLocationSpec(
     NeXusComponentLocationSpec[snx.NXevent_data, RunType], Generic[RunType, MonitorType]
 ):
     """NeXus filename and parameters to identify (parts of) monitor data to load."""
+
+
+T = TypeVar('T', bound='NeXusTransformationChain')
+
+
+@dataclass
+class NeXusTransformationChain(snx.TransformationChain, Generic[Component, RunType]):
+    @classmethod
+    def from_base(cls: type[T], base: snx.TransformationChain) -> T:
+        return cls(
+            parent=base.parent,
+            value=base.value,
+            transformations=base.transformations,
+        )
+
+    def compute_position(self) -> sc.Variable | sc.DataArray:
+        return self.compute() * sc.vector([0, 0, 0], unit='m')
