@@ -293,8 +293,6 @@ def load_nexus_monitor(
     location:
         Location spec for the monitor group.
     """
-    definitions = snx.base_definitions()
-    definitions["NXmonitor"] = _StrippedMonitor
     return NeXusMonitor[RunType, MonitorType](
         nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
     )
