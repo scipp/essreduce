@@ -146,8 +146,13 @@ class ScalarParamWithUnitOptions(Parameter[T]):
 
 
 @dataclass(kw_only=True)
-class VectorParameter(Parameter[sc.Variable]):
-    """Widget for entering a vector."""
+class Vector2dParameter(Parameter[sc.Variable]):
+    """Widget for entering a 2d vector."""
+
+
+@dataclass(kw_only=True)
+class Vector3dParameter(Parameter[sc.Variable]):
+    """Widget for entering a 3d vector."""
 
 
 class ParameterRegistry(MutableMapping):

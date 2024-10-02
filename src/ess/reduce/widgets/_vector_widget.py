@@ -2,26 +2,27 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
 import scipp as sc
-from ipywidgets import FloatText, GridBox, Label, Text, ValueWidget
+from ipywidgets import FloatText, HBox, Label, Text, ValueWidget
 
 
-class VectorWidget(GridBox, ValueWidget):
-    def __init__(self, variable: sc.Variable):
+class VectorWidget(HBox, ValueWidget):
+    def __init__(self, name: str, variable: sc.Variable, components: str):
         super().__init__()
 
-        self.fields = {
-            "x": FloatText(description="x", value=variable.fields.x.value),
-            "y": FloatText(description="y", value=variable.fields.y.value),
-            "z": FloatText(description="z", value=variable.fields.z.value),
-            "unit": Text(description="unit", value=str(variable.unit)),
+        style = {
+            "layout": {"width": "130px"},
+            "style": {"description_width": "initial"},
         }
-        self.children = [
-            Label(value="(x, y, z) ="),
-            self.fields['x'],
-            self.fields['y'],
-            self.fields['z'],
-            self.fields['unit'],
-        ]
+        self.fields = {
+            c: FloatText(
+                description=f"{c} =", value=getattr(variable.fields, c).value, **style
+            )
+            for c in components
+        }
+        self.fields["unit"] = Text(
+            description="unit:", value=str(variable.unit), **style
+        )
+        self.children = [Label(value=f"{name}: "), *list(self.fields.values())]
 
     @property
     def value(self):
@@ -29,7 +30,7 @@ class VectorWidget(GridBox, ValueWidget):
             value=[
                 self.fields['x'].value,
                 self.fields['y'].value,
-                self.fields['z'].value,
+                self.fields.get('z', sc.scalar(0.0)).value,
             ],
             unit=self.fields['unit'].value,
         )
