@@ -191,15 +191,6 @@ class PulseSelection(Generic[RunType]):
 
     value: snx.typing.ScippIndex | slice
 
-    def to_snx_selection(self, *, for_events: bool) -> snx.typing.ScippIndex:
-        if self.value == slice(None, None):
-            return ()
-        if isinstance(self.value, slice):
-            if for_events:
-                return {'event_time_zero': self.value}
-            return {'time': self.value}
-        return self.value
-
 
 @dataclass
 class NeXusFileSpec(Generic[RunType]):
