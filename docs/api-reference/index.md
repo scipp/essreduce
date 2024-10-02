@@ -31,4 +31,5 @@
    nexus
    streaming
    uncertainty
+   widgets
 ```
