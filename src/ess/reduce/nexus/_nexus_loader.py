@@ -13,13 +13,7 @@ import scipp as sc
 import scippnexus as snx
 
 from ..logging import get_logger
-from .types import (
-    AnyRunFilename,
-    AnyRunPulseSelection,
-    NeXusEntryName,
-    NeXusGroup,
-    NeXusLocationSpec,
-)
+from .types import FilePath, NeXusEntryName, NeXusFile, NeXusGroup, NeXusLocationSpec
 
 
 class NoNewDefinitionsType: ...
@@ -69,7 +63,7 @@ def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
 
 
 def _open_nexus_file(
-    file_path: AnyRunFilename,
+    file_path: FilePath | NeXusFile | NeXusGroup,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> AbstractContextManager:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
@@ -169,23 +163,19 @@ def _select_unique_array(
     return next(iter(arrays.values()))
 
 
-def _to_snx_selection(
-    selection: snx.typing.ScippIndex | AnyRunPulseSelection, *, for_events: bool
-) -> snx.typing.ScippIndex:
-    match selection:
-        case AnyRunPulseSelection(slice(start=None, stop=None)):
-            return ()
-        case AnyRunPulseSelection(sel):
-            if for_events:
-                return {'event_time_zero': sel}
-            return {'time': sel}
-        case _:
-            return selection
+def _to_snx_selection(selection, *, for_events: bool) -> snx.typing.ScippIndex:
+    if selection == slice(None, None):
+        return ()
+    if isinstance(selection, slice):
+        if for_events:
+            return {'event_time_zero': selection}
+        return {'time': selection}
+    return selection
 
 
 def load_data(
-    file_path: AnyRunFilename,
-    selection: snx.typing.ScippIndex | AnyRunPulseSelection = (),
+    file_path: FilePath | NeXusFile | NeXusGroup,
+    selection: snx.typing.ScippIndex | slice = (),
     *,
     entry_name: NeXusEntryName | None = None,
     component_name: str,
@@ -422,7 +412,7 @@ def _parse_monitor(group: snx.Group) -> NeXusMonitorInfo:
     )
 
 
-def read_nexus_file_info(file_path: AnyRunFilename) -> NeXusFileInfo:
+def read_nexus_file_info(file_path: FilePath | NeXusFile | NeXusGroup) -> NeXusFileInfo:
     """Opens and inspects a NeXus file, returning a summary of its contents."""
     with _open_nexus_file(file_path) as f:
         entry = _unique_child_group(f, snx.NXentry, None)
