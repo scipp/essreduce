@@ -28,11 +28,10 @@ from .types import (
     MonitorType,
     NeXusComponent,
     NeXusComponentLocationSpec,
+    NeXusComponentName,
     NeXusData,
     NeXusDataLocationSpec,
-    NeXusDetectorName,
     NeXusFileSpec,
-    NeXusMonitorName,
     NeXusTransformation,
     NeXusTransformationChain,
     PreopenNeXusFile,
@@ -89,7 +88,7 @@ def unique_component_spec(
 
 
 def monitor_by_name(
-    filename: NeXusFileSpec[RunType], name: NeXusMonitorName[MonitorType]
+    filename: NeXusFileSpec[RunType], name: NeXusComponentName[MonitorType]
 ) -> NeXusComponentLocationSpec[MonitorType, RunType]:
     """
     Create a location spec for a monitor group in a NeXus file.
@@ -106,30 +105,8 @@ def monitor_by_name(
     )
 
 
-def monitor_data_by_name(
-    filename: NeXusFileSpec[RunType],
-    name: NeXusMonitorName[MonitorType],
-    selection: PulseSelection[RunType],
-) -> NeXusDataLocationSpec[MonitorType, RunType]:
-    """
-    Create a location spec for monitor data in a NeXus file.
-
-    Parameters
-    ----------
-    filename:
-        NeXus file to use for the location spec.
-    name:
-        Name of the monitor group.
-    selection:
-        Selection (start and stop as a Python slice object) for the monitor data.
-    """
-    return NeXusDataLocationSpec[MonitorType, RunType](
-        filename=filename.value, component_name=name, selection=selection.value
-    )
-
-
 def detector_by_name(
-    filename: NeXusFileSpec[RunType], name: NeXusDetectorName
+    filename: NeXusFileSpec[RunType], name: NeXusComponentName[snx.NXdetector]
 ) -> NeXusComponentLocationSpec[snx.NXdetector, RunType]:
     """
     Create a location spec for a detector group in a NeXus file.
@@ -146,24 +123,24 @@ def detector_by_name(
     )
 
 
-def detector_data_by_name(
+def data_by_name(
     filename: NeXusFileSpec[RunType],
-    name: NeXusDetectorName,
+    name: NeXusComponentName[ComponentType],
     selection: PulseSelection[RunType],
-) -> NeXusDataLocationSpec[snx.NXdetector, RunType]:
+) -> NeXusDataLocationSpec[ComponentType, RunType]:
     """
-    Create a location spec for detector data in a NeXus file.
+    Create a location spec for monitor or detector data in a NeXus file.
 
     Parameters
     ----------
     filename:
         NeXus file to use for the location spec.
     name:
-        Name of the detector group.
+        Name of the monitor or detector group.
     selection:
-        Selection (start and stop as a Python slice object) for the detector data.
+        Time range (start and stop as a Python slice object).
     """
-    return NeXusDataLocationSpec[snx.NXdetector, RunType](
+    return NeXusDataLocationSpec[ComponentType, RunType](
         filename=filename.value, component_name=name, selection=selection.value
     )
 
@@ -542,12 +519,12 @@ _common_providers = (
     to_transformation,
     compute_position,
     load_nexus_data,
+    data_by_name,
 )
 
 _monitor_providers = (
     no_monitor_position_offset,
     monitor_by_name,
-    monitor_data_by_name,
     load_nexus_monitor,
     load_nexus_source,
     get_calibrated_monitor,
@@ -557,7 +534,6 @@ _monitor_providers = (
 _detector_providers = (
     no_detector_position_offset,
     detector_by_name,
-    detector_data_by_name,
     load_nexus_detector,
     load_nexus_source,
     load_nexus_sample,

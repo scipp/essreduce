@@ -22,8 +22,6 @@ The type alias is provided for callers of load functions outside of pipelines.
 NeXusGroup = NewType('NeXusGroup', snx.Group)
 """A ScippNexus group in an open file."""
 
-NeXusDetectorName = NewType('NeXusDetectorName', str)
-"""Name of a detector (bank) in a NeXus file."""
 NeXusEntryName = NewType('NeXusEntryName', str)
 """Name of an entry in a NeXus file."""
 NeXusSourceName = NewType('NeXusSourceName', str)
@@ -126,8 +124,12 @@ ComponentType = TypeVar(
 )
 
 
-class NeXusMonitorName(sciline.Scope[MonitorType, str], str):
-    """Name of a monitor in a NeXus file."""
+class NeXusComponentName(sciline.Scope[ComponentType, str], str):
+    """Name of a monitor or detector component in a NeXus file."""
+
+
+NeXusDetectorName = NeXusComponentName[snx.NXdetector]
+"""Name of a detector (bank) in a NeXus file."""
 
 
 class NeXusComponent(
