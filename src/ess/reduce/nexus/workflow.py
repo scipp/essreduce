@@ -296,6 +296,12 @@ def assemble_beamline(
     """
     Add beamline information (gravity vector, source- and sample-position) to detector.
 
+    This is performed separately and after :py:func:`get_calibrated_detector` to avoid
+    as false dependency of, e.g., the reshaped detector numbers on the sample position.
+    The latter can change during a run, e.g., for a rotating sample. The detector
+    numbers might be used, e.g., to mask certain detector pixels, and should not depend
+    on the sample position.
+
     Parameters
     ----------
     detector:
