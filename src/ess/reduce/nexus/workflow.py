@@ -13,6 +13,7 @@ from scipp.constants import g
 
 from . import _nexus_loader as nexus
 from .types import (
+    CalibratedBeamline,
     CalibratedDetector,
     CalibratedMonitor,
     DetectorBankSizes,
@@ -388,9 +389,6 @@ def get_calibrated_detector(
     detector: NeXusDetector[RunType],
     *,
     offset: DetectorPositionOffset[RunType],
-    source_position: SourcePosition[RunType],
-    sample_position: SamplePosition[RunType],
-    gravity: GravityVector,
     bank_sizes: DetectorBankSizes,
 ) -> CalibratedDetector[RunType]:
     """
@@ -427,6 +425,18 @@ def get_calibrated_detector(
     return CalibratedDetector[RunType](
         da.assign_coords(
             position=da.coords['position'] + offset.to(unit=da.coords['position'].unit),
+        )
+    )
+
+
+def assemble_beamline(
+    detector: CalibratedDetector[RunType],
+    source_position: SourcePosition[RunType],
+    sample_position: SamplePosition[RunType],
+    gravity: GravityVector,
+) -> CalibratedBeamline[RunType]:
+    return CalibratedBeamline[RunType](
+        detector.assign_coords(
             source_position=source_position,
             sample_position=sample_position,
             gravity=gravity,
@@ -435,10 +445,11 @@ def get_calibrated_detector(
 
 
 def assemble_detector_data(
-    detector: CalibratedDetector[RunType], event_data: NeXusDetectorData[RunType]
+    detector: CalibratedBeamline[RunType],
+    event_data: NeXusDetectorData[RunType],
 ) -> DetectorData[RunType]:
     """
-    Assemble a detector data array with event data and source- and sample-position.
+    Assemble a detector data array with event data.
 
     Also adds variances to the event data if they are missing.
 
@@ -605,6 +616,7 @@ _detector_providers = (
     load_nexus_sample,
     get_sample_position,
     get_calibrated_detector,
+    assemble_beamline,
     assemble_detector_data,
 )
 
