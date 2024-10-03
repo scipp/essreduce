@@ -254,6 +254,12 @@ def get_calibrated_detector(
     detector: NeXusComponent[snx.NXdetector, RunType],
     *,
     transform: NeXusTransformation[snx.NXdetector, RunType],
+    # Strictly speaking we could apply an offset by modifying the transformation chain,
+    # using a more generic implementation. However, this may in general require
+    # extending the chain and it is currently not clear if that is desirable. As far as
+    # I am aware the offset is currently mainly used for handling files from other
+    # facilities and it is not clear if it is needed for ESS data and should be kept at
+    # all.
     offset: DetectorPositionOffset[RunType],
     bank_sizes: DetectorBankSizes,
 ) -> CalibratedDetector[RunType]:
