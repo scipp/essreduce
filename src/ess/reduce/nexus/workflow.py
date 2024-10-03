@@ -15,8 +15,8 @@ from .types import (
     CalibratedBeamline,
     CalibratedDetector,
     CalibratedMonitor,
+    Component,
     ComponentPosition,
-    ComponentType,
     DetectorBankSizes,
     DetectorData,
     DetectorPositionOffset,
@@ -75,8 +75,8 @@ def gravity_vector_neg_y() -> GravityVector:
 
 
 def component_spec_by_name(
-    filename: NeXusFileSpec[RunType], name: NeXusComponentName[ComponentType]
-) -> NeXusComponentLocationSpec[ComponentType, RunType]:
+    filename: NeXusFileSpec[RunType], name: NeXusComponentName[Component]
+) -> NeXusComponentLocationSpec[Component, RunType]:
     """
     Create a location spec for a component group in a NeXus file.
 
@@ -87,7 +87,7 @@ def component_spec_by_name(
     name:
         Name of the component group.
     """
-    return NeXusComponentLocationSpec[ComponentType, RunType](
+    return NeXusComponentLocationSpec[Component, RunType](
         filename=filename.value, component_name=name
     )
 
@@ -110,9 +110,9 @@ def unique_component_spec(
 
 def data_by_name(
     filename: NeXusFileSpec[RunType],
-    name: NeXusComponentName[ComponentType],
+    name: NeXusComponentName[Component],
     selection: PulseSelection[RunType],
-) -> NeXusDataLocationSpec[ComponentType, RunType]:
+) -> NeXusDataLocationSpec[Component, RunType]:
     """
     Create a location spec for monitor or detector data in a NeXus file.
 
@@ -125,7 +125,7 @@ def data_by_name(
     selection:
         Time range (start and stop as a Python slice object).
     """
-    return NeXusDataLocationSpec[ComponentType, RunType](
+    return NeXusDataLocationSpec[Component, RunType](
         filename=filename.value, component_name=name, selection=selection.value
     )
 
@@ -170,9 +170,9 @@ def nx_class_for_sample() -> NeXusClassName[snx.NXsample]:
 
 
 def load_nexus_component(
-    location: NeXusComponentLocationSpec[ComponentType, RunType],
-    nx_class: NeXusClassName[ComponentType],
-) -> NeXusComponent[ComponentType, RunType]:
+    location: NeXusComponentLocationSpec[Component, RunType],
+    nx_class: NeXusClassName[Component],
+) -> NeXusComponent[Component, RunType]:
     """
     Load a NeXus component group from a file.
 
@@ -197,14 +197,14 @@ def load_nexus_component(
     nx_class:
         NX_class to identify the component.
     """
-    return NeXusComponent[ComponentType, RunType](
+    return NeXusComponent[Component, RunType](
         nexus.load_component(location, nx_class=nx_class, definitions=definitions)
     )
 
 
 def load_nexus_data(
-    location: NeXusDataLocationSpec[ComponentType, RunType],
-) -> NeXusData[ComponentType, RunType]:
+    location: NeXusDataLocationSpec[Component, RunType],
+) -> NeXusData[Component, RunType]:
     """
     Load event or histogram data from a NeXus detector group.
 
@@ -213,7 +213,7 @@ def load_nexus_data(
     location:
         Location spec for the detector group.
     """
-    return NeXusData[ComponentType, RunType](
+    return NeXusData[Component, RunType](
         nexus.load_data(
             file_path=location.filename,
             entry_name=location.entry_name,
@@ -224,8 +224,8 @@ def load_nexus_data(
 
 
 def get_transformation_chain(
-    detector: NeXusComponent[ComponentType, RunType],
-) -> NeXusTransformationChain[ComponentType, RunType]:
+    detector: NeXusComponent[Component, RunType],
+) -> NeXusTransformationChain[Component, RunType]:
     """
     Extract the transformation chain from a NeXus detector group.
 
@@ -235,21 +235,21 @@ def get_transformation_chain(
         NeXus detector group.
     """
     chain = detector['depends_on']
-    return NeXusTransformationChain[ComponentType, RunType].from_base(chain)
+    return NeXusTransformationChain[Component, RunType].from_base(chain)
 
 
 def to_transformation(
-    chain: NeXusTransformationChain[ComponentType, RunType],
-) -> NeXusTransformation[ComponentType, RunType]:
+    chain: NeXusTransformationChain[Component, RunType],
+) -> NeXusTransformation[Component, RunType]:
     """Convert transformation chain into a single transformation matrix."""
-    return NeXusTransformation[ComponentType, RunType].from_chain(chain)
+    return NeXusTransformation[Component, RunType].from_chain(chain)
 
 
 def compute_position(
-    transformation: NeXusTransformation[ComponentType, RunType],
-) -> ComponentPosition[ComponentType, RunType]:
+    transformation: NeXusTransformation[Component, RunType],
+) -> ComponentPosition[Component, RunType]:
     """Compute the position of a component from a transformation matrix."""
-    return ComponentPosition[ComponentType, RunType](transformation.value * origin)
+    return ComponentPosition[Component, RunType](transformation.value * origin)
 
 
 def get_calibrated_detector(

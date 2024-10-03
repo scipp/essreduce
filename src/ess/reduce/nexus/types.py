@@ -31,8 +31,6 @@ DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]]
 
 GravityVector = NewType('GravityVector', sc.Variable)
 
-Component = TypeVar('Component', bound=snx.NXobject)
-
 PreopenNeXusFile = NewType('PreopenNeXusFile', bool)
 """Whether to preopen NeXus files before passing them to the rest of the workflow."""
 
@@ -109,8 +107,8 @@ MonitorType = TypeVar(
 )
 """TypeVar used for specifying the monitor type such as Incident or Transmission"""
 
-ComponentType = TypeVar(
-    'ComponentType',
+Component = TypeVar(
+    'Component',
     snx.NXdetector,
     snx.NXsample,
     snx.NXsource,
@@ -126,11 +124,11 @@ UniqueComponentType = TypeVar('UniqueComponentType', snx.NXsample, snx.NXsource)
 """Components that can be identified by their type as there will only be one."""
 
 
-class NeXusComponentName(sciline.Scope[ComponentType, str], str):
+class NeXusComponentName(sciline.Scope[Component, str], str):
     """Name of a monitor or detector component in a NeXus file."""
 
 
-class NeXusClassName(sciline.Scope[ComponentType, str], str):
+class NeXusClassName(sciline.Scope[Component, str], str):
     """NX_class of a component in a NeXus file."""
 
 
@@ -139,14 +137,12 @@ NeXusDetectorName = NeXusComponentName[snx.NXdetector]
 
 
 class NeXusComponent(
-    sciline.ScopeTwoParams[ComponentType, RunType, sc.DataGroup], sc.DataGroup
+    sciline.ScopeTwoParams[Component, RunType, sc.DataGroup], sc.DataGroup
 ):
     """Raw data from a NeXus component."""
 
 
-class NeXusData(
-    sciline.ScopeTwoParams[ComponentType, RunType, sc.DataArray], sc.DataArray
-):
+class NeXusData(sciline.ScopeTwoParams[Component, RunType, sc.DataArray], sc.DataArray):
     """
     Data array loaded from an NXevent_data or NXdata group.
 
@@ -155,7 +151,7 @@ class NeXusData(
 
 
 class ComponentPosition(
-    sciline.ScopeTwoParams[ComponentType, RunType, sc.Variable], sc.Variable
+    sciline.ScopeTwoParams[Component, RunType, sc.Variable], sc.Variable
 ):
     """Position of a component such as source, sample, monitor, or detector."""
 
@@ -229,7 +225,7 @@ class NeXusComponentLocationSpec(NeXusLocationSpec, Generic[Component, RunType])
 
 
 @dataclass
-class NeXusDataLocationSpec(NeXusLocationSpec, Generic[ComponentType, RunType]):
+class NeXusDataLocationSpec(NeXusLocationSpec, Generic[Component, RunType]):
     """NeXus filename and parameters to identify (parts of) detector data to load."""
 
 
@@ -237,9 +233,7 @@ T = TypeVar('T', bound='NeXusTransformationChain')
 
 
 @dataclass
-class NeXusTransformationChain(
-    snx.TransformationChain, Generic[ComponentType, RunType]
-):
+class NeXusTransformationChain(snx.TransformationChain, Generic[Component, RunType]):
     @classmethod
     def from_base(cls: type[T], base: snx.TransformationChain) -> T:
         return cls(
@@ -253,14 +247,14 @@ class NeXusTransformationChain(
 
 
 @dataclass
-class NeXusTransformation(Generic[ComponentType, RunType]):
+class NeXusTransformation(Generic[Component, RunType]):
     value: sc.Variable
 
     @staticmethod
     def from_chain(
-        chain: NeXusTransformationChain[ComponentType, RunType],
+        chain: NeXusTransformationChain[Component, RunType],
         # TODO can add filter options here
-    ) -> 'NeXusTransformation[ComponentType, RunType]':
+    ) -> 'NeXusTransformation[Component, RunType]':
         transform = chain.compute()
         if transform.ndim == 0:
             return NeXusTransformation(value=transform)
