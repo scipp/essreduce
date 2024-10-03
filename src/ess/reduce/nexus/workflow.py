@@ -283,12 +283,9 @@ def get_calibrated_detector(
         da = da.fold(dim="detector_number", sizes=sizes)
     # Note: We apply offset as early as possible, i.e., right in this function
     # the detector array from the raw loader NeXus group, to prevent a source of bugs.
-    base_pos = snx.zip_pixel_offsets(da.coords)
-    position = transform.value * base_pos
+    position = transform.value * snx.zip_pixel_offsets(da.coords)
     return CalibratedDetector[RunType](
-        da.assign_coords(
-            position=position + offset.to(unit=position.unit),
-        )
+        da.assign_coords(position=position + offset.to(unit=position.unit))
     )
 
 
