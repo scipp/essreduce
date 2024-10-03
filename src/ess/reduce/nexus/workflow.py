@@ -16,7 +16,6 @@ from .types import (
     CalibratedDetector,
     CalibratedMonitor,
     Component,
-    ComponentPosition,
     DetectorBankSizes,
     DetectorData,
     DetectorPositionOffset,
@@ -25,19 +24,20 @@ from .types import (
     MonitorData,
     MonitorPositionOffset,
     MonitorType,
-    NeXusClassName,
+    NeXusClass,
     NeXusComponent,
     NeXusComponentLocationSpec,
-    NeXusComponentName,
     NeXusData,
     NeXusDataLocationSpec,
     NeXusFileSpec,
+    NeXusName,
     NeXusTransformation,
     NeXusTransformationChain,
+    Position,
     PreopenNeXusFile,
     PulseSelection,
     RunType,
-    UniqueComponentType,
+    UniqueComponent,
 )
 
 origin = sc.vector([0, 0, 0], unit="m")
@@ -75,7 +75,7 @@ def gravity_vector_neg_y() -> GravityVector:
 
 
 def component_spec_by_name(
-    filename: NeXusFileSpec[RunType], name: NeXusComponentName[Component]
+    filename: NeXusFileSpec[RunType], name: NeXusName[Component]
 ) -> NeXusComponentLocationSpec[Component, RunType]:
     """
     Create a location spec for a component group in a NeXus file.
@@ -94,7 +94,7 @@ def component_spec_by_name(
 
 def unique_component_spec(
     filename: NeXusFileSpec[RunType],
-) -> NeXusComponentLocationSpec[UniqueComponentType, RunType]:
+) -> NeXusComponentLocationSpec[UniqueComponent, RunType]:
     """
     Create a location spec for a unique component group in a NeXus file.
 
@@ -103,14 +103,12 @@ def unique_component_spec(
     filename:
         NeXus file to use for the location spec.
     """
-    return NeXusComponentLocationSpec[UniqueComponentType, RunType](
-        filename=filename.value
-    )
+    return NeXusComponentLocationSpec[UniqueComponent, RunType](filename=filename.value)
 
 
 def data_by_name(
     filename: NeXusFileSpec[RunType],
-    name: NeXusComponentName[Component],
+    name: NeXusName[Component],
     selection: PulseSelection[RunType],
 ) -> NeXusDataLocationSpec[Component, RunType]:
     """
@@ -153,25 +151,25 @@ def load_nexus_sample(
     return NeXusComponent[snx.NXsample, RunType](dg)
 
 
-def nx_class_for_monitor() -> NeXusClassName[MonitorType]:
-    return NeXusClassName[MonitorType](snx.NXmonitor)
+def nx_class_for_monitor() -> NeXusClass[MonitorType]:
+    return NeXusClass[MonitorType](snx.NXmonitor)
 
 
-def nx_class_for_detector() -> NeXusClassName[snx.NXdetector]:
-    return NeXusClassName[snx.NXdetector](snx.NXdetector)
+def nx_class_for_detector() -> NeXusClass[snx.NXdetector]:
+    return NeXusClass[snx.NXdetector](snx.NXdetector)
 
 
-def nx_class_for_source() -> NeXusClassName[snx.NXsource]:
-    return NeXusClassName[snx.NXsource](snx.NXsource)
+def nx_class_for_source() -> NeXusClass[snx.NXsource]:
+    return NeXusClass[snx.NXsource](snx.NXsource)
 
 
-def nx_class_for_sample() -> NeXusClassName[snx.NXsample]:
-    return NeXusClassName[snx.NXsample](snx.NXsample)
+def nx_class_for_sample() -> NeXusClass[snx.NXsample]:
+    return NeXusClass[snx.NXsample](snx.NXsample)
 
 
 def load_nexus_component(
     location: NeXusComponentLocationSpec[Component, RunType],
-    nx_class: NeXusClassName[Component],
+    nx_class: NeXusClass[Component],
 ) -> NeXusComponent[Component, RunType]:
     """
     Load a NeXus component group from a file.
@@ -247,9 +245,9 @@ def to_transformation(
 
 def compute_position(
     transformation: NeXusTransformation[Component, RunType],
-) -> ComponentPosition[Component, RunType]:
+) -> Position[Component, RunType]:
     """Compute the position of a component from a transformation matrix."""
-    return ComponentPosition[Component, RunType](transformation.value * origin)
+    return Position[Component, RunType](transformation.value * origin)
 
 
 def get_calibrated_detector(
@@ -291,8 +289,8 @@ def get_calibrated_detector(
 
 def assemble_beamline(
     detector: CalibratedDetector[RunType],
-    source_position: ComponentPosition[snx.NXsource, RunType],
-    sample_position: ComponentPosition[snx.NXsample, RunType],
+    source_position: Position[snx.NXsource, RunType],
+    sample_position: Position[snx.NXsample, RunType],
     gravity: GravityVector,
 ) -> CalibratedBeamline[RunType]:
     """
@@ -347,7 +345,7 @@ def assemble_detector_data(
 def get_calibrated_monitor(
     monitor: NeXusComponent[MonitorType, RunType],
     offset: MonitorPositionOffset[RunType, MonitorType],
-    source_position: ComponentPosition[snx.NXsource, RunType],
+    source_position: Position[snx.NXsource, RunType],
 ) -> CalibratedMonitor[RunType, MonitorType]:
     """
     Extract the data array corresponding to a monitor's signal field.

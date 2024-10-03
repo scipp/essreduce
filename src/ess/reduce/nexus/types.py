@@ -120,19 +120,19 @@ Component = TypeVar(
     IncidentMonitor,
     TransmissionMonitor,
 )
-UniqueComponentType = TypeVar('UniqueComponentType', snx.NXsample, snx.NXsource)
+UniqueComponent = TypeVar('UniqueComponent', snx.NXsample, snx.NXsource)
 """Components that can be identified by their type as there will only be one."""
 
 
-class NeXusComponentName(sciline.Scope[Component, str], str):
-    """Name of a monitor or detector component in a NeXus file."""
+class NeXusName(sciline.Scope[Component, str], str):
+    """Name of a component in a NeXus file."""
 
 
-class NeXusClassName(sciline.Scope[Component, str], str):
+class NeXusClass(sciline.Scope[Component, str], str):
     """NX_class of a component in a NeXus file."""
 
 
-NeXusDetectorName = NeXusComponentName[snx.NXdetector]
+NeXusDetectorName = NeXusName[snx.NXdetector]
 """Name of a detector (bank) in a NeXus file."""
 
 
@@ -150,9 +150,7 @@ class NeXusData(sciline.ScopeTwoParams[Component, RunType, sc.DataArray], sc.Dat
     """
 
 
-class ComponentPosition(
-    sciline.ScopeTwoParams[Component, RunType, sc.Variable], sc.Variable
-):
+class Position(sciline.ScopeTwoParams[Component, RunType, sc.Variable], sc.Variable):
     """Position of a component such as source, sample, monitor, or detector."""
 
 
