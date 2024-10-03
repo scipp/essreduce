@@ -28,14 +28,10 @@ from .types import (
     MonitorType,
     NeXusComponent,
     NeXusComponentLocationSpec,
-    NeXusDetectorData,
-    NeXusDetectorDataLocationSpec,
+    NeXusData,
+    NeXusDataLocationSpec,
     NeXusDetectorName,
     NeXusFileSpec,
-    NeXusMonitor,
-    NeXusMonitorData,
-    NeXusMonitorDataLocationSpec,
-    NeXusMonitorLocationSpec,
     NeXusMonitorName,
     NeXusTransformation,
     NeXusTransformationChain,
@@ -94,7 +90,7 @@ def unique_component_spec(
 
 def monitor_by_name(
     filename: NeXusFileSpec[RunType], name: NeXusMonitorName[MonitorType]
-) -> NeXusMonitorLocationSpec[RunType, MonitorType]:
+) -> NeXusComponentLocationSpec[MonitorType, RunType]:
     """
     Create a location spec for a monitor group in a NeXus file.
 
@@ -105,7 +101,7 @@ def monitor_by_name(
     name:
         Name of the monitor group.
     """
-    return NeXusMonitorLocationSpec[RunType, MonitorType](
+    return NeXusComponentLocationSpec[MonitorType, RunType](
         filename=filename.value, component_name=name
     )
 
@@ -114,7 +110,7 @@ def monitor_data_by_name(
     filename: NeXusFileSpec[RunType],
     name: NeXusMonitorName[MonitorType],
     selection: PulseSelection[RunType],
-) -> NeXusMonitorDataLocationSpec[RunType, MonitorType]:
+) -> NeXusDataLocationSpec[MonitorType, RunType]:
     """
     Create a location spec for monitor data in a NeXus file.
 
@@ -127,7 +123,7 @@ def monitor_data_by_name(
     selection:
         Selection (start and stop as a Python slice object) for the monitor data.
     """
-    return NeXusMonitorDataLocationSpec[RunType, MonitorType](
+    return NeXusDataLocationSpec[MonitorType, RunType](
         filename=filename.value, component_name=name, selection=selection.value
     )
 
@@ -154,7 +150,7 @@ def detector_data_by_name(
     filename: NeXusFileSpec[RunType],
     name: NeXusDetectorName,
     selection: PulseSelection[RunType],
-) -> NeXusDetectorDataLocationSpec[RunType]:
+) -> NeXusDataLocationSpec[snx.NXdetector, RunType]:
     """
     Create a location spec for detector data in a NeXus file.
 
@@ -167,7 +163,7 @@ def detector_data_by_name(
     selection:
         Selection (start and stop as a Python slice object) for the detector data.
     """
-    return NeXusDetectorDataLocationSpec[RunType](
+    return NeXusDataLocationSpec[snx.NXdetector, RunType](
         filename=filename.value, component_name=name, selection=selection.value
     )
 
@@ -251,8 +247,8 @@ def load_nexus_detector(
 
 
 def load_nexus_monitor(
-    location: NeXusMonitorLocationSpec[RunType, MonitorType],
-) -> NeXusMonitor[RunType, MonitorType]:
+    location: NeXusComponentLocationSpec[MonitorType, RunType],
+) -> NeXusComponent[MonitorType, RunType]:
     """
     Load monitor from NeXus, but with event data replaced by placeholders.
 
@@ -270,7 +266,7 @@ def load_nexus_monitor(
     Loading thus proceeds in three steps:
 
     1. This function loads the monitor, but replaces the event data with placeholders.
-    2. :py:func:`get_calbirated_monitor` drops the additional information, returning
+    2. :py:func:`get_calibrated_monitor` drops the additional information, returning
        only the contained scipp.DataArray.
        This will generally contain coordinates as well as pixel masks.
     3. :py:func:`assemble_monitor_data` replaces placeholder data values with the
@@ -281,14 +277,14 @@ def load_nexus_monitor(
     location:
         Location spec for the monitor group.
     """
-    return NeXusMonitor[RunType, MonitorType](
+    return NeXusComponent[MonitorType, RunType](
         nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
     )
 
 
-def load_nexus_detector_data(
-    location: NeXusDetectorDataLocationSpec[RunType],
-) -> NeXusDetectorData[RunType]:
+def load_nexus_data(
+    location: NeXusDataLocationSpec[ComponentType, RunType],
+) -> NeXusData[ComponentType, RunType]:
     """
     Load event or histogram data from a NeXus detector group.
 
@@ -297,28 +293,7 @@ def load_nexus_detector_data(
     location:
         Location spec for the detector group.
     """
-    return NeXusDetectorData[RunType](
-        nexus.load_data(
-            file_path=location.filename,
-            entry_name=location.entry_name,
-            selection=location.selection,
-            component_name=location.component_name,
-        )
-    )
-
-
-def load_nexus_monitor_data(
-    location: NeXusMonitorDataLocationSpec[RunType, MonitorType],
-) -> NeXusMonitorData[RunType, MonitorType]:
-    """
-    Load event or histogram data from a NeXus monitor group.
-
-    Parameters
-    ----------
-    location:
-        Location spec for the monitor group.
-    """
-    return NeXusMonitorData[RunType, MonitorType](
+    return NeXusData[ComponentType, RunType](
         nexus.load_data(
             file_path=location.filename,
             entry_name=location.entry_name,
@@ -346,12 +321,14 @@ def get_transformation_chain(
 def to_transformation(
     chain: NeXusTransformationChain[ComponentType, RunType],
 ) -> NeXusTransformation[ComponentType, RunType]:
+    """Convert transformation chain into a single transformation matrix."""
     return NeXusTransformation[ComponentType, RunType].from_chain(chain)
 
 
 def compute_position(
     transformation: NeXusTransformation[ComponentType, RunType],
 ) -> ComponentPosition[ComponentType, RunType]:
+    """Compute the position of a component from a transformation matrix."""
     return ComponentPosition[ComponentType, RunType](transformation.value * origin)
 
 
@@ -385,7 +362,6 @@ def get_calibrated_detector(
     bank_sizes:
         Dictionary of detector bank sizes.
     """
-    # detector = nexus.compute_component_position(detector)
     da = nexus.extract_signal_data_array(detector)
     if (
         sizes := (bank_sizes or {}).get(detector.get('nexus_component_name'))
@@ -419,7 +395,7 @@ def assemble_beamline(
 
 def assemble_detector_data(
     detector: CalibratedBeamline[RunType],
-    event_data: NeXusDetectorData[RunType],
+    event_data: NeXusData[snx.NXdetector, RunType],
 ) -> DetectorData[RunType]:
     """
     Assemble a detector data array with event data.
@@ -444,7 +420,7 @@ def assemble_detector_data(
 
 
 def get_calibrated_monitor(
-    monitor: NeXusMonitor[RunType, MonitorType],
+    monitor: NeXusComponent[MonitorType, RunType],
     offset: MonitorPositionOffset[RunType, MonitorType],
     source_position: ComponentPosition[snx.NXsource, RunType],
 ) -> CalibratedMonitor[RunType, MonitorType]:
@@ -474,7 +450,7 @@ def get_calibrated_monitor(
 
 def assemble_monitor_data(
     monitor: CalibratedMonitor[RunType, MonitorType],
-    data: NeXusMonitorData[RunType, MonitorType],
+    data: NeXusData[MonitorType, RunType],
 ) -> MonitorData[RunType, MonitorType]:
     """
     Assemble a monitor data array with event data.
@@ -565,6 +541,7 @@ _common_providers = (
     get_transformation_chain,
     to_transformation,
     compute_position,
+    load_nexus_data,
 )
 
 _monitor_providers = (
@@ -572,7 +549,6 @@ _monitor_providers = (
     monitor_by_name,
     monitor_data_by_name,
     load_nexus_monitor,
-    load_nexus_monitor_data,
     load_nexus_source,
     get_calibrated_monitor,
     assemble_monitor_data,
@@ -583,7 +559,6 @@ _detector_providers = (
     detector_by_name,
     detector_data_by_name,
     load_nexus_detector,
-    load_nexus_detector_data,
     load_nexus_source,
     load_nexus_sample,
     get_calibrated_detector,

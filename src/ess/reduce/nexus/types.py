@@ -62,8 +62,6 @@ ScatteringRunType = TypeVar(
     VanadiumRun,
 )
 
-ComponentType = TypeVar('ComponentType', snx.NXdetector, snx.NXsample, snx.NXsource)
-
 
 class TransmissionRun(Generic[ScatteringRunType]):
     """
@@ -113,15 +111,23 @@ MonitorType = TypeVar(
 )
 """TypeVar used for specifying the monitor type such as Incident or Transmission"""
 
+ComponentType = TypeVar(
+    'ComponentType',
+    snx.NXdetector,
+    snx.NXsample,
+    snx.NXsource,
+    Monitor1,
+    Monitor2,
+    Monitor3,
+    Monitor4,
+    Monitor5,
+    Incident,
+    Transmission,
+)
+
 
 class NeXusMonitorName(sciline.Scope[MonitorType, str], str):
     """Name of a monitor in a NeXus file."""
-
-
-class NeXusMonitor(
-    sciline.ScopeTwoParams[RunType, MonitorType, sc.DataGroup], sc.DataGroup
-):
-    """Full raw data from a NeXus monitor."""
 
 
 class NeXusComponent(
@@ -130,20 +136,20 @@ class NeXusComponent(
     """Raw data from a NeXus component."""
 
 
-class NeXusDetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
-    """Data array loaded from an NXevent_data or NXdata group within an NXdetector."""
-
-
-class NeXusMonitorData(
-    sciline.ScopeTwoParams[RunType, MonitorType, sc.DataArray], sc.DataArray
+class NeXusData(
+    sciline.ScopeTwoParams[ComponentType, RunType, sc.DataArray], sc.DataArray
 ):
-    """Data array loaded from an NXevent_data or NXdata group within an NXmonitor."""
+    """
+    Data array loaded from an NXevent_data or NXdata group.
+
+    This must be contained in an NXmonitor or NXdetector group.
+    """
 
 
 class ComponentPosition(
     sciline.ScopeTwoParams[ComponentType, RunType, sc.Variable], sc.Variable
 ):
-    """Position of the neutron source."""
+    """Position of a component such as source, sample, monitor, or detector."""
 
 
 class DetectorPositionOffset(sciline.Scope[RunType, sc.Variable], sc.Variable):
@@ -215,33 +221,17 @@ class NeXusComponentLocationSpec(NeXusLocationSpec, Generic[Component, RunType])
 
 
 @dataclass
-class NeXusMonitorLocationSpec(
-    NeXusComponentLocationSpec[snx.NXmonitor, RunType], Generic[RunType, MonitorType]
-):
-    """
-    NeXus filename and optional parameters to identify (parts of) a monitor to load.
-    """
-
-
-@dataclass
-class NeXusDetectorDataLocationSpec(
-    NeXusComponentLocationSpec[snx.NXevent_data, RunType], Generic[RunType]
-):
+class NeXusDataLocationSpec(NeXusLocationSpec, Generic[ComponentType, RunType]):
     """NeXus filename and parameters to identify (parts of) detector data to load."""
-
-
-@dataclass
-class NeXusMonitorDataLocationSpec(
-    NeXusComponentLocationSpec[snx.NXevent_data, RunType], Generic[RunType, MonitorType]
-):
-    """NeXus filename and parameters to identify (parts of) monitor data to load."""
 
 
 T = TypeVar('T', bound='NeXusTransformationChain')
 
 
 @dataclass
-class NeXusTransformationChain(snx.TransformationChain, Generic[Component, RunType]):
+class NeXusTransformationChain(
+    snx.TransformationChain, Generic[ComponentType, RunType]
+):
     @classmethod
     def from_base(cls: type[T], base: snx.TransformationChain) -> T:
         return cls(
@@ -255,14 +245,14 @@ class NeXusTransformationChain(snx.TransformationChain, Generic[Component, RunTy
 
 
 @dataclass
-class NeXusTransformation(Generic[Component, RunType]):
+class NeXusTransformation(Generic[ComponentType, RunType]):
     value: sc.Variable
 
     @staticmethod
     def from_chain(
-        chain: NeXusTransformationChain[Component, RunType],
+        chain: NeXusTransformationChain[ComponentType, RunType],
         # TODO can add filter options here
-    ) -> 'NeXusTransformation[Component, RunType]':
+    ) -> 'NeXusTransformation[ComponentType, RunType]':
         transform = chain.compute()
         if transform.ndim == 0:
             return NeXusTransformation(value=transform)
