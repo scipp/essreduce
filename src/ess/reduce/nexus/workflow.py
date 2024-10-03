@@ -254,6 +254,9 @@ def load_nexus_monitor(
     location:
         Location spec for the monitor group.
     """
+    # The selection is only used for selecting a range of event data.
+    location = replace(location, selection=())
+
     return NeXusComponent[MonitorType, RunType](
         nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
     )
