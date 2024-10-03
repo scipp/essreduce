@@ -251,8 +251,16 @@ class NeXusTransformation(Generic[Component, RunType]):
     @staticmethod
     def from_chain(
         chain: NeXusTransformationChain[Component, RunType],
-        # TODO can add filter options here
     ) -> 'NeXusTransformation[Component, RunType]':
+        """
+        Convert a transformation chain to a single transformation.
+
+        As transformation chains may be time-dependent, this method will need to select
+        a specific time point to convert to a single transformation. This may include
+        averaging as well as threshold checks. This is not implemented yet and we
+        therefore currently raise an error if the transformation chain does not compute
+        to a scalar.
+        """
         transform = chain.compute()
         if transform.ndim == 0:
             return NeXusTransformation(value=transform)
