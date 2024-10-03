@@ -91,9 +91,9 @@ Monitor4 = NewType('Monitor4', int)
 """Identifier for an arbitrary monitor"""
 Monitor5 = NewType('Monitor5', int)
 """Identifier for an arbitrary monitor"""
-Incident = NewType('Incident', int)
+IncidentMonitor = NewType('IncidentMonitor', int)
 """Incident monitor"""
-Transmission = NewType('Transmission', int)
+TransmissionMonitor = NewType('TransmissionMonitor', int)
 """Transmission monitor"""
 MonitorType = TypeVar(
     'MonitorType',
@@ -102,8 +102,8 @@ MonitorType = TypeVar(
     Monitor3,
     Monitor4,
     Monitor5,
-    Incident,
-    Transmission,
+    IncidentMonitor,
+    TransmissionMonitor,
 )
 """TypeVar used for specifying the monitor type such as Incident or Transmission"""
 
@@ -117,8 +117,8 @@ Component = TypeVar(
     Monitor3,
     Monitor4,
     Monitor5,
-    Incident,
-    Transmission,
+    IncidentMonitor,
+    TransmissionMonitor,
 )
 UniqueComponentType = TypeVar('UniqueComponentType', snx.NXsample, snx.NXsource)
 """Components that can be identified by their type as there will only be one."""
