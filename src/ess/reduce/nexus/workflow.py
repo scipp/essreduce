@@ -16,6 +16,8 @@ from .types import (
     CalibratedBeamline,
     CalibratedDetector,
     CalibratedMonitor,
+    ComponentPosition,
+    ComponentType,
     DetectorBankSizes,
     DetectorData,
     DetectorPositionOffset,
@@ -24,8 +26,8 @@ from .types import (
     MonitorData,
     MonitorPositionOffset,
     MonitorType,
+    NeXusComponent,
     NeXusComponentLocationSpec,
-    NeXusDetector,
     NeXusDetectorData,
     NeXusDetectorDataLocationSpec,
     NeXusDetectorName,
@@ -35,14 +37,11 @@ from .types import (
     NeXusMonitorDataLocationSpec,
     NeXusMonitorLocationSpec,
     NeXusMonitorName,
-    NeXusSample,
-    NeXusSource,
+    NeXusTransformation,
     NeXusTransformationChain,
     PreopenNeXusFile,
     PulseSelection,
     RunType,
-    SamplePosition,
-    SourcePosition,
 )
 
 origin = sc.vector([0, 0, 0], unit="m")
@@ -79,32 +78,18 @@ def gravity_vector_neg_y() -> GravityVector:
     return GravityVector(sc.vector(value=[0, -1, 0]) * g)
 
 
-def unique_sample_spec(
+def unique_component_spec(
     filename: NeXusFileSpec[RunType],
-) -> NeXusComponentLocationSpec[snx.NXsample, RunType]:
+) -> NeXusComponentLocationSpec[ComponentType, RunType]:
     """
-    Create a location spec for a unique sample group in a NeXus file.
+    Create a location spec for a unique component group in a NeXus file.
 
     Parameters
     ----------
     filename:
         NeXus file to use for the location spec.
     """
-    return NeXusComponentLocationSpec[snx.NXsample, RunType](filename=filename.value)
-
-
-def unique_source_spec(
-    filename: NeXusFileSpec[RunType],
-) -> NeXusComponentLocationSpec[snx.NXsource, RunType]:
-    """
-    Create a location spec for a unique source group in a NeXus file.
-
-    Parameters
-    ----------
-    filename:
-        NeXus file to use for the location spec.
-    """
-    return NeXusComponentLocationSpec[snx.NXsource, RunType](filename=filename.value)
+    return NeXusComponentLocationSpec[ComponentType, RunType](filename=filename.value)
 
 
 def monitor_by_name(
@@ -189,7 +174,7 @@ def detector_data_by_name(
 
 def load_nexus_sample(
     location: NeXusComponentLocationSpec[snx.NXsample, RunType],
-) -> NeXusSample[RunType]:
+) -> NeXusComponent[snx.NXsample, RunType]:
     """
     Load a NeXus sample group from a file.
 
@@ -206,13 +191,13 @@ def load_nexus_sample(
     try:
         dg = nexus.load_component(location, nx_class=snx.NXsample)
     except ValueError:
-        dg = sc.DataGroup()
-    return NeXusSample[RunType](dg)
+        dg = sc.DataGroup(depends_on=snx.TransformationChain(parent='', value='.'))
+    return NeXusComponent[snx.NXsample, RunType](dg)
 
 
 def load_nexus_source(
     location: NeXusComponentLocationSpec[snx.NXsource, RunType],
-) -> NeXusSource[RunType]:
+) -> NeXusComponent[snx.NXsource, RunType]:
     """
     Load a NeXus source group from a file.
 
@@ -221,12 +206,14 @@ def load_nexus_source(
     location:
         Location spec for the source group.
     """
-    return NeXusSource[RunType](nexus.load_component(location, nx_class=snx.NXsource))
+    return NeXusComponent[snx.NXsource, RunType](
+        nexus.load_component(location, nx_class=snx.NXsource)
+    )
 
 
 def load_nexus_detector(
     location: NeXusComponentLocationSpec[snx.NXdetector, RunType],
-) -> NeXusDetector[RunType]:
+) -> NeXusComponent[snx.NXdetector, RunType]:
     """
     Load detector from NeXus, but with event data replaced by placeholders.
 
@@ -258,7 +245,7 @@ def load_nexus_detector(
     # The selection is only used for selecting a range of event data.
     location = replace(location, selection=())
 
-    return NeXusDetector[RunType](
+    return NeXusComponent[snx.NXdetector, RunType](
         nexus.load_component(location, nx_class=snx.NXdetector, definitions=definitions)
     )
 
@@ -341,53 +328,37 @@ def load_nexus_monitor_data(
     )
 
 
-def get_source_transformation_chain(
-    source: NeXusSource[RunType],
-) -> NeXusTransformationChain[snx.NXsource, RunType]:
+def get_transformation_chain(
+    detector: NeXusComponent[ComponentType, RunType],
+) -> NeXusTransformationChain[ComponentType, RunType]:
     """
-    Extract the transformation chain from a NeXus source group.
+    Extract the transformation chain from a NeXus detector group.
 
     Parameters
     ----------
-    source:
-        NeXus source group.
+    detector:
+        NeXus detector group.
     """
-    chain = source['depends_on']
-    return NeXusTransformationChain[snx.NXsource, RunType].from_base(chain)
+    chain = detector['depends_on']
+    return NeXusTransformationChain[ComponentType, RunType].from_base(chain)
 
 
-def get_source_position(
-    transformations: NeXusTransformationChain[snx.NXsource, RunType],
-) -> SourcePosition[RunType]:
-    """
-    Extract the source position of a NeXus source group.
-
-    Parameters
-    ----------
-    transformations:
-        NeXus transformation chain of the source group.
-    """
-    return SourcePosition[RunType](transformations.compute_position())
+def to_transformation(
+    chain: NeXusTransformationChain[ComponentType, RunType],
+) -> NeXusTransformation[ComponentType, RunType]:
+    return NeXusTransformation[ComponentType, RunType].from_chain(chain)
 
 
-def get_sample_position(sample: NeXusSample[RunType]) -> SamplePosition[RunType]:
-    """
-    Extract the sample position from a NeXus sample group.
-
-    Defaults to the origin if the sample group does not contain a position field.
-
-    Parameters
-    ----------
-    sample:
-        NeXus sample group.
-    """
-    dg = nexus.compute_component_position(sample)
-    return SamplePosition[RunType](dg.get("position", origin))
+def compute_position(
+    transformation: NeXusTransformation[ComponentType, RunType],
+) -> ComponentPosition[ComponentType, RunType]:
+    return ComponentPosition[ComponentType, RunType](transformation.value * origin)
 
 
 def get_calibrated_detector(
-    detector: NeXusDetector[RunType],
+    detector: NeXusComponent[snx.NXdetector, RunType],
     *,
+    transform: NeXusTransformation[snx.NXdetector, RunType],
     offset: DetectorPositionOffset[RunType],
     bank_sizes: DetectorBankSizes,
 ) -> CalibratedDetector[RunType]:
@@ -414,7 +385,7 @@ def get_calibrated_detector(
     bank_sizes:
         Dictionary of detector bank sizes.
     """
-    detector = nexus.compute_component_position(detector)
+    # detector = nexus.compute_component_position(detector)
     da = nexus.extract_signal_data_array(detector)
     if (
         sizes := (bank_sizes or {}).get(detector.get('nexus_component_name'))
@@ -422,17 +393,19 @@ def get_calibrated_detector(
         da = da.fold(dim="detector_number", sizes=sizes)
     # Note: We apply offset as early as possible, i.e., right in this function
     # the detector array from the raw loader NeXus group, to prevent a source of bugs.
+    base_pos = snx.zip_pixel_offsets(da.coords)
+    position = transform.value * base_pos
     return CalibratedDetector[RunType](
         da.assign_coords(
-            position=da.coords['position'] + offset.to(unit=da.coords['position'].unit),
+            position=position + offset.to(unit=position.unit),
         )
     )
 
 
 def assemble_beamline(
     detector: CalibratedDetector[RunType],
-    source_position: SourcePosition[RunType],
-    sample_position: SamplePosition[RunType],
+    source_position: ComponentPosition[snx.NXsource, RunType],
+    sample_position: ComponentPosition[snx.NXsample, RunType],
     gravity: GravityVector,
 ) -> CalibratedBeamline[RunType]:
     return CalibratedBeamline[RunType](
@@ -473,7 +446,7 @@ def assemble_detector_data(
 def get_calibrated_monitor(
     monitor: NeXusMonitor[RunType, MonitorType],
     offset: MonitorPositionOffset[RunType, MonitorType],
-    source_position: SourcePosition[RunType],
+    source_position: ComponentPosition[snx.NXsource, RunType],
 ) -> CalibratedMonitor[RunType, MonitorType]:
     """
     Extract the data array corresponding to a monitor's signal field.
@@ -588,13 +561,14 @@ _common_providers = (
     gravity_vector_neg_y,
     file_path_to_file_spec,
     all_pulses,
-    get_source_transformation_chain,
-    get_source_position,
+    unique_component_spec,
+    get_transformation_chain,
+    to_transformation,
+    compute_position,
 )
 
 _monitor_providers = (
     no_monitor_position_offset,
-    unique_source_spec,
     monitor_by_name,
     monitor_data_by_name,
     load_nexus_monitor,
@@ -606,15 +580,12 @@ _monitor_providers = (
 
 _detector_providers = (
     no_detector_position_offset,
-    unique_source_spec,
-    unique_sample_spec,
     detector_by_name,
     detector_data_by_name,
     load_nexus_detector,
     load_nexus_detector_data,
     load_nexus_source,
     load_nexus_sample,
-    get_sample_position,
     get_calibrated_detector,
     assemble_beamline,
     assemble_detector_data,

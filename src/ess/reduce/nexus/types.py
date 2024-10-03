@@ -62,6 +62,8 @@ ScatteringRunType = TypeVar(
     VanadiumRun,
 )
 
+ComponentType = TypeVar('ComponentType', snx.NXdetector, snx.NXsample, snx.NXsource)
+
 
 class TransmissionRun(Generic[ScatteringRunType]):
     """
@@ -116,22 +118,16 @@ class NeXusMonitorName(sciline.Scope[MonitorType, str], str):
     """Name of a monitor in a NeXus file."""
 
 
-class NeXusDetector(sciline.Scope[RunType, sc.DataGroup], sc.DataGroup):
-    """Full raw data from a NeXus detector."""
-
-
 class NeXusMonitor(
     sciline.ScopeTwoParams[RunType, MonitorType, sc.DataGroup], sc.DataGroup
 ):
     """Full raw data from a NeXus monitor."""
 
 
-class NeXusSample(sciline.Scope[RunType, sc.DataGroup], sc.DataGroup):
-    """Raw data from a NeXus sample."""
-
-
-class NeXusSource(sciline.Scope[RunType, sc.DataGroup], sc.DataGroup):
-    """Raw data from a NeXus source."""
+class NeXusComponent(
+    sciline.ScopeTwoParams[ComponentType, RunType, sc.DataGroup], sc.DataGroup
+):
+    """Raw data from a NeXus component."""
 
 
 class NeXusDetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
@@ -144,12 +140,10 @@ class NeXusMonitorData(
     """Data array loaded from an NXevent_data or NXdata group within an NXmonitor."""
 
 
-class SourcePosition(sciline.Scope[RunType, sc.Variable], sc.Variable):
+class ComponentPosition(
+    sciline.ScopeTwoParams[ComponentType, RunType, sc.Variable], sc.Variable
+):
     """Position of the neutron source."""
-
-
-class SamplePosition(sciline.Scope[RunType, sc.Variable], sc.Variable):
-    """Position of the sample."""
 
 
 class DetectorPositionOffset(sciline.Scope[RunType, sc.Variable], sc.Variable):
@@ -258,3 +252,18 @@ class NeXusTransformationChain(snx.TransformationChain, Generic[Component, RunTy
 
     def compute_position(self) -> sc.Variable | sc.DataArray:
         return self.compute() * sc.vector([0, 0, 0], unit='m')
+
+
+@dataclass
+class NeXusTransformation(Generic[Component, RunType]):
+    value: sc.Variable
+
+    @staticmethod
+    def from_chain(
+        chain: NeXusTransformationChain[Component, RunType],
+        # TODO can add filter options here
+    ) -> 'NeXusTransformation[Component, RunType]':
+        transform = chain.compute()
+        if transform.ndim == 0:
+            return NeXusTransformation(value=transform)
+        raise ValueError(f"Expected scalar transformation, got {transform}")
