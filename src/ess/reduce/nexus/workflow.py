@@ -233,7 +233,7 @@ def get_transformation_chain(
         NeXus detector group.
     """
     chain = detector['depends_on']
-    return NeXusTransformationChain[Component, RunType].from_base(chain)
+    return NeXusTransformationChain[Component, RunType](chain)
 
 
 def to_transformation(

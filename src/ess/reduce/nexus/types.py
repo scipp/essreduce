@@ -230,18 +230,10 @@ class NeXusDataLocationSpec(NeXusLocationSpec, Generic[Component, RunType]):
 T = TypeVar('T', bound='NeXusTransformationChain')
 
 
-@dataclass
-class NeXusTransformationChain(snx.TransformationChain, Generic[Component, RunType]):
-    @classmethod
-    def from_base(cls: type[T], base: snx.TransformationChain) -> T:
-        return cls(
-            parent=base.parent,
-            value=base.value,
-            transformations=base.transformations,
-        )
-
-    def compute_position(self) -> sc.Variable | sc.DataArray:
-        return self.compute() * sc.vector([0, 0, 0], unit='m')
+class NeXusTransformationChain(
+    sciline.ScopeTwoParams[Component, RunType, snx.TransformationChain],
+    snx.TransformationChain,
+): ...
 
 
 @dataclass
