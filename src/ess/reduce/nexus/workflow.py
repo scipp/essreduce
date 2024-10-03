@@ -3,7 +3,6 @@
 
 """Workflow and workflow components for interacting with NeXus files."""
 
-from dataclasses import replace
 from typing import Any
 
 import sciline
@@ -26,6 +25,7 @@ from .types import (
     MonitorData,
     MonitorPositionOffset,
     MonitorType,
+    NeXusClassName,
     NeXusComponent,
     NeXusComponentLocationSpec,
     NeXusComponentName,
@@ -37,6 +37,7 @@ from .types import (
     PreopenNeXusFile,
     PulseSelection,
     RunType,
+    UniqueComponentType,
 )
 
 origin = sc.vector([0, 0, 0], unit="m")
@@ -73,9 +74,27 @@ def gravity_vector_neg_y() -> GravityVector:
     return GravityVector(sc.vector(value=[0, -1, 0]) * g)
 
 
+def component_spec_by_name(
+    filename: NeXusFileSpec[RunType], name: NeXusComponentName[ComponentType]
+) -> NeXusComponentLocationSpec[ComponentType, RunType]:
+    """
+    Create a location spec for a component group in a NeXus file.
+
+    Parameters
+    ----------
+    filename:
+        NeXus file to use for the location spec.
+    name:
+        Name of the component group.
+    """
+    return NeXusComponentLocationSpec[ComponentType, RunType](
+        filename=filename.value, component_name=name
+    )
+
+
 def unique_component_spec(
     filename: NeXusFileSpec[RunType],
-) -> NeXusComponentLocationSpec[ComponentType, RunType]:
+) -> NeXusComponentLocationSpec[UniqueComponentType, RunType]:
     """
     Create a location spec for a unique component group in a NeXus file.
 
@@ -84,42 +103,8 @@ def unique_component_spec(
     filename:
         NeXus file to use for the location spec.
     """
-    return NeXusComponentLocationSpec[ComponentType, RunType](filename=filename.value)
-
-
-def monitor_by_name(
-    filename: NeXusFileSpec[RunType], name: NeXusComponentName[MonitorType]
-) -> NeXusComponentLocationSpec[MonitorType, RunType]:
-    """
-    Create a location spec for a monitor group in a NeXus file.
-
-    Parameters
-    ----------
-    filename:
-        NeXus file to use for the location spec.
-    name:
-        Name of the monitor group.
-    """
-    return NeXusComponentLocationSpec[MonitorType, RunType](
-        filename=filename.value, component_name=name
-    )
-
-
-def detector_by_name(
-    filename: NeXusFileSpec[RunType], name: NeXusComponentName[snx.NXdetector]
-) -> NeXusComponentLocationSpec[snx.NXdetector, RunType]:
-    """
-    Create a location spec for a detector group in a NeXus file.
-
-    Parameters
-    ----------
-    filename:
-        NeXus file to use for the location spec.
-    name:
-        Name of the detector group.
-    """
-    return NeXusComponentLocationSpec[snx.NXdetector, RunType](
-        filename=filename.value, component_name=name
+    return NeXusComponentLocationSpec[UniqueComponentType, RunType](
+        filename=filename.value
     )
 
 
@@ -168,32 +153,36 @@ def load_nexus_sample(
     return NeXusComponent[snx.NXsample, RunType](dg)
 
 
-def load_nexus_source(
-    location: NeXusComponentLocationSpec[snx.NXsource, RunType],
-) -> NeXusComponent[snx.NXsource, RunType]:
-    """
-    Load a NeXus source group from a file.
-
-    Parameters
-    ----------
-    location:
-        Location spec for the source group.
-    """
-    return NeXusComponent[snx.NXsource, RunType](
-        nexus.load_component(location, nx_class=snx.NXsource)
-    )
+def nx_class_for_monitor() -> NeXusClassName[MonitorType]:
+    return NeXusClassName[MonitorType](snx.NXmonitor)
 
 
-def load_nexus_detector(
-    location: NeXusComponentLocationSpec[snx.NXdetector, RunType],
-) -> NeXusComponent[snx.NXdetector, RunType]:
+def nx_class_for_detector() -> NeXusClassName[snx.NXdetector]:
+    return NeXusClassName[snx.NXdetector](snx.NXdetector)
+
+
+def nx_class_for_source() -> NeXusClassName[snx.NXsource]:
+    return NeXusClassName[snx.NXsource](snx.NXsource)
+
+
+def nx_class_for_sample() -> NeXusClassName[snx.NXsample]:
+    return NeXusClassName[snx.NXsample](snx.NXsample)
+
+
+def load_nexus_component(
+    location: NeXusComponentLocationSpec[ComponentType, RunType],
+    nx_class: NeXusClassName[ComponentType],
+) -> NeXusComponent[ComponentType, RunType]:
     """
-    Load detector from NeXus, but with event data replaced by placeholders.
+    Load a NeXus component group from a file.
+
+    When loading a detector or monitor, event data is replaced by placeholders.
 
     As the event data can be large and is not needed at this stage, it is replaced by
     a placeholder. A placeholder is used to allow for returning a scipp.DataArray, which
     is what most downstream code will expect.
-    Currently the placeholder is the detector number, but this may change in the future.
+    Currently the placeholder is the detector number (for detectors) or a size-0 array
+    (for monitors), but this may change in the future.
 
     The returned object is a scipp.DataGroup, as it may contain additional information
     about the detector that cannot be represented as a single scipp.DataArray. Most
@@ -201,64 +190,15 @@ def load_nexus_detector(
     needs to be extracted. However, other processing steps may require the additional
     information, so it is kept in the DataGroup.
 
-    Loading thus proceeds in three steps:
-
-    1. This function loads the detector, but replaces the event data with placeholders.
-    2. :py:func:`get_calibrated_detector` drops the additional information, returning
-       only the contained scipp.DataArray, reshaped to the logical detector shape.
-       This will generally contain coordinates as well as pixel masks.
-    3. :py:func:`assemble_detector_data` replaces placeholder data values with the
-       event data, and adds source and sample positions.
-
     Parameters
     ----------
     location:
-        Location spec for the detector group.
+        Location spec for the source group.
+    nx_class:
+        NX_class to identify the component.
     """
-    # The selection is only used for selecting a range of event data.
-    location = replace(location, selection=())
-
-    return NeXusComponent[snx.NXdetector, RunType](
-        nexus.load_component(location, nx_class=snx.NXdetector, definitions=definitions)
-    )
-
-
-def load_nexus_monitor(
-    location: NeXusComponentLocationSpec[MonitorType, RunType],
-) -> NeXusComponent[MonitorType, RunType]:
-    """
-    Load monitor from NeXus, but with event data replaced by placeholders.
-
-    As the event data can be large and is not needed at this stage, it is replaced by
-    a placeholder. A placeholder is used to allow for returning a scipp.DataArray, which
-    is what most downstream code will expect.
-    Currently the placeholder is a size-0 array, but this may change in the future.
-
-    The returned object is a scipp.DataGroup, as it may contain additional information
-    about the monitor that cannot be represented as a single scipp.DataArray. Most
-    downstream code will only be interested in the contained scipp.DataArray so this
-    needs to be extracted. However, other processing steps may require the additional
-    information, so it is kept in the DataGroup.
-
-    Loading thus proceeds in three steps:
-
-    1. This function loads the monitor, but replaces the event data with placeholders.
-    2. :py:func:`get_calibrated_monitor` drops the additional information, returning
-       only the contained scipp.DataArray.
-       This will generally contain coordinates as well as pixel masks.
-    3. :py:func:`assemble_monitor_data` replaces placeholder data values with the
-       event data, and adds source and sample positions.
-
-    Parameters
-    ----------
-    location:
-        Location spec for the monitor group.
-    """
-    # The selection is only used for selecting a range of event data.
-    location = replace(location, selection=())
-
-    return NeXusComponent[MonitorType, RunType](
-        nexus.load_component(location, nx_class=snx.NXmonitor, definitions=definitions)
+    return NeXusComponent[ComponentType, RunType](
+        nexus.load_component(location, nx_class=nx_class, definitions=definitions)
     )
 
 
@@ -333,12 +273,6 @@ def get_calibrated_detector(
         NeXus detector group.
     offset:
         Offset to add to the detector position.
-    source_position:
-        Position of the neutron source.
-    sample_position:
-        Position of the sample.
-    gravity:
-        Gravity vector.
     bank_sizes:
         Dictionary of detector bank sizes.
     """
@@ -364,6 +298,20 @@ def assemble_beamline(
     sample_position: ComponentPosition[snx.NXsample, RunType],
     gravity: GravityVector,
 ) -> CalibratedBeamline[RunType]:
+    """
+    Add beamline information (gravity vector, source- and sample-position) to detector.
+
+    Parameters
+    ----------
+    detector:
+        NeXus detector group.
+    source_position:
+        Position of the neutron source.
+    sample_position:
+        Position of the sample.
+    gravity:
+        Gravity vector.
+    """
     return CalibratedBeamline[RunType](
         detector.assign_coords(
             source_position=source_position,
@@ -517,28 +465,28 @@ _common_providers = (
     gravity_vector_neg_y,
     file_path_to_file_spec,
     all_pulses,
-    unique_component_spec,
+    component_spec_by_name,
+    unique_component_spec,  # after component_spec_by_name, partially overrides
     get_transformation_chain,
     to_transformation,
     compute_position,
     load_nexus_data,
+    load_nexus_component,
     data_by_name,
+    nx_class_for_detector,
+    nx_class_for_monitor,
+    nx_class_for_source,
+    nx_class_for_sample,
 )
 
 _monitor_providers = (
     no_monitor_position_offset,
-    monitor_by_name,
-    load_nexus_monitor,
-    load_nexus_source,
     get_calibrated_monitor,
     assemble_monitor_data,
 )
 
 _detector_providers = (
     no_detector_position_offset,
-    detector_by_name,
-    load_nexus_detector,
-    load_nexus_source,
     load_nexus_sample,
     get_calibrated_detector,
     assemble_beamline,

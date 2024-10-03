@@ -122,10 +122,16 @@ ComponentType = TypeVar(
     Incident,
     Transmission,
 )
+UniqueComponentType = TypeVar('UniqueComponentType', snx.NXsample, snx.NXsource)
+"""Components that can be identified by their type as there will only be one."""
 
 
 class NeXusComponentName(sciline.Scope[ComponentType, str], str):
     """Name of a monitor or detector component in a NeXus file."""
+
+
+class NeXusClassName(sciline.Scope[ComponentType, str], str):
+    """NX_class of a component in a NeXus file."""
 
 
 NeXusDetectorName = NeXusComponentName[snx.NXdetector]
