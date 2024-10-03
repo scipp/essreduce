@@ -12,8 +12,8 @@ from ess.reduce.nexus.types import (
     Filename,
     Monitor1,
     MonitorData,
-    NeXusDetectorName,
-    NeXusMonitorName,
+    NeXusName,
+    NeXusTransformation,
     SampleRun,
 )
 from ess.reduce.nexus.workflow import (
@@ -24,8 +24,8 @@ from ess.reduce.nexus.workflow import (
 
 
 @pytest.fixture(params=[{}, {'aux': 1}])
-def group_with_no_position(request) -> workflow.NeXusSample[SampleRun]:
-    return workflow.NeXusSample[SampleRun](sc.DataGroup(request.param))
+def group_with_no_position(request) -> workflow.NeXusComponent[snx.NXsample, SampleRun]:
+    return workflow.NeXusComponent[snx.NXsample, SampleRun](sc.DataGroup(request.param))
 
 
 @pytest.fixture()
@@ -45,40 +45,34 @@ def depends_on() -> snx.TransformationChain:
     )
 
 
-def test_sample_position_returns_position_of_group() -> None:
-    position = sc.vector([1.0, 2.0, 3.0], unit='m')
-    sample_group = workflow.NeXusSample[SampleRun](sc.DataGroup(position=position))
-    assert_identical(workflow.get_sample_position(sample_group), position)
-
-
-def test_get_sample_position_returns_origin_if_position_not_found(
-    group_with_no_position,
-) -> None:
-    assert_identical(
-        workflow.get_sample_position(group_with_no_position), workflow.origin
-    )
-
-
-def test_get_source_position_returns_position_of_group(
+@pytest.fixture()
+def transform(
     depends_on: snx.TransformationChain,
-) -> None:
+) -> NeXusTransformation[snx.NXdetector, SampleRun]:
+    return NeXusTransformation.from_chain(depends_on)
+
+
+def test_can_compute_position_of_group(depends_on: snx.TransformationChain) -> None:
     position = sc.vector([1.0, 2.0, 3.0], unit='m')
-    source_group = workflow.NeXusSource[SampleRun](sc.DataGroup(depends_on=depends_on))
-    chain = workflow.get_source_transformation_chain(source_group)
-    assert_identical(workflow.get_source_position(chain), position)
+    group = workflow.NeXusComponent[snx.NXsource, SampleRun](
+        sc.DataGroup(depends_on=depends_on)
+    )
+    chain = workflow.get_transformation_chain(group)
+    trans = workflow.to_transformation(chain)
+    assert_identical(workflow.compute_position(trans), position)
 
 
-def test_get_source_transformation_chain_raises_exception_if_position_not_found(
+def test_get_transformation_chain_raises_exception_if_position_not_found(
     group_with_no_position,
 ) -> None:
     with pytest.raises(KeyError, match='depends_on'):
-        workflow.get_source_transformation_chain(group_with_no_position)
+        workflow.get_transformation_chain(group_with_no_position)
 
 
 @pytest.fixture()
 def nexus_detector(
     depends_on: snx.TransformationChain,
-) -> workflow.NeXusDetector[SampleRun]:
+) -> workflow.NeXusComponent[snx.NXdetector, SampleRun]:
     detector_number = sc.arange('detector_number', 6, unit=None)
     data = sc.DataArray(
         sc.empty_like(detector_number),
@@ -87,7 +81,7 @@ def nexus_detector(
             'x_pixel_offset': sc.linspace('detector_number', 0, 1, num=6, unit='m'),
         },
     )
-    return workflow.NeXusDetector[SampleRun](
+    return workflow.NeXusComponent[snx.NXdetector, SampleRun](
         sc.DataGroup(data=data, depends_on=depends_on, nexus_component_name='detector1')
     )
 
@@ -98,67 +92,51 @@ def source_position() -> sc.Variable:
 
 
 def test_get_calibrated_detector_extracts_data_field_from_nexus_detector(
-    nexus_detector,
-    source_position,
+    nexus_detector, transform
 ) -> None:
     detector = workflow.get_calibrated_detector(
-        nexus_detector,
-        offset=workflow.no_offset,
-        source_position=source_position,
-        sample_position=workflow.origin,
-        gravity=workflow.gravity_vector_neg_y(),
-        bank_sizes={},
+        nexus_detector, offset=workflow.no_offset, bank_sizes={}, transform=transform
     )
-    assert_identical(
-        detector.drop_coords(('sample_position', 'source_position', 'gravity')),
-        compute_component_position(nexus_detector)['data'],
-    )
+    assert_identical(detector, compute_component_position(nexus_detector)['data'])
 
 
 def test_get_calibrated_detector_folds_detector_number_if_mapping_given(
-    nexus_detector,
-    source_position,
+    nexus_detector, transform
 ) -> None:
     sizes = {'xpixel': 2, 'ypixel': 3}
     bank_sizes = {'detector1': sizes}
     detector = workflow.get_calibrated_detector(
         nexus_detector,
         offset=workflow.no_offset,
-        source_position=source_position,
-        sample_position=workflow.origin,
-        gravity=workflow.gravity_vector_neg_y(),
         bank_sizes=bank_sizes,
+        transform=transform,
     )
     assert detector.sizes == sizes
 
 
 def test_get_calibrated_detector_works_if_nexus_component_name_is_missing(
-    nexus_detector, source_position
+    nexus_detector, transform
 ):
     del nexus_detector['nexus_component_name']
     detector = workflow.get_calibrated_detector(
         nexus_detector,
         offset=workflow.no_offset,
-        source_position=source_position,
-        sample_position=workflow.origin,
-        gravity=workflow.gravity_vector_neg_y(),
         bank_sizes={},
+        transform=transform,
     )
     assert detector.sizes == nexus_detector['data'].sizes
 
 
 def test_get_calibrated_detector_adds_offset_to_position(
     nexus_detector,
-    source_position,
+    transform,
 ) -> None:
     offset = sc.vector([0.1, 0.2, 0.3], unit='m')
     detector = workflow.get_calibrated_detector(
         nexus_detector,
         offset=offset,
-        source_position=source_position,
-        sample_position=workflow.origin,
-        gravity=workflow.gravity_vector_neg_y(),
         bank_sizes={},
+        transform=transform,
     )
     position = (
         compute_component_position(nexus_detector)['data'].coords['position'] + offset
@@ -167,34 +145,21 @@ def test_get_calibrated_detector_adds_offset_to_position(
     assert_identical(detector.coords['position'], position)
 
 
-def test_get_calibrated_detector_forwards_coords(
-    nexus_detector,
-    source_position,
-) -> None:
+def test_get_calibrated_detector_forwards_coords(nexus_detector, transform) -> None:
     nexus_detector['data'].coords['abc'] = sc.scalar(1.2)
     detector = workflow.get_calibrated_detector(
-        nexus_detector,
-        offset=workflow.no_offset,
-        source_position=source_position,
-        sample_position=workflow.origin,
-        gravity=workflow.gravity_vector_neg_y(),
-        bank_sizes={},
+        nexus_detector, offset=workflow.no_offset, bank_sizes={}, transform=transform
     )
     assert 'abc' in detector.coords
 
 
 def test_get_calibrated_detector_forwards_masks(
     nexus_detector,
-    source_position,
+    transform,
 ) -> None:
     nexus_detector['data'].masks['mymask'] = sc.scalar(False)
     detector = workflow.get_calibrated_detector(
-        nexus_detector,
-        offset=workflow.no_offset,
-        source_position=source_position,
-        sample_position=workflow.origin,
-        gravity=workflow.gravity_vector_neg_y(),
-        bank_sizes={},
+        nexus_detector, offset=workflow.no_offset, bank_sizes={}, transform=transform
     )
     assert 'mymask' in detector.masks
 
@@ -214,13 +179,13 @@ def calibrated_detector() -> workflow.CalibratedDetector[SampleRun]:
 
 
 @pytest.fixture()
-def detector_event_data() -> workflow.NeXusDetectorData[SampleRun]:
+def detector_event_data() -> workflow.NeXusData[snx.NXdetector, SampleRun]:
     content = sc.DataArray(
         sc.ones(dims=['event'], shape=[17], unit='counts'),
         coords={'event_id': sc.arange('event', 17, unit=None) % sc.index(6)},
     )
     weights = sc.bins(data=content, dim='event')
-    return workflow.NeXusDetectorData[SampleRun](
+    return workflow.NeXusData[snx.NXdetector, SampleRun](
         sc.DataArray(
             weights,
             coords={
@@ -279,9 +244,9 @@ def test_assemble_detector_preserves_masks(calibrated_detector, detector_event_d
 @pytest.fixture()
 def nexus_monitor(
     depends_on: snx.TransformationChain,
-) -> workflow.NeXusMonitor[SampleRun, Monitor1]:
+) -> workflow.NeXusComponent[Monitor1, SampleRun]:
     data = sc.DataArray(sc.scalar(1.2), coords={'something': sc.scalar(13)})
-    return workflow.NeXusMonitor[SampleRun, Monitor1](
+    return workflow.NeXusComponent[Monitor1, SampleRun](
         sc.DataGroup(data=data, depends_on=depends_on)
     )
 
@@ -323,10 +288,10 @@ def calibrated_monitor() -> workflow.CalibratedMonitor[SampleRun, Monitor1]:
 
 
 @pytest.fixture()
-def monitor_event_data() -> workflow.NeXusMonitorData[SampleRun, Monitor1]:
+def monitor_event_data() -> workflow.NeXusData[Monitor1, SampleRun]:
     content = sc.DataArray(sc.ones(dims=['event'], shape=[17], unit='counts'))
     weights = sc.bins(data=content, dim='event')
-    return workflow.NeXusMonitorData[SampleRun, Monitor1](
+    return workflow.NeXusData[Monitor1, SampleRun](
         sc.DataArray(
             weights,
             coords={
@@ -380,7 +345,7 @@ def test_assemble_monitor_preserves_masks(calibrated_monitor, monitor_event_data
 def test_load_monitor_workflow() -> None:
     wf = LoadMonitorWorkflow()
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
-    wf[NeXusMonitorName[Monitor1]] = 'monitor_1'
+    wf[NeXusName[Monitor1]] = 'monitor_1'
     da = wf.compute(MonitorData[SampleRun, Monitor1])
     assert 'position' in da.coords
     assert 'source_position' in da.coords
@@ -391,7 +356,7 @@ def test_load_monitor_workflow() -> None:
 def test_load_detector_workflow() -> None:
     wf = LoadDetectorWorkflow()
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
-    wf[NeXusDetectorName] = 'larmor_detector'
+    wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     da = wf.compute(DetectorData[SampleRun])
     assert 'position' in da.coords
     assert 'sample_position' in da.coords
@@ -403,8 +368,8 @@ def test_load_detector_workflow() -> None:
 def test_generic_nexus_workflow() -> None:
     wf = GenericNeXusWorkflow()
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
-    wf[NeXusMonitorName[Monitor1]] = 'monitor_1'
-    wf[NeXusDetectorName] = 'larmor_detector'
+    wf[NeXusName[Monitor1]] = 'monitor_1'
+    wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     da = wf.compute(DetectorData[SampleRun])
     assert 'position' in da.coords
     assert 'sample_position' in da.coords
