@@ -8,7 +8,7 @@ from typing import Any
 import scipp as sc
 
 
-def _as_attr(value: Any, name: str) -> dict:
+def _as_str_attr(value: Any, name: str) -> dict:
     val = str(value)
     return {"string_size": len(val), "type": "string", "name": name, "values": val}
 
@@ -17,10 +17,10 @@ def _variable_to_json(var: sc.Variable, name: str):
     attrs = []
     if var.dtype == sc.DType.datetime64:
         offset = var.min()
-        attrs.append(_as_attr(offset.value, "offset"))
+        attrs.append(_as_str_attr(offset.value, "offset"))
         var = var - offset
     if var.unit is not None:
-        attrs.append(_as_attr(var.unit, "units"))
+        attrs.append(_as_str_attr(var.unit, "units"))
     return {
         "module": "dataset",
         "config": {
@@ -54,14 +54,7 @@ def _event_data_pulse_to_json(pulse: sc.DataArray) -> dict:
         "type": "group",
         "name": "events_0",
         "children": children,
-        "attributes": [
-            {
-                "string_size": 12,
-                "type": "string",
-                "name": "NX_class",
-                "values": "NXevent_data",
-            }
-        ],
+        "attributes": [_as_str_attr("NXevent_data", name="NX_class")],
     }
     return group
 
