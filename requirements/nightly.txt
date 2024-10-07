@@ -10,11 +10,11 @@ cyclebane @ git+https://github.com/scipp/cyclebane@main
     # via
     #   -r nightly.in
     #   sciline
-h5py==3.11.0
+h5py==3.12.1
     # via scippnexus
 networkx==3.3
     # via cyclebane
-numpy==2.1.0
+numpy==2.1.2
     # via
     #   h5py
     #   scipp
