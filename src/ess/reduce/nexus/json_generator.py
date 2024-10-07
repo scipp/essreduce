@@ -68,6 +68,12 @@ def event_data_generator(data: sc.DataArray) -> Generator[dict, None, None]:
     data:
         A data array with event data, equivalent to what ScippNexus would load from an
          NXevent_data group in a NeXus file.
+
+    Yields
+    ------
+    :
+        A dict of data for a single event data pulse that can be wrapped in a
+        :py:class:`ess.reduce.nexus.json_nexus.JSONGroup`.
     """
     for pulse in data:
         yield _event_data_pulse_to_json(pulse)
