@@ -67,7 +67,7 @@ def event_data_generator(data: sc.DataArray) -> Generator[dict, None, None]:
     ----------
     data:
         A data array with event data, equivalent to what ScippNexus would load from an
-         NXevent_data group in a NeXus file.
+        NXevent_data group in a NeXus file.
 
     Yields
     ------
