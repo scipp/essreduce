@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+import pytest
 import scippnexus as snx
 from scipp.testing import assert_identical
 
@@ -15,6 +16,8 @@ def test_event_data_generator_monitor_events_round_trip() -> None:
     for i in range(len(monitor)):
         group = json_nexus_group(next(generator))
         assert_identical(group[()], monitor[i : i + 1])
+    with pytest.raises(StopIteration):
+        next(generator)
 
 
 def test_event_data_generator_detector_events_round_trip() -> None:
