@@ -16,7 +16,7 @@ from ._nexus_loader import (
     group_event_data,
     load_component,
     compute_component_position,
-    extract_events_or_histogram,
+    extract_signal_data_array,
 )
 
 __all__ = [
@@ -25,5 +25,5 @@ __all__ = [
     'load_data',
     'load_component',
     'compute_component_position',
-    'extract_events_or_histogram',
+    'extract_signal_data_array',
 ]

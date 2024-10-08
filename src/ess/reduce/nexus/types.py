@@ -22,8 +22,6 @@ The type alias is provided for callers of load functions outside of pipelines.
 NeXusGroup = NewType('NeXusGroup', snx.Group)
 """A ScippNexus group in an open file."""
 
-NeXusDetectorName = NewType('NeXusDetectorName', str)
-"""Name of a detector (bank) in a NeXus file."""
 NeXusEntryName = NewType('NeXusEntryName', str)
 """Name of an entry in a NeXus file."""
 NeXusSourceName = NewType('NeXusSourceName', str)
@@ -32,8 +30,6 @@ NeXusSourceName = NewType('NeXusSourceName', str)
 DetectorBankSizes = NewType("DetectorBankSizes", dict[str, dict[str, int | Any]])
 
 GravityVector = NewType('GravityVector', sc.Variable)
-
-Component = TypeVar('Component', bound=snx.NXobject)
 
 PreopenNeXusFile = NewType('PreopenNeXusFile', bool)
 """Whether to preopen NeXus files before passing them to the rest of the workflow."""
@@ -95,9 +91,9 @@ Monitor4 = NewType('Monitor4', int)
 """Identifier for an arbitrary monitor"""
 Monitor5 = NewType('Monitor5', int)
 """Identifier for an arbitrary monitor"""
-Incident = NewType('Incident', int)
+IncidentMonitor = NewType('IncidentMonitor', int)
 """Incident monitor"""
-Transmission = NewType('Transmission', int)
+TransmissionMonitor = NewType('TransmissionMonitor', int)
 """Transmission monitor"""
 MonitorType = TypeVar(
     'MonitorType',
@@ -106,50 +102,56 @@ MonitorType = TypeVar(
     Monitor3,
     Monitor4,
     Monitor5,
-    Incident,
-    Transmission,
+    IncidentMonitor,
+    TransmissionMonitor,
 )
 """TypeVar used for specifying the monitor type such as Incident or Transmission"""
 
+Component = TypeVar(
+    'Component',
+    snx.NXdetector,
+    snx.NXsample,
+    snx.NXsource,
+    Monitor1,
+    Monitor2,
+    Monitor3,
+    Monitor4,
+    Monitor5,
+    IncidentMonitor,
+    TransmissionMonitor,
+)
+UniqueComponent = TypeVar('UniqueComponent', snx.NXsample, snx.NXsource)
+"""Components that can be identified by their type as there will only be one."""
 
-class NeXusMonitorName(sciline.Scope[MonitorType, str], str):
-    """Name of a monitor in a NeXus file."""
+
+class NeXusName(sciline.Scope[Component, str], str):
+    """Name of a component in a NeXus file."""
 
 
-class NeXusDetector(sciline.Scope[RunType, sc.DataGroup], sc.DataGroup):
-    """Full raw data from a NeXus detector."""
+class NeXusClass(sciline.Scope[Component, str], str):
+    """NX_class of a component in a NeXus file."""
 
 
-class NeXusMonitor(
-    sciline.ScopeTwoParams[RunType, MonitorType, sc.DataGroup], sc.DataGroup
+NeXusDetectorName = NeXusName[snx.NXdetector]
+"""Name of a detector (bank) in a NeXus file."""
+
+
+class NeXusComponent(
+    sciline.ScopeTwoParams[Component, RunType, sc.DataGroup], sc.DataGroup
 ):
-    """Full raw data from a NeXus monitor."""
+    """Raw data from a NeXus component."""
 
 
-class NeXusSample(sciline.Scope[RunType, sc.DataGroup], sc.DataGroup):
-    """Raw data from a NeXus sample."""
+class NeXusData(sciline.ScopeTwoParams[Component, RunType, sc.DataArray], sc.DataArray):
+    """
+    Data array loaded from an NXevent_data or NXdata group.
+
+    This must be contained in an NXmonitor or NXdetector group.
+    """
 
 
-class NeXusSource(sciline.Scope[RunType, sc.DataGroup], sc.DataGroup):
-    """Raw data from a NeXus source."""
-
-
-class NeXusDetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
-    """Data array loaded from an NXevent_data or NXdata group within an NXdetector."""
-
-
-class NeXusMonitorData(
-    sciline.ScopeTwoParams[RunType, MonitorType, sc.DataArray], sc.DataArray
-):
-    """Data array loaded from an NXevent_data or NXdata group within an NXmonitor."""
-
-
-class SourcePosition(sciline.Scope[RunType, sc.Variable], sc.Variable):
-    """Position of the neutron source."""
-
-
-class SamplePosition(sciline.Scope[RunType, sc.Variable], sc.Variable):
-    """Position of the sample."""
+class Position(sciline.ScopeTwoParams[Component, RunType, sc.Variable], sc.Variable):
+    """Position of a component such as source, sample, monitor, or detector."""
 
 
 class DetectorPositionOffset(sciline.Scope[RunType, sc.Variable], sc.Variable):
@@ -164,6 +166,10 @@ class MonitorPositionOffset(
 
 class CalibratedDetector(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
     """Calibrated data from a detector."""
+
+
+class CalibratedBeamline(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
+    """Calibrated beamline with detector and other components."""
 
 
 class CalibratedMonitor(
@@ -217,23 +223,37 @@ class NeXusComponentLocationSpec(NeXusLocationSpec, Generic[Component, RunType])
 
 
 @dataclass
-class NeXusMonitorLocationSpec(
-    NeXusComponentLocationSpec[snx.NXmonitor, RunType], Generic[RunType, MonitorType]
-):
-    """
-    NeXus filename and optional parameters to identify (parts of) a monitor to load.
-    """
-
-
-@dataclass
-class NeXusDetectorDataLocationSpec(
-    NeXusComponentLocationSpec[snx.NXevent_data, RunType], Generic[RunType]
-):
+class NeXusDataLocationSpec(NeXusLocationSpec, Generic[Component, RunType]):
     """NeXus filename and parameters to identify (parts of) detector data to load."""
 
 
+T = TypeVar('T', bound='NeXusTransformationChain')
+
+
+class NeXusTransformationChain(
+    sciline.ScopeTwoParams[Component, RunType, snx.TransformationChain],
+    snx.TransformationChain,
+): ...
+
+
 @dataclass
-class NeXusMonitorDataLocationSpec(
-    NeXusComponentLocationSpec[snx.NXevent_data, RunType], Generic[RunType, MonitorType]
-):
-    """NeXus filename and parameters to identify (parts of) monitor data to load."""
+class NeXusTransformation(Generic[Component, RunType]):
+    value: sc.Variable
+
+    @staticmethod
+    def from_chain(
+        chain: NeXusTransformationChain[Component, RunType],
+    ) -> 'NeXusTransformation[Component, RunType]':
+        """
+        Convert a transformation chain to a single transformation.
+
+        As transformation chains may be time-dependent, this method will need to select
+        a specific time point to convert to a single transformation. This may include
+        averaging as well as threshold checks. This is not implemented yet and we
+        therefore currently raise an error if the transformation chain does not compute
+        to a scalar.
+        """
+        transform = chain.compute()
+        if transform.ndim == 0:
+            return NeXusTransformation(value=transform)
+        raise ValueError(f"Expected scalar transformation, got {transform}")
