@@ -14,8 +14,8 @@ def _scale_group(event_data: h5py.Group, scale: int):
     event_data['event_index'][:] = event_index
 
     size = event_data['event_id'].size
-    event_data['event_id'].resize(event_index[-1], axis=0)
-    event_data['event_time_offset'].resize(event_index[-1], axis=0)
+    event_data['event_id'].resize(size * scale, axis=0)
+    event_data['event_time_offset'].resize(size * scale, axis=0)
 
     for s in range(1, scale):
         event_data['event_id'][s * size : (s + 1) * size] = event_data['event_id'][
