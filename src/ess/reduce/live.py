@@ -38,6 +38,8 @@ T = TypeVar('T', bound='LiveWorkflow')
 
 
 class LiveWorkflow:
+    """A workflow class that fulfills Beamlime's LiveWorkflow protocol."""
+
     def __init__(
         self,
         *,
@@ -57,6 +59,30 @@ class LiveWorkflow:
         run_type: type[nt.RunType],
         nexus_filename: Path,
     ) -> T:
+        """
+        Create a live workflow from a base workflow and other parameters.
+
+        Parameters
+        ----------
+        workflow:
+            Base workflow to use for live data reduction.
+        accumulators:
+            Accumulators forwarded to the stream processor.
+        outputs:
+            Mapping from output names to keys in the workflow. The keys correspond to
+            workflow results that will be computed.
+        run_type:
+            Type of the run to process. This defines which run is the dynamic run being
+            processed. The NeXus template file will be set as the filename for this run.
+        nexus_filename:
+            Path to the NeXus file to process.
+
+        Returns
+        -------
+        :
+            Live workflow object.
+        """
+
         workflow = workflow.copy()
         if run_type is nt.SampleRun:
             workflow.insert(load_json_event_data_for_sample_run)
@@ -76,6 +102,21 @@ class LiveWorkflow:
     def __call__(
         self, nxevent_data: dict[str, JSONGroup], nxlog: dict[str, JSONGroup]
     ) -> dict[str, sc.DataArray]:
+        """
+        Implements the __call__ method required by the LiveWorkflow protocol.
+
+        Parameters
+        ----------
+        nxevent_data:
+            NeXus event data.
+        nxlog:
+            NeXus log data. WARNING: This is currently not used.
+
+        Returns
+        -------
+        :
+            Dictionary of computed and plottable results.
+        """
         # Beamlime passes full path, but the workflow only needs the name of the monitor
         # or detector group.
         nxevent_data = {
