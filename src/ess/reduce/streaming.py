@@ -191,7 +191,9 @@ class StreamProcessor:
             for key, value in self._accumulators.items()
             if key in self._process_chunk_workflow.underlying_graph
         }
-        # Create accumulators unless instances were passed
+        # Create accumulators unless instances were passed. This allows for initializing
+        # accumulators with arguments that depend on the workflow such as bin edges,
+        # which would otherwise be hard to obtain.
         self._accumulators = {
             key: value
             if isinstance(value, Accumulator)
