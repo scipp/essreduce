@@ -147,7 +147,9 @@ def load_nexus_sample(
     try:
         dg = nexus.load_component(location, nx_class=snx.NXsample)
     except ValueError:
-        dg = sc.DataGroup(depends_on=snx.TransformationChain(parent='', value='.'))
+        dg = sc.DataGroup()
+    if 'depends_on' not in dg:
+        dg['depends_on'] = snx.TransformationChain(parent='', value='.')
     return NeXusComponent[snx.NXsample, RunType](dg)
 
 
