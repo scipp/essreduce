@@ -144,7 +144,7 @@ class StreamProcessor:
         *,
         dynamic_keys: tuple[sciline.typing.Key, ...],
         target_keys: tuple[sciline.typing.Key, ...],
-        accumulators: dict[sciline.typing.Key, Accumulator]
+        accumulators: dict[sciline.typing.Key, Accumulator, Callable[..., Accumulator]]
         | tuple[sciline.typing.Key, ...],
     ) -> None:
         """
@@ -161,7 +161,8 @@ class StreamProcessor:
         accumulators:
             Keys at which to accumulate values and their accumulators. If a tuple is
             passed, :py:class:`EternalAccumulator` is used for all keys. Otherwise, a
-            dict mapping keys to accumulator instances can be passed.
+            dict mapping keys to accumulator instances can be passed. If a dict value is
+            a callable, base_workflow.bind_and_call(value) is used to make an instance.
         """
         workflow = sciline.Pipeline()
         for key in target_keys:
@@ -189,6 +190,13 @@ class StreamProcessor:
             key: value
             for key, value in self._accumulators.items()
             if key in self._process_chunk_workflow.underlying_graph
+        }
+        # Create accumulators unless instances were passed
+        self._accumulators = {
+            key: value
+            if isinstance(value, Accumulator)
+            else base_workflow.bind_and_call(value)
+            for key, value in self._accumulators.items()
         }
         self._target_keys = target_keys
 
