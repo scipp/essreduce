@@ -62,6 +62,22 @@ def test_can_compute_position_of_group(depends_on: snx.TransformationChain) -> N
     assert_identical(workflow.compute_position(trans), position)
 
 
+def test_given_no_sample_load_nexus_sample_returns_group_with_origin_depends_on() -> (
+    None
+):
+    filespec = workflow.file_path_to_file_spec(
+        data.loki_tutorial_sample_run_60250(), preopen=True
+    )
+    spec = workflow.unique_component_spec(filespec)
+    assert spec.filename['/entry'][snx.NXsample] == {}
+    sample = workflow.load_nexus_sample(spec)
+    assert list(sample) == ['depends_on']
+    chain = workflow.get_transformation_chain(sample)
+    transformation = workflow.to_transformation(chain)
+    position = workflow.compute_position(transformation)
+    assert_identical(position, sc.vector([0.0, 0.0, 0.0], unit='m'))
+
+
 def test_get_transformation_chain_raises_exception_if_position_not_found(
     group_with_no_position,
 ) -> None:
