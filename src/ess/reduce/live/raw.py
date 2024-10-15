@@ -56,9 +56,11 @@ class Detector:
     def data(self) -> sc.DataArray:
         return self._data
 
+    def bincount(self, data: Sequence[int]) -> np.ndarray:
+        return np.bincount(np.asarray(data) - self._start, minlength=self.data.size)
+
     def add_counts(self, data: Sequence[int]) -> None:
-        data = np.asarray(data)
-        self._values += np.bincount(data - self._start, minlength=self.data.size)
+        self._values += self.bincount(data)
 
     def clear_counts(self) -> None:
         self._data.values *= 0
