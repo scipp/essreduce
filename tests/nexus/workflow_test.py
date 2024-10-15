@@ -15,6 +15,7 @@ from ess.reduce.nexus.types import (
     Monitor2,
     Monitor3,
     MonitorData,
+    NeXusComponentLocationSpec,
     NeXusName,
     NeXusTransformation,
     SampleRun,
@@ -411,11 +412,25 @@ def test_generic_nexus_workflow_raises_if_monitor_types_but_not_run_types_given(
 
 def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> None:
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[Monitor1, Monitor3])
-    assert DetectorData[SampleRun] in wf.underlying_graph
-    assert DetectorData[BackgroundRun] not in wf.underlying_graph
-    assert MonitorData[SampleRun, Monitor1] in wf.underlying_graph
-    assert MonitorData[SampleRun, Monitor2] not in wf.underlying_graph
-    assert MonitorData[SampleRun, Monitor3] in wf.underlying_graph
-    assert MonitorData[BackgroundRun, Monitor1] not in wf.underlying_graph
-    assert MonitorData[BackgroundRun, Monitor2] not in wf.underlying_graph
-    assert MonitorData[BackgroundRun, Monitor3] not in wf.underlying_graph
+    graph = wf.underlying_graph
+    assert DetectorData[SampleRun] in graph
+    assert DetectorData[BackgroundRun] not in graph
+    assert MonitorData[SampleRun, Monitor1] in graph
+    assert MonitorData[SampleRun, Monitor2] not in graph
+    assert MonitorData[SampleRun, Monitor3] in graph
+    assert MonitorData[BackgroundRun, Monitor1] not in graph
+    assert MonitorData[BackgroundRun, Monitor2] not in graph
+    assert MonitorData[BackgroundRun, Monitor3] not in graph
+    # Many other keys are also removed, this is just an example
+    assert NeXusComponentLocationSpec[Monitor1, SampleRun] in graph
+    assert NeXusComponentLocationSpec[Monitor2, SampleRun] not in graph
+    assert NeXusComponentLocationSpec[Monitor3, SampleRun] in graph
+    assert NeXusComponentLocationSpec[snx.NXdetector, SampleRun] in graph
+    assert NeXusComponentLocationSpec[snx.NXsample, SampleRun] in graph
+    assert NeXusComponentLocationSpec[snx.NXsource, SampleRun] in graph
+    assert NeXusComponentLocationSpec[Monitor1, BackgroundRun] not in graph
+    assert NeXusComponentLocationSpec[Monitor2, BackgroundRun] not in graph
+    assert NeXusComponentLocationSpec[Monitor3, BackgroundRun] not in graph
+    assert NeXusComponentLocationSpec[snx.NXdetector, BackgroundRun] not in graph
+    assert NeXusComponentLocationSpec[snx.NXsample, BackgroundRun] not in graph
+    assert NeXusComponentLocationSpec[snx.NXsource, BackgroundRun] not in graph

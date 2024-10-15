@@ -554,6 +554,8 @@ def GenericNeXusWorkflow(
 
     g = wf.underlying_graph
     ancestors = set()
+    # DetectorData and MonitorData are the "final" outputs, so finding and removing all
+    # their ancestors is what we need to strip unused run and monitor types.
     for rt in run_types or ():
         ancestors |= nx.ancestors(g, DetectorData[rt])
         ancestors.add(DetectorData[rt])
