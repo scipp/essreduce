@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+"""Raw count processing and visualization for live data display."""
+
+from collections.abc import Sequence
+from dataclasses import dataclass
+
+import numpy as np
+import scipp as sc
+
+
+@dataclass
+class DetectorParams:
+    detector_number: sc.Variable
+    x_pixel_offset: sc.Variable | None = None
+    y_pixel_offset: sc.Variable | None = None
+    z_pixel_offset: sc.Variable | None = None
+
+    def __post_init__(self):
+        self._flat_detector_number = self.detector_number.flatten(to='event_id')
+        if not sc.issorted(self._flat_detector_number, dim='event_id'):
+            raise ValueError("Detector numbers must be sorted.")
+        if self.stop - self.start + 1 != self.size:
+            raise ValueError("Detector numbers must be consecutive.")
+
+    @property
+    def size(self) -> int:
+        return int(self._flat_detector_number.size)
+
+    @property
+    def start(self) -> int:
+        return int(self._flat_detector_number[0].value)
+
+    @property
+    def stop(self) -> int:
+        return int(self._flat_detector_number[-1].value)
+
+
+class Detector:
+    def __init__(self, params: DetectorParams):
+        self._data = sc.DataArray(
+            sc.zeros(sizes=params.detector_number.sizes, unit='counts', dtype='int32'),
+            coords={'detector_id': params.detector_number},
+        )
+        if params.x_pixel_offset is not None:
+            self._data.coords['x_pixel_offset'] = params.x_pixel_offset
+        if params.y_pixel_offset is not None:
+            self._data.coords['y_pixel_offset'] = params.y_pixel_offset
+        if params.z_pixel_offset is not None:
+            self._data.coords['z_pixel_offset'] = params.z_pixel_offset
+        self._start = params.start
+        self._size = params.size
+        self._values = self._data.flatten(to='event_id').values
+
+    @property
+    def data(self) -> sc.DataArray:
+        return self._data
+
+    def add_counts(self, data: Sequence[int]) -> None:
+        data = np.asarray(data)
+        self._values += np.bincount(data - self._start, minlength=self.data.size)
+
+    def clear_counts(self) -> None:
+        self._data.values *= 0
