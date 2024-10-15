@@ -13,6 +13,7 @@ from ess.reduce.nexus.types import (
     Filename,
     Monitor1,
     Monitor2,
+    Monitor3,
     MonitorData,
     NeXusName,
     NeXusTransformation,
@@ -409,10 +410,12 @@ def test_generic_nexus_workflow_raises_if_monitor_types_but_not_run_types_given(
 
 
 def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> None:
-    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[Monitor1])
+    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[Monitor1, Monitor3])
     assert DetectorData[SampleRun] in wf.underlying_graph
     assert DetectorData[BackgroundRun] not in wf.underlying_graph
     assert MonitorData[SampleRun, Monitor1] in wf.underlying_graph
     assert MonitorData[SampleRun, Monitor2] not in wf.underlying_graph
+    assert MonitorData[SampleRun, Monitor3] in wf.underlying_graph
     assert MonitorData[BackgroundRun, Monitor1] not in wf.underlying_graph
     assert MonitorData[BackgroundRun, Monitor2] not in wf.underlying_graph
+    assert MonitorData[BackgroundRun, Monitor3] not in wf.underlying_graph
