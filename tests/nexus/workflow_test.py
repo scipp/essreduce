@@ -8,9 +8,11 @@ from scipp.testing import assert_identical
 from ess.reduce import data
 from ess.reduce.nexus import compute_component_position, workflow
 from ess.reduce.nexus.types import (
+    BackgroundRun,
     DetectorData,
     Filename,
     Monitor1,
+    Monitor2,
     MonitorData,
     NeXusName,
     NeXusTransformation,
@@ -397,3 +399,20 @@ def test_generic_nexus_workflow() -> None:
     assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('event_time_zero',)
+
+
+def test_generic_nexus_workflow_raises_if_monitor_types_but_not_run_types_given() -> (
+    None
+):
+    with pytest.raises(ValueError, match='run_types'):
+        GenericNeXusWorkflow(monitor_types=[Monitor1])
+
+
+def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> None:
+    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[Monitor1])
+    assert DetectorData[SampleRun] in wf.underlying_graph
+    assert DetectorData[BackgroundRun] not in wf.underlying_graph
+    assert MonitorData[SampleRun, Monitor1] in wf.underlying_graph
+    assert MonitorData[SampleRun, Monitor2] not in wf.underlying_graph
+    assert MonitorData[BackgroundRun, Monitor1] not in wf.underlying_graph
+    assert MonitorData[BackgroundRun, Monitor2] not in wf.underlying_graph
