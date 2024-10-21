@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+import pytest
 import scipp as sc
 
 from ess.reduce.live import raw
@@ -65,3 +66,14 @@ def test_RollingDetectorView_partial_window() -> None:
     assert det.get(1).sum().value == 2
     assert det.get(2).sum().value == 2
     assert det.get(3).sum().value == 4
+
+
+def test_RollingDetectorView_raises_if_subwindow_exceeds_window() -> None:
+    params = raw.DetectorParams(
+        detector_number=sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    )
+    det = raw.RollingDetectorView(params, window=3)
+    with pytest.raises(ValueError, match="Window size"):
+        det.get(4)
+    with pytest.raises(ValueError, match="Window size"):
+        det.get(-1)

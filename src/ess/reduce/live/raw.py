@@ -80,7 +80,9 @@ class RollingDetectorView(Detector):
         self._cache = self._history.sum('window')
 
     def get(self, window: int | None = None) -> sc.DataArray:
-        if window is None:
+        if window is not None and not 0 <= window <= self._window:
+            raise ValueError("Window size must be less than the history size.")
+        if window is None or window == self._window:
             data = self._cache
         else:
             start = self._current - window
