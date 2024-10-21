@@ -50,17 +50,49 @@ class Detector:
             self._data.coords['z_pixel_offset'] = params.z_pixel_offset
         self._start = params.start
         self._size = params.size
-        self._values = self._data.flatten(to='event_id').values
 
     @property
     def data(self) -> sc.DataArray:
         return self._data
 
     def bincount(self, data: Sequence[int]) -> np.ndarray:
-        return np.bincount(np.asarray(data) - self._start, minlength=self.data.size)
+        return np.bincount(
+            np.asarray(data, dtype=np.int32) - self._start, minlength=self.data.size
+        ).reshape(self.data.shape)
 
     def add_counts(self, data: Sequence[int]) -> None:
-        self._values += self.bincount(data)
+        self.data.values += self.bincount(data)
 
     def clear_counts(self) -> None:
         self._data.values *= 0
+
+
+class RollingDetectorView(Detector):
+    def __init__(self, params: DetectorParams, window: int):
+        super().__init__(params)
+        self._history = sc.zeros(
+            sizes={'window': window, **self.data.sizes},
+            unit=self.data.unit,
+            dtype=self.data.dtype,
+        )
+        self._window = window
+        self._current = 0
+        self._cache = self._history.sum('window')
+
+    def get(self, window: int | None = None) -> sc.DataArray:
+        if window is None:
+            data = self._cache
+        else:
+            start = self._current - window
+            if start >= 0:
+                data = self._history['window', start : self._current].sum('window')
+            else:
+                data = self._history['window', start % self._window :].sum('window')
+                data += self._history['window', 0 : self._current].sum('window')
+        return sc.DataArray(data, coords=self.data.coords)
+
+    def add_counts(self, data: Sequence[int]) -> None:
+        self._cache -= self._history['window', self._current]
+        self._history['window', self._current].values = self.bincount(data)
+        self._cache += self._history['window', self._current]
+        self._current = (self._current + 1) % self._window
