@@ -187,9 +187,9 @@ class RollingDetectorView(Detector):
 def project_xy(
     x: sc.Variable, y: sc.Variable, z: sc.Variable
 ) -> dict[str, sc.Variable]:
-    zmean = z.mean()
-    t = zmean / z
-    return {'x': x * t, 'y': y * t, 'z': zmean}
+    zmin = z.min()
+    t = zmin / z
+    return {'x': x * t, 'y': y * t, 'z': zmin}
 
 
 # TODO init chicken-egg problem
@@ -242,12 +242,21 @@ def make_xy_plane_projection(
     # 2. transform * noise_vector... no! only rot!
     # 3. On call, add randomly selected noise to position
     # 4. Project to plane (TODO only x=y for now)
-    return LokiProjection()
+    return LokiProjection(
+        pixel_shape=component['pixel_shape'],
+        position=detector.coords['position'],
+        transformation=transformation.value,
+    )
 
 
 # Generalize to TubeProjection
 class LokiProjection:
-    def __init__(self):
+    def __init__(
+        self,
+        pixel_shape: sc.DataGroup,
+        position: sc.Variable,
+        transformation: sc.Variable,
+    ):
         # TODO Use NeXusTransformation, apply to pos and noise once, add in __call__
         # The former is just position of CalibratedDetector
         # TODO Find cylinder axis from NeXusDetector, or hard-code
@@ -257,6 +266,7 @@ class LokiProjection:
         dx = cyl_height / 2
         cyl_radius = 0.004
         dims = ['pixel']
+        dims = position.dims
         size = int(1e6)
         dx = sc.array(dims=dims, values=rng.uniform(-dx, dx, size=size), unit='m')
         angle = sc.array(
@@ -269,17 +279,28 @@ class LokiProjection:
         )
         dy = radius * sc.sin(angle)
         dz = radius * sc.cos(angle)
-        self._pixel_offset_noise = sc.spatial.as_vectors(x=dx, y=dy, z=dz)
+        noise = sc.spatial.as_vectors(x=dx, y=dy, z=dz)
         self._x_edges = sc.linspace('x', -0.4, 0.5, num=151, unit='m')
         self._y_edges = sc.linspace('y', -0.4, 0.4, num=151, unit='m')
         self._position = sc.vector([-0.49902349, 0.43555999, 4.09899989], unit='m')
         self._beam_center = sc.vector([-0.02864121, -0.01850989, 0.0], unit='m')
 
+        # TODO want to rotate the noise, not translate -> use difference
+        # noise = transform * noise - transform * origin
+        # hmmm, but why not transform the shape? harder to apply noise?
+        # or just do position - transform * noise, if we do not care about
+        # absolute trans?
+        self._position = position
+        self._pixel_offset_noise = (
+            transformation * noise - transformation * sc.zeros_like(noise[0])
+        )
+
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
-        data = da.flatten(to='pixel')
+        data = da.flatten(to=self._position.dim)
         pos = (
-            (self._position - self._beam_center)
-            + data.coords['pixel_offset']
+            self._position
+            # (self._position - self._beam_center)
+            # + data.coords['pixel_offset']
             + self._pixel_offset_noise[: data.size]
         )
         return sc.DataArray(
