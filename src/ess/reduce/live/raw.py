@@ -2,7 +2,7 @@
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 """Raw count processing and visualization for live data display."""
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -55,28 +55,42 @@ class Detector:
     def data(self) -> sc.DataArray:
         return self._data
 
-    def bincount(self, data: Sequence[int]) -> np.ndarray:
-        return np.bincount(
-            np.asarray(data, dtype=np.int32) - self._start, minlength=self.data.size
-        ).reshape(self.data.shape)
+    def bincount(self, data: Sequence[int]) -> sc.DataArray:
+        offset = np.asarray(data, dtype=np.int32) - self._start
+        out = sc.empty_like(self.data)
+        out.values = np.bincount(offset, minlength=self._size).reshape(self.data.shape)
+        return out
 
     def add_counts(self, data: Sequence[int]) -> None:
-        self.data.values += self.bincount(data)
+        self._data += self.bincount(data)
 
     def clear_counts(self) -> None:
         self._data.values *= 0
 
 
 class RollingDetectorView(Detector):
-    def __init__(self, params: DetectorParams, window: int):
+    def __init__(
+        self,
+        params: DetectorParams,
+        *,
+        window: int,
+        projection: Callable[[sc.DataArray], sc.DataArray] | None = None,
+    ):
         super().__init__(params)
-        self._history = sc.zeros(
-            sizes={'window': window, **self.data.sizes},
-            unit=self.data.unit,
-            dtype=self.data.dtype,
-        )
+        self._projection = projection
         self._window = window
         self._current = 0
+        self._history: sc.DataArray | None = None
+        self._cache: sc.DataArray | None = None
+
+        counts = self.bincount([])
+        if self._projection is not None:
+            counts = self._projection(counts)
+        self._history = (
+            sc.zeros_like(counts)
+            .broadcast(sizes={'window': self._window, **counts.sizes})
+            .copy()
+        )
         self._cache = self._history.sum('window')
 
     def get(self, window: int | None = None) -> sc.DataArray:
@@ -91,10 +105,13 @@ class RollingDetectorView(Detector):
             else:
                 data = self._history['window', start % self._window :].sum('window')
                 data += self._history['window', 0 : self._current].sum('window')
-        return sc.DataArray(data, coords=self.data.coords)
+        return data
 
     def add_counts(self, data: Sequence[int]) -> None:
+        counts = self.bincount(data)
+        if self._projection is not None:
+            counts = self._projection(counts)
         self._cache -= self._history['window', self._current]
-        self._history['window', self._current].values = self.bincount(data)
+        self._history['window', self._current] = counts
         self._cache += self._history['window', self._current]
         self._current = (self._current + 1) % self._window
