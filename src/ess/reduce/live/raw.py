@@ -230,10 +230,9 @@ class LokiProjection:
         dy = radius * sc.sin(angle)
         dz = radius * sc.cos(angle)
         noise = sc.spatial.as_vectors(x=dx, y=dy, z=dz)
+        # TODO Can we get min and max from extents?
         self._x_edges = sc.linspace('x', -0.4, 0.5, num=151, unit='m')
         self._y_edges = sc.linspace('y', -0.4, 0.4, num=151, unit='m')
-        self._position = sc.vector([-0.49902349, 0.43555999, 4.09899989], unit='m')
-        self._beam_center = sc.vector([-0.02864121, -0.01850989, 0.0], unit='m')
 
         self._position = position
         # The transformation is in generally an affine transform. We do not want the
@@ -244,12 +243,7 @@ class LokiProjection:
 
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         data = da.flatten(to=self._position.dim)
-        pos = (
-            self._position
-            # (self._position - self._beam_center)
-            # + data.coords['pixel_offset']
-            + self._pixel_offset_noise[: data.size]
-        )
+        pos = self._position + self._pixel_offset_noise[: data.size]
         return sc.DataArray(
             data.data, coords=project_xy(pos.fields.x, pos.fields.y, pos.fields.z)
         ).hist(y=self._y_edges, x=self._x_edges)
