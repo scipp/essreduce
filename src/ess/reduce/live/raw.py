@@ -162,11 +162,12 @@ class RollingDetectorView(Detector):
 
 
 def project_xy(
-    x: sc.Variable, y: sc.Variable, z: sc.Variable
+    x: sc.Variable, y: sc.Variable, z: sc.Variable, *, zplane: sc.Variable | None = None
 ) -> dict[str, sc.Variable]:
     zmin = z.min()
     zero = sc.zeros_like(zmin)
-    zplane = z.max() if zmin < zero else zmin
+    if zplane is None:
+        zplane = z.max() if zmin < zero else zmin
     t = zplane / z
     return {'x': x * t, 'y': y * t, 'z': zplane}
 
@@ -276,9 +277,12 @@ class TubeProjection(Projection):
         noise = dx + dy + dz
 
         self._coords = []
+        zplane = position.fields.z.min()
         for i in range(16):
             pos = position + sc.concat([noise[i:], noise[0:i]], noise.dim)
-            self._coords.append(project_xy(pos.fields.x, pos.fields.y, pos.fields.z))
+            self._coords.append(
+                project_xy(pos.fields.x, pos.fields.y, pos.fields.z, zplane=zplane)
+            )
 
         self._current = 0
         x = sc.concat([coord['x'] for coord in self._coords], 'replica')
