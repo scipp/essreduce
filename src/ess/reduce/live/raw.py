@@ -125,6 +125,9 @@ class RollingDetectorView(Detector):
         wf = GenericNeXusWorkflow()
         wf.insert(make_xy_plane_projection)
         wf.insert(make_rolling_detector_view)
+        wf.insert(pixel_shape)
+        wf.insert(pixel_cylinder_axis)
+        wf.insert(pixel_cylinder_radius)
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
         return wf.compute(RollingDetectorView)
@@ -169,6 +172,11 @@ class Projection:
     pass
 
 
+PixelShape = NewType('PixelShape', sc.DataGroup)
+PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
+PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
+
+
 def make_rolling_detector_view(
     detector: CalibratedDetector[SampleRun],
     projection: Projection,
@@ -178,20 +186,13 @@ def make_rolling_detector_view(
 
 
 def make_xy_plane_projection(
-    component: NeXusComponent[snx.NXdetector, SampleRun],
+    axis: PixelCylinderAxis,
+    radius: PixelCylinderRadius,
     detector: CalibratedDetector[SampleRun],
-    transformation: NeXusTransformation[snx.NXdetector, SampleRun],
 ) -> Projection:
-    return LokiProjection(
-        pixel_shape=component['pixel_shape'],
-        position=detector.coords['position'],
-        transformation=transformation.value,
+    return TubeProjection(
+        axis=axis, radius=radius, position=detector.coords['position']
     )
-
-
-PixelShape = NewType('PixelShape', sc.DataGroup)
-PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
-PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
 
 
 def pixel_shape(component: NeXusComponent[snx.NXdetector, SampleRun]) -> PixelShape:
@@ -207,7 +208,8 @@ def pixel_cylinder_axis(
         raise NotImplementedError("Case of multiple cylinders not implemented.")
     # Note that transformation may be affine, so we need to apply it to the vertices
     # *before* subtracting them, to remove the translation part.
-    return PixelCylinderAxis(transform * vertices[2] - transform * vertices[0])
+    t = transform.value
+    return PixelCylinderAxis(t * vertices[2] - t * vertices[0])
 
 
 def pixel_cylinder_radius(
@@ -219,26 +221,26 @@ def pixel_cylinder_radius(
         raise NotImplementedError("Case of multiple cylinders not implemented.")
     # Note that transformation may be affine, so we need to apply it to the vertices
     # *before* subtracting them, to remove the translation part.
-    return PixelCylinderRadius(transform * vertices[1] - transform * vertices[0])
+    t = transform.value
+    return PixelCylinderRadius(t * vertices[1] - t * vertices[0])
 
 
 # Generalize to TubeProjection
-class LokiProjection:
+class TubeProjection(Projection):
     def __init__(
         self,
-        pixel_shape: sc.DataGroup,
+        *,
+        axis: PixelCylinderAxis,
+        radius: PixelCylinderRadius,
         position: sc.Variable,
-        transformation: sc.Variable,
     ):
-        rng = np.random.default_rng()
-        dims = position.dims
-        size = position.size
         # We *assume* that the cylinder is centered on the origin. Real files may not
         # fulfill this. However, the rest of the data reduction currently assumes that
         # the pixel offset corresponds to the pixel center, so if it is not fulfilled
         # there are bigger problems elsewhere anywhere.
-        axis = pixel_cylinder_axis(pixel_shape, transformation)
-        radius = pixel_cylinder_radius(pixel_shape, transformation)
+        rng = np.random.default_rng()
+        dims = position.dims
+        size = position.size
 
         z_hat = axis / sc.norm(axis)  # Unit vector along the cylinder axis
         x_hat = radius / sc.norm(radius)  # Unit vector along the radius direction
