@@ -5,6 +5,7 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from time import time
+from typing import NewType
 
 import numpy as np
 import scipp as sc
@@ -158,24 +159,10 @@ def project_xy(
     x: sc.Variable, y: sc.Variable, z: sc.Variable
 ) -> dict[str, sc.Variable]:
     zmin = z.min()
-    t = zmin / z
-    return {'x': x * t, 'y': y * t, 'z': zmin}
-
-
-# TODO init chicken-egg problem
-# Detector needs DetectorParams
-# Projection needs extra info, but some overlap
-# What goes where? How to init in what order?
-# Just think about DI!
-# RollingDetectorView needs
-# - DetectorNumber (~NeXusComponent)
-# - Does not really needs pixel offsets, but likes to include it in output
-#   -> is this just a special kind of projection?
-# - Projection
-#   - pixel offsets
-#   - pixel shape
-#   - transformation (to apply to position noise)
-#   - position
+    zero = sc.zeros_like(zmin)
+    zplane = z.max() if zmin < zero else zmin
+    t = zplane / z
+    return {'x': x * t, 'y': y * t, 'z': zplane}
 
 
 class Projection:
@@ -202,6 +189,39 @@ def make_xy_plane_projection(
     )
 
 
+PixelShape = NewType('PixelShape', sc.DataGroup)
+PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
+PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
+
+
+def pixel_shape(component: NeXusComponent[snx.NXdetector, SampleRun]) -> PixelShape:
+    return PixelShape(component['pixel_shape'])
+
+
+def pixel_cylinder_axis(
+    shape: PixelShape,
+    transform: NeXusTransformation[snx.NXdetector, SampleRun],
+) -> PixelCylinderAxis:
+    vertices = shape['vertices']
+    if len(vertices) != 3:
+        raise NotImplementedError("Case of multiple cylinders not implemented.")
+    # Note that transformation may be affine, so we need to apply it to the vertices
+    # *before* subtracting them, to remove the translation part.
+    return PixelCylinderAxis(transform * vertices[2] - transform * vertices[0])
+
+
+def pixel_cylinder_radius(
+    shape: PixelShape,
+    transform: NeXusTransformation[snx.NXdetector, SampleRun],
+) -> PixelCylinderRadius:
+    vertices = shape['vertices']
+    if len(vertices) != 3:
+        raise NotImplementedError("Case of multiple cylinders not implemented.")
+    # Note that transformation may be affine, so we need to apply it to the vertices
+    # *before* subtracting them, to remove the translation part.
+    return PixelCylinderRadius(transform * vertices[1] - transform * vertices[0])
+
+
 # Generalize to TubeProjection
 class LokiProjection:
     def __init__(
@@ -210,40 +230,79 @@ class LokiProjection:
         position: sc.Variable,
         transformation: sc.Variable,
     ):
-        # TODO Find cylinder axis from NeXusDetector, or hard-code
         rng = np.random.default_rng()
-        # 2 mm height, 4 mm radius
-        cyl_height = 0.002
-        dx = cyl_height / 2
-        cyl_radius = 0.004
         dims = position.dims
-        size = int(1e6)
-        dx = sc.array(dims=dims, values=rng.uniform(-dx, dx, size=size), unit='m')
-        angle = sc.array(
+        size = position.size
+        # We *assume* that the cylinder is centered on the origin. Real files may not
+        # fulfill this. However, the rest of the data reduction currently assumes that
+        # the pixel offset corresponds to the pixel center, so if it is not fulfilled
+        # there are bigger problems elsewhere anywhere.
+
+        axis = pixel_cylinder_axis(pixel_shape, transformation)
+        radius = pixel_cylinder_radius(pixel_shape, transformation)
+
+        # Normalize vectors to get unit directions
+        z_hat = axis / sc.norm(axis)  # Unit vector along the cylinder axis
+        x_hat = radius / sc.norm(radius)  # Unit vector along the radius direction
+        y_hat = sc.cross(z_hat, x_hat)  # Unit vector perpendicular to z_hat and x_hat
+
+        dz = sc.array(dims=dims, values=rng.uniform(-0.5, 0.5, size=size)) * axis
+        dphi = sc.array(
             dims=dims, values=rng.uniform(0, 2 * np.pi, size=size), unit='rad'
         )
-        radius = sc.sqrt(
+        dr = sc.sqrt(
             sc.array(
-                dims=dims, values=rng.uniform(0, cyl_radius**2, size=size), unit='m^2'
+                dims=dims,
+                values=rng.uniform(0, sc.norm(radius).value ** 2, size=size),
+                unit='m^2',
             )
         )
-        dy = radius * sc.sin(angle)
-        dz = radius * sc.cos(angle)
-        noise = sc.spatial.as_vectors(x=dx, y=dy, z=dz)
+
+        dx = dr * sc.cos(dphi) * x_hat
+        dy = dr * sc.sin(dphi) * y_hat
+
+        # 2 mm height, 4 mm radius
+        # cyl_height = 0.002
+        # dx = cyl_height / 2
+        # cyl_radius = 0.004
+        # dx = sc.array(dims=dims, values=rng.uniform(-dx, dx, size=size), unit='m')
+        # angle = sc.array(
+        #    dims=dims, values=rng.uniform(0, 2 * np.pi, size=size), unit='rad'
+        # )
+        # radius = sc.sqrt(
+        #    sc.array(
+        #        dims=dims, values=rng.uniform(0, cyl_radius**2, size=size), unit='m^2'
+        #    )
+        # )
+        # dy = radius * sc.sin(angle)
+        # dz = radius * sc.cos(angle)
+        # noise = sc.spatial.as_vectors(x=dx, y=dy, z=dz)
+        noise = dx + dy + dz
         # TODO Can we get min and max from extents?
         self._x_edges = sc.linspace('x', -0.4, 0.5, num=151, unit='m')
         self._y_edges = sc.linspace('y', -0.4, 0.4, num=151, unit='m')
 
         self._position = position
+        self._pixel_offset_noise = noise
         # The transformation is in generally an affine transform. We do not want the
         # translation part, so we subtract a transformation applied to the origin.
-        self._pixel_offset_noise = (
-            transformation * noise - transformation * sc.zeros_like(noise[0])
-        )
+        # self._pixel_offset_noise = (
+        #    transformation * noise - transformation * sc.zeros_like(noise[0])
+        # )
+
+        self._split = 0
 
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         data = da.flatten(to=self._position.dim)
-        pos = self._position + self._pixel_offset_noise[: data.size]
+        noise = sc.concat(
+            [
+                self._pixel_offset_noise[0 : self._split],
+                self._pixel_offset_noise[self._split :],
+            ],
+            self._position.dim,
+        )
+        self._split = (self._split + 1) % len(self._position)
+        pos = self._position + noise  # + self._pixel_offset_noise[: data.size]
         return sc.DataArray(
             data.data, coords=project_xy(pos.fields.x, pos.fields.y, pos.fields.z)
         ).hist(y=self._y_edges, x=self._x_edges)
