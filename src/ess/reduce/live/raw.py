@@ -121,10 +121,13 @@ class RollingDetectorView(Detector):
         self._cache = self._history.sum('window')
 
     @staticmethod
-    def from_nexus(nexus_file: str, detector_name: str) -> 'RollingDetectorView':
+    def from_nexus(
+        nexus_file: str, *, detector_name: str, window: int, xres: int, yres: int
+    ) -> 'RollingDetectorView':
         wf = GenericNeXusWorkflow()
-        wf.insert(make_xy_plane_projection)
-        wf.insert(make_rolling_detector_view)
+        # TODO Could also set workflow parameters.
+        wf.insert(make_xy_plane_projection_factory(xres=xres, yres=yres))
+        wf.insert(make_rolling_detector_view_factory(window=window))
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
         wf.insert(pixel_cylinder_radius)
@@ -177,22 +180,32 @@ PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
 PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
 
 
-def make_rolling_detector_view(
-    detector: CalibratedDetector[SampleRun],
-    projection: Projection,
-) -> RollingDetectorView:
-    params = DetectorParams(detector_number=detector.coords['detector_number'])
-    return RollingDetectorView(params=params, window=100, projection=projection)
+def make_rolling_detector_view_factory(window: int):
+    def make_rolling_detector_view(
+        detector: CalibratedDetector[SampleRun],
+        projection: Projection,
+    ) -> RollingDetectorView:
+        params = DetectorParams(detector_number=detector.coords['detector_number'])
+        return RollingDetectorView(params=params, window=window, projection=projection)
+
+    return make_rolling_detector_view
 
 
-def make_xy_plane_projection(
-    axis: PixelCylinderAxis,
-    radius: PixelCylinderRadius,
-    detector: CalibratedDetector[SampleRun],
-) -> Projection:
-    return TubeProjection(
-        axis=axis, radius=radius, position=detector.coords['position']
-    )
+def make_xy_plane_projection_factory(xres: int, yres: int):
+    def make_xy_plane_projection(
+        axis: PixelCylinderAxis,
+        radius: PixelCylinderRadius,
+        detector: CalibratedDetector[SampleRun],
+    ) -> Projection:
+        return TubeProjection(
+            axis=axis,
+            radius=radius,
+            position=detector.coords['position'],
+            xres=xres,
+            yres=yres,
+        )
+
+    return make_xy_plane_projection
 
 
 def pixel_shape(component: NeXusComponent[snx.NXdetector, SampleRun]) -> PixelShape:
@@ -233,6 +246,8 @@ class TubeProjection(Projection):
         axis: PixelCylinderAxis,
         radius: PixelCylinderRadius,
         position: sc.Variable,
+        xres: int = 150,
+        yres: int = 150,
     ):
         # We *assume* that the cylinder is centered on the origin. Real files may not
         # fulfill this. However, the rest of the data reduction currently assumes that
@@ -270,10 +285,10 @@ class TubeProjection(Projection):
         y = sc.concat([coord['y'] for coord in self._coords], 'replica')
         delta = sc.scalar(0.001, unit='m')
         self._x_edges = sc.linspace(
-            'x', x.min() - delta, x.max() + delta, num=151, unit='m'
+            'x', x.min() - delta, x.max() + delta, num=xres + 1, unit='m'
         )
         self._y_edges = sc.linspace(
-            'y', y.min() - delta, y.max() + delta, num=151, unit='m'
+            'y', y.min() - delta, y.max() + delta, num=yres + 1, unit='m'
         )
         self._position = position
 
