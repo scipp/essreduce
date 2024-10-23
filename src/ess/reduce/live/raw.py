@@ -237,11 +237,9 @@ class LokiProjection:
         # fulfill this. However, the rest of the data reduction currently assumes that
         # the pixel offset corresponds to the pixel center, so if it is not fulfilled
         # there are bigger problems elsewhere anywhere.
-
         axis = pixel_cylinder_axis(pixel_shape, transformation)
         radius = pixel_cylinder_radius(pixel_shape, transformation)
 
-        # Normalize vectors to get unit directions
         z_hat = axis / sc.norm(axis)  # Unit vector along the cylinder axis
         x_hat = radius / sc.norm(radius)  # Unit vector along the radius direction
         y_hat = sc.cross(z_hat, x_hat)  # Unit vector perpendicular to z_hat and x_hat
@@ -250,59 +248,35 @@ class LokiProjection:
         dphi = sc.array(
             dims=dims, values=rng.uniform(0, 2 * np.pi, size=size), unit='rad'
         )
+        r = sc.norm(radius).value
         dr = sc.sqrt(
-            sc.array(
-                dims=dims,
-                values=rng.uniform(0, sc.norm(radius).value ** 2, size=size),
-                unit='m^2',
-            )
+            sc.array(dims=dims, values=rng.uniform(0, r**2, size=size), unit='m^2')
         )
 
         dx = dr * sc.cos(dphi) * x_hat
         dy = dr * sc.sin(dphi) * y_hat
 
-        # 2 mm height, 4 mm radius
-        # cyl_height = 0.002
-        # dx = cyl_height / 2
-        # cyl_radius = 0.004
-        # dx = sc.array(dims=dims, values=rng.uniform(-dx, dx, size=size), unit='m')
-        # angle = sc.array(
-        #    dims=dims, values=rng.uniform(0, 2 * np.pi, size=size), unit='rad'
-        # )
-        # radius = sc.sqrt(
-        #    sc.array(
-        #        dims=dims, values=rng.uniform(0, cyl_radius**2, size=size), unit='m^2'
-        #    )
-        # )
-        # dy = radius * sc.sin(angle)
-        # dz = radius * sc.cos(angle)
-        # noise = sc.spatial.as_vectors(x=dx, y=dy, z=dz)
         noise = dx + dy + dz
-        # TODO Can we get min and max from extents?
-        self._x_edges = sc.linspace('x', -0.4, 0.5, num=151, unit='m')
-        self._y_edges = sc.linspace('y', -0.4, 0.4, num=151, unit='m')
 
+        self._coords = []
+        for i in range(16):
+            pos = position + sc.concat([noise[i:], noise[0:i]], noise.dim)
+            self._coords.append(project_xy(pos.fields.x, pos.fields.y, pos.fields.z))
+
+        self._current = 0
+        x = sc.concat([coord['x'] for coord in self._coords], 'replica')
+        y = sc.concat([coord['y'] for coord in self._coords], 'replica')
+        delta = sc.scalar(0.001, unit='m')
+        self._x_edges = sc.linspace(
+            'x', x.min() - delta, x.max() + delta, num=151, unit='m'
+        )
+        self._y_edges = sc.linspace(
+            'y', y.min() - delta, y.max() + delta, num=151, unit='m'
+        )
         self._position = position
-        self._pixel_offset_noise = noise
-        # The transformation is in generally an affine transform. We do not want the
-        # translation part, so we subtract a transformation applied to the origin.
-        # self._pixel_offset_noise = (
-        #    transformation * noise - transformation * sc.zeros_like(noise[0])
-        # )
-
-        self._split = 0
 
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
-        data = da.flatten(to=self._position.dim)
-        noise = sc.concat(
-            [
-                self._pixel_offset_noise[0 : self._split],
-                self._pixel_offset_noise[self._split :],
-            ],
-            self._position.dim,
-        )
-        self._split = (self._split + 1) % len(self._position)
-        pos = self._position + noise  # + self._pixel_offset_noise[: data.size]
-        return sc.DataArray(
-            data.data, coords=project_xy(pos.fields.x, pos.fields.y, pos.fields.z)
-        ).hist(y=self._y_edges, x=self._x_edges)
+        data = da.data.flatten(to=self._position.dim)
+        self._current += 1
+        coords = self._coords[self._current % len(self._coords)]
+        return sc.DataArray(data, coords=coords).hist(y=self._y_edges, x=self._x_edges)
