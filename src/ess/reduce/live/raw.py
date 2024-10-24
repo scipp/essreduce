@@ -261,7 +261,10 @@ def position_noise_for_cylindrical_pixel(
     # there are bigger problems elsewhere anywhere.
     rng = np.random.default_rng()
     dims = ('random_point_in_cylindrical_pixel',)
-    size = 117
+    # Arbitrary small but not tiny size. More is likely not necessary, but having it too
+    # small might lead to visible patterns after projection. It is therefore also chosen
+    # to be a prime number, but it likely does not matter.
+    size = 107
 
     z_hat = axis / sc.norm(axis)  # Unit vector along the cylinder axis
     x_hat = radius / sc.norm(radius)  # Unit vector along the radius direction
