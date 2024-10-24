@@ -131,6 +131,7 @@ class RollingDetectorView(Detector):
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
         wf.insert(pixel_cylinder_radius)
+        wf.insert(position_noise_for_cylindrical_pixel)
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
         return wf.compute(RollingDetectorView)
@@ -169,7 +170,7 @@ def project_xy(
     if zplane is None:
         zplane = z.max() if zmin < zero else zmin
     t = zplane / z
-    return {'x': x * t, 'y': y * t, 'z': zplane}
+    return sc.DataGroup(x=x * t, y=y * t, z=zplane)
 
 
 def project_onto_cylinder(
@@ -189,6 +190,7 @@ class Projection:
 PixelShape = NewType('PixelShape', sc.DataGroup)
 PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
 PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
+PositionNoiseCylindricalPixel = NewType('PositionNoiseCylindricalPixel', sc.Variable)
 
 
 def make_rolling_detector_view_factory(window: int):
@@ -204,14 +206,12 @@ def make_rolling_detector_view_factory(window: int):
 
 def make_xy_plane_projection_factory(xres: int, yres: int):
     def make_xy_plane_projection(
-        axis: PixelCylinderAxis,
-        radius: PixelCylinderRadius,
         detector: CalibratedDetector[SampleRun],
+        position_noise: PositionNoiseCylindricalPixel,
     ) -> Projection:
         return TubeProjection(
-            axis=axis,
-            radius=radius,
             position=detector.coords['position'],
+            position_noise=position_noise,
             xres=xres,
             yres=yres,
         )
@@ -249,54 +249,56 @@ def pixel_cylinder_radius(
     return PixelCylinderRadius(t * vertices[1] - t * vertices[0])
 
 
-# Generalize to TubeProjection
+def position_noise_for_cylindrical_pixel(
+    *,
+    axis: PixelCylinderAxis,
+    radius: PixelCylinderRadius,
+) -> PositionNoiseCylindricalPixel:
+    # We *assume* that the cylinder is centered on the origin. Real files may not
+    # fulfill this. However, the rest of the data reduction currently assumes that
+    # the pixel offset corresponds to the pixel center, so if it is not fulfilled
+    # there are bigger problems elsewhere anywhere.
+    rng = np.random.default_rng()
+    dims = ('random_point_in_cylindrical_pixel',)
+    size = 117
+
+    z_hat = axis / sc.norm(axis)  # Unit vector along the cylinder axis
+    x_hat = radius / sc.norm(radius)  # Unit vector along the radius direction
+    y_hat = sc.cross(z_hat, x_hat)  # Unit vector perpendicular to z_hat and x_hat
+
+    dz = sc.array(dims=dims, values=rng.uniform(-0.5, 0.5, size=size)) * axis
+    dphi = sc.array(dims=dims, values=rng.uniform(0, 2 * np.pi, size=size), unit='rad')
+    r = sc.norm(radius).value
+    dr = sc.sqrt(
+        sc.array(dims=dims, values=rng.uniform(0, r**2, size=size), unit='m^2')
+    )
+
+    dx = dr * sc.cos(dphi) * x_hat
+    dy = dr * sc.sin(dphi) * y_hat
+
+    return dx + dy + dz
+
+
 class TubeProjection(Projection):
     def __init__(
         self,
         *,
-        axis: PixelCylinderAxis,
-        radius: PixelCylinderRadius,
         position: sc.Variable,
+        position_noise: PositionNoiseCylindricalPixel,
         xres: int = 150,
         yres: int = 150,
     ):
-        # We *assume* that the cylinder is centered on the origin. Real files may not
-        # fulfill this. However, the rest of the data reduction currently assumes that
-        # the pixel offset corresponds to the pixel center, so if it is not fulfilled
-        # there are bigger problems elsewhere anywhere.
-        rng = np.random.default_rng()
-        dims = position.dims
-        size = position.size
-
-        z_hat = axis / sc.norm(axis)  # Unit vector along the cylinder axis
-        x_hat = radius / sc.norm(radius)  # Unit vector along the radius direction
-        y_hat = sc.cross(z_hat, x_hat)  # Unit vector perpendicular to z_hat and x_hat
-
-        dz = sc.array(dims=dims, values=rng.uniform(-0.5, 0.5, size=size)) * axis
-        dphi = sc.array(
-            dims=dims, values=rng.uniform(0, 2 * np.pi, size=size), unit='rad'
-        )
-        r = sc.norm(radius).value
-        dr = sc.sqrt(
-            sc.array(dims=dims, values=rng.uniform(0, r**2, size=size), unit='m^2')
-        )
-
-        dx = dr * sc.cos(dphi) * x_hat
-        dy = dr * sc.sin(dphi) * y_hat
-
-        noise = dx + dy + dz
-
-        self._coords = []
+        self._noise_dim = position_noise.dim
+        self._replicas = 4
+        pos = position_noise[: self._replicas] + position
         zplane = position.fields.z.min()
-        for i in range(16):
-            pos = position + sc.concat([noise[i:], noise[0:i]], noise.dim)
-            self._coords.append(
-                project_xy(pos.fields.x, pos.fields.y, pos.fields.z, zplane=zplane)
-            )
+        self._coords = project_xy(
+            pos.fields.x, pos.fields.y, pos.fields.z, zplane=zplane
+        )
+        x = self._coords['x']
+        y = self._coords['y']
 
         self._current = 0
-        x = sc.concat([coord['x'] for coord in self._coords], 'replica')
-        y = sc.concat([coord['y'] for coord in self._coords], 'replica')
         delta = sc.scalar(0.001, unit='m')
         self._x_edges = sc.linspace(
             'x', x.min() - delta, x.max() + delta, num=xres + 1, unit='m'
@@ -304,10 +306,9 @@ class TubeProjection(Projection):
         self._y_edges = sc.linspace(
             'y', y.min() - delta, y.max() + delta, num=yres + 1, unit='m'
         )
-        self._position = position
 
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
-        data = da.data.flatten(to=self._position.dim)
+        data = da.data.flatten(to='detector_number')
         self._current += 1
-        coords = self._coords[self._current % len(self._coords)]
+        coords = self._coords[self._noise_dim, self._current % self._replicas]
         return sc.DataArray(data, coords=coords).hist(y=self._y_edges, x=self._x_edges)
