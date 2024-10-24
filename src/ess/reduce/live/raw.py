@@ -172,6 +172,16 @@ def project_xy(
     return {'x': x * t, 'y': y * t, 'z': zplane}
 
 
+def project_onto_cylinder(
+    x: sc.Variable, y: sc.Variable, z: sc.Variable, *, radius: sc.Variable | None = None
+) -> dict[str, sc.Variable]:
+    r_xy = sc.sqrt(x**2 + y**2)
+    if radius is None:
+        radius = r_xy.min()
+    t = radius / r_xy
+    return {'x': x * t, 'y': y * t, 'z': z * t}
+
+
 class Projection:
     pass
 
