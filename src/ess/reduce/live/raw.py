@@ -6,6 +6,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from time import time
 from typing import NewType
+from math import ceil
 
 import numpy as np
 import scipp as sc
@@ -132,6 +133,8 @@ class RollingDetectorView(Detector):
         wf.insert(pixel_cylinder_axis)
         wf.insert(pixel_cylinder_radius)
         wf.insert(position_noise_for_cylindrical_pixel)
+        wf.insert(position_with_noisy_replicas)
+        wf[PositionNoiseReplicaCount] = 4
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
         return wf.compute(RollingDetectorView)
@@ -191,6 +194,10 @@ PixelShape = NewType('PixelShape', sc.DataGroup)
 PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
 PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
 PositionNoiseCylindricalPixel = NewType('PositionNoiseCylindricalPixel', sc.Variable)
+PositionNoiseReplicaCount = NewType('PositionNoiseReplicaCount', int)
+CalibratedPositionWithNoisyReplicas = NewType(
+    'CalibratedPositionWithNoisyReplicas', sc.Variable
+)
 
 
 def make_rolling_detector_view_factory(window: int):
@@ -206,15 +213,9 @@ def make_rolling_detector_view_factory(window: int):
 
 def make_xy_plane_projection_factory(xres: int, yres: int):
     def make_xy_plane_projection(
-        detector: CalibratedDetector[SampleRun],
-        position_noise: PositionNoiseCylindricalPixel,
+        position: CalibratedPositionWithNoisyReplicas,
     ) -> Projection:
-        return TubeProjection(
-            position=detector.coords['position'],
-            position_noise=position_noise,
-            xres=xres,
-            yres=yres,
-        )
+        return XYPlaneProjection(pos=position, xres=xres, yres=yres)
 
     return make_xy_plane_projection
 
@@ -279,19 +280,40 @@ def position_noise_for_cylindrical_pixel(
     return dx + dy + dz
 
 
-class TubeProjection(Projection):
+def position_with_noisy_replicas(
+    *,
+    detector: CalibratedDetector[SampleRun],
+    position_noise: PositionNoiseCylindricalPixel,
+    replicas: PositionNoiseReplicaCount,
+) -> CalibratedPositionWithNoisyReplicas:
+    """
+    Create a new position array with noise added to the detector positions.
+
+    The first slice of the new array is the original position data, and the
+    remaining slices are the original data with noise added.
+    """
+    position = detector.coords['position']
+    noise_dim = position_noise.dim
+    size = position.size * replicas
+    # "Paint" the short array of noise on top of the (replicated) position data.
+    noise = sc.concat(
+        [position_noise] * ceil(size / position_noise.size), dim=noise_dim
+    )[:size].fold(dim=noise_dim, sizes={noise_dim: replicas, position.dim: -1})
+    return sc.concat([position, noise + position], dim=noise_dim)
+
+
+class XYPlaneProjection(Projection):
     def __init__(
         self,
         *,
-        position: sc.Variable,
-        position_noise: PositionNoiseCylindricalPixel,
+        pos: CalibratedPositionWithNoisyReplicas,
         xres: int = 150,
         yres: int = 150,
     ):
-        self._noise_dim = position_noise.dim
-        self._replicas = 4
-        pos = position_noise[: self._replicas] + position
-        zplane = position.fields.z.min()
+        self._noise_dim = pos.dims[0]
+        self._replicas = pos.sizes[self._noise_dim]
+        position = pos[self._noise_dim, 0]
+        zplane = position.fields.z.min()  # position, not pos, to avoid noise
         self._coords = project_xy(
             pos.fields.x, pos.fields.y, pos.fields.z, zplane=zplane
         )
@@ -299,7 +321,7 @@ class TubeProjection(Projection):
         y = self._coords['y']
 
         self._current = 0
-        delta = sc.scalar(0.001, unit='m')
+        delta = sc.scalar(0.01, unit='m')
         self._x_edges = sc.linspace(
             'x', x.min() - delta, x.max() + delta, num=xres + 1, unit='m'
         )
