@@ -132,9 +132,11 @@ class RollingDetectorView(Detector):
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
         wf.insert(pixel_cylinder_radius)
-        wf.insert(position_noise_for_cylindrical_pixel)
+        # wf.insert(position_noise_for_cylindrical_pixel)
+        wf.insert(gaussian_position_noise)
         wf.insert(position_with_noisy_replicas)
         wf[PositionNoiseReplicaCount] = 4
+        wf[PositionNoiseSigma] = sc.scalar(0.01, unit='m')
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
         return wf.compute(RollingDetectorView)
@@ -193,17 +195,17 @@ class Projection:
 PixelShape = NewType('PixelShape', sc.DataGroup)
 PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
 PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
-PositionNoiseCylindricalPixel = NewType('PositionNoiseCylindricalPixel', sc.Variable)
+PositionNoise = NewType('PositionNoise', sc.Variable)
 PositionNoiseReplicaCount = NewType('PositionNoiseReplicaCount', int)
 CalibratedPositionWithNoisyReplicas = NewType(
     'CalibratedPositionWithNoisyReplicas', sc.Variable
 )
+PositionNoiseSigma = NewType('PositionNoiseSigma', sc.Variable)
 
 
 def make_rolling_detector_view_factory(window: int):
     def make_rolling_detector_view(
-        detector: CalibratedDetector[SampleRun],
-        projection: Projection,
+        detector: CalibratedDetector[SampleRun], projection: Projection
     ) -> RollingDetectorView:
         params = DetectorParams(detector_number=detector.coords['detector_number'])
         return RollingDetectorView(params=params, window=window, projection=projection)
@@ -250,22 +252,22 @@ def pixel_cylinder_radius(
     return PixelCylinderRadius(t * vertices[1] - t * vertices[0])
 
 
+# Arbitrary small but not tiny size. More is likely not necessary, but having it too
+# small might lead to visible patterns after projection. It is therefore also chosen
+# to be a prime number, but it likely does not matter.
+_noise_size = 107
+
+
 def position_noise_for_cylindrical_pixel(
-    *,
-    axis: PixelCylinderAxis,
-    radius: PixelCylinderRadius,
-) -> PositionNoiseCylindricalPixel:
+    *, axis: PixelCylinderAxis, radius: PixelCylinderRadius
+) -> PositionNoise:
     # We *assume* that the cylinder is centered on the origin. Real files may not
     # fulfill this. However, the rest of the data reduction currently assumes that
     # the pixel offset corresponds to the pixel center, so if it is not fulfilled
     # there are bigger problems elsewhere anywhere.
     rng = np.random.default_rng()
-    dims = ('random_point_in_cylindrical_pixel',)
-    # Arbitrary small but not tiny size. More is likely not necessary, but having it too
-    # small might lead to visible patterns after projection. It is therefore also chosen
-    # to be a prime number, but it likely does not matter.
-    size = 107
-
+    dims = ('position',)
+    size = _noise_size
     z_hat = axis / sc.norm(axis)  # Unit vector along the cylinder axis
     x_hat = radius / sc.norm(radius)  # Unit vector along the radius direction
     y_hat = sc.cross(z_hat, x_hat)  # Unit vector perpendicular to z_hat and x_hat
@@ -280,13 +282,20 @@ def position_noise_for_cylindrical_pixel(
     dx = dr * sc.cos(dphi) * x_hat
     dy = dr * sc.sin(dphi) * y_hat
 
-    return dx + dy + dz
+    return PositionNoise(dx + dy + dz)
+
+
+def gaussian_position_noise(sigma: PositionNoiseSigma) -> PositionNoise:
+    size = _noise_size
+    position = sc.empty(sizes={'position': size}, unit='m', dtype=sc.DType.vector3)
+    position.values = np.random.default_rng().normal(0, sigma.value, size=(size, 3))
+    return PositionNoise(position)
 
 
 def position_with_noisy_replicas(
     *,
     detector: CalibratedDetector[SampleRun],
-    position_noise: PositionNoiseCylindricalPixel,
+    position_noise: PositionNoise,
     replicas: PositionNoiseReplicaCount,
 ) -> CalibratedPositionWithNoisyReplicas:
     """
