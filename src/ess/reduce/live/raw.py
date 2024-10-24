@@ -4,9 +4,9 @@
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from math import ceil
 from time import time
 from typing import NewType
-from math import ceil
 
 import numpy as np
 import scipp as sc
@@ -215,7 +215,7 @@ def make_xy_plane_projection_factory(xres: int, yres: int):
     def make_xy_plane_projection(
         position: CalibratedPositionWithNoisyReplicas,
     ) -> Projection:
-        return XYPlaneProjection(pos=position, xres=xres, yres=yres)
+        return XYPlaneProjection(position=position, xres=xres, yres=yres)
 
     return make_xy_plane_projection
 
@@ -298,24 +298,26 @@ def position_with_noisy_replicas(
     # "Paint" the short array of noise on top of the (replicated) position data.
     noise = sc.concat(
         [position_noise] * ceil(size / position_noise.size), dim=noise_dim
-    )[:size].fold(dim=noise_dim, sizes={noise_dim: replicas, position.dim: -1})
-    return sc.concat([position, noise + position], dim=noise_dim)
+    )[:size].fold(dim=noise_dim, sizes={'replica': replicas, position.dim: -1})
+    return sc.concat([position, noise + position], dim='replica')
 
 
 class XYPlaneProjection(Projection):
     def __init__(
         self,
         *,
-        pos: CalibratedPositionWithNoisyReplicas,
+        position: CalibratedPositionWithNoisyReplicas,
         xres: int = 150,
         yres: int = 150,
     ):
-        self._noise_dim = pos.dims[0]
-        self._replicas = pos.sizes[self._noise_dim]
-        position = pos[self._noise_dim, 0]
-        zplane = position.fields.z.min()  # position, not pos, to avoid noise
+        self._replica_dim = 'replica'
+        self._replicas = position.sizes[self._replica_dim]
+        # The first slice is the original data, so we use it to determine the z plane.
+        # This avoids noise in the z plane which could later cause trouble when
+        # combining the data.
+        zplane = position[self._replica_dim, 0].fields.z.min()
         self._coords = project_xy(
-            pos.fields.x, pos.fields.y, pos.fields.z, zplane=zplane
+            position.fields.x, position.fields.y, position.fields.z, zplane=zplane
         )
         x = self._coords['x']
         y = self._coords['y']
@@ -332,5 +334,5 @@ class XYPlaneProjection(Projection):
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         data = da.data.flatten(to='detector_number')
         self._current += 1
-        coords = self._coords[self._noise_dim, self._current % self._replicas]
+        coords = self._coords[self._replica_dim, self._current % self._replicas]
         return sc.DataArray(data, coords=coords).hist(y=self._y_edges, x=self._x_edges)
