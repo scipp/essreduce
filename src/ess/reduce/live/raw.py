@@ -126,8 +126,10 @@ class RollingDetectorView(Detector):
         nexus_file: str, *, detector_name: str, window: int, xres: int, yres: int
     ) -> 'RollingDetectorView':
         wf = GenericNeXusWorkflow()
-        # TODO Could also set workflow parameters.
-        wf.insert(make_xy_plane_histogrammer)
+        if 'mantle' in detector_name:
+            wf.insert(make_cylinder_mantle_histogrammer)
+        else:
+            wf.insert(make_xy_plane_histogrammer)
         wf.insert(make_rolling_detector_view_factory(window=window))
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
@@ -136,7 +138,7 @@ class RollingDetectorView(Detector):
         wf.insert(gaussian_position_noise)
         wf.insert(position_with_noisy_replicas)
         wf[PositionNoiseReplicaCount] = 4
-        wf[PositionNoiseSigma] = sc.scalar(0.01, unit='m')
+        wf[PositionNoiseSigma] = sc.scalar(0.001, unit='m')
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
         wf[Xres] = xres
@@ -187,7 +189,9 @@ def project_onto_cylinder(
     if radius is None:
         radius = r_xy.min()
     t = radius / r_xy
-    return {'x': x * t, 'y': y * t, 'z': z * t}
+    phi = sc.atan2(y=y, x=x).to(unit='deg')
+    arclength = radius * (phi * sc.scalar(np.pi / 180.0, unit='1/deg'))
+    return sc.DataGroup(phi=phi, r=radius, z=z * t, arclength=arclength)
 
 
 PixelShape = NewType('PixelShape', sc.DataGroup)
@@ -340,5 +344,28 @@ def make_xy_plane_histogrammer(
     edges = sc.DataGroup(
         y=sc.linspace('y', y.min() - delta, y.max() + delta, num=yres + 1, unit='m'),
         x=sc.linspace('x', x.min() - delta, x.max() + delta, num=xres + 1, unit='m'),
+    )
+    return Histogrammer(coords=coords, edges=edges)
+
+
+def make_cylinder_mantle_histogrammer(
+    position: CalibratedPositionWithNoisyReplicas, *, zres: Xres, arcres: Yres
+) -> Histogrammer:
+    pos = position['replica', 0]
+    radius = sc.sqrt(pos.fields.x**2 + pos.fields.y**2)
+    coords = project_onto_cylinder(
+        position.fields.x, position.fields.y, position.fields.z, radius=radius
+    )
+    z = coords['z']
+    arc = coords['arclength']
+    delta = sc.scalar(0.01, unit='m')
+    # We use the arc length instead of phi as it makes it easier to get a correct
+    # aspect ratio for the plot if both axes have the same unit.
+    # Order matters to plots have X as horizontal axis and Y as vertical.
+    edges = sc.DataGroup(
+        arclength=sc.linspace(
+            'arclength', arc.min() - delta, arc.max() + delta, num=arcres + 1, unit='m'
+        ),
+        z=sc.linspace('z', z.min() - delta, z.max() + delta, num=zres + 1, unit='m'),
     )
     return Histogrammer(coords=coords, edges=edges)
