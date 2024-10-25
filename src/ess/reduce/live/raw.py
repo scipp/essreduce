@@ -304,7 +304,7 @@ def position_with_noisy_replicas(
     The first slice of the new array is the original position data, and the
     remaining slices are the original data with noise added.
     """
-    position = detector.coords['position']
+    position = detector.coords['position'].to(unit='m')
     noise_dim = position_noise.dim
     size = position.size * replicas
     # "Paint" the short array of noise on top of the (replicated) position data.
