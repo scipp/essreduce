@@ -172,26 +172,29 @@ class RollingDetectorView(Detector):
 
 
 def project_xy(
-    x: sc.Variable, y: sc.Variable, z: sc.Variable, *, zplane: sc.Variable | None = None
+    position: sc.Variable, *, zplane: sc.Variable | None = None
 ) -> dict[str, sc.Variable]:
+    z = position.fields.z
     zmin = z.min()
     zero = sc.zeros_like(zmin)
     if zplane is None:
         zplane = z.max() if zmin < zero else zmin
     t = zplane / z
-    return sc.DataGroup(x=x * t, y=y * t, z=zplane)
+    return sc.DataGroup(x=position.fields.x * t, y=position.fields.y * t, z=zplane)
 
 
 def project_onto_cylinder(
-    x: sc.Variable, y: sc.Variable, z: sc.Variable, *, radius: sc.Variable | None = None
+    position: sc.Variable, *, radius: sc.Variable | None = None
 ) -> dict[str, sc.Variable]:
+    x = position.fields.x
+    y = position.fields.y
     r_xy = sc.sqrt(x**2 + y**2)
     if radius is None:
         radius = r_xy.min()
     t = radius / r_xy
     phi = sc.atan2(y=y, x=x).to(unit='deg')
     arclength = radius * (phi * sc.scalar(np.pi / 180.0, unit='1/deg'))
-    return sc.DataGroup(phi=phi, r=radius, z=z * t, arclength=arclength)
+    return sc.DataGroup(phi=phi, r=radius, z=position.fields.z * t, arclength=arclength)
 
 
 PixelShape = NewType('PixelShape', sc.DataGroup)
@@ -359,17 +362,12 @@ def make_xy_plane_coords(
     # The first slice is the original data, so we use it to determine the z plane.
     # This avoids noise in the z plane which could later cause trouble when
     # combining the data.
-    zplane = position['replica', 0].fields.z.min()
-    return project_xy(
-        position.fields.x, position.fields.y, position.fields.z, zplane=zplane
-    )
+    zplane = project_xy(position['replica', 0])['z']
+    return project_xy(position, zplane=zplane)
 
 
 def make_cylinder_mantle_coords(
     position: CalibratedPositionWithNoisyReplicas,
 ) -> ProjectedCoords:
-    pos = position['replica', 0]
-    radius = sc.sqrt(pos.fields.x**2 + pos.fields.y**2)
-    return project_onto_cylinder(
-        position.fields.x, position.fields.y, position.fields.z, radius=radius
-    )
+    radius = project_onto_cylinder(position['replica', 0])['r']
+    return project_onto_cylinder(position, radius=radius)
