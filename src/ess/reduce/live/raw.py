@@ -125,6 +125,7 @@ class RollingDetectorView(Detector):
     def from_nexus(
         nexus_file: str, *, detector_name: str, window: int, resolution: dict[str, int]
     ) -> 'RollingDetectorView':
+        # TODO This if statements should be handled by improving the config options!
         wf = GenericNeXusWorkflow()
         if 'mantle' in detector_name:
             wf.insert(make_cylinder_mantle_coords)
@@ -134,12 +135,14 @@ class RollingDetectorView(Detector):
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
         wf.insert(pixel_cylinder_radius)
-        # wf.insert(position_noise_for_cylindrical_pixel)
-        wf.insert(gaussian_position_noise)
+        if 'loki' in detector_name:
+            wf.insert(position_noise_for_cylindrical_pixel)
+        else:
+            wf.insert(gaussian_position_noise)
+            wf[PositionNoiseSigma] = sc.scalar(0.01, unit='m')
         wf.insert(position_with_noisy_replicas)
         wf.insert(Histogrammer.from_coords)
         wf[PositionNoiseReplicaCount] = 4
-        wf[PositionNoiseSigma] = sc.scalar(0.001, unit='m')
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
         wf[DetectorViewResolution] = resolution
@@ -347,6 +350,8 @@ def position_with_noisy_replicas(
     remaining slices are the original data with noise added.
     """
     position = detector.coords['position'].to(unit='m')
+    if replicas == 0:
+        return sc.concat([position], dim='replica')
     noise_dim = position_noise.dim
     size = position.size * replicas
     # "Paint" the short array of noise on top of the (replicated) position data.
