@@ -6,7 +6,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from math import ceil
 from time import time
-from typing import NewType
+from typing import Literal, NewType
 
 import numpy as np
 import scipp as sc
@@ -123,14 +123,21 @@ class RollingDetectorView(Detector):
 
     @staticmethod
     def from_nexus(
-        nexus_file: str, *, detector_name: str, window: int, resolution: dict[str, int]
+        nexus_file: str,
+        *,
+        detector_name: str,
+        window: int,
+        projection: Literal['xy_plane', 'cylinder_mantle_z'],
+        resolution: dict[str, int],
     ) -> 'RollingDetectorView':
         # TODO This if statements should be handled by improving the config options!
         wf = GenericNeXusWorkflow()
-        if 'mantle' in detector_name:
+        if projection == 'cylinder_mantle_z':
             wf.insert(make_cylinder_mantle_coords)
-        else:
+        elif projection == 'xy_plane':
             wf.insert(make_xy_plane_coords)
+        else:
+            raise ValueError(f"Invalid projection {projection}.")
         wf.insert(make_rolling_detector_view_factory(window=window))
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
