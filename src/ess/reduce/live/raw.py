@@ -123,13 +123,13 @@ class RollingDetectorView(Detector):
 
     @staticmethod
     def from_nexus(
-        nexus_file: str, *, detector_name: str, window: int, xres: int, yres: int
+        nexus_file: str, *, detector_name: str, window: int, resolution: dict[str, int]
     ) -> 'RollingDetectorView':
         wf = GenericNeXusWorkflow()
         if 'mantle' in detector_name:
-            wf.insert(make_cylinder_mantle_histogrammer)
+            wf.insert(make_cylinder_mantle_coords)
         else:
-            wf.insert(make_xy_plane_histogrammer)
+            wf.insert(make_xy_plane_coords)
         wf.insert(make_rolling_detector_view_factory(window=window))
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
@@ -137,12 +137,12 @@ class RollingDetectorView(Detector):
         # wf.insert(position_noise_for_cylindrical_pixel)
         wf.insert(gaussian_position_noise)
         wf.insert(position_with_noisy_replicas)
+        wf.insert(Histogrammer.from_coords)
         wf[PositionNoiseReplicaCount] = 4
         wf[PositionNoiseSigma] = sc.scalar(0.001, unit='m')
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
-        wf[Xres] = xres
-        wf[Yres] = yres
+        wf[DetectorViewResolution] = resolution
         return wf.compute(RollingDetectorView)
 
     def get(self, window: int | None = None) -> sc.DataArray:
@@ -203,8 +203,8 @@ CalibratedPositionWithNoisyReplicas = NewType(
     'CalibratedPositionWithNoisyReplicas', sc.Variable
 )
 PositionNoiseSigma = NewType('PositionNoiseSigma', sc.Variable)
-Xres = NewType('Xres', int)
-Yres = NewType('Yres', int)
+ProjectedCoords = NewType('ProjectedCoords', sc.DataGroup[str, sc.Variable])
+DetectorViewResolution = NewType('DetectorViewResolution', dict[str, int])
 
 
 class Histogrammer:
@@ -218,6 +218,32 @@ class Histogrammer:
         self._replicas = coords.sizes[self._replica_dim]
         self._coords = coords
         self._edges = edges
+
+    @staticmethod
+    def from_coords(
+        coords: ProjectedCoords, resolution: DetectorViewResolution
+    ) -> 'Histogrammer':
+        """
+        Create a histogrammer from coordinates and resolution.
+
+        Parameters
+        ----------
+        coords:
+            Coordinates to use for histogramming. May contain more than the
+            dimensions used for histogramming.
+        resolution:
+            Resolution to use for histogramming. The keys are the dimensions
+            to histogram, and the values are the number of bins to use. The order
+            of the dimensions is preserved in the output and thus controls which axis
+            is which in a plot.
+        """
+        edges = sc.DataGroup(
+            {
+                dim: coords[dim].hist({dim: res}).coords[dim]
+                for dim, res in resolution.items()
+            }
+        )
+        return Histogrammer(coords=coords, edges=edges)
 
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         self._current += 1
@@ -327,45 +353,23 @@ def position_with_noisy_replicas(
     return sc.concat([position, noise + position], dim='replica')
 
 
-def make_xy_plane_histogrammer(
-    position: CalibratedPositionWithNoisyReplicas, *, xres: Xres, yres: Yres
-) -> Histogrammer:
+def make_xy_plane_coords(
+    position: CalibratedPositionWithNoisyReplicas,
+) -> ProjectedCoords:
     # The first slice is the original data, so we use it to determine the z plane.
     # This avoids noise in the z plane which could later cause trouble when
     # combining the data.
     zplane = position['replica', 0].fields.z.min()
-    coords = project_xy(
+    return project_xy(
         position.fields.x, position.fields.y, position.fields.z, zplane=zplane
     )
-    x = coords['x']
-    y = coords['y']
-    delta = sc.scalar(0.01, unit='m')
-    # Order matters to plots have X as horizontal axis and Y as vertical.
-    edges = sc.DataGroup(
-        y=sc.linspace('y', y.min() - delta, y.max() + delta, num=yres + 1, unit='m'),
-        x=sc.linspace('x', x.min() - delta, x.max() + delta, num=xres + 1, unit='m'),
-    )
-    return Histogrammer(coords=coords, edges=edges)
 
 
-def make_cylinder_mantle_histogrammer(
-    position: CalibratedPositionWithNoisyReplicas, *, zres: Xres, arcres: Yres
-) -> Histogrammer:
+def make_cylinder_mantle_coords(
+    position: CalibratedPositionWithNoisyReplicas,
+) -> ProjectedCoords:
     pos = position['replica', 0]
     radius = sc.sqrt(pos.fields.x**2 + pos.fields.y**2)
-    coords = project_onto_cylinder(
+    return project_onto_cylinder(
         position.fields.x, position.fields.y, position.fields.z, radius=radius
     )
-    z = coords['z']
-    arc = coords['arclength']
-    delta = sc.scalar(0.01, unit='m')
-    # We use the arc length instead of phi as it makes it easier to get a correct
-    # aspect ratio for the plot if both axes have the same unit.
-    # Order matters to plots have X as horizontal axis and Y as vertical.
-    edges = sc.DataGroup(
-        arclength=sc.linspace(
-            'arclength', arc.min() - delta, arc.max() + delta, num=arcres + 1, unit='m'
-        ),
-        z=sc.linspace('z', z.min() - delta, z.max() + delta, num=zres + 1, unit='m'),
-    )
-    return Histogrammer(coords=coords, edges=edges)
