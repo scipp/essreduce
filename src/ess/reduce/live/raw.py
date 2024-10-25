@@ -127,7 +127,7 @@ class RollingDetectorView(Detector):
     ) -> 'RollingDetectorView':
         wf = GenericNeXusWorkflow()
         # TODO Could also set workflow parameters.
-        wf.insert(make_xy_plane_projection_factory(xres=xres, yres=yres))
+        wf.insert(make_xy_plane_histogrammer)
         wf.insert(make_rolling_detector_view_factory(window=window))
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
@@ -139,6 +139,8 @@ class RollingDetectorView(Detector):
         wf[PositionNoiseSigma] = sc.scalar(0.01, unit='m')
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
+        wf[Xres] = xres
+        wf[Yres] = yres
         return wf.compute(RollingDetectorView)
 
     def get(self, window: int | None = None) -> sc.DataArray:
@@ -188,10 +190,6 @@ def project_onto_cylinder(
     return {'x': x * t, 'y': y * t, 'z': z * t}
 
 
-class Projection:
-    pass
-
-
 PixelShape = NewType('PixelShape', sc.DataGroup)
 PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
 PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
@@ -201,25 +199,36 @@ CalibratedPositionWithNoisyReplicas = NewType(
     'CalibratedPositionWithNoisyReplicas', sc.Variable
 )
 PositionNoiseSigma = NewType('PositionNoiseSigma', sc.Variable)
+Xres = NewType('Xres', int)
+Yres = NewType('Yres', int)
+
+
+class Histogrammer:
+    def __init__(
+        self,
+        coords: sc.DataGroup[str, sc.Variable],
+        edges: sc.DataGroup[str, sc.Variable],
+    ):
+        self._current = 0
+        self._replica_dim = 'replica'
+        self._replicas = coords.sizes[self._replica_dim]
+        self._coords = coords
+        self._edges = edges
+
+    def __call__(self, da: sc.DataArray) -> sc.DataArray:
+        self._current += 1
+        coords = self._coords[self._replica_dim, self._current % self._replicas]
+        return sc.DataArray(da.data, coords=coords).hist(self._edges)
 
 
 def make_rolling_detector_view_factory(window: int):
     def make_rolling_detector_view(
-        detector: CalibratedDetector[SampleRun], projection: Projection
+        detector: CalibratedDetector[SampleRun], projection: Histogrammer
     ) -> RollingDetectorView:
         params = DetectorParams(detector_number=detector.coords['detector_number'])
         return RollingDetectorView(params=params, window=window, projection=projection)
 
     return make_rolling_detector_view
-
-
-def make_xy_plane_projection_factory(xres: int, yres: int):
-    def make_xy_plane_projection(
-        position: CalibratedPositionWithNoisyReplicas,
-    ) -> Projection:
-        return XYPlaneProjection(position=position, xres=xres, yres=yres)
-
-    return make_xy_plane_projection
 
 
 def pixel_shape(component: NeXusComponent[snx.NXdetector, SampleRun]) -> PixelShape:
@@ -314,37 +323,22 @@ def position_with_noisy_replicas(
     return sc.concat([position, noise + position], dim='replica')
 
 
-class XYPlaneProjection(Projection):
-    def __init__(
-        self,
-        *,
-        position: CalibratedPositionWithNoisyReplicas,
-        xres: int = 150,
-        yres: int = 150,
-    ):
-        self._replica_dim = 'replica'
-        self._replicas = position.sizes[self._replica_dim]
-        # The first slice is the original data, so we use it to determine the z plane.
-        # This avoids noise in the z plane which could later cause trouble when
-        # combining the data.
-        zplane = position[self._replica_dim, 0].fields.z.min()
-        self._coords = project_xy(
-            position.fields.x, position.fields.y, position.fields.z, zplane=zplane
-        )
-        x = self._coords['x']
-        y = self._coords['y']
-
-        self._current = 0
-        delta = sc.scalar(0.01, unit='m')
-        self._x_edges = sc.linspace(
-            'x', x.min() - delta, x.max() + delta, num=xres + 1, unit='m'
-        )
-        self._y_edges = sc.linspace(
-            'y', y.min() - delta, y.max() + delta, num=yres + 1, unit='m'
-        )
-
-    def __call__(self, da: sc.DataArray) -> sc.DataArray:
-        data = da.data.flatten(to='detector_number')
-        self._current += 1
-        coords = self._coords[self._replica_dim, self._current % self._replicas]
-        return sc.DataArray(data, coords=coords).hist(y=self._y_edges, x=self._x_edges)
+def make_xy_plane_histogrammer(
+    position: CalibratedPositionWithNoisyReplicas, *, xres: Xres, yres: Yres
+) -> Histogrammer:
+    # The first slice is the original data, so we use it to determine the z plane.
+    # This avoids noise in the z plane which could later cause trouble when
+    # combining the data.
+    zplane = position['replica', 0].fields.z.min()
+    coords = project_xy(
+        position.fields.x, position.fields.y, position.fields.z, zplane=zplane
+    )
+    x = coords['x']
+    y = coords['y']
+    delta = sc.scalar(0.01, unit='m')
+    # Order matters to plots have X as horizontal axis and Y as vertical.
+    edges = sc.DataGroup(
+        y=sc.linspace('y', y.min() - delta, y.max() + delta, num=yres + 1, unit='m'),
+        x=sc.linspace('x', x.min() - delta, x.max() + delta, num=xres + 1, unit='m'),
+    )
+    return Histogrammer(coords=coords, edges=edges)
