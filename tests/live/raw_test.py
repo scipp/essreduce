@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+import numpy as np
 import pytest
 import scipp as sc
 
@@ -69,3 +70,83 @@ def test_RollingDetectorView_raises_if_subwindow_exceeds_window() -> None:
         det.get(4)
     with pytest.raises(ValueError, match="Window size"):
         det.get(-1)
+
+
+def test_RollingDetectorView_projects_counts() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    # Dummy projection that just drops the first pixel
+    det = raw.RollingDetectorView(
+        detector_number=detector_number,
+        window=3,
+        projection=lambda da: da['pixel', 1:].rename(pixel='abc'),
+    )
+    expected = sc.DataArray(
+        sc.array(dims=['pixel'], values=[0, 0], unit='counts', dtype='int32'),
+        coords={'detector_number': detector_number[1:]},
+    ).rename(pixel='abc')
+
+    det.add_counts([1, 2, 3, 2])
+    expected.values = [2, 1]
+    assert sc.identical(det.get(), expected)
+
+    det.add_counts([1, 3, 3, 1])
+    expected.values = [2, 3]
+    assert sc.identical(det.get(), expected)
+
+
+def test_project_xy_with_given_zplane_scales() -> None:
+    result = raw.project_xy(
+        sc.vectors(
+            dims=['point'],
+            values=[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [6.0, 10.0, 12.0]],
+            unit='m',
+        ),
+        zplane=sc.scalar(6.0, unit='m'),
+    )
+    assert sc.identical(
+        result,
+        sc.DataGroup(
+            x=sc.array(dims=['point'], values=[2.0, 4.0, 3.0], unit='m'),
+            y=sc.array(dims=['point'], values=[4.0, 5.0, 5.0], unit='m'),
+            z=sc.scalar(6.0, unit='m'),
+        ),
+    )
+
+
+def test_project_xy_defaults_to_scale_to_zmin() -> None:
+    result = raw.project_xy(
+        sc.vectors(
+            dims=['point'],
+            values=[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [6.0, 10.0, 12.0]],
+            unit='m',
+        )
+    )
+    assert sc.identical(
+        result,
+        sc.DataGroup(
+            # Note same relative values as with zplane=6, just scaled.
+            x=sc.array(dims=['point'], values=[1.0, 2.0, 1.5], unit='m'),
+            y=sc.array(dims=['point'], values=[2.0, 2.5, 2.5], unit='m'),
+            z=sc.scalar(3.0, unit='m'),
+        ),
+    )
+
+
+def test_project_onto_cylinder_z() -> None:
+    radius = sc.scalar(2.0, unit='m')
+    # Input radii are 4 and 1 => scale by 1/2 and 2.
+    result = raw.project_onto_cylinder_z(
+        sc.vectors(dims=['point'], values=[[0.0, 4.0, 3.0], [1.0, 0.0, 6.0]], unit='m'),
+        radius=radius,
+    )
+    assert sc.identical(result['r'], radius)
+    assert sc.identical(
+        result['z'], sc.array(dims=['point'], values=[1.5, 12.0], unit='m')
+    )
+    assert sc.identical(
+        result['phi'], sc.array(dims=['point'], values=[90.0, 0.0], unit='deg')
+    )
+    assert sc.identical(
+        result['arc_length'],
+        sc.array(dims=['point'], values=[radius.value * np.pi * 0.5, 0.0], unit='m'),
+    )
