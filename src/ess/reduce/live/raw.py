@@ -46,61 +46,20 @@ class LogicalView:
         return da.copy()
 
 
-@dataclass
-class DetectorParams:
-    detector_number: sc.Variable
-    x_pixel_offset: sc.Variable | None = None
-    y_pixel_offset: sc.Variable | None = None
-    z_pixel_offset: sc.Variable | None = None
-    transformation: NeXusTransformation | None = None
-    pixel_shape: sc.DataGroup | None = None
-
-    def __post_init__(self):
-        self._flat_detector_number = self.detector_number.flatten(to='event_id')
+class Detector:
+    def __init__(self, detector_number: sc.Variable):
+        self._data = sc.DataArray(
+            sc.zeros(sizes=detector_number.sizes, unit='counts', dtype='int32'),
+            coords={'detector_number': detector_number},
+        )
+        self._flat_detector_number = detector_number.flatten(to='event_id')
+        self._start = int(self._flat_detector_number[0].value)
+        self._stop = int(self._flat_detector_number[-1].value)
+        self._size = int(self._flat_detector_number.size)
         if not sc.issorted(self._flat_detector_number, dim='event_id'):
             raise ValueError("Detector numbers must be sorted.")
-        if self.stop - self.start + 1 != self.size:
+        if self._stop - self._start + 1 != self._size:
             raise ValueError("Detector numbers must be consecutive.")
-
-    @property
-    def size(self) -> int:
-        return int(self._flat_detector_number.size)
-
-    @property
-    def start(self) -> int:
-        return int(self._flat_detector_number[0].value)
-
-    @property
-    def stop(self) -> int:
-        return int(self._flat_detector_number[-1].value)
-
-
-class Detector:
-    def __init__(self, params: DetectorParams):
-        self._data = sc.DataArray(
-            sc.zeros(sizes=params.detector_number.sizes, unit='counts', dtype='int32'),
-            coords={'detector_id': params.detector_number},
-        )
-        if params.x_pixel_offset is not None:
-            self._data.coords['x_pixel_offset'] = params.x_pixel_offset
-        if params.y_pixel_offset is not None:
-            self._data.coords['y_pixel_offset'] = params.y_pixel_offset
-        if params.z_pixel_offset is not None:
-            self._data.coords['z_pixel_offset'] = params.z_pixel_offset
-        if all(
-            coord in self._data.coords
-            for coord in ['x_pixel_offset', 'y_pixel_offset', 'z_pixel_offset']
-        ):
-            self._data.coords['pixel_offset'] = sc.spatial.as_vectors(
-                x=self._data.coords['x_pixel_offset'],
-                y=self._data.coords['y_pixel_offset'],
-                z=self._data.coords['z_pixel_offset'],
-            )
-            del self._data.coords['x_pixel_offset']
-            del self._data.coords['y_pixel_offset']
-            del self._data.coords['z_pixel_offset']
-        self._start = params.start
-        self._size = params.size
 
     @property
     def data(self) -> sc.DataArray:
@@ -122,12 +81,12 @@ class Detector:
 class RollingDetectorView(Detector):
     def __init__(
         self,
-        params: DetectorParams,
         *,
+        detector_number: sc.Variable,
         window: int,
         projection: Callable[[sc.DataArray], sc.DataArray] | None = None,
     ):
-        super().__init__(params)
+        super().__init__(detector_number=detector_number)
         self._projection = projection
         self._window = window
         self._current = 0
@@ -305,8 +264,11 @@ def make_rolling_logical_detector_view_factory(window: int, selection: LogicalVi
     def make_rolling_detector_view(
         detector: CalibratedDetector[SampleRun],
     ) -> RollingDetectorView:
-        params = DetectorParams(detector_number=detector.coords['detector_number'])
-        return RollingDetectorView(params=params, window=window, projection=selection)
+        return RollingDetectorView(
+            detector_number=detector.coords['detector_number'],
+            window=window,
+            projection=selection,
+        )
 
     return make_rolling_detector_view
 
@@ -315,8 +277,11 @@ def make_rolling_detector_view_factory(window: int):
     def make_rolling_detector_view(
         detector: CalibratedDetector[SampleRun], projection: Histogrammer
     ) -> RollingDetectorView:
-        params = DetectorParams(detector_number=detector.coords['detector_number'])
-        return RollingDetectorView(params=params, window=window, projection=projection)
+        return RollingDetectorView(
+            detector_number=detector.coords['detector_number'],
+            window=window,
+            projection=projection,
+        )
 
     return make_rolling_detector_view
 
