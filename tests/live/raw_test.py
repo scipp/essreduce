@@ -71,6 +71,28 @@ def test_RollingDetectorView_raises_if_subwindow_exceeds_window() -> None:
         det.get(-1)
 
 
+def test_RollingDetectorView_projects_counts() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    # Dummy projection that just drops the first pixel
+    det = raw.RollingDetectorView(
+        detector_number=detector_number,
+        window=3,
+        projection=lambda da: da['pixel', 1:].rename(pixel='abc'),
+    )
+    expected = sc.DataArray(
+        sc.array(dims=['pixel'], values=[0, 0], unit='counts', dtype='int32'),
+        coords={'detector_number': detector_number[1:]},
+    ).rename(pixel='abc')
+
+    det.add_counts([1, 2, 3, 2])
+    expected.values = [2, 1]
+    assert sc.identical(det.get(), expected)
+
+    det.add_counts([1, 3, 3, 1])
+    expected.values = [2, 3]
+    assert sc.identical(det.get(), expected)
+
+
 def test_project_xy_with_given_zplane_scales() -> None:
     result = raw.project_xy(
         sc.vectors(
