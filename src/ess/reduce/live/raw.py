@@ -5,7 +5,6 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from math import ceil
-from time import time
 from typing import Literal, NewType
 
 import numpy as np
@@ -168,7 +167,6 @@ class RollingDetectorView(Detector):
         return data
 
     def add_counts(self, data: Sequence[int]) -> None:
-        start = time()
         counts = self.bincount(data)
         if self._projection is not None:
             counts = self._projection(counts)
@@ -176,7 +174,6 @@ class RollingDetectorView(Detector):
         self._history['window', self._current] = counts
         self._cache += counts
         self._current = (self._current + 1) % self._window
-        print(f"add_counts {len(data)}: {time() - start:.2f}s")
 
 
 def project_xy(
