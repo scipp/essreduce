@@ -24,6 +24,29 @@ from ess.reduce.nexus.workflow import GenericNeXusWorkflow
 
 
 @dataclass
+class LogicalView:
+    """
+    Logical view of a multi-dimensional detector.
+
+    Instances can be used as a "projection" function for a detector view.
+    """
+
+    fold: dict[str, int]
+    transpose: tuple[str, ...]
+    select: dict[str, int]
+    flatten: dict[str, list[str]]
+
+    def __call__(self, da: sc.DataArray) -> sc.DataArray:
+        da = da.fold(da.dim, sizes=self.fold)
+        da = da.transpose(self.transpose)
+        for dim, index in self.select.items():
+            da = da[dim, index]
+        for to, dims in self.flatten.items():
+            da = da.flatten(dims, to=to)
+        return da.copy()
+
+
+@dataclass
 class DetectorParams:
     detector_number: sc.Variable
     x_pixel_offset: sc.Variable | None = None
@@ -127,7 +150,7 @@ class RollingDetectorView(Detector):
         *,
         detector_name: str,
         window: int,
-        projection: Literal['xy_plane', 'cylinder_mantle_z'],
+        projection: Literal['xy_plane', 'cylinder_mantle_z'] | LogicalView,
         resolution: dict[str, int],
         pixel_noise: Literal['cylindrical'] | sc.Variable | None = None,
     ) -> 'RollingDetectorView':
@@ -139,18 +162,25 @@ class RollingDetectorView(Detector):
         wf = GenericNeXusWorkflow()
         if projection == 'cylinder_mantle_z':
             wf.insert(make_cylinder_mantle_coords)
+            wf.insert(make_rolling_detector_view_factory(window=window))
         elif projection == 'xy_plane':
             wf.insert(make_xy_plane_coords)
+            wf.insert(make_rolling_detector_view_factory(window=window))
+        elif isinstance(projection, LogicalView):
+            wf.insert(
+                make_rolling_logical_detector_view_factory(
+                    window=window, selection=projection
+                )
+            )
         else:
             raise ValueError(f"Invalid {projection=}.")
-        wf.insert(make_rolling_detector_view_factory(window=window))
-        wf.insert(pixel_shape)
-        wf.insert(pixel_cylinder_axis)
-        wf.insert(pixel_cylinder_radius)
         if isinstance(pixel_noise, sc.Variable):
             wf.insert(gaussian_position_noise)
             wf[PositionNoiseSigma] = pixel_noise
         elif pixel_noise == 'cylindrical':
+            wf.insert(pixel_shape)
+            wf.insert(pixel_cylinder_axis)
+            wf.insert(pixel_cylinder_radius)
             wf.insert(position_noise_for_cylindrical_pixel)
         else:
             raise ValueError(f"Invalid {pixel_noise=}.")
@@ -269,6 +299,16 @@ class Histogrammer:
         self._current += 1
         coords = self._coords[self._replica_dim, self._current % self._replicas]
         return sc.DataArray(da.data, coords=coords).hist(self._edges)
+
+
+def make_rolling_logical_detector_view_factory(window: int, selection: LogicalView):
+    def make_rolling_detector_view(
+        detector: CalibratedDetector[SampleRun],
+    ) -> RollingDetectorView:
+        params = DetectorParams(detector_number=detector.coords['detector_number'])
+        return RollingDetectorView(params=params, window=window, projection=selection)
+
+    return make_rolling_detector_view
 
 
 def make_rolling_detector_view_factory(window: int):
