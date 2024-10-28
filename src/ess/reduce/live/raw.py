@@ -3,7 +3,7 @@
 """Raw count processing and visualization for live data display."""
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from math import ceil
 from time import time
 from typing import Literal, NewType
@@ -31,14 +31,16 @@ class LogicalView:
     Instances can be used as a "projection" function for a detector view.
     """
 
-    fold: dict[str, int]
-    transpose: tuple[str, ...]
-    select: dict[str, int]
-    flatten: dict[str, list[str]]
+    fold: dict[str, int] | None = None
+    transpose: tuple[str, ...] | None = None
+    select: dict[str, int] = field(default_factory=dict)
+    flatten: dict[str, list[str]] = field(default_factory=dict)
 
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
-        da = da.fold(da.dim, sizes=self.fold)
-        da = da.transpose(self.transpose)
+        if self.fold is not None:
+            da = da.fold(da.dim, sizes=self.fold)
+        if self.transpose is not None:
+            da = da.transpose(self.transpose)
         for dim, index in self.select.items():
             da = da[dim, index]
         for to, dims in self.flatten.items():
