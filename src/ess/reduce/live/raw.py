@@ -129,27 +129,34 @@ class RollingDetectorView(Detector):
         window: int,
         projection: Literal['xy_plane', 'cylinder_mantle_z'],
         resolution: dict[str, int],
+        pixel_noise: Literal['cylindrical'] | sc.Variable | None = None,
     ) -> 'RollingDetectorView':
-        # TODO This if statements should be handled by improving the config options!
+        if pixel_noise is None:
+            pixel_noise = sc.scalar(0.0, unit='m')
+            noise_replica_count = 0
+        else:
+            noise_replica_count = 4
         wf = GenericNeXusWorkflow()
         if projection == 'cylinder_mantle_z':
             wf.insert(make_cylinder_mantle_coords)
         elif projection == 'xy_plane':
             wf.insert(make_xy_plane_coords)
         else:
-            raise ValueError(f"Invalid projection {projection}.")
+            raise ValueError(f"Invalid {projection=}.")
         wf.insert(make_rolling_detector_view_factory(window=window))
         wf.insert(pixel_shape)
         wf.insert(pixel_cylinder_axis)
         wf.insert(pixel_cylinder_radius)
-        if 'loki' in detector_name:
+        if isinstance(pixel_noise, sc.Variable):
+            wf.insert(gaussian_position_noise)
+            wf[PositionNoiseSigma] = pixel_noise
+        elif pixel_noise == 'cylindrical':
             wf.insert(position_noise_for_cylindrical_pixel)
         else:
-            wf.insert(gaussian_position_noise)
-            wf[PositionNoiseSigma] = sc.scalar(0.01, unit='m')
+            raise ValueError(f"Invalid {pixel_noise=}.")
         wf.insert(position_with_noisy_replicas)
         wf.insert(Histogrammer.from_coords)
-        wf[PositionNoiseReplicaCount] = 4
+        wf[PositionNoiseReplicaCount] = noise_replica_count
         wf[Filename[SampleRun]] = nexus_file
         wf[NeXusDetectorName] = detector_name
         wf[DetectorViewResolution] = resolution
