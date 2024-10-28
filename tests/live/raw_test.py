@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+import numpy as np
 import pytest
 import scipp as sc
 
@@ -128,4 +129,24 @@ def test_project_xy_defaults_to_scale_to_zmin() -> None:
             y=sc.array(dims=['point'], values=[2.0, 2.5, 2.5], unit='m'),
             z=sc.scalar(3.0, unit='m'),
         ),
+    )
+
+
+def test_project_onto_cylinder_z() -> None:
+    radius = sc.scalar(2.0, unit='m')
+    # Input radii are 4 and 1 => scale by 1/2 and 2.
+    result = raw.project_onto_cylinder_z(
+        sc.vectors(dims=['point'], values=[[0.0, 4.0, 3.0], [1.0, 0.0, 6.0]], unit='m'),
+        radius=radius,
+    )
+    assert sc.identical(result['r'], radius)
+    assert sc.identical(
+        result['z'], sc.array(dims=['point'], values=[1.5, 12.0], unit='m')
+    )
+    assert sc.identical(
+        result['phi'], sc.array(dims=['point'], values=[90.0, 0.0], unit='deg')
+    )
+    assert sc.identical(
+        result['arc_length'],
+        sc.array(dims=['point'], values=[radius.value * np.pi * 0.5, 0.0], unit='m'),
     )

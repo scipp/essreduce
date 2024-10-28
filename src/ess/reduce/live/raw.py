@@ -350,7 +350,7 @@ def project_xy(
     return sc.DataGroup(x=position.fields.x * t, y=position.fields.y * t, z=zplane)
 
 
-def project_onto_cylinder(
+def project_onto_cylinder_z(
     position: sc.Variable, *, radius: sc.Variable | None = None
 ) -> dict[str, sc.Variable]:
     """
@@ -365,8 +365,10 @@ def project_onto_cylinder(
         radius = r_xy.min()
     t = radius / r_xy
     phi = sc.atan2(y=y, x=x).to(unit='deg')
-    arclength = radius * (phi * sc.scalar(np.pi / 180.0, unit='1/deg'))
-    return sc.DataGroup(phi=phi, r=radius, z=position.fields.z * t, arclength=arclength)
+    arc_length = radius * (phi * sc.scalar(np.pi / 180.0, unit='1/deg'))
+    return sc.DataGroup(
+        phi=phi, r=radius, z=position.fields.z * t, arc_length=arc_length
+    )
 
 
 def pixel_shape(component: NeXusComponent[snx.NXdetector, SampleRun]) -> PixelShape:
@@ -476,5 +478,5 @@ def make_xy_plane_coords(
 def make_cylinder_mantle_coords(
     position: CalibratedPositionWithNoisyReplicas,
 ) -> ProjectedCoords:
-    radius = project_onto_cylinder(position['replica', 0])['r']
-    return project_onto_cylinder(position, radius=radius)
+    radius = project_onto_cylinder_z(position['replica', 0])['r']
+    return project_onto_cylinder_z(position, radius=radius)
