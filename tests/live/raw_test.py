@@ -69,3 +69,41 @@ def test_RollingDetectorView_raises_if_subwindow_exceeds_window() -> None:
         det.get(4)
     with pytest.raises(ValueError, match="Window size"):
         det.get(-1)
+
+
+def test_project_xy_with_given_zplane_scales() -> None:
+    result = raw.project_xy(
+        sc.vectors(
+            dims=['point'],
+            values=[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [6.0, 10.0, 12.0]],
+            unit='m',
+        ),
+        zplane=sc.scalar(6.0, unit='m'),
+    )
+    assert sc.identical(
+        result,
+        sc.DataGroup(
+            x=sc.array(dims=['point'], values=[2.0, 4.0, 3.0], unit='m'),
+            y=sc.array(dims=['point'], values=[4.0, 5.0, 5.0], unit='m'),
+            z=sc.scalar(6.0, unit='m'),
+        ),
+    )
+
+
+def test_project_xy_defaults_to_scale_to_zmin() -> None:
+    result = raw.project_xy(
+        sc.vectors(
+            dims=['point'],
+            values=[[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [6.0, 10.0, 12.0]],
+            unit='m',
+        )
+    )
+    assert sc.identical(
+        result,
+        sc.DataGroup(
+            # Note same relative values as with zplane=6, just scaled.
+            x=sc.array(dims=['point'], values=[1.0, 2.0, 1.5], unit='m'),
+            y=sc.array(dims=['point'], values=[2.0, 2.5, 2.5], unit='m'),
+            z=sc.scalar(3.0, unit='m'),
+        ),
+    )
