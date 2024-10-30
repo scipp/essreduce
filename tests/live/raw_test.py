@@ -17,6 +17,16 @@ def test_clear_counts_resets_counts_to_zero() -> None:
     assert det.data.sum().value == 0
 
 
+def test_Detector_bincount_drops_out_of_range_ids() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    det = raw.Detector(detector_number)
+    counts = det.bincount([1, 2, 0, -1, 3, 4])
+    assert sc.identical(
+        counts.data,
+        sc.array(dims=['pixel'], values=[1, 1, 1], unit='counts', dtype='int32'),
+    )
+
+
 def test_RollingDetectorView_full_window() -> None:
     detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
     det = raw.RollingDetectorView(detector_number=detector_number, window=2)
