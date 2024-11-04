@@ -253,7 +253,7 @@ class NeXusTransformation(Generic[Component, RunType]):
         therefore currently raise an error if the transformation chain does not compute
         to a scalar.
         """
+        if chain.transformations.sizes != {}:
+            raise ValueError(f"Expected scalar transformation, got {chain}")
         transform = chain.compute()
-        if transform.ndim == 0:
-            return NeXusTransformation(value=transform)
-        raise ValueError(f"Expected scalar transformation, got {transform}")
+        return NeXusTransformation(value=transform)

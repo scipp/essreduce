@@ -45,7 +45,7 @@ def depends_on() -> snx.TransformationChain:
     return snx.TransformationChain(
         parent='/entry/instrument/comp1',
         value='transformations/trans1',
-        transformations={translation.name: translation},
+        transformations=sc.DataGroup({translation.name: translation}),
     )
 
 
