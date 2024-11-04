@@ -3,7 +3,6 @@
 import pytest
 import scipp as sc
 import scippnexus as snx
-from scipp.core import label_based_index_to_positional_index
 from scipp.testing import assert_identical
 
 from ess.reduce import data
@@ -27,43 +26,6 @@ from ess.reduce.nexus.workflow import (
     LoadDetectorWorkflow,
     LoadMonitorWorkflow,
 )
-
-
-def test_transformation_chain_time_slicing() -> None:
-    value = sc.DataArray(
-        sc.arange('time', 10, unit='m'),
-        coords={'time': sc.arange('time', 10.0, unit='s')},
-    )
-    time = sc.concat([value.coords['time'], sc.scalar(1e9, unit='s')], 'time')
-
-    idx = label_based_index_to_positional_index(
-        sizes=value.sizes, coord=time, index=sc.scalar(0.5, unit='s')
-    )
-    assert idx == ('time', 0)
-
-    idx = label_based_index_to_positional_index(
-        sizes=value.sizes, coord=time, index=sc.scalar(5.0, unit='s')
-    )
-    assert idx == ('time', 5)
-
-    idx = label_based_index_to_positional_index(
-        sizes=value.sizes, coord=time, index=sc.scalar(10.0, unit='s')
-    )
-    assert idx == ('time', 9)
-
-
-@pytest.mark.skip(reason='scipp/scipp#3584')
-def test_transformation_chain_time_slicing_raises_if_out_of_range() -> None:
-    value = sc.DataArray(
-        sc.arange('time', 10, unit='m'),
-        coords={'time': sc.arange('time', 10.0, unit='s')},
-    )
-    time = sc.concat([value.coords['time'], sc.scalar(1e9, unit='s')], 'time')
-
-    with pytest.raises(KeyError):
-        label_based_index_to_positional_index(
-            sizes=value.sizes, coord=time, index=sc.scalar(-0.1, unit='s')
-        )
 
 
 @pytest.fixture(params=[{}, {'aux': 1}])
