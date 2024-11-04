@@ -37,8 +37,8 @@ from .types import (
     NeXusTransformationChain,
     Position,
     PreopenNeXusFile,
-    PulseSelection,
     RunType,
+    TimeInterval,
     UniqueComponent,
 )
 
@@ -64,9 +64,9 @@ def no_detector_position_offset() -> DetectorPositionOffset[RunType]:
     return DetectorPositionOffset[RunType](no_offset)
 
 
-def all_pulses() -> PulseSelection[RunType]:
+def all_pulses() -> TimeInterval[RunType]:
     """Select all neutron pulses in the data."""
-    return PulseSelection[RunType](slice(None, None))
+    return TimeInterval[RunType](slice(None, None))
 
 
 def gravity_vector_neg_y() -> GravityVector:
@@ -111,7 +111,7 @@ def unique_component_spec(
 def data_by_name(
     filename: NeXusFileSpec[RunType],
     name: NeXusName[Component],
-    selection: PulseSelection[RunType],
+    selection: TimeInterval[RunType],
 ) -> NeXusDataLocationSpec[Component, RunType]:
     """
     Create a location spec for monitor or detector data in a NeXus file.

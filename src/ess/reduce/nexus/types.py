@@ -192,10 +192,10 @@ class Filename(sciline.Scope[RunType, Path], Path): ...
 
 
 @dataclass
-class PulseSelection(Generic[RunType]):
+class TimeInterval(Generic[RunType]):
     """Range of neutron pulses to load from NXevent_data or NXdata groups."""
 
-    value: snx.typing.ScippIndex | slice
+    value: slice
 
 
 @dataclass
