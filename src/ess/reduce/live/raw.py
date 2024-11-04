@@ -151,6 +151,10 @@ class Detector:
 
     def bincount(self, data: Sequence[int]) -> sc.DataArray:
         offset = np.asarray(data, dtype=np.int32) - self._start
+        # Ignore events with detector numbers outside the range of the detector. This
+        # should not happen in valid files but for now it is useful until we are sure
+        # we get only valid files from upstream.
+        offset = offset[(offset >= 0) & (offset < self._size)]
         out = sc.empty_like(self.data)
         out.values = np.bincount(offset, minlength=self._size).reshape(self.data.shape)
         return out
@@ -281,6 +285,7 @@ class RollingDetectorView(Detector):
         wf[RollingDetectorViewWindow] = window
         if isinstance(projection, LogicalView):
             wf[LogicalView] = projection
+            wf[NeXusTransformation[snx.NXdetector, SampleRun]] = sc.scalar(1)
             wf.insert(RollingDetectorView.from_detector_and_logical_view)
         elif projection == 'cylinder_mantle_z':
             wf.insert(make_cylinder_mantle_coords)
