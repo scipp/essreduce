@@ -19,8 +19,6 @@ from ess.reduce.nexus.types import (
     NeXusComponentLocationSpec,
     NeXusName,
     NeXusTransformation,
-    NeXusTransformationTimeFilter,
-    NeXusTransformationTimeMean,
     SampleRun,
     TimeInterval,
 )
@@ -137,7 +135,6 @@ def test_can_compute_position_of_group(depends_on: snx.TransformationChain) -> N
     trans = workflow.to_transformation(
         chain,
         interval=TimeInterval(slice(None, None)),
-        time_filter=NeXusTransformationTimeFilter.create(),
     )
     assert_identical(workflow.compute_position(trans), position)
 
@@ -150,21 +147,18 @@ def test_to_transform_with_positional_time_interval(
     transform = workflow.to_transformation(
         time_dependent_depends_on,
         TimeInterval(slice(0, 1)),
-        time_filter=NeXusTransformationTimeFilter.create(),
     ).value
     assert sc.identical(transform * origin, sc.vector([1.0, 1.0, 0.0], unit='m'))
 
     transform = workflow.to_transformation(
         time_dependent_depends_on,
         TimeInterval(slice(1, 2)),
-        time_filter=NeXusTransformationTimeFilter.create(),
     ).value
     assert sc.identical(transform * origin, sc.vector([1.0, 2.0, 0.0], unit='m'))
 
     transform = workflow.to_transformation(
         time_dependent_depends_on,
         TimeInterval(slice(2, 3)),
-        time_filter=NeXusTransformationTimeFilter.create(),
     ).value
     assert sc.identical(transform * origin, sc.vector([1.0, 3.0, 0.0], unit='m'))
 
@@ -177,21 +171,18 @@ def test_to_transform_with_label_based_time_interval_single_point(
     transform = workflow.to_transformation(
         time_dependent_depends_on,
         TimeInterval(slice(sc.scalar(0.1, unit='s'), sc.scalar(0.9, unit='s'))),
-        time_filter=NeXusTransformationTimeFilter.create(),
     ).value
     assert sc.identical(transform * origin, sc.vector([1.0, 1.0, 0.0], unit='m'))
 
     transform = workflow.to_transformation(
         time_dependent_depends_on,
         TimeInterval(slice(sc.scalar(1.1, unit='s'), sc.scalar(1.9, unit='s'))),
-        time_filter=NeXusTransformationTimeFilter.create(),
     ).value
     assert sc.identical(transform * origin, sc.vector([1.0, 2.0, 0.0], unit='m'))
 
     transform = workflow.to_transformation(
         time_dependent_depends_on,
         TimeInterval(slice(sc.scalar(2.1, unit='s'), sc.scalar(2.9, unit='s'))),
-        time_filter=NeXusTransformationTimeFilter.create(),
     ).value
     assert sc.identical(transform * origin, sc.vector([1.0, 3.0, 0.0], unit='m'))
 
@@ -199,32 +190,18 @@ def test_to_transform_with_label_based_time_interval_single_point(
     transform = workflow.to_transformation(
         time_dependent_depends_on,
         TimeInterval(slice(sc.scalar(1000.0, unit='s'), sc.scalar(2000.0, unit='s'))),
-        time_filter=NeXusTransformationTimeFilter.create(),
     ).value
     assert sc.identical(transform * origin, sc.vector([1.0, 3.0, 0.0], unit='m'))
 
 
-def test_to_transform_label_based_time_interval_multiple_raises_with_default_filter(
+def test_to_transform_raises_if_interval_does_not_yield_unique_value(
     time_dependent_depends_on: snx.TransformationChain,
 ) -> None:
     with pytest.raises(ValueError, match='Transform is time-dependent'):
         workflow.to_transformation(
             time_dependent_depends_on,
             TimeInterval(slice(sc.scalar(0.1, unit='s'), sc.scalar(1.9, unit='s'))),
-            time_filter=NeXusTransformationTimeFilter.create(),
         )
-
-
-def test_to_transform_label_based_time_interval_multiple_works_with_mean_filter(
-    time_dependent_depends_on: snx.TransformationChain,
-) -> None:
-    origin = sc.vector([0.0, 0.0, 0.0], unit='m')
-    transform = workflow.to_transformation(
-        time_dependent_depends_on,
-        TimeInterval(slice(sc.scalar(0.1, unit='s'), sc.scalar(1.9, unit='s'))),
-        time_filter=NeXusTransformationTimeMean.create(),
-    ).value
-    assert sc.identical(transform * origin, sc.vector([1.0, 1.5, 0.0], unit='m'))
 
 
 def test_given_no_sample_load_nexus_sample_returns_group_with_origin_depends_on() -> (
@@ -241,7 +218,6 @@ def test_given_no_sample_load_nexus_sample_returns_group_with_origin_depends_on(
     transformation = workflow.to_transformation(
         chain,
         interval=TimeInterval(slice(None, None)),
-        time_filter=NeXusTransformationTimeFilter.create(),
     )
     position = workflow.compute_position(transformation)
     assert_identical(position, sc.vector([0.0, 0.0, 0.0], unit='m'))

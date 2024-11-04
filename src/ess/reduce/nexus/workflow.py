@@ -37,7 +37,6 @@ from .types import (
     NeXusName,
     NeXusTransformation,
     NeXusTransformationChain,
-    NeXusTransformationTimeFilter,
     Position,
     PreopenNeXusFile,
     RunType,
@@ -243,17 +242,36 @@ def get_transformation_chain(
     return NeXusTransformationChain[Component, RunType](chain)
 
 
+def _time_filter(transform: sc.DataArray) -> sc.Variable:
+    if transform.ndim == 0 or transform.sizes == {'time': 1}:
+        return transform.data.squeeze()
+    raise ValueError(
+        f"Transform is time-dependent: {transform}, but no filter is " "provided."
+    )
+
+
 def to_transformation(
-    chain: NeXusTransformationChain[Component, RunType],
-    interval: TimeInterval[RunType],
-    time_filter: NeXusTransformationTimeFilter[Component],
+    chain: NeXusTransformationChain[Component, RunType], interval: TimeInterval[RunType]
 ) -> NeXusTransformation[Component, RunType]:
-    """Convert transformation chain into a single transformation matrix."""
+    """
+    Convert transformation chain into a single transformation matrix.
+
+    It one or more transformations in the chain are time-dependent, the time interval
+    is used to select a specific time point. If the interval is not a single time point,
+    an error is raised. This may be extended in the future to a more sophisticated
+    mechanism, e.g., averaging over the interval to remove noise.
+
+    Parameters
+    ----------
+    chain:
+        Transformation chain.
+    interval:
+        Time interval to select from the transformation chain.
+    """
 
     chain = deepcopy(chain)
     for t in chain.transformations.values():
-        # TODO Check if value is DataArray?
-        if t.sizes == {}:
+        if t.sizes == {} or not isinstance(t.value, sc.DataArray):
             continue
         start = interval.value.start
         stop = interval.value.stop
@@ -269,9 +287,9 @@ def to_transformation(
             idx = label_based_index_to_positional_index(
                 sizes=t.sizes, coord=time, index=interval.value
             )
-            t.value = time_filter(t.value[idx])
+            t.value = _time_filter(t.value[idx])
         else:
-            t.value = time_filter(t.value['time', interval.value])
+            t.value = _time_filter(t.value['time', interval.value])
 
     return NeXusTransformation[Component, RunType].from_chain(chain)
 
@@ -517,7 +535,6 @@ _common_providers = (
     nx_class_for_monitor,
     nx_class_for_source,
     nx_class_for_sample,
-    NeXusTransformationTimeFilter.create,
 )
 
 _monitor_providers = (
