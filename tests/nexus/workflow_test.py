@@ -289,21 +289,48 @@ def test_get_calibrated_detector_works_if_nexus_component_name_is_missing(
 
 
 def test_get_calibrated_detector_adds_offset_to_position(
-    nexus_detector,
-    transform,
+    nexus_detector, transform
 ) -> None:
     offset = sc.vector([0.1, 0.2, 0.3], unit='m')
     detector = workflow.get_calibrated_detector(
-        nexus_detector,
-        offset=offset,
-        bank_sizes={},
-        transform=transform,
+        nexus_detector, offset=offset, bank_sizes={}, transform=transform
     )
     position = (
         compute_component_position(nexus_detector)['data'].coords['position'] + offset
     )
     assert detector.coords['position'].sizes == {'detector_number': 6}
     assert_identical(detector.coords['position'], position)
+
+
+def test_get_calibrated_detector_position_dims_matches_data_dims(
+    nexus_detector, transform
+) -> None:
+    nexus_detector2d = nexus_detector.fold('detector_number', sizes={'y': 2, 'x': 3})
+    nexus_detector2d['data'].coords['x_pixel_offset'] = sc.linspace(
+        'x', 0, 1, num=3, unit='m'
+    )
+    nexus_detector2d['data'].coords['y_pixel_offset'] = sc.linspace(
+        'y', 0, 1, num=2, unit='m'
+    )
+    offset = sc.vector([0.1, 0.2, 0.3], unit='m')
+    detector = workflow.get_calibrated_detector(
+        nexus_detector2d, offset=offset, bank_sizes={}, transform=transform
+    )
+    assert detector.sizes == {'y': 2, 'x': 3}
+    assert detector.coords['position'].sizes == {'y': 2, 'x': 3}
+
+
+def test_get_calibrated_detector_position_unit_matches_offset_unit(
+    nexus_detector, transform
+) -> None:
+    nexus_detector['data'].coords['x_pixel_offset'] = (
+        nexus_detector['data'].coords['x_pixel_offset'].to(unit='mm')
+    )
+    offset = sc.vector([0.1, 0.2, 0.3], unit='m')
+    detector = workflow.get_calibrated_detector(
+        nexus_detector, offset=offset, bank_sizes={}, transform=transform
+    )
+    assert detector.coords['position'].unit == 'mm'
 
 
 def test_get_calibrated_detector_forwards_coords(nexus_detector, transform) -> None:

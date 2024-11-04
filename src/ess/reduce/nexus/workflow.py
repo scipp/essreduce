@@ -338,7 +338,12 @@ def get_calibrated_detector(
         da = da.fold(dim="detector_number", sizes=sizes)
     # Note: We apply offset as early as possible, i.e., right in this function
     # the detector array from the raw loader NeXus group, to prevent a source of bugs.
-    position = transform.value * snx.zip_pixel_offsets(da.coords)
+    # If the NXdetector in the file is not 1-D, we want to match the order of dims.
+    # zip_pixel_offsets otherwise yields a vector with dimensions in the order given
+    # by the x/y/z offsets.
+    offsets = snx.zip_pixel_offsets(da.coords).transpose(da.dims).copy()
+    # We use the unit of the offsets as this is likely what the user expects.
+    position = transform.value.to(unit=offsets.unit) * offsets
     return CalibratedDetector[RunType](
         da.assign_coords(position=position + offset.to(unit=position.unit))
     )
