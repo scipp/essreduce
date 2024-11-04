@@ -64,7 +64,7 @@ def no_detector_position_offset() -> DetectorPositionOffset[RunType]:
     return DetectorPositionOffset[RunType](no_offset)
 
 
-def all_pulses() -> TimeInterval[RunType]:
+def full_time_interval() -> TimeInterval[RunType]:
     """Select all neutron pulses in the data."""
     return TimeInterval[RunType](slice(None, None))
 
@@ -475,7 +475,7 @@ definitions["NXmonitor"] = _StrippedMonitor
 _common_providers = (
     gravity_vector_neg_y,
     file_path_to_file_spec,
-    all_pulses,
+    full_time_interval,
     component_spec_by_name,
     unique_component_spec,  # after component_spec_by_name, partially overrides
     get_transformation_chain,
