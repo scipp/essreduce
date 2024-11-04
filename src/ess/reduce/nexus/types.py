@@ -257,3 +257,34 @@ class NeXusTransformation(Generic[Component, RunType]):
             raise ValueError(f"Expected scalar transformation, got {chain}")
         transform = chain.compute()
         return NeXusTransformation(value=transform)
+
+
+class NeXusTransformationTimeFilter(Generic[Component]):
+    def __call__(self, transform: sc.DataArray) -> sc.Variable:
+        if transform.ndim == 0 or transform.sizes == {'time': 1}:
+            return transform.data.squeeze()
+        raise ValueError(
+            f"Transform is time-dependent: {transform}, but no filter is " "provided."
+        )
+
+    @classmethod
+    def create(
+        cls, *args: Any, **kwargs: Any
+    ) -> 'NeXusTransformationTimeFilter[Component]':
+        return cls(*args, **kwargs)
+
+
+class NeXusTransformationTimeMean(NeXusTransformationTimeFilter[Component]):
+    def __init__(self, rtol: sc.Variable | None = None):
+        self._rtol = rtol
+
+    def __call__(self, transform: sc.DataArray) -> sc.Variable:
+        if self._rtol is not None:
+            low = transform.min()
+            high = transform.max()
+            if (high - low) / low > self._rtol:
+                raise ValueError(
+                    f"Time-dependent transform with min={low} and max={high} "
+                    f"exceeds relative tolerance {self._rtol}."
+                )
+        return transform.mean('time').data

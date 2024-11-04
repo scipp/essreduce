@@ -4,6 +4,7 @@
 """Workflow and workflow components for interacting with NeXus files."""
 
 from collections.abc import Sequence
+from copy import deepcopy
 from typing import Any
 
 import networkx as nx
@@ -11,6 +12,7 @@ import sciline
 import scipp as sc
 import scippnexus as snx
 from scipp.constants import g
+from scipp.core import label_based_index_to_positional_index
 
 from . import _nexus_loader as nexus
 from .types import (
@@ -35,6 +37,7 @@ from .types import (
     NeXusName,
     NeXusTransformation,
     NeXusTransformationChain,
+    NeXusTransformationTimeFilter,
     Position,
     PreopenNeXusFile,
     RunType,
@@ -242,8 +245,34 @@ def get_transformation_chain(
 
 def to_transformation(
     chain: NeXusTransformationChain[Component, RunType],
+    interval: TimeInterval[RunType],
+    time_filter: NeXusTransformationTimeFilter[Component],
 ) -> NeXusTransformation[Component, RunType]:
     """Convert transformation chain into a single transformation matrix."""
+
+    chain = deepcopy(chain)
+    for t in chain.transformations.values():
+        # TODO Check if value is DataArray?
+        if t.sizes == {}:
+            continue
+        start = interval.value.start
+        stop = interval.value.stop
+        if isinstance(start, sc.Variable) or isinstance(stop, sc.Variable):
+            # NXlog entries are generally interpreted as the previous value being valid
+            # until the next entry. We therefore need to select the previous value, and
+            # any index after the last entry refers to the last entry, i.e., there is no
+            # "end" time in the files. We add a dummy end so we can use Scipp's label-
+            # based indexing for histogram data.
+            time = t.value.coords['time']
+            delta = sc.scalar(86_400_000, unit='s', dtype='int64').to(unit=time.unit)
+            time = sc.concat([time, time[-1] + delta], 'time')
+            idx = label_based_index_to_positional_index(
+                sizes=t.sizes, coord=time, index=interval.value
+            )
+            t.value = time_filter(t.value[idx])
+        else:
+            t.value = time_filter(t.value['time', interval.value])
+
     return NeXusTransformation[Component, RunType].from_chain(chain)
 
 
@@ -488,6 +517,7 @@ _common_providers = (
     nx_class_for_monitor,
     nx_class_for_source,
     nx_class_for_sample,
+    NeXusTransformationTimeFilter.create,
 )
 
 _monitor_providers = (
