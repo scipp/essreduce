@@ -32,7 +32,7 @@ requires-python = ">=3.10"
 dependencies = [
     "sciline>=24.06.2",
     "scipp>=24.02.0",
-    "scippnexus>=24.10.0",
+    "scippnexus>=24.11.0",
 ]
 
 dynamic = ["version"]
