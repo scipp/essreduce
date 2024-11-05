@@ -282,7 +282,9 @@ def to_transformation(
             # "end" time in the files. We add a dummy end so we can use Scipp's label-
             # based indexing for histogram data.
             time = t.value.coords['time']
-            delta = sc.scalar(86_400_000, unit='s', dtype='int64').to(unit=time.unit)
+            # Add 1000 days as a dummy end time. This is hopefully long enough to cover
+            # all reasonable use cases.
+            delta = sc.scalar(24_000, unit='hours', dtype='int64').to(unit=time.unit)
             time = sc.concat([time, time[-1] + delta], 'time')
             idx = label_based_index_to_positional_index(
                 sizes=t.sizes, coord=time, index=interval.value
