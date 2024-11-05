@@ -4,6 +4,7 @@
 """Workflow and workflow components for interacting with NeXus files."""
 
 from collections.abc import Sequence
+from copy import deepcopy
 from typing import Any
 
 import networkx as nx
@@ -11,6 +12,7 @@ import sciline
 import scipp as sc
 import scippnexus as snx
 from scipp.constants import g
+from scipp.core import label_based_index_to_positional_index
 
 from . import _nexus_loader as nexus
 from .types import (
@@ -37,8 +39,8 @@ from .types import (
     NeXusTransformationChain,
     Position,
     PreopenNeXusFile,
-    PulseSelection,
     RunType,
+    TimeInterval,
     UniqueComponent,
 )
 
@@ -64,9 +66,9 @@ def no_detector_position_offset() -> DetectorPositionOffset[RunType]:
     return DetectorPositionOffset[RunType](no_offset)
 
 
-def all_pulses() -> PulseSelection[RunType]:
+def full_time_interval() -> TimeInterval[RunType]:
     """Select all neutron pulses in the data."""
-    return PulseSelection[RunType](slice(None, None))
+    return TimeInterval[RunType](slice(None, None))
 
 
 def gravity_vector_neg_y() -> GravityVector:
@@ -111,7 +113,7 @@ def unique_component_spec(
 def data_by_name(
     filename: NeXusFileSpec[RunType],
     name: NeXusName[Component],
-    selection: PulseSelection[RunType],
+    selection: TimeInterval[RunType],
 ) -> NeXusDataLocationSpec[Component, RunType]:
     """
     Create a location spec for monitor or detector data in a NeXus file.
@@ -240,10 +242,57 @@ def get_transformation_chain(
     return NeXusTransformationChain[Component, RunType](chain)
 
 
+def _time_filter(transform: sc.DataArray) -> sc.Variable:
+    if transform.ndim == 0 or transform.sizes == {'time': 1}:
+        return transform.data.squeeze()
+    raise ValueError(
+        f"Transform is time-dependent: {transform}, but no filter is provided."
+    )
+
+
 def to_transformation(
-    chain: NeXusTransformationChain[Component, RunType],
+    chain: NeXusTransformationChain[Component, RunType], interval: TimeInterval[RunType]
 ) -> NeXusTransformation[Component, RunType]:
-    """Convert transformation chain into a single transformation matrix."""
+    """
+    Convert transformation chain into a single transformation matrix.
+
+    If one or more transformations in the chain are time-dependent, the time interval
+    is used to select a specific time point. If the interval is not a single time point,
+    an error is raised. This may be extended in the future to a more sophisticated
+    mechanism, e.g., averaging over the interval to remove noise.
+
+    Parameters
+    ----------
+    chain:
+        Transformation chain.
+    interval:
+        Time interval to select from the transformation chain.
+    """
+
+    chain = deepcopy(chain)
+    for t in chain.transformations.values():
+        if t.sizes == {} or not isinstance(t.value, sc.DataArray):
+            continue
+        start = interval.value.start
+        stop = interval.value.stop
+        if isinstance(start, sc.Variable) or isinstance(stop, sc.Variable):
+            # NXlog entries are generally interpreted as the previous value being valid
+            # until the next entry. We therefore need to select the previous value, and
+            # any index after the last entry refers to the last entry, i.e., there is no
+            # "end" time in the files. We add a dummy end so we can use Scipp's label-
+            # based indexing for histogram data.
+            time = t.value.coords['time']
+            # Add 1000 days as a dummy end time. This is hopefully long enough to cover
+            # all reasonable use cases.
+            delta = sc.scalar(24_000, unit='hours', dtype='int64').to(unit=time.unit)
+            time = sc.concat([time, time[-1] + delta], 'time')
+            idx = label_based_index_to_positional_index(
+                sizes=t.sizes, coord=time, index=interval.value
+            )
+            t.value = _time_filter(t.value[idx])
+        else:
+            t.value = _time_filter(t.value['time', interval.value])
+
     return NeXusTransformation[Component, RunType].from_chain(chain)
 
 
@@ -291,7 +340,12 @@ def get_calibrated_detector(
         da = da.fold(dim="detector_number", sizes=sizes)
     # Note: We apply offset as early as possible, i.e., right in this function
     # the detector array from the raw loader NeXus group, to prevent a source of bugs.
-    position = transform.value * snx.zip_pixel_offsets(da.coords)
+    # If the NXdetector in the file is not 1-D, we want to match the order of dims.
+    # zip_pixel_offsets otherwise yields a vector with dimensions in the order given
+    # by the x/y/z offsets.
+    offsets = snx.zip_pixel_offsets(da.coords).transpose(da.dims).copy()
+    # We use the unit of the offsets as this is likely what the user expects.
+    position = transform.value.to(unit=offsets.unit) * offsets
     return CalibratedDetector[RunType](
         da.assign_coords(position=position + offset.to(unit=position.unit))
     )
@@ -475,7 +529,7 @@ definitions["NXmonitor"] = _StrippedMonitor
 _common_providers = (
     gravity_vector_neg_y,
     file_path_to_file_spec,
-    all_pulses,
+    full_time_interval,
     component_spec_by_name,
     unique_component_spec,  # after component_spec_by_name, partially overrides
     get_transformation_chain,

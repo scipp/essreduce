@@ -19,6 +19,7 @@ from ess.reduce.nexus.types import (
     NeXusName,
     NeXusTransformation,
     SampleRun,
+    TimeInterval,
 )
 from ess.reduce.nexus.workflow import (
     GenericNeXusWorkflow,
@@ -45,7 +46,38 @@ def depends_on() -> snx.TransformationChain:
     return snx.TransformationChain(
         parent='/entry/instrument/comp1',
         value='transformations/trans1',
-        transformations={translation.name: translation},
+        transformations=sc.DataGroup({translation.name: translation}),
+    )
+
+
+@pytest.fixture()
+def time_dependent_depends_on() -> snx.TransformationChain:
+    """A chain of two transformations, the second one time-dependent."""
+    trans1 = snx.nxtransformations.Transform(
+        name='/entry/instrument/comp1/transformations/trans1',
+        transformation_type='translation',
+        value=sc.scalar(1.0, unit='m'),
+        vector=sc.vector(value=[1.0, 0.0, 0.0], unit=''),
+        depends_on=snx.DependsOn(
+            parent='/entry/instrument/comp1/transformations', value='trans2'
+        ),
+    )
+    trans2 = snx.nxtransformations.Transform(
+        name='/entry/instrument/comp1/transformations/trans2',
+        transformation_type='translation',
+        value=sc.DataArray(
+            sc.array(dims=['time'], values=[1.0, 2.0, 3.0], unit='m'),
+            coords={'time': sc.array(dims=['time'], values=[0.0, 1.0, 2.0], unit='s')},
+        ),
+        vector=sc.vector(value=[0.0, 1.0, 0.0], unit=''),
+        depends_on=snx.DependsOn(
+            parent='/entry/instrument/comp1/transformations', value='.'
+        ),
+    )
+    return snx.TransformationChain(
+        parent='/entry/instrument/comp1',
+        value='transformations/trans1',
+        transformations=sc.DataGroup({trans1.name: trans1, trans2.name: trans2}),
     )
 
 
@@ -62,8 +94,76 @@ def test_can_compute_position_of_group(depends_on: snx.TransformationChain) -> N
         sc.DataGroup(depends_on=depends_on)
     )
     chain = workflow.get_transformation_chain(group)
-    trans = workflow.to_transformation(chain)
+    trans = workflow.to_transformation(
+        chain,
+        interval=TimeInterval(slice(None, None)),
+    )
     assert_identical(workflow.compute_position(trans), position)
+
+
+def test_to_transform_with_positional_time_interval(
+    time_dependent_depends_on: snx.TransformationChain,
+) -> None:
+    origin = sc.vector([0.0, 0.0, 0.0], unit='m')
+
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(0, 1)),
+    ).value
+    assert sc.identical(transform * origin, sc.vector([1.0, 1.0, 0.0], unit='m'))
+
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(1, 2)),
+    ).value
+    assert sc.identical(transform * origin, sc.vector([1.0, 2.0, 0.0], unit='m'))
+
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(2, 3)),
+    ).value
+    assert sc.identical(transform * origin, sc.vector([1.0, 3.0, 0.0], unit='m'))
+
+
+def test_to_transform_with_label_based_time_interval_single_point(
+    time_dependent_depends_on: snx.TransformationChain,
+) -> None:
+    origin = sc.vector([0.0, 0.0, 0.0], unit='m')
+
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(sc.scalar(0.1, unit='s'), sc.scalar(0.9, unit='s'))),
+    ).value
+    assert sc.identical(transform * origin, sc.vector([1.0, 1.0, 0.0], unit='m'))
+
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(sc.scalar(1.1, unit='s'), sc.scalar(1.9, unit='s'))),
+    ).value
+    assert sc.identical(transform * origin, sc.vector([1.0, 2.0, 0.0], unit='m'))
+
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(sc.scalar(2.1, unit='s'), sc.scalar(2.9, unit='s'))),
+    ).value
+    assert sc.identical(transform * origin, sc.vector([1.0, 3.0, 0.0], unit='m'))
+
+    # No more new values after 2 seconds
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(sc.scalar(1000.0, unit='s'), sc.scalar(2000.0, unit='s'))),
+    ).value
+    assert sc.identical(transform * origin, sc.vector([1.0, 3.0, 0.0], unit='m'))
+
+
+def test_to_transform_raises_if_interval_does_not_yield_unique_value(
+    time_dependent_depends_on: snx.TransformationChain,
+) -> None:
+    with pytest.raises(ValueError, match='Transform is time-dependent'):
+        workflow.to_transformation(
+            time_dependent_depends_on,
+            TimeInterval(slice(sc.scalar(0.1, unit='s'), sc.scalar(1.9, unit='s'))),
+        )
 
 
 def test_given_no_sample_load_nexus_sample_returns_group_with_origin_depends_on() -> (
@@ -77,7 +177,10 @@ def test_given_no_sample_load_nexus_sample_returns_group_with_origin_depends_on(
     sample = workflow.load_nexus_sample(spec)
     assert list(sample) == ['depends_on']
     chain = workflow.get_transformation_chain(sample)
-    transformation = workflow.to_transformation(chain)
+    transformation = workflow.to_transformation(
+        chain,
+        interval=TimeInterval(slice(None, None)),
+    )
     position = workflow.compute_position(transformation)
     assert_identical(position, sc.vector([0.0, 0.0, 0.0], unit='m'))
 
@@ -148,21 +251,48 @@ def test_get_calibrated_detector_works_if_nexus_component_name_is_missing(
 
 
 def test_get_calibrated_detector_adds_offset_to_position(
-    nexus_detector,
-    transform,
+    nexus_detector, transform
 ) -> None:
     offset = sc.vector([0.1, 0.2, 0.3], unit='m')
     detector = workflow.get_calibrated_detector(
-        nexus_detector,
-        offset=offset,
-        bank_sizes={},
-        transform=transform,
+        nexus_detector, offset=offset, bank_sizes={}, transform=transform
     )
     position = (
         compute_component_position(nexus_detector)['data'].coords['position'] + offset
     )
     assert detector.coords['position'].sizes == {'detector_number': 6}
     assert_identical(detector.coords['position'], position)
+
+
+def test_get_calibrated_detector_position_dims_matches_data_dims(
+    nexus_detector, transform
+) -> None:
+    nexus_detector2d = nexus_detector.fold('detector_number', sizes={'y': 2, 'x': 3})
+    nexus_detector2d['data'].coords['x_pixel_offset'] = sc.linspace(
+        'x', 0, 1, num=3, unit='m'
+    )
+    nexus_detector2d['data'].coords['y_pixel_offset'] = sc.linspace(
+        'y', 0, 1, num=2, unit='m'
+    )
+    offset = sc.vector([0.1, 0.2, 0.3], unit='m')
+    detector = workflow.get_calibrated_detector(
+        nexus_detector2d, offset=offset, bank_sizes={}, transform=transform
+    )
+    assert detector.sizes == {'y': 2, 'x': 3}
+    assert detector.coords['position'].sizes == {'y': 2, 'x': 3}
+
+
+def test_get_calibrated_detector_position_unit_matches_offset_unit(
+    nexus_detector, transform
+) -> None:
+    nexus_detector['data'].coords['x_pixel_offset'] = (
+        nexus_detector['data'].coords['x_pixel_offset'].to(unit='mm')
+    )
+    offset = sc.vector([0.1, 0.2, 0.3], unit='m')
+    detector = workflow.get_calibrated_detector(
+        nexus_detector, offset=offset, bank_sizes={}, transform=transform
+    )
+    assert detector.coords['position'].unit == 'mm'
 
 
 def test_get_calibrated_detector_forwards_coords(nexus_detector, transform) -> None:
