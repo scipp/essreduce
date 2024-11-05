@@ -246,7 +246,7 @@ def _time_filter(transform: sc.DataArray) -> sc.Variable:
     if transform.ndim == 0 or transform.sizes == {'time': 1}:
         return transform.data.squeeze()
     raise ValueError(
-        f"Transform is time-dependent: {transform}, but no filter is " "provided."
+        f"Transform is time-dependent: {transform}, but no filter is provided."
     )
 
 
@@ -256,7 +256,7 @@ def to_transformation(
     """
     Convert transformation chain into a single transformation matrix.
 
-    It one or more transformations in the chain are time-dependent, the time interval
+    If one or more transformations in the chain are time-dependent, the time interval
     is used to select a specific time point. If the interval is not a single time point,
     an error is raised. This may be extended in the future to a more sophisticated
     mechanism, e.g., averaging over the interval to remove noise.
