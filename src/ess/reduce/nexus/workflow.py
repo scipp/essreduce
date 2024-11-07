@@ -345,7 +345,11 @@ def get_calibrated_detector(
     # by the x/y/z offsets.
     offsets = snx.zip_pixel_offsets(da.coords).transpose(da.dims).copy()
     # We use the unit of the offsets as this is likely what the user expects.
-    position = transform.value.to(unit=offsets.unit) * offsets
+    if transform.value.unit is not None and transform.value.unit != '':
+        transform_value = transform.value.to(unit=offsets.unit)
+    else:
+        transform_value = transform.value
+    position = transform_value * offsets
     return CalibratedDetector[RunType](
         da.assign_coords(position=position + offset.to(unit=position.unit))
     )
