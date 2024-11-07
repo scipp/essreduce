@@ -282,9 +282,17 @@ def test_get_calibrated_detector_position_dims_matches_data_dims(
     assert detector.coords['position'].sizes == {'y': 2, 'x': 3}
 
 
+@pytest.mark.parametrize(
+    'transform_value',
+    [
+        sc.spatial.translation(value=[1.0, 2.0, 3.0], unit='m'),
+        sc.spatial.rotations_from_rotvecs(sc.vector([0.1, 0.2, 0.3], unit='rad')),
+    ],
+)
 def test_get_calibrated_detector_position_unit_matches_offset_unit(
-    nexus_detector, transform
+    nexus_detector, transform_value
 ) -> None:
+    transform = NeXusTransformation(transform_value)
     nexus_detector['data'].coords['x_pixel_offset'] = (
         nexus_detector['data'].coords['x_pixel_offset'].to(unit='mm')
     )
