@@ -1,22 +1,35 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 import scipp as sc
-from ipywidgets import FloatText, GridBox, Label, Text, ValueWidget
+from ipywidgets import FloatText, HBox, Label, Text, ValueWidget
 
 from ..parameter import ParamWithBounds
 
 
-class BoundsWidget(GridBox, ValueWidget):
-    def __init__(self):
+class BoundsWidget(HBox, ValueWidget):
+    def __init__(
+        self,
+        name: str,
+        dim: str,
+        start: float | None = None,
+        stop: float | None = None,
+        unit: str | None = None,
+    ):
         super().__init__()
+        style = {
+            "layout": {"width": "100px"},
+            "style": {"description_width": "initial"},
+        }
 
         self.fields = {
-            'start': FloatText(description='start'),
-            'end': FloatText(description='end'),
-            'unit': Text(description='unit'),
+            "dim": Label(str(dim)),
+            'start': FloatText(description='start', **style),
+            'end': FloatText(description='end', **style),
+            'unit': Text(description='unit', **style),
         }
         self.children = [
-            Label(value="Select bound:"),
+            Label(f"{name}:"),
+            self.fields['dim'],
             self.fields['unit'],
             self.fields['start'],
             self.fields['end'],
@@ -25,8 +38,12 @@ class BoundsWidget(GridBox, ValueWidget):
     @property
     def value(self):
         return (
-            sc.scalar(self.fields['start'].value, unit=self.fields['unit']),
-            sc.scalar(self.fields['end'].value, unit=self.fields['unit']),
+            self.fields['dim'].value,
+            slice(
+                sc.scalar(self.fields['start'].value, unit=self.fields['unit'].value),
+                sc.scalar(self.fields['end'].value, unit=self.fields['unit'].value),
+                None,
+            ),
         )
 
     @staticmethod

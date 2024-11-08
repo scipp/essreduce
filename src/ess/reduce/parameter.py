@@ -128,7 +128,26 @@ class StringParameter(Parameter[str]):
 
 @dataclass(kw_only=True)
 class ParamWithBounds(Parameter[T]):
-    bounds: tuple[T, T]
+    dim: str
+    start: float | None = None
+    stop: float | None = None
+    unit: str | None = None
+
+    def __init__(
+        self,
+        t: type[T],
+        dim: str,
+        start: float | None = None,
+        stop: float | None = None,
+        unit: str | None = None,
+    ):
+        self.dim = dim
+        self.start = start
+        self.stop = stop
+        self.unit = unit
+        super().__init__(name=key_name(t), description=t.__doc__, default=None)
+
+    # bounds: tuple[T, T]
 
 
 @dataclass(kw_only=True)
