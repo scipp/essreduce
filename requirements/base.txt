@@ -20,7 +20,7 @@ python-dateutil==2.9.0.post0
     # via scippnexus
 sciline==24.6.3
     # via -r base.in
-scipp==24.11.0
+scipp==24.11.1
     # via
     #   -r base.in
     #   scippnexus
