@@ -285,7 +285,9 @@ class RollingDetectorView(Detector):
         wf[RollingDetectorViewWindow] = window
         if isinstance(projection, LogicalView):
             wf[LogicalView] = projection
-            wf[NeXusTransformation[snx.NXdetector, SampleRun]] = sc.scalar(1)
+            wf[NeXusTransformation[snx.NXdetector, SampleRun]] = NeXusTransformation[
+                snx.NXdetector, SampleRun
+            ](sc.scalar(1))
             wf.insert(RollingDetectorView.from_detector_and_logical_view)
         elif projection == 'cylinder_mantle_z':
             wf.insert(make_cylinder_mantle_coords)
