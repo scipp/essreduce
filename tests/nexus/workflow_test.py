@@ -9,6 +9,7 @@ from ess.reduce import data
 from ess.reduce.nexus import compute_component_position, workflow
 from ess.reduce.nexus.types import (
     BackgroundRun,
+    Choppers,
     DetectorData,
     Filename,
     Monitor1,
@@ -539,6 +540,25 @@ def test_generic_nexus_workflow() -> None:
     assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('event_time_zero',)
+
+
+def test_generic_nexus_workflow_load_choppers() -> None:
+    wf = GenericNeXusWorkflow()
+    wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
+    choppers = wf.compute(Choppers[SampleRun])
+
+    assert choppers.keys() == {
+        '005_PulseShapingChopper',
+        '006_PulseShapingChopper2',
+        '019_FOC1',
+        '048_FOC2',
+        '095_BWC1',
+        '096_BWC2',
+    }
+    chopper = choppers['005_PulseShapingChopper']
+    assert 'position' in chopper
+    assert 'rotation_speed' in chopper
+    assert chopper['slit_edges'].shape == (2,)
 
 
 def test_generic_nexus_workflow_raises_if_monitor_types_but_not_run_types_given() -> (
