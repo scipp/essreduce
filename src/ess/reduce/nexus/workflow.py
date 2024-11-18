@@ -18,6 +18,7 @@ from scippneutron.chopper import extract_chopper_from_nexus
 from . import _nexus_loader as nexus
 from .types import (
     AllNeXusComponents,
+    Analyzers,
     CalibratedBeamline,
     CalibratedDetector,
     CalibratedMonitor,
@@ -529,6 +530,20 @@ def parse_disk_choppers(
     )
 
 
+def parse_analyzers(
+    analyzers: AllNeXusComponents[snx.NXcrystal, RunType],
+) -> Analyzers[RunType]:
+    """Convert the NeXus representation of an analyzer to ours."""
+    return Analyzers[RunType](
+        sc.DataGroup(
+            {
+                name: nexus.compute_component_position(analyzer)
+                for name, analyzer in analyzers.items()
+            }
+        )
+    )
+
+
 def _drop(
     children: dict[str, snx.Field | snx.Group], classes: tuple[snx.NXobject, ...]
 ) -> dict[str, snx.Field | snx.Group]:
@@ -633,6 +648,8 @@ _detector_providers = (
 
 _chopper_providers = (parse_disk_choppers,)
 
+_analyzer_providers = (parse_analyzers,)
+
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:
     """Generic workflow for loading monitor data from a NeXus file."""
@@ -681,6 +698,7 @@ def GenericNeXusWorkflow(
             *_monitor_providers,
             *_detector_providers,
             *_chopper_providers,
+            *_analyzer_providers,
         )
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
