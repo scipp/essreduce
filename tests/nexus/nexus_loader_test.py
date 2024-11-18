@@ -157,7 +157,7 @@ def nexus_file(request):
                 yield f
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_bank12():
     components = _event_data_components()
     buffer = sc.DataArray(
@@ -195,17 +195,17 @@ def expected_bank12():
     return binned
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_monitor() -> sc.DataArray:
     return _monitor_histogram()
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_source() -> sc.DataGroup:
     return _source_data()
 
 
-@pytest.fixture()
+@pytest.fixture
 def expected_sample() -> sc.DataGroup:
     return _sample_data()
 

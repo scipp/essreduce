@@ -8,7 +8,7 @@ import pytest
 from ess.reduce.scripts.grow_nexus import grow_nexus_file
 
 
-@pytest.fixture()
+@pytest.fixture
 def nexus_file():
     with tempfile.TemporaryDirectory() as tmp:
         path = os.path.join(tmp, 'test.nxs')
