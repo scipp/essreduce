@@ -29,13 +29,13 @@ ipython==8.29.0
     # via ipywidgets
 ipywidgets==8.1.5
     # via -r basetest.in
-jedi==0.19.1
+jedi==0.19.2
     # via ipython
 jupyterlab-widgets==3.0.13
     # via ipywidgets
 matplotlib-inline==0.1.7
     # via ipython
-packaging==24.1
+packaging==24.2
     # via
     #   pooch
     #   pytest
@@ -65,7 +65,7 @@ six==1.16.0
     # via asttokens
 stack-data==0.6.3
     # via ipython
-tomli==2.0.2
+tomli==2.1.0
     # via pytest
 traitlets==5.14.3
     # via
