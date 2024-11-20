@@ -519,13 +519,10 @@ def parse_disk_choppers(
 ) -> Choppers[RunType]:
     """Convert the NeXus representation of a chopper to ours."""
     return Choppers[RunType](
-        sc.DataGroup(
-            {
-                name: extract_chopper_from_nexus(
-                    nexus.compute_component_position(chopper)
-                )
-                for name, chopper in choppers.items()
-            }
+        choppers.apply(
+            lambda chopper: extract_chopper_from_nexus(
+                nexus.compute_component_position(chopper)
+            )
         )
     )
 
@@ -534,14 +531,7 @@ def parse_analyzers(
     analyzers: AllNeXusComponents[snx.NXcrystal, RunType],
 ) -> Analyzers[RunType]:
     """Convert the NeXus representation of an analyzer to ours."""
-    return Analyzers[RunType](
-        sc.DataGroup(
-            {
-                name: nexus.compute_component_position(analyzer)
-                for name, analyzer in analyzers.items()
-            }
-        )
-    )
+    return Analyzers[RunType](analyzers.apply(nexus.compute_component_position))
 
 
 def _drop(
