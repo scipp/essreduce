@@ -13,7 +13,14 @@ import scipp as sc
 import scippnexus as snx
 
 from ..logging import get_logger
-from .types import FilePath, NeXusEntryName, NeXusFile, NeXusGroup, NeXusLocationSpec
+from .types import (
+    FilePath,
+    NeXusAllLocationSpec,
+    NeXusEntryName,
+    NeXusFile,
+    NeXusGroup,
+    NeXusLocationSpec,
+)
 
 
 class NoNewDefinitionsType: ...
@@ -41,17 +48,12 @@ def load_component(
 
 
 def load_all_components(
-    location: NeXusLocationSpec,
+    location: NeXusAllLocationSpec,
     *,
     nx_class: type[snx.NXobject],
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataGroup:
     """Load all components of a given class from NeXus."""
-    if location.component_name is not None:
-        raise ValueError(
-            "`location.component_name` must be None when loading all "
-            "components of a certain class."
-        )
     with _open_component_parent(
         location, nx_class=nx_class, definitions=definitions
     ) as parent:

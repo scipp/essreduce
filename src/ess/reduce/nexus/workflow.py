@@ -32,6 +32,7 @@ from .types import (
     MonitorData,
     MonitorPositionOffset,
     MonitorType,
+    NeXusAllComponentLocationSpec,
     NeXusClass,
     NeXusComponent,
     NeXusComponentLocationSpec,
@@ -100,20 +101,11 @@ def component_spec_by_name(
     )
 
 
-def disk_chopper_component_spec(
+def all_component_spec(
     filename: NeXusFileSpec[RunType],
-) -> NeXusComponentLocationSpec[snx.NXdisk_chopper, RunType]:
-    """Create a location spec for a disk chopper group in a NeXus file."""
-    return NeXusComponentLocationSpec[snx.NXdisk_chopper, RunType](
-        filename=filename.value
-    )
-
-
-def crystal_component_spec(
-    filename: NeXusFileSpec[RunType],
-) -> NeXusComponentLocationSpec[snx.NXcrystal, RunType]:
-    """Create a location spec for a crystal / analyzer group in a NeXus file."""
-    return NeXusComponentLocationSpec[snx.NXcrystal, RunType](filename=filename.value)
+) -> NeXusAllComponentLocationSpec[Component, RunType]:
+    """Create a location spec for all components of a class in a NeXus file."""
+    return NeXusAllComponentLocationSpec[Component, RunType](filename=filename.value)
 
 
 def unique_component_spec(
@@ -235,7 +227,7 @@ def load_nexus_component(
 
 
 def load_all_nexus_components(
-    location: NeXusComponentLocationSpec[Component, RunType],
+    location: NeXusAllComponentLocationSpec[Component, RunType],
     nx_class: NeXusClass[Component],
 ) -> AllNeXusComponents[Component, RunType]:
     """
@@ -604,9 +596,8 @@ _common_providers = (
     file_path_to_file_spec,
     full_time_interval,
     component_spec_by_name,
-    disk_chopper_component_spec,
-    crystal_component_spec,
     unique_component_spec,  # after component_spec_by_name, partially overrides
+    all_component_spec,
     get_transformation_chain,
     to_transformation,
     compute_position,

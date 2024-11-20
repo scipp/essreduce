@@ -231,6 +231,24 @@ class NeXusComponentLocationSpec(NeXusLocationSpec, Generic[Component, RunType])
 
 
 @dataclass
+class NeXusAllLocationSpec:
+    """
+    NeXus parameters to identify all components of a class to load.
+    """
+
+    filename: FilePath | NeXusFile | NeXusGroup
+    entry_name: NeXusEntryName | None = None
+    selection: snx.typing.ScippIndex | slice = ()
+
+
+@dataclass
+class NeXusAllComponentLocationSpec(NeXusAllLocationSpec, Generic[Component, RunType]):
+    """
+    NeXus parameters to identify all components of a class to load.
+    """
+
+
+@dataclass
 class NeXusDataLocationSpec(NeXusLocationSpec, Generic[Component, RunType]):
     """NeXus filename and parameters to identify (parts of) detector data to load."""
 
