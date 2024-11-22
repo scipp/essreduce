@@ -91,6 +91,8 @@ Monitor4 = NewType('Monitor4', int)
 """Identifier for an arbitrary monitor"""
 Monitor5 = NewType('Monitor5', int)
 """Identifier for an arbitrary monitor"""
+Monitor6 = NewType('Monitor6', int)
+"""Identifier for an arbitrary monitor"""
 IncidentMonitor = NewType('IncidentMonitor', int)
 """Incident monitor"""
 TransmissionMonitor = NewType('TransmissionMonitor', int)
@@ -102,6 +104,7 @@ MonitorType = TypeVar(
     Monitor3,
     Monitor4,
     Monitor5,
+    Monitor6,
     IncidentMonitor,
     TransmissionMonitor,
 )
@@ -119,6 +122,7 @@ Component = TypeVar(
     Monitor3,
     Monitor4,
     Monitor5,
+    Monitor6,
     IncidentMonitor,
     TransmissionMonitor,
 )
