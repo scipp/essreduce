@@ -33,7 +33,7 @@ def group_with_no_position(request) -> workflow.NeXusComponent[snx.NXsample, Sam
     return workflow.NeXusComponent[snx.NXsample, SampleRun](sc.DataGroup(request.param))
 
 
-@pytest.fixture()
+@pytest.fixture
 def depends_on() -> snx.TransformationChain:
     translation = snx.nxtransformations.Transform(
         name='/entry/instrument/comp1/transformations/trans1',
@@ -50,7 +50,7 @@ def depends_on() -> snx.TransformationChain:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def time_dependent_depends_on() -> snx.TransformationChain:
     """A chain of two transformations, the second one time-dependent."""
     trans1 = snx.nxtransformations.Transform(
@@ -81,7 +81,7 @@ def time_dependent_depends_on() -> snx.TransformationChain:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def transform(
     depends_on: snx.TransformationChain,
 ) -> NeXusTransformation[snx.NXdetector, SampleRun]:
@@ -192,7 +192,7 @@ def test_get_transformation_chain_raises_exception_if_position_not_found(
         workflow.get_transformation_chain(group_with_no_position)
 
 
-@pytest.fixture()
+@pytest.fixture
 def nexus_detector(
     depends_on: snx.TransformationChain,
 ) -> workflow.NeXusComponent[snx.NXdetector, SampleRun]:
@@ -209,7 +209,7 @@ def nexus_detector(
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def source_position() -> sc.Variable:
     return sc.vector([0.0, 0.0, -10.0], unit='m')
 
@@ -322,7 +322,7 @@ def test_get_calibrated_detector_forwards_masks(
     assert 'mymask' in detector.masks
 
 
-@pytest.fixture()
+@pytest.fixture
 def calibrated_detector() -> workflow.CalibratedDetector[SampleRun]:
     detector_number = sc.arange('detector_number', 6, unit=None)
     return workflow.CalibratedDetector[SampleRun](
@@ -336,7 +336,7 @@ def calibrated_detector() -> workflow.CalibratedDetector[SampleRun]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def detector_event_data() -> workflow.NeXusData[snx.NXdetector, SampleRun]:
     content = sc.DataArray(
         sc.ones(dims=['event'], shape=[17], unit='counts'),
@@ -399,7 +399,7 @@ def test_assemble_detector_preserves_masks(calibrated_detector, detector_event_d
     assert 'mymask' in detector.masks
 
 
-@pytest.fixture()
+@pytest.fixture
 def nexus_monitor(
     depends_on: snx.TransformationChain,
 ) -> workflow.NeXusComponent[Monitor1, SampleRun]:
@@ -435,7 +435,7 @@ def test_get_calibrated_monitor_subtracts_offset_from_position(
     assert_identical(monitor.coords['position'], sc.vector([1.1, 2.2, 3.3], unit='m'))
 
 
-@pytest.fixture()
+@pytest.fixture
 def calibrated_monitor() -> workflow.CalibratedMonitor[SampleRun, Monitor1]:
     return workflow.CalibratedMonitor[SampleRun, Monitor1](
         sc.DataArray(
@@ -445,7 +445,7 @@ def calibrated_monitor() -> workflow.CalibratedMonitor[SampleRun, Monitor1]:
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def monitor_event_data() -> workflow.NeXusData[Monitor1, SampleRun]:
     content = sc.DataArray(sc.ones(dims=['event'], shape=[17], unit='counts'))
     weights = sc.bins(data=content, dim='event')

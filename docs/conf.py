@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+
 import doctest
 import os
 import sys
@@ -203,7 +206,7 @@ html_sidebars = {
 
 html_title = "ESSreduce"
 html_logo = "_static/logo.svg"
-html_favicon = "_static/favicon.ico"
+html_favicon = "_static/favicon.svg"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
