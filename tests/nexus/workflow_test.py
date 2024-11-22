@@ -8,7 +8,9 @@ from scipp.testing import assert_identical
 from ess.reduce import data
 from ess.reduce.nexus import compute_component_position, workflow
 from ess.reduce.nexus.types import (
+    Analyzers,
     BackgroundRun,
+    Choppers,
     DetectorData,
     Filename,
     Monitor1,
@@ -539,6 +541,37 @@ def test_generic_nexus_workflow() -> None:
     assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('event_time_zero',)
+
+
+def test_generic_nexus_workflow_load_choppers() -> None:
+    wf = GenericNeXusWorkflow()
+    wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
+    choppers = wf.compute(Choppers[SampleRun])
+
+    assert choppers.keys() == {
+        '005_PulseShapingChopper',
+        '006_PulseShapingChopper2',
+        '019_FOC1',
+        '048_FOC2',
+        '095_BWC1',
+        '096_BWC2',
+    }
+    chopper = choppers['005_PulseShapingChopper']
+    assert 'position' in chopper
+    assert 'rotation_speed' in chopper
+    assert chopper['slit_edges'].shape == (2,)
+
+
+def test_generic_nexus_workflow_load_analyzers() -> None:
+    wf = GenericNeXusWorkflow()
+    wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
+    analyzers = wf.compute(Analyzers[SampleRun])
+
+    assert len(analyzers) == 45
+    analyzer = analyzers['144_channel_2_1_monochromator']
+    assert 'position' in analyzer
+    assert analyzer['d_spacing'].ndim == 0
+    assert analyzer['usage'] == 'Bragg'
 
 
 def test_generic_nexus_workflow_raises_if_monitor_types_but_not_run_types_given() -> (

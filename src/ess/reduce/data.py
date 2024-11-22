@@ -31,7 +31,16 @@ class Registry:
         return self._registry.fetch(name, processor=pooch.Unzip() if unzip else None)
 
 
-_registry = Registry(
+_bifrost_registry = Registry(
+    instrument='bifrost',
+    files={
+        "BIFROST_20240914T053723.h5": "md5:0f2fa5c9a851f8e3a4fa61defaa3752e",
+    },
+    version='1',
+)
+
+
+_loki_registry = Registry(
     instrument='loki',
     files={
         # Files from LoKI@Larmor detector test experiment
@@ -57,26 +66,31 @@ _registry = Registry(
 )
 
 
+def bifrost_simulated_elastic() -> str:
+    """McStas simulation with elastic incoherent scattering + phonon."""
+    return _bifrost_registry.get_path('BIFROST_20240914T053723.h5')
+
+
 def loki_tutorial_sample_run_60250() -> str:
     """Sample run with sample and sample holder/can, no transmission monitor in beam."""
-    return _registry.get_path('60250-2022-02-28_2215.nxs')
+    return _loki_registry.get_path('60250-2022-02-28_2215.nxs')
 
 
 def loki_tutorial_sample_run_60339() -> str:
     """Sample run with sample and sample holder/can, no transmission monitor in beam."""
-    return _registry.get_path('60339-2022-02-28_2215.nxs')
+    return _loki_registry.get_path('60339-2022-02-28_2215.nxs')
 
 
 def loki_tutorial_background_run_60248() -> str:
     """Background run with sample holder/can only, no transmission monitor."""
-    return _registry.get_path('60248-2022-02-28_2215.nxs')
+    return _loki_registry.get_path('60248-2022-02-28_2215.nxs')
 
 
 def loki_tutorial_background_run_60393() -> str:
     """Background run with sample holder/can only, no transmission monitor."""
-    return _registry.get_path('60393-2022-02-28_2215.nxs')
+    return _loki_registry.get_path('60393-2022-02-28_2215.nxs')
 
 
 def loki_tutorial_sample_transmission_run() -> str:
     """Sample transmission run (sample + sample holder/can + transmission monitor)."""
-    return _registry.get_path('60394-2022-02-28_2215.nxs')
+    return _loki_registry.get_path('60394-2022-02-28_2215.nxs')

@@ -13,12 +13,16 @@ import scipp as sc
 import scippnexus as snx
 from scipp.constants import g
 from scipp.core import label_based_index_to_positional_index
+from scippneutron.chopper import extract_chopper_from_nexus
 
 from . import _nexus_loader as nexus
 from .types import (
+    AllNeXusComponents,
+    Analyzers,
     CalibratedBeamline,
     CalibratedDetector,
     CalibratedMonitor,
+    Choppers,
     Component,
     DetectorBankSizes,
     DetectorData,
@@ -28,6 +32,7 @@ from .types import (
     MonitorData,
     MonitorPositionOffset,
     MonitorType,
+    NeXusAllComponentLocationSpec,
     NeXusClass,
     NeXusComponent,
     NeXusComponentLocationSpec,
@@ -94,6 +99,13 @@ def component_spec_by_name(
     return NeXusComponentLocationSpec[Component, RunType](
         filename=filename.value, component_name=name
     )
+
+
+def all_component_spec(
+    filename: NeXusFileSpec[RunType],
+) -> NeXusAllComponentLocationSpec[Component, RunType]:
+    """Create a location spec for all components of a class in a NeXus file."""
+    return NeXusAllComponentLocationSpec[Component, RunType](filename=filename.value)
 
 
 def unique_component_spec(
@@ -173,6 +185,14 @@ def nx_class_for_sample() -> NeXusClass[snx.NXsample]:
     return NeXusClass[snx.NXsample](snx.NXsample)
 
 
+def nx_class_for_disk_chopper() -> NeXusClass[snx.NXdisk_chopper]:
+    return NeXusClass[snx.NXdisk_chopper](snx.NXdisk_chopper)
+
+
+def nx_class_for_crystal() -> NeXusClass[snx.NXcrystal]:
+    return NeXusClass[snx.NXcrystal](snx.NXcrystal)
+
+
 def load_nexus_component(
     location: NeXusComponentLocationSpec[Component, RunType],
     nx_class: NeXusClass[Component],
@@ -203,6 +223,27 @@ def load_nexus_component(
     """
     return NeXusComponent[Component, RunType](
         nexus.load_component(location, nx_class=nx_class, definitions=definitions)
+    )
+
+
+def load_all_nexus_components(
+    location: NeXusAllComponentLocationSpec[Component, RunType],
+    nx_class: NeXusClass[Component],
+) -> AllNeXusComponents[Component, RunType]:
+    """
+    Load all NeXus components of one class from one entry a file.
+
+    This is equivalent to calling :func:`load_nexus_component` for every component.
+
+    Parameters
+    ----------
+    location:
+        Location spec for the source group.
+    nx_class:
+        NX_class to identify the components.
+    """
+    return AllNeXusComponents[Component, RunType](
+        nexus.load_all_components(location, nx_class=nx_class, definitions=definitions)
     )
 
 
@@ -465,6 +506,26 @@ def assemble_monitor_data(
     return MonitorData[RunType, MonitorType](_add_variances(da))
 
 
+def parse_disk_choppers(
+    choppers: AllNeXusComponents[snx.NXdisk_chopper, RunType],
+) -> Choppers[RunType]:
+    """Convert the NeXus representation of a chopper to ours."""
+    return Choppers[RunType](
+        choppers.apply(
+            lambda chopper: extract_chopper_from_nexus(
+                nexus.compute_component_position(chopper)
+            )
+        )
+    )
+
+
+def parse_analyzers(
+    analyzers: AllNeXusComponents[snx.NXcrystal, RunType],
+) -> Analyzers[RunType]:
+    """Convert the NeXus representation of an analyzer to ours."""
+    return Analyzers[RunType](analyzers.apply(nexus.compute_component_position))
+
+
 def _drop(
     children: dict[str, snx.Field | snx.Group], classes: tuple[snx.NXobject, ...]
 ) -> dict[str, snx.Field | snx.Group]:
@@ -536,16 +597,20 @@ _common_providers = (
     full_time_interval,
     component_spec_by_name,
     unique_component_spec,  # after component_spec_by_name, partially overrides
+    all_component_spec,
     get_transformation_chain,
     to_transformation,
     compute_position,
     load_nexus_data,
     load_nexus_component,
+    load_all_nexus_components,
     data_by_name,
     nx_class_for_detector,
     nx_class_for_monitor,
     nx_class_for_source,
     nx_class_for_sample,
+    nx_class_for_disk_chopper,
+    nx_class_for_crystal,
 )
 
 _monitor_providers = (
@@ -561,6 +626,10 @@ _detector_providers = (
     assemble_beamline,
     assemble_detector_data,
 )
+
+_chopper_providers = (parse_disk_choppers,)
+
+_analyzer_providers = (parse_analyzers,)
 
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:
@@ -605,7 +674,13 @@ def GenericNeXusWorkflow(
     if monitor_types is not None and run_types is None:
         raise ValueError("run_types must be specified if monitor_types is specified")
     wf = sciline.Pipeline(
-        (*_common_providers, *_monitor_providers, *_detector_providers)
+        (
+            *_common_providers,
+            *_monitor_providers,
+            *_detector_providers,
+            *_chopper_providers,
+            *_analyzer_providers,
+        )
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)

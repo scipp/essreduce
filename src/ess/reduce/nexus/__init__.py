@@ -18,6 +18,7 @@ from ._nexus_loader import (
     load_data,
     group_event_data,
     load_component,
+    load_all_components,
     compute_component_position,
     extract_signal_data_array,
 )
@@ -25,6 +26,7 @@ from ._nexus_loader import (
 __all__ = [
     'types',
     'group_event_data',
+    'load_all_components',
     'load_data',
     'load_component',
     'compute_component_position',

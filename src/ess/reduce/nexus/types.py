@@ -112,6 +112,8 @@ Component = TypeVar(
     snx.NXdetector,
     snx.NXsample,
     snx.NXsource,
+    snx.NXdisk_chopper,
+    snx.NXcrystal,
     Monitor1,
     Monitor2,
     Monitor3,
@@ -128,7 +130,7 @@ class NeXusName(sciline.Scope[Component, str], str):
     """Name of a component in a NeXus file."""
 
 
-class NeXusClass(sciline.Scope[Component, str], str):
+class NeXusClass(sciline.Scope[Component, type], type):
     """NX_class of a component in a NeXus file."""
 
 
@@ -140,6 +142,12 @@ class NeXusComponent(
     sciline.ScopeTwoParams[Component, RunType, sc.DataGroup], sc.DataGroup
 ):
     """Raw data from a NeXus component."""
+
+
+class AllNeXusComponents(
+    sciline.ScopeTwoParams[Component, RunType, sc.DataGroup], sc.DataGroup
+):
+    """Raw data from all NeXus components of one class."""
 
 
 class NeXusData(sciline.ScopeTwoParams[Component, RunType, sc.DataArray], sc.DataArray):
@@ -223,11 +231,26 @@ class NeXusComponentLocationSpec(NeXusLocationSpec, Generic[Component, RunType])
 
 
 @dataclass
+class NeXusAllLocationSpec:
+    """
+    NeXus parameters to identify all components of a class to load.
+    """
+
+    filename: FilePath | NeXusFile | NeXusGroup
+    entry_name: NeXusEntryName | None = None
+    selection: snx.typing.ScippIndex | slice = ()
+
+
+@dataclass
+class NeXusAllComponentLocationSpec(NeXusAllLocationSpec, Generic[Component, RunType]):
+    """
+    NeXus parameters to identify all components of a class to load.
+    """
+
+
+@dataclass
 class NeXusDataLocationSpec(NeXusLocationSpec, Generic[Component, RunType]):
     """NeXus filename and parameters to identify (parts of) detector data to load."""
-
-
-T = TypeVar('T', bound='NeXusTransformationChain')
 
 
 class NeXusTransformationChain(
@@ -257,3 +280,17 @@ class NeXusTransformation(Generic[Component, RunType]):
             raise ValueError(f"Expected scalar transformation, got {chain}")
         transform = chain.compute()
         return NeXusTransformation(value=transform)
+
+
+class Choppers(
+    sciline.Scope[RunType, sc.DataGroup[sc.DataGroup[Any]]],
+    sc.DataGroup[sc.DataGroup[Any]],
+):
+    """All choppers in a NeXus file."""
+
+
+class Analyzers(
+    sciline.Scope[RunType, sc.DataGroup[sc.DataGroup[Any]]],
+    sc.DataGroup[sc.DataGroup[Any]],
+):
+    """All analyzers in a NeXus file."""
