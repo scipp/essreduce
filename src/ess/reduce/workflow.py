@@ -86,10 +86,6 @@ def assign_parameter_values(pipeline: Pipeline, values: dict[Key, Any]) -> Pipel
     """Set a value for a parameter in the pipeline."""
     pipeline = pipeline.copy()
     for key, value in values.items():
-        # if (
-        #     isinstance(value, (tuple, list))
-        #     and (mapper := parameter_mappers.get(key)) is not None
-        # ):
         if (mapper := parameter_mappers.get(key)) is not None:
             pipeline = mapper(pipeline, value)
         else:
