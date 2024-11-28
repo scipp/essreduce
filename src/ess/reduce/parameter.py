@@ -126,6 +126,11 @@ class StringParameter(Parameter[str]):
     pass
 
 
+@dataclass
+class MultiStringParameter(Parameter[tuple[str, ...]]):
+    """Widget for entering multiple strings."""
+
+
 @dataclass(kw_only=True)
 class ParamWithBounds(Parameter[T]):
     bounds: tuple[T, T]

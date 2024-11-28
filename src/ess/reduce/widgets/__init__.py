@@ -10,6 +10,7 @@ from ..parameter import (
     BooleanParameter,
     FilenameParameter,
     MultiFilenameParameter,
+    MultiStringParameter,
     ParamWithOptions,
     StringParameter,
     Parameter,
@@ -21,9 +22,11 @@ from ..parameter import (
 from ._config import default_layout, default_style
 
 from ._binedges_widget import BinEdgesWidget
+from ._filename_widget import FilenameWidget, MultiFilenameWidget
 from ._linspace_widget import LinspaceWidget
 from ._vector_widget import VectorWidget
 from ._bounds_widget import BoundsWidget
+from ._string_widget import MultiStringWidget, StringWidget
 from ._switchable_widget import SwitchWidget
 from ._optional_widget import OptionalWidget
 
@@ -101,42 +104,41 @@ def boolean_parameter_widget(param: BooleanParameter):
 
 @create_parameter_widget.register(StringParameter)
 def string_parameter_widget(param: StringParameter):
-    name = param.name
-    description = param.description
-    if param.switchable:
-        return widgets.Text(
-            description=name,
-            tooltip=description,
-            layout=default_layout,
-            style=default_style,
-        )
-    else:
-        return widgets.Text(
-            value=param.default,
-            description=name,
-            tooltip=description,
-            layout=default_layout,
-            style=default_style,
-        )
+    return StringWidget(
+        description=param.name,
+        value=param.default,
+        layout=default_layout,
+        style=default_style,
+    )
+
+
+@create_parameter_widget.register(MultiStringParameter)
+def multi_string_parameter_widget(param: MultiStringParameter):
+    return MultiStringWidget(
+        description=param.name,
+        value=param.default,
+        layout=default_layout,
+        style=default_style,
+    )
 
 
 @create_parameter_widget.register(FilenameParameter)
 def filename_parameter_widget(param: FilenameParameter):
-    return widgets.Text(
+    return FilenameWidget(
         description=param.name,
+        value=param.default,
         layout=default_layout,
         style=default_style,
-        value=param.default,
     )
 
 
 @create_parameter_widget.register(MultiFilenameParameter)
 def multi_filename_parameter_widget(param: MultiFilenameParameter):
-    return widgets.Text(
+    return MultiFilenameWidget(
         description=param.name,
+        value=param.default,
         layout=default_layout,
         style=default_style,
-        value=param.default,
     )
 
 
@@ -182,7 +184,9 @@ __all__ = [
     'BinEdgesWidget',
     'BoundsWidget',
     'EssWidget',
+    'FilenameWidget',
     'LinspaceWidget',
+    'MultiFilenameWidget',
     'OptionalWidget',
     'SwitchWidget',
     'VectorWidget',
