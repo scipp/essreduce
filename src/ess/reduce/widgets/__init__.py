@@ -26,7 +26,7 @@ from ._filename_widget import FilenameWidget, MultiFilenameWidget
 from ._linspace_widget import LinspaceWidget
 from ._vector_widget import VectorWidget
 from ._bounds_widget import BoundsWidget
-from ._string_widget import StringWidget, MultiStringWidget
+from ._string_widget import MultiStringWidget, StringWidget
 from ._switchable_widget import SwitchWidget
 from ._optional_widget import OptionalWidget
 
@@ -100,27 +100,6 @@ def boolean_parameter_widget(param: BooleanParameter):
         layout=default_layout,
         style=default_style,
     )
-
-
-# @create_parameter_widget.register(StringParameter)
-# def string_parameter_widget(param: StringParameter):
-#     name = param.name
-#     description = param.description
-#     if param.switchable:
-#         return widgets.Text(
-#             description=name,
-#             tooltip=description,
-#             layout=default_layout,
-#             style=default_style,
-#         )
-#     else:
-#         return widgets.Text(
-#             value=param.default,
-#             description=name,
-#             tooltip=description,
-#             layout=default_layout,
-#             style=default_style,
-#         )
 
 
 @create_parameter_widget.register(StringParameter)
