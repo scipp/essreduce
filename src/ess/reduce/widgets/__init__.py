@@ -36,7 +36,6 @@ class EssWidget(Protocol):
 
     All widgets should have a `value` property that returns the value of the widget.
     It can be composed from multiple widgets.
-    ```
     """
 
     @property

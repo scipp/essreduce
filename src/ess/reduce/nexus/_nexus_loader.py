@@ -3,8 +3,8 @@
 
 """NeXus loaders."""
 
-from collections.abc import Mapping
-from contextlib import AbstractContextManager, nullcontext
+from collections.abc import Generator, Mapping
+from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import dataclass
 from math import prod
 from typing import cast
@@ -13,7 +13,14 @@ import scipp as sc
 import scippnexus as snx
 
 from ..logging import get_logger
-from .types import FilePath, NeXusEntryName, NeXusFile, NeXusGroup, NeXusLocationSpec
+from .types import (
+    FilePath,
+    NeXusAllLocationSpec,
+    NeXusEntryName,
+    NeXusFile,
+    NeXusGroup,
+    NeXusLocationSpec,
+)
 
 
 class NoNewDefinitionsType: ...
@@ -28,20 +35,34 @@ def load_component(
     nx_class: type[snx.NXobject],
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataGroup:
-    file_path = location.filename
+    """Load a single component of a given class from NeXus."""
     selection = location.selection
-    entry_name = location.entry_name
     group_name = location.component_name
-    with _open_nexus_file(file_path, definitions=definitions) as f:
-        entry = _unique_child_group(f, snx.NXentry, entry_name)
-        if nx_class is snx.NXsample:
-            instrument = entry
-        else:
-            instrument = _unique_child_group(entry, snx.NXinstrument, None)
-        component = _unique_child_group(instrument, nx_class, group_name)
+    with _open_component_parent(
+        location, nx_class=nx_class, definitions=definitions
+    ) as parent:
+        component = _unique_child_group(parent, nx_class, group_name)
         loaded = cast(sc.DataGroup, component[selection])
-        loaded['nexus_component_name'] = component.name.split('/')[-1]
+        loaded['nexus_component_name'] = component.name.rsplit('/', 1)[-1]
     return loaded
+
+
+def load_all_components(
+    location: NeXusAllLocationSpec,
+    *,
+    nx_class: type[snx.NXobject],
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+) -> sc.DataGroup:
+    """Load all components of a given class from NeXus."""
+    with _open_component_parent(
+        location, nx_class=nx_class, definitions=definitions
+    ) as parent:
+        components = sc.DataGroup()
+        for name, component in parent[nx_class].items():
+            loaded = component[location.selection]
+            loaded['nexus_component_name'] = name
+            components[name] = loaded
+    return components
 
 
 def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
@@ -70,7 +91,7 @@ def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
 def _open_nexus_file(
     file_path: FilePath | NeXusFile | NeXusGroup,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
-) -> AbstractContextManager:
+) -> AbstractContextManager[snx.Group]:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         if (
             definitions is not NoNewDefinitions
@@ -83,6 +104,24 @@ def _open_nexus_file(
     if definitions is NoNewDefinitions:
         return snx.File(file_path)
     return snx.File(file_path, definitions=definitions)
+
+
+@contextmanager
+def _open_component_parent(
+    location: NeXusLocationSpec,
+    *,
+    nx_class: type[snx.NXobject],
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+) -> Generator[snx.Group, None, None]:
+    """Locate the parent group of a NeXus component."""
+    file_path = location.filename
+    entry_name = location.entry_name
+    with _open_nexus_file(file_path, definitions=definitions) as f:
+        entry = _unique_child_group(f, snx.NXentry, entry_name)
+        if nx_class is snx.NXsample:
+            yield entry
+        else:
+            yield _unique_child_group(entry, snx.NXinstrument, None)
 
 
 def _unique_child_group(
