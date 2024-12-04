@@ -71,7 +71,12 @@ class ParamWithOptions(Parameter[T]):
 
     @classmethod
     def from_enum(cls: type[C], t: type[T], default: T) -> C:
-        return cls(name=str(t), description=t.__doc__, options=t, default=default)
+        return cls(
+            name=t.__name__,
+            description=t.__doc__,
+            options=t.__members__,
+            default=default,
+        )
 
 
 @dataclass
