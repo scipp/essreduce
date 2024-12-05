@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -81,11 +82,13 @@ class ParameterBox(widgets.VBox):
             self._input_widgets.clear()
             self._input_widgets.update(
                 {
-                    node: widgets.HBox([create_parameter_widget(parameter)])
-                    for node, parameter in registry_getter().items()
+                    node: create_parameter_widget(parameter)
+                    for node, parameter in new_input_parameters.items()
                 }
             )
-            self._input_box.children = list(self._input_widgets.values())
+            self._input_box.children = [
+                widgets.HBox([widget]) for widget in self._input_widgets.values()
+            ]
 
         self.parameter_refresh_button.on_click(_refresh_input_box)
 
@@ -100,6 +103,75 @@ class ParameterBox(widgets.VBox):
             if (not isinstance((widget := widget_box.children[0]), SwitchWidget))
             or widget.enabled
         }
+
+
+def set_parameter_values(
+    parameter_box: ParameterBox,
+    parameter_values: dict[str | Key, dict[str, Any]],
+) -> None:
+    for node, widget in parameter_box._input_widgets.items():
+        internal_values = parameter_values.get(
+            node, parameter_values.get(parameter_box._input_registry[node].name, {})
+        )
+        # Set the fields values
+        fields_values = internal_values.get('fields', {})
+        widget_fields = getattr(widget, "fields", {})
+        for field_name, field_value in fields_values.items():
+            if field_name in widget_fields:
+                widget_fields[field_name].value = field_value
+            else:
+                warnings.warn(
+                    f"Cannot set field '{field_name}' for parameter '{node}'. "
+                    "The field does not exist in the widget. "
+                    "The field value will be ignored.",
+                    UserWarning,
+                    stacklevel=1,
+                )
+        # Set the value
+        if (self_value := internal_values.get('value')) is not None:
+            try:
+                widget.value = self_value
+            except AttributeError:  # No setter for value
+                warnings.warn(
+                    f"Cannot set value for parameter '{node}'. "
+                    "The widget does not have a value setter."
+                    "The value will be ignored.",
+                    UserWarning,
+                    stacklevel=1,
+                )
+
+
+def _has_widget_value_setter(widget: widgets.Widget) -> bool:
+    widget_type = type(widget)
+    return (
+        widget_property := getattr(widget_type, 'value', None)
+    ) is not None and getattr(widget_property, 'fset', None) is not None
+
+
+def _is_value_exportable(value: Any) -> bool:
+    return isinstance(value, int | float | str | bool)
+
+
+def export_parameter_values(
+    parameter_box: ParameterBox, key_as_str: bool = False
+) -> dict[str | Key, dict[str, Any]]:
+    parameter_values = {}
+    for node, widget in parameter_box._input_widgets.items():
+        widget_values = {}
+        fields_values = {
+            field_name: field.value
+            for field_name, field in getattr(widget, 'fields', {}).items()
+        }
+        if fields_values:  # Skip setting empty fields
+            widget_values['fields'] = fields_values
+        if _has_widget_value_setter(widget) and _is_value_exportable(widget.value):
+            widget_values['value'] = widget.value
+
+        key = parameter_box._input_registry[node].name if key_as_str else node
+        if widget_values:  # Skip setting empty widget values
+            parameter_values[key] = widget_values
+
+    return parameter_values
 
 
 class ResultBox(widgets.VBox):
