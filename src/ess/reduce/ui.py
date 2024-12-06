@@ -317,15 +317,15 @@ def set_input_widget_values(
         for field_name in valid_fields:
             widget_fields[field_name].value = new_fields[field_name]
 
-        # Set the high-level value if possible.
+        # Set the high-level value if needed and possible.
         # It is set after the fields to prioritize the high-level value.
-        self_value = new_internal_values.get('value')
-        if self_value is not None and _has_widget_value_setter(widget):
-            widget.value = self_value
-        else:
-            warning_msg = f"Cannot set value for parameter '{node}'. "
-            "The widget does not have a value setter. The value will be ignored."
-            warnings.warn(warning_msg, UserWarning, stacklevel=1)
+        if (self_value := new_internal_values.get('value')) is not None:
+            if _has_widget_value_setter(widget):
+                widget.value = self_value
+            else:
+                warning_msg = f"Cannot set value for parameter '{node}'. "
+                "The widget does not have a value setter. The value will be ignored."
+                warnings.warn(warning_msg, UserWarning, stacklevel=1)
 
 
 def _is_value_exportable(value: Any) -> bool:
