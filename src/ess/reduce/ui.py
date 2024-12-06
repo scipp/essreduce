@@ -100,8 +100,7 @@ class ParameterBox(widgets.VBox):
         return {
             node: widget.value
             for node, widget_box in self._input_widgets.items()
-            if (not isinstance((widget := widget_box.children[0]), SwitchWidget))
-            or widget.enabled
+            if (not isinstance((widget := widget_box), SwitchWidget)) or widget.enabled
         }
 
 
