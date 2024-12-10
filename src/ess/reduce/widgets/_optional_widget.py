@@ -4,6 +4,7 @@ from typing import Any
 
 from ipywidgets import HTML, HBox, Layout, RadioButtons, Widget
 
+from ._base import WidgetWithFieldsProtocol
 from ._config import default_style
 
 
@@ -64,3 +65,25 @@ class OptionalWidget(HBox):
         else:
             self._option_box.value = self.name
             self.wrapped.value = value
+
+    def set_fields(self, new_values: Any) -> None:
+        # Set the value of the option box
+        if new_values is not None:
+            self._option_box.value = self.name
+        else:
+            self._option_box.value = None
+        # Set the value of the wrapped widget
+        if isinstance(self.wrapped, WidgetWithFieldsProtocol):
+            self.wrapped.set_fields(new_values)
+        elif new_values is not None:
+            self.wrapped.value = new_values
+        else:
+            ...  # Do not set the value of the wrapped widget
+
+    def get_fields(self) -> dict[str, Any] | None:
+        if self._option_box.value is None:
+            return None
+        elif isinstance(self.wrapped, WidgetWithFieldsProtocol):
+            return self.wrapped.get_fields()
+        else:
+            return self.wrapped.value
