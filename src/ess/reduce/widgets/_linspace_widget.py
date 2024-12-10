@@ -3,8 +3,10 @@
 import scipp as sc
 from ipywidgets import FloatText, GridBox, IntText, Label, ValueWidget
 
+from ._base import WidgetWithFieldsMixin
 
-class LinspaceWidget(GridBox, ValueWidget):
+
+class LinspaceWidget(GridBox, ValueWidget, WidgetWithFieldsMixin):
     def __init__(self, dim: str, unit: str):
         super().__init__()
 

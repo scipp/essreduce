@@ -4,8 +4,10 @@
 import scipp as sc
 from ipywidgets import FloatText, HBox, Label, Text, ValueWidget
 
+from ._base import WidgetWithFieldsMixin
 
-class VectorWidget(HBox, ValueWidget):
+
+class VectorWidget(HBox, ValueWidget, WidgetWithFieldsMixin):
     def __init__(self, name: str, variable: sc.Variable, components: str):
         super().__init__()
 

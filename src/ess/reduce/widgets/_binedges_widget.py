@@ -3,6 +3,8 @@
 import ipywidgets as ipw
 import scipp as sc
 
+from ._base import WidgetWithFieldsMixin
+
 UNITS_LIBRARY = {
     "wavelength": {"options": ("angstrom", "nm")},
     "Q": {"options": ("1/angstrom", "1/nm")},
@@ -19,7 +21,7 @@ UNITS_LIBRARY = {
 }
 
 
-class BinEdgesWidget(ipw.HBox, ipw.ValueWidget):
+class BinEdgesWidget(ipw.HBox, ipw.ValueWidget, WidgetWithFieldsMixin):
     def __init__(
         self,
         name: str,

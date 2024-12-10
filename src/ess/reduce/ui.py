@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-import warnings
 from collections.abc import Callable
 from typing import Any
 
@@ -11,6 +10,7 @@ from ipywidgets import Layout
 
 from .parameter import Parameter
 from .widgets import SwitchWidget, create_parameter_widget, default_layout
+from .widgets._base import get_fields, set_fields
 from .workflow import (
     Key,
     assign_parameter_values,
@@ -236,13 +236,6 @@ def workflow_widget(result_registry: dict | None = None) -> widgets.Widget:
     return widgets.VBox([workflow_selection_box, workflow_box])
 
 
-def _has_widget_value_setter(widget: widgets.Widget) -> bool:
-    widget_type = type(widget)
-    return (
-        widget_property := getattr(widget_type, 'value', None)
-    ) is not None and getattr(widget_property, 'fset', None) is not None
-
-
 def _get_parameter_box(widget: WorkflowWidget | ParameterBox) -> ParameterBox:
     if isinstance(widget, WorkflowWidget):
         return widget.parameter_box
@@ -255,18 +248,17 @@ def _get_parameter_box(widget: WorkflowWidget | ParameterBox) -> ParameterBox:
         )
 
 
-def set_input_widget_values(
-    widget: WorkflowWidget | ParameterBox,
-    new_parameter_values: dict[str | type, dict[str, Any]],
+def update_parameter_widget(
+    widget: WorkflowWidget | ParameterBox, new_parameter_values: dict[type, Any]
 ) -> None:
     """Set the values of the input widgets in the target widget.
+
+    Nodes that don't exist in the input widgets will be ignored.
 
     Example
     -------
     {
-        'WavelengthBins': {
-            'fields': {'start': 1.0, 'stop': 14.0, 'nbins': 500}
-        }
+        'WavelengthBins': {'start': 1.0, 'stop': 14.0, 'nbins': 500}
     }
 
     Parameters
@@ -274,69 +266,28 @@ def set_input_widget_values(
     widget:
         The widget containing the input widgets.
     new_parameter_values:
-        A dictionary of parameter values to set for the input widgets.
-        The keys are the parameter names or the type(Key in Sciline graphs).
-        The values are dictionaries with the following keys
-
-        - 'fields':
-            A dictionary of field names and values to set.
-            i.e. {'dim': 'tof', 'unit': 'mm'}
-            The field values will be set if the field exists in the widget.
-            Otherwise, the field value will be ignored and a warning will be raised.
-        - 'value':
-            If the widget has a value setter, the value will be set directly.
-            Otherwise, it will be ignored and a warning will be raised.
+        A dictionary of values/state to set each fields/state or value of input widgets.
 
     Raises
     ------
     TypeError:
-        If the target_widget is not a WorkflowWidget or a ParameterBox.
+        If the widget is not a WorkflowWidget or a ParameterBox.
 
     """
     parameter_box = _get_parameter_box(widget)
     # Walk through the existing input widgets and set the values
+    # ``node`s that don't exist in the input widgets will be ignored.
     for node, widget in parameter_box._input_widgets.items():
-        new_internal_values = new_parameter_values.get(
-            node, new_parameter_values.get(parameter_box._input_registry[node].name, {})
-        )
-        # Parse the new values and corresponding fields in the existing widget
-        new_fields: dict[str, Any] = new_internal_values.get('fields', {})
-        new_fields_keys = set(new_fields.keys())
-        widget_fields = getattr(widget, "fields", {})
-        # Extract valid fields
-        valid_fields = new_fields_keys & set(widget_fields.keys())
-        # Warn for invalid fields
-        invalid_fields = new_fields_keys - valid_fields
-        for field_name in invalid_fields:
-            warning_msg = f"Cannot set field '{field_name}' for parameter '{node}'."
-            " The field does not exist in the widget. "
-            "The field value will be ignored."
-            warnings.warn(warning_msg, UserWarning, stacklevel=1)
-        # Set the valid fields
-        for field_name in valid_fields:
-            widget_fields[field_name].value = new_fields[field_name]
-
-        # Set the high-level value if needed and possible.
-        # It is set after the fields to prioritize the high-level value.
-        if (self_value := new_internal_values.get('value')) is not None:
-            if _has_widget_value_setter(widget):
-                widget.value = self_value
-            else:
-                warning_msg = f"Cannot set value for parameter '{node}'. "
-                "The widget does not have a value setter. The value will be ignored."
-                warnings.warn(warning_msg, UserWarning, stacklevel=1)
+        if node in new_parameter_values:
+            # We shouldn't use `get` here because ``None`` is a valid value.
+            set_fields(widget, new_parameter_values[node])
 
 
-def _is_value_exportable(value: Any) -> bool:
-    return isinstance(value, int | float | str | bool)
-
-
-def get_input_widget_values(
-    widget: WorkflowWidget | ParameterBox, key_as_str: bool = False
-) -> dict[str | type, dict[str, Any]]:
+def get_parameter_widget_values(
+    widget: WorkflowWidget | ParameterBox,
+) -> dict[type, Any]:
     """Return the current values of the input widgets in the target widget.
 
-    Empty fields and widgets without value setters will not be included in the result.
     The result of this function can be used to set the values of the input widgets
     using the `~set_input_widget_values` function.
 
@@ -344,26 +295,19 @@ def get_input_widget_values(
     ----------
     widget:
         The widget containing the input widgets.
-    key_as_str:
-        If True, the keys in the returned dictionary will be the parameter names(str).
-        Otherwise, the keys will be type objects(Key in Sciline graphs).
+
+    Returns
+    -------
+    dict[str, Any]:
+        A dictionary of the current values/state of each input widget.
+
+    Raises
+    ------
+    TypeError:
+        If the widget is not a WorkflowWidget or a ParameterBox.
 
     """
-    parameter_box = _get_parameter_box(widget)
-    parameter_input_widget_values = {}
-    for node, widget in parameter_box._input_widgets.items():
-        input_widget_values = {}
-        fields_values = {
-            field_name: field.value
-            for field_name, field in getattr(widget, 'fields', {}).items()
-        }
-        if fields_values:  # Skip setting empty fields
-            input_widget_values['fields'] = fields_values
-        if _has_widget_value_setter(widget) and _is_value_exportable(widget.value):
-            input_widget_values['value'] = widget.value
-
-        key = parameter_box._input_registry[node].name if key_as_str else node
-        if input_widget_values:  # Skip setting empty widget values
-            parameter_input_widget_values[key] = input_widget_values
-
-    return parameter_input_widget_values
+    return {
+        node: get_fields(widget)
+        for node, widget in _get_parameter_box(widget)._input_widgets.items()
+    }
