@@ -8,9 +8,15 @@ import sciline as sl
 import scipp as sc
 from ipywidgets import FloatText, IntText
 
-from ess.reduce.parameter import BinEdgesParameter, Parameter, parameter_registry
+from ess.reduce.parameter import (
+    BinEdgesParameter,
+    Parameter,
+    Vector3dParameter,
+    parameter_registry,
+)
 from ess.reduce.ui import WorkflowWidget, workflow_widget
 from ess.reduce.widgets import OptionalWidget, SwitchWidget, create_parameter_widget
+from ess.reduce.widgets._base import WidgetWithFieldsProtocol
 from ess.reduce.workflow import register_workflow, workflow_registry
 
 SwitchableInt = NewType('SwitchableInt', int)
@@ -164,6 +170,38 @@ def test_switchable_optional_parameter_switchable_first() -> None:
     dummy_widget = create_parameter_widget(dummy_param)
     assert isinstance(dummy_widget, SwitchWidget)
     assert isinstance(dummy_widget.wrapped, OptionalWidget)
+
+
+def test_optional_widget_set_value_get_fields() -> None:
+    optional_param = Parameter('a', 'a', 1, optional=True)
+    optional_widget = create_parameter_widget(optional_param)
+    assert isinstance(optional_widget, WidgetWithFieldsProtocol)
+    assert isinstance(optional_widget, OptionalWidget)
+    # Check initial state
+    assert optional_widget._option_box.value is None
+    assert optional_widget.get_fields() is None
+    # Update the value of the wrapped widget
+    optional_widget.value = 'test'
+    # Check the fields
+    assert optional_widget.get_fields() == 'test'
+
+
+def test_optional_widget_set_fields_get_fields() -> None:
+    optional_param = Vector3dParameter(
+        'a', 'a', sc.vector([1, 2, 3], unit='m'), optional=True
+    )
+    optional_widget = create_parameter_widget(optional_param)
+    assert isinstance(optional_widget, WidgetWithFieldsProtocol)
+    assert isinstance(optional_widget, OptionalWidget)
+    # Check initial state
+    assert optional_widget._option_box.value is None
+    assert optional_widget.get_fields() is None
+    # Update the value of the wrapped widget
+    optional_widget.set_fields({'x': 4, 'y': 5, 'z': 6, 'unit': 'm'})
+    assert optional_widget.value == sc.vector([4, 5, 6], unit='m')
+    # Check the fields and the option box value
+    assert optional_widget.get_fields() == {'x': 4, 'y': 5, 'z': 6, 'unit': 'm'}
+    assert optional_widget._option_box.value == optional_param.name
 
 
 def test_optional_widget_dispatch() -> None:
