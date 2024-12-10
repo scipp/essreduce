@@ -29,6 +29,7 @@ from ._bounds_widget import BoundsWidget
 from ._string_widget import MultiStringWidget, StringWidget
 from ._switchable_widget import SwitchWidget
 from ._optional_widget import OptionalWidget
+from ._spinner import Spinner
 
 
 class EssWidget(Protocol):
@@ -191,4 +192,5 @@ __all__ = [
     'SwitchWidget',
     'VectorWidget',
     'create_parameter_widget',
+    'Spinner',
 ]
