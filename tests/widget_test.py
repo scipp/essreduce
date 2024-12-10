@@ -79,7 +79,7 @@ def provider_with_optional(a: OptionalInt, b: OptionalFloat) -> str:
 
 
 def _get_param_widget(widget: WorkflowWidget, param_type: type) -> Any:
-    return widget.parameter_box._input_widgets[param_type].children[0]
+    return widget.parameter_box._input_widgets[param_type]
 
 
 def test_parameter_default_value_test() -> None:
