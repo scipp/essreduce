@@ -248,7 +248,7 @@ def _get_parameter_box(widget: WorkflowWidget | ParameterBox) -> ParameterBox:
         )
 
 
-def update_parameter_widget(
+def set_parameter_widget_values(
     widget: WorkflowWidget | ParameterBox, new_parameter_values: dict[type, Any]
 ) -> None:
     """Set the values of the input widgets in the target widget.
