@@ -36,25 +36,31 @@ class WidgetWithFieldsMixin:
         }
 
 
-def _has_widget_value_setter(widget: Widget) -> bool:
-    widget_type = type(widget)
-    return (
-        widget_property := getattr(widget_type, 'value', None)
-    ) is not None and getattr(widget_property, 'fset', None) is not None
-
-
 def set_fields(widget: Widget, new_values: Any) -> None:
     if isinstance(widget, WidgetWithFieldsProtocol) and isinstance(new_values, dict):
         widget.set_fields(new_values)
-    elif _has_widget_value_setter(widget):
-        widget.value = new_values
     else:
-        warnings.warn(
-            f"Cannot set value or fields for widget of type {type(widget)}."
-            " The new_value(s) will be ignored.",
-            UserWarning,
-            stacklevel=1,
-        )
+        try:
+            widget.value = new_values
+        except AttributeError as error:
+            # Checking if the widget value property has a setter in advance, i.e.
+            # ```python
+            # (widget_property := getattr(type(widget), 'value', None)) is not None
+            # and getattr(widget_property, 'fset', None) is not None
+            # ```
+            # does not work with a class that inherits Traitlets class.
+            # In those classes, even if a property has a setter,
+            # it may not have `fset` attribute.
+            # It is not really feasible to check all possible cases of value setters.
+            # Instead, we try setting the value and catch the AttributeError.
+            # to determine if the widget has a value setter.
+            warnings.warn(
+                f"Cannot set value for widget of type {type(widget)}."
+                " The new_value(s) will be ignored."
+                f" Setting value caused the following error: {error}",
+                UserWarning,
+                stacklevel=1,
+            )
 
 
 def get_fields(widget: Widget) -> Any:
