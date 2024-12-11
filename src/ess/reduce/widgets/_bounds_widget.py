@@ -4,9 +4,10 @@ import scipp as sc
 from ipywidgets import FloatText, GridBox, Label, Text, ValueWidget
 
 from ..parameter import ParamWithBounds
+from ._base import WidgetWithFieldsMixin
 
 
-class BoundsWidget(GridBox, ValueWidget):
+class BoundsWidget(GridBox, ValueWidget, WidgetWithFieldsMixin):
     def __init__(self):
         super().__init__()
 

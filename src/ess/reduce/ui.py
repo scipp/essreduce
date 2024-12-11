@@ -10,6 +10,7 @@ from ipywidgets import Layout
 
 from .parameter import Parameter
 from .widgets import SwitchWidget, create_parameter_widget, default_layout
+from .widgets._base import get_fields, set_fields
 from .workflow import (
     Key,
     assign_parameter_values,
@@ -81,11 +82,13 @@ class ParameterBox(widgets.VBox):
             self._input_widgets.clear()
             self._input_widgets.update(
                 {
-                    node: widgets.HBox([create_parameter_widget(parameter)])
-                    for node, parameter in registry_getter().items()
+                    node: create_parameter_widget(parameter)
+                    for node, parameter in new_input_parameters.items()
                 }
             )
-            self._input_box.children = list(self._input_widgets.values())
+            self._input_box.children = [
+                widgets.HBox([widget]) for widget in self._input_widgets.values()
+            ]
 
         self.parameter_refresh_button.on_click(_refresh_input_box)
 
@@ -97,8 +100,7 @@ class ParameterBox(widgets.VBox):
         return {
             node: widget.value
             for node, widget_box in self._input_widgets.items()
-            if (not isinstance((widget := widget_box.children[0]), SwitchWidget))
-            or widget.enabled
+            if (not isinstance((widget := widget_box), SwitchWidget)) or widget.enabled
         }
 
 
@@ -232,3 +234,80 @@ def workflow_widget(result_registry: dict | None = None) -> widgets.Widget:
     workflow_selection_box = widgets.HBox([workflow_select], layout=default_layout)
     workflow_box = widgets.Box(layout=default_layout)
     return widgets.VBox([workflow_selection_box, workflow_box])
+
+
+def _get_parameter_box(widget: WorkflowWidget | ParameterBox) -> ParameterBox:
+    if isinstance(widget, WorkflowWidget):
+        return widget.parameter_box
+    elif isinstance(widget, ParameterBox):
+        return widget
+    else:
+        raise TypeError(
+            f"Expected target_widget to be a WorkflowWidget or ParameterBox, "
+            f"got {type(widget)}."
+        )
+
+
+def set_parameter_widget_values(
+    widget: WorkflowWidget | ParameterBox, new_parameter_values: dict[type, Any]
+) -> None:
+    """Set the values of the input widgets in the target widget.
+
+    Nodes that don't exist in the input widgets will be ignored.
+
+    Example
+    -------
+    {
+        'WavelengthBins': {'start': 1.0, 'stop': 14.0, 'nbins': 500}
+    }
+
+    Parameters
+    ----------
+    widget:
+        The widget containing the input widgets.
+    new_parameter_values:
+        A dictionary of values/state to set each fields/state or value of input widgets.
+
+    Raises
+    ------
+    TypeError:
+        If the widget is not a WorkflowWidget or a ParameterBox.
+
+    """
+    parameter_box = _get_parameter_box(widget)
+    # Walk through the existing input widgets and set the values
+    # ``node`s that don't exist in the input widgets will be ignored.
+    for node, widget in parameter_box._input_widgets.items():
+        if node in new_parameter_values:
+            # We shouldn't use `get` here because ``None`` is a valid value.
+            set_fields(widget, new_parameter_values[node])
+
+
+def get_parameter_widget_values(
+    widget: WorkflowWidget | ParameterBox,
+) -> dict[type, Any]:
+    """Return the current values of the input widgets in the target widget.
+
+    The result of this function can be used to set the values of the input widgets
+    using the :py:func:`~set_parameter_widget_values` function.
+
+    Parameters
+    ----------
+    widget:
+        The widget containing the input widgets.
+
+    Returns
+    -------
+    :
+        A dictionary of the current values/state of each input widget.
+
+    Raises
+    ------
+    TypeError:
+        If the widget is not a WorkflowWidget or a ParameterBox.
+
+    """
+    return {
+        node: get_fields(widget)
+        for node, widget in _get_parameter_box(widget)._input_widgets.items()
+    }
