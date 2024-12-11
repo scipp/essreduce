@@ -30,6 +30,7 @@
    logging
    nexus
    streaming
+   ui
    uncertainty
    widgets
 ```

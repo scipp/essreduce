@@ -289,7 +289,7 @@ def get_parameter_widget_values(
     """Return the current values of the input widgets in the target widget.
 
     The result of this function can be used to set the values of the input widgets
-    using the `~set_parameter_widget_values` function.
+    using the :py:func:`~set_parameter_widget_values` function.
 
     Parameters
     ----------
