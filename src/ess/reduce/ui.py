@@ -298,7 +298,7 @@ def get_parameter_widget_values(
 
     Returns
     -------
-    dict[str, Any]:
+    :
         A dictionary of the current values/state of each input widget.
 
     Raises
