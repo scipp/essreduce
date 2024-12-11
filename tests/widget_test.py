@@ -440,3 +440,73 @@ def test_bin_edges_widget_with_default_values() -> None:
     assert param_widget.fields['stop'].value == 0.6
     assert param_widget.fields['nbins'].value == 150
     assert param_widget.fields['spacing'].value == 'linear'
+
+
+def test_switchable_widget_set_values() -> None:
+    param = IntParam('a', 'a', 1, switchable=True)
+    widget = create_parameter_widget(param)
+    assert isinstance(widget, SwitchWidget)
+    assert not widget.enabled
+    widget.set_fields({'enabled': True})
+    assert widget.enabled
+    widget.set_fields({'enabled': False})
+    assert not widget.enabled
+    widget.set_fields({'enabled': True, 'value': 2})
+    assert widget.enabled
+    assert widget.value == 2
+    widget.set_fields({'enabled': False, 'value': 3})
+    assert not widget.enabled
+    assert widget.value == 3
+    widget.set_fields({'value': 4})
+    assert not widget.enabled
+    assert widget.value == 4
+
+
+def test_switchable_widget_get_fields_only_value() -> None:
+    param = IntParam('a', 'a', 1, switchable=True)
+    widget = create_parameter_widget(param)
+    assert isinstance(widget, SwitchWidget)
+    assert widget.get_fields() == {'enabled': False, 'value': 1}
+    widget.enabled = True
+    assert widget.get_fields() == {'enabled': True, 'value': 1}
+    widget.value = 2
+    assert widget.get_fields() == {'enabled': True, 'value': 2}
+    widget.enabled = False
+    assert widget.get_fields() == {'enabled': False, 'value': 2}
+
+
+def test_switchable_widget_set_fields() -> None:
+    param = Vector3dParameter('a', 'a', sc.vector([1, 2, 3], unit='m'), switchable=True)
+    widget = create_parameter_widget(param)
+    assert isinstance(widget, SwitchWidget)
+    assert not widget.enabled
+    assert widget.value == sc.vector([1, 2, 3], unit='m')
+    widget.set_fields({'enabled': True, 'x': 4, 'y': 5, 'z': 6, 'unit': 'm'})
+    assert widget.enabled
+    assert widget.value == sc.vector([4, 5, 6], unit='m')
+    widget.set_fields({'x': 7, 'y': 8})
+    assert widget.enabled
+    assert widget.value == sc.vector([7, 8, 6], unit='m')
+
+
+def test_switchable_widget_get_fields_sub_fields() -> None:
+    param = Vector3dParameter('a', 'a', sc.vector([1, 2, 3], unit='m'), switchable=True)
+    widget = create_parameter_widget(param)
+    assert isinstance(widget, SwitchWidget)
+    assert widget.get_fields() == {
+        'enabled': False,
+        'x': 1,
+        'y': 2,
+        'z': 3,
+        'unit': 'm',
+    }
+    widget.enabled = True
+    assert widget.get_fields() == {'enabled': True, 'x': 1, 'y': 2, 'z': 3, 'unit': 'm'}
+    widget.set_fields({'enabled': False, 'x': 4, 'y': 5, 'unit': 'mm'})
+    assert widget.get_fields() == {
+        'enabled': False,
+        'x': 4,
+        'y': 5,
+        'z': 3,
+        'unit': 'mm',
+    }
