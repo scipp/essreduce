@@ -42,6 +42,32 @@ class WidgetWithFieldsMixin:
 
 
 def set_fields(widget: Widget, new_values: dict[str, Any]) -> None:
+    """Set the fields of a widget with the given values.
+
+    Parameters
+    ----------
+    widget:
+        The widget to set the fields. It should either be an instance of
+        ``WidgetWithFieldsProtocol`` or have a value property setter.
+    new_values:
+        The new values to set for the fields.
+        i.e. ``{'field_name': field_value}``
+        If the widget does not have a ``set_fields/get_fields`` method,
+        (e.g. it is not an instance of ``WidgetWithFieldsProtocol``),
+        it will try to set the value of the widget directly.
+        The value of the widget should be available in the ``new_values`` dictionary
+        with the key 'value'.
+        i.e. ``{'value': widget_value}``
+
+    Raises
+    ------
+    TypeError:
+        If ``new_values`` is not a dictionary.
+
+    """
+    if not isinstance(new_values, dict):
+        raise TypeError(f"new_values must be a dictionary, got {type(new_values)}")
+
     if isinstance(widget, WidgetWithFieldsProtocol) and isinstance(new_values, dict):
         widget.set_fields(new_values)
     else:
@@ -73,6 +99,22 @@ def set_fields(widget: Widget, new_values: dict[str, Any]) -> None:
 
 
 def get_fields(widget: Widget) -> dict[str, Any] | None:
+    """Get the fields of a widget.
+
+    If the widget is an instance of ``WidgetWithFieldsProtocol``,
+    it will return the fields of the widget.
+    i.e. ``{'field_name': field_value}``
+    Otherwise, it will try to get the value of the widget and return a dictionary
+    with the key 'value' and the value of the widget.
+    i.e. ``{'value': widget_value}``
+
+    Parameters
+    ----------
+    widget:
+        The widget to get the fields. It should either be an instance of
+        ``WidgetWithFieldsProtocol`` or have a value property.
+
+    """
     if isinstance(widget, WidgetWithFieldsProtocol):
         return widget.get_fields()
     try:

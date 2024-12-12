@@ -4,7 +4,7 @@ from typing import Any
 
 from ipywidgets import Checkbox, HBox, Label, Stack, Widget
 
-from ._base import WidgetWithFieldsProtocol, get_fields, set_fields
+from ._base import get_fields, set_fields
 from ._config import default_style
 
 
@@ -52,36 +52,15 @@ class SwitchWidget(HBox):
         self.wrapped.value = value
 
     def set_fields(self, new_values: dict[str, Any]) -> None:
-        # Check if the new values are a dictionary
-        if not isinstance(new_values, dict):
-            raise ValueError(f"Expected a dictionary, got {new_values}.")
         # Retrieve and set the enabled flag first
         new_values = dict(new_values)
         enabled_flag = new_values.pop('enabled', self.enabled)
         if not isinstance(enabled_flag, bool):
             raise ValueError(f"`enabled` must be a boolean, got {enabled_flag}")
         self.enabled = enabled_flag
-        # Set fields or value of the wrapped widget
-        if isinstance(self.wrapped, WidgetWithFieldsProtocol):
-            # Expecting {'enabled': True/False, **wrapped_fields}
-            self.wrapped.set_fields(new_values)
-        elif 'value' in new_values:  # Skip if 'value' is not in new_values
-            # i.e. User might only want to change the enabled flag
-            # We use ``set_fields`` to set the value of the wrapped widget
-            # so that it handles availability of a value setter.
-            # Expecting {'enabled': True/False, 'value': value}
-            set_fields(self.wrapped, new_values.pop('value'))
-            if new_values:
-                # Check if there are any fields left except for 'enabled' and 'value'
-                raise ValueError(
-                    f"Unexpected field(s) {new_values.keys()} for widget {self.wrapped}"
-                )
+        # Set the rest of the fields
+        set_fields(self.wrapped, new_values)
 
     def get_fields(self) -> dict[str, Any]:
         wrapped_fields = get_fields(self.wrapped)
-        if isinstance(self.wrapped, WidgetWithFieldsProtocol) and isinstance(
-            wrapped_fields, dict
-        ):
-            return {'enabled': self.enabled, **wrapped_fields}
-        else:
-            return {'enabled': self.enabled, 'value': wrapped_fields}
+        return {'enabled': self.enabled, **(wrapped_fields or {})}
