@@ -257,9 +257,11 @@ def set_parameter_widget_values(
 
     Example
     -------
-    {
-        'WavelengthBins': {'start': 1.0, 'stop': 14.0, 'nbins': 500}
-    }
+    .. code-block::
+
+        set_parameter_widget_values(widget, {
+            'WavelengthBins': {'start': 1.0, 'stop': 14.0, 'nbins': 500}
+        })
 
     Parameters
     ----------
