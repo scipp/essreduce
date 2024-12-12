@@ -132,7 +132,7 @@ class ResultBox(widgets.VBox):
                     result_registry.clear()
                     result_registry.update(compute_result)
                 for i in compute_result.values():
-                    display.display(display.HTML(i._repr_html_()))
+                    display.display(i)
 
         def clear_output(_: widgets.Button) -> None:
             self.output.clear_output()

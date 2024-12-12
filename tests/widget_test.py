@@ -4,6 +4,7 @@ from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from typing import Any, NewType
 
+import pytest
 import sciline as sl
 import scipp as sc
 from ipywidgets import FloatText, IntText
@@ -14,7 +15,7 @@ from ess.reduce.parameter import (
     Vector3dParameter,
     parameter_registry,
 )
-from ess.reduce.ui import WorkflowWidget, workflow_widget
+from ess.reduce.ui import ResultBox, WorkflowWidget, workflow_widget
 from ess.reduce.widgets import OptionalWidget, SwitchWidget, create_parameter_widget
 from ess.reduce.widgets._base import WidgetWithFieldsProtocol
 from ess.reduce.workflow import register_workflow, workflow_registry
@@ -440,6 +441,26 @@ def test_bin_edges_widget_with_default_values() -> None:
     assert param_widget.fields['stop'].value == 0.6
     assert param_widget.fields['nbins'].value == 150
     assert param_widget.fields['spacing'].value == 'linear'
+
+
+@pytest.mark.parametrize(
+    'output',
+    [
+        (sc.scalar(1), sc.scalar(2)),
+        'Test with a string',
+        sc.data.binned_xy(100, 10, 10),
+    ],
+)
+def test_result_box_can_handle_different_outputs(output):
+    was_called = False
+
+    def run_workflow():
+        nonlocal was_called
+        was_called = True
+        return dict(enumerate(output))
+
+    ResultBox(run_workflow).run_button.click()
+    assert was_called
 
 
 def test_switchable_widget_set_values() -> None:
