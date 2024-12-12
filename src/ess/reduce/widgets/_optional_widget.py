@@ -4,7 +4,7 @@ from typing import Any
 
 from ipywidgets import HTML, HBox, Layout, RadioButtons, Widget
 
-from ._base import WidgetWithFieldsProtocol
+from ._base import get_fields, set_fields
 from ._config import default_style
 
 
@@ -66,24 +66,26 @@ class OptionalWidget(HBox):
             self._option_box.value = self.name
             self.wrapped.value = value
 
-    def set_fields(self, new_values: Any) -> None:
+    def set_fields(self, new_values: dict[str, Any]) -> None:
+        new_values = dict(new_values)
         # Set the value of the option box
-        if new_values is not None:
-            self._option_box.value = self.name
-        else:
-            self._option_box.value = None
+        opted_out_flag = (
+            new_values.pop(  # We assume ``opted-out`` is not used in any wrapped widget
+                'opted-out',
+                self._option_box.value is None,
+            )
+        )
+        if not isinstance(opted_out_flag, bool):
+            raise ValueError(
+                f"Invalid value for 'opted-out' field: {opted_out_flag}."
+                " The value should be a boolean."
+            )
+        self._option_box.value = None if opted_out_flag else self.name
         # Set the value of the wrapped widget
-        if isinstance(self.wrapped, WidgetWithFieldsProtocol):
-            self.wrapped.set_fields(new_values)
-        elif new_values is not None:
-            self.wrapped.value = new_values
-        else:
-            ...  # Do not set the value of the wrapped widget
+        set_fields(self.wrapped, new_values)
 
     def get_fields(self) -> dict[str, Any] | None:
-        if self._option_box.value is None:
-            return None
-        elif isinstance(self.wrapped, WidgetWithFieldsProtocol):
-            return self.wrapped.get_fields()
-        else:
-            return self.wrapped.value
+        return {
+            **(get_fields(self.wrapped) or {}),
+            'opted-out': self._option_box.value is None,
+        }
