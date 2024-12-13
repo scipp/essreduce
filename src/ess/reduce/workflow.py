@@ -2,14 +2,16 @@
 # Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSet, Sequence
+import itertools
+from collections.abc import Callable, Iterable, MutableSet, Sequence
 from typing import Any, TypeVar
 
 import networkx as nx
-from sciline import Pipeline
+from sciline import Pipeline, Scope, ScopeTwoParams
 from sciline._utils import key_name
 from sciline.typing import Key
 
+from .nexus.types import MonitorType
 from .parameter import Parameter, keep_default, parameter_mappers, parameter_registry
 
 T = TypeVar("T")
@@ -91,3 +93,115 @@ def assign_parameter_values(pipeline: Pipeline, values: dict[Key, Any]) -> Pipel
         else:
             pipeline[key] = value
     return pipeline
+
+
+def prune_nexus_domain_types(
+    workflow: Pipeline,
+    *,
+    targets_per_run: Iterable[type[Scope]],
+    targets_per_run_and_monitor: Iterable[type[ScopeTwoParams]] | None = None,
+    run_types: Iterable[Key],
+    monitor_types: Iterable[Key] | None = None,
+) -> Pipeline:
+    """Remove unused types from a workflow.
+
+    This function removes all nodes from a workflow that are not needed to compute
+    given targets with given run and monitor types.
+
+    Warning
+    -------
+    This modifies the input workflow.
+
+    Parameters
+    ----------
+    workflow:
+        Workflow to remove types from.
+    targets_per_run:
+        Types parametrized by run type to keep.
+    targets_per_run_and_monitor:
+        Types parametrized by run type and monitor type to keep.
+    run_types:
+        List of run types to include in the workflow. If not provided, all run types
+        are included.
+    monitor_types:
+        List of monitor types to include in the workflow. If not provided, all monitor
+        types are included.
+
+    Returns
+    -------
+    :
+        The pruned workflow.
+        The same object as the `workflow` argument.
+
+    Examples
+    --------
+    This creates a workflow that can compute `DetectorData[SampleRun]` and all its
+    dependencies but nothing else.
+    I.e., providers for `DetectorData[backgroundRun]`,
+    `MonitorData[SampleRun, Monitor1]`, etc., are removed.
+
+        >>> from ess.reduce.nexus import GenericNeXusWorkflow, types
+        >>> workflow = GenericNeXusWorkflow()
+        >>> prune_nexus_domain_types(
+        ...    workflow,
+        ...    targets_per_run=[types.DetectorData],
+        ...    run_types=[types.SampleRun],
+        ... )
+
+    To also keep monitors, use, e.g.,
+
+        >>> from ess.reduce.nexus import GenericNeXusWorkflow, types
+        >>> workflow = GenericNeXusWorkflow()
+        >>> prune_nexus_domain_types(
+        ...    workflow,
+        ...    targets_per_run=[types.DetectorData],
+        ...    targets_per_run_and_monitor=[types.MonitorData],
+        ...    run_types=[types.SampleRun],
+        ...    monitor_types=[types.Monitor1, types.Monitor2],
+        ... )
+    """
+    if monitor_types is not None and targets_per_run_and_monitor is None:
+        raise ValueError(
+            "`targets_per_run_and_monitor` must be provided if"
+            "`monitor_types` is provided."
+        )
+
+    run_types = list(run_types)  # To support iterators because we iterate twice.
+    graph = workflow.underlying_graph
+    # Find all ancestors of the target types ...
+    ancestors = set()
+    _add_ancestors(ancestors, graph, targets_per_run, run_types)
+    if targets_per_run_and_monitor is not None:
+        _add_ancestors(
+            ancestors,
+            graph,
+            targets_per_run_and_monitor,
+            run_types,
+            _monitor_types_or_default(monitor_types),
+        )
+    # ... and remove everything else.
+    graph.remove_nodes_from(set(graph.nodes) - ancestors)
+    return workflow
+
+
+def _add_ancestors(
+    out: set[type],
+    graph: nx.DiGraph,
+    targets: Iterable[Any],
+    *constraints: Iterable[type],
+) -> None:
+    for target, *types in itertools.product(targets, *constraints):
+        if len(types) == 1:
+            t = target[types[0]]
+        else:
+            t = target[types[0], types[1]]
+        out |= nx.ancestors(graph, t)
+        out.add(t)
+
+
+def _monitor_types_or_default(
+    monitor_types: Iterable[Key] | None = None,
+) -> Iterable[Key]:
+    if monitor_types is None:
+        return MonitorType.__constraints__
+    return monitor_types

@@ -3,11 +3,9 @@
 
 """Workflow and workflow components for interacting with NeXus files."""
 
-from collections.abc import Sequence
 from copy import deepcopy
 from typing import Any
 
-import networkx as nx
 import sciline
 import sciline.typing
 import scipp as sc
@@ -659,7 +657,7 @@ def GenericNeXusWorkflow() -> sciline.Pipeline:
 
     See Also
     --------
-    prune_nexus_domain_types:
+    ess.reduce.workflow.prune_nexus_domain_types:
         Use this function after creating and customizing a
         NeXus workflow to avoid very large graphs.
     """
@@ -675,47 +673,3 @@ def GenericNeXusWorkflow() -> sciline.Pipeline:
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
     return wf
-
-
-def prune_nexus_domain_types(
-    workflow: sciline.Pipeline,
-    *,
-    run_types: Sequence[sciline.typing.Key],
-    monitor_types: Sequence[sciline.typing.Key] | None = None,
-) -> sciline.Pipeline:
-    """Remove unused types from a workflow.
-
-    Warning
-    -------
-    This modifies the input workflow.
-
-    Parameters
-    ----------
-    workflow:
-        Workflow to remove types from.
-    run_types:
-        List of run types to include in the workflow. If not provided, all run types
-        are included.
-    monitor_types:
-        List of monitor types to include in the workflow. If not provided, all monitor
-        types are included.
-
-    Returns
-    -------
-    :
-        The pruned workflow.
-        The same object as the `workflow` argument.
-    """
-    graph = workflow.underlying_graph
-    ancestors = set()
-    # DetectorData and MonitorData are the "final" outputs, so finding and removing all
-    # their ancestors is what we need to strip unused run and monitor types.
-    for rt in run_types or ():
-        ancestors |= nx.ancestors(graph, DetectorData[rt])
-        ancestors.add(DetectorData[rt])
-        for mt in monitor_types or ():
-            ancestors |= nx.ancestors(graph, MonitorData[rt, mt])
-            ancestors.add(MonitorData[rt, mt])
-    if run_types is not None:
-        graph.remove_nodes_from(set(graph.nodes) - ancestors)
-    return workflow
