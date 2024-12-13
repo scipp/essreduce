@@ -9,6 +9,7 @@ from typing import Any
 
 import networkx as nx
 import sciline
+import sciline.typing
 import scipp as sc
 import scipp.constants
 import scippnexus as snx
@@ -647,32 +648,21 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
     return wf
 
 
-def GenericNeXusWorkflow(
-    *,
-    run_types: Sequence[sciline.typing.Key] | None = None,
-    monitor_types: Sequence[sciline.typing.Key] | None = None,
-) -> sciline.Pipeline:
+def GenericNeXusWorkflow() -> sciline.Pipeline:
     """
     Generic workflow for loading detector and monitor data from a NeXus file.
-
-    Parameters
-    ----------
-    run_types:
-        List of run types to include in the workflow. If not provided, all run types
-        are included. It is recommended to specify run types to avoid creating very
-        large workflows.
-    monitor_types:
-        List of monitor types to include in the workflow. If not provided, all monitor
-        types are included. It is recommended to specify monitor types to avoid creating
-        very large workflows.
 
     Returns
     -------
     :
         The workflow.
+
+    See Also
+    --------
+    prune_nexus_domain_types:
+        Use this function after creating and customizing a
+        NeXus workflow to avoid very large graphs.
     """
-    if monitor_types is not None and run_types is None:
-        raise ValueError("run_types must be specified if monitor_types is specified")
     wf = sciline.Pipeline(
         (
             *_common_providers,
@@ -684,17 +674,48 @@ def GenericNeXusWorkflow(
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
+    return wf
 
-    g = wf.underlying_graph
+
+def prune_nexus_domain_types(
+    workflow: sciline.Pipeline,
+    *,
+    run_types: Sequence[sciline.typing.Key],
+    monitor_types: Sequence[sciline.typing.Key] | None = None,
+) -> sciline.Pipeline:
+    """Remove unused types from a workflow.
+
+    Warning
+    -------
+    This modifies the input workflow.
+
+    Parameters
+    ----------
+    workflow:
+        Workflow to remove types from.
+    run_types:
+        List of run types to include in the workflow. If not provided, all run types
+        are included.
+    monitor_types:
+        List of monitor types to include in the workflow. If not provided, all monitor
+        types are included.
+
+    Returns
+    -------
+    :
+        The pruned workflow.
+        The same object as the `workflow` argument.
+    """
+    graph = workflow.underlying_graph
     ancestors = set()
     # DetectorData and MonitorData are the "final" outputs, so finding and removing all
     # their ancestors is what we need to strip unused run and monitor types.
     for rt in run_types or ():
-        ancestors |= nx.ancestors(g, DetectorData[rt])
+        ancestors |= nx.ancestors(graph, DetectorData[rt])
         ancestors.add(DetectorData[rt])
         for mt in monitor_types or ():
-            ancestors |= nx.ancestors(g, MonitorData[rt, mt])
+            ancestors |= nx.ancestors(graph, MonitorData[rt, mt])
             ancestors.add(MonitorData[rt, mt])
     if run_types is not None:
-        g.remove_nodes_from(set(g.nodes) - ancestors)
-    return wf
+        graph.remove_nodes_from(set(graph.nodes) - ancestors)
+    return workflow

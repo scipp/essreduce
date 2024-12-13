@@ -27,6 +27,7 @@ from ess.reduce.nexus.workflow import (
     GenericNeXusWorkflow,
     LoadDetectorWorkflow,
     LoadMonitorWorkflow,
+    prune_nexus_domain_types,
 )
 
 
@@ -574,15 +575,11 @@ def test_generic_nexus_workflow_load_analyzers() -> None:
     assert analyzer['usage'] == 'Bragg'
 
 
-def test_generic_nexus_workflow_raises_if_monitor_types_but_not_run_types_given() -> (
-    None
-):
-    with pytest.raises(ValueError, match='run_types'):
-        GenericNeXusWorkflow(monitor_types=[Monitor1])
-
-
-def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> None:
-    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[Monitor1, Monitor3])
+def test_pruning_nexus_workflow_includes_only_given_run_and_monitor_types() -> None:
+    wf = GenericNeXusWorkflow()
+    wf = prune_nexus_domain_types(
+        wf, run_types=[SampleRun], monitor_types=[Monitor1, Monitor3]
+    )
     graph = wf.underlying_graph
     assert DetectorData[SampleRun] in graph
     assert DetectorData[BackgroundRun] not in graph
