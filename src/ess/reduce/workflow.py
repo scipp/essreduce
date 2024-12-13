@@ -98,9 +98,10 @@ def assign_parameter_values(pipeline: Pipeline, values: dict[Key, Any]) -> Pipel
 def prune_nexus_domain_types(
     workflow: Pipeline,
     *,
-    targets_per_run: Iterable[type[Scope]],
+    targets: Iterable[Key] | None = None,
+    targets_per_run: Iterable[type[Scope]] | None = None,
     targets_per_run_and_monitor: Iterable[type[ScopeTwoParams]] | None = None,
-    run_types: Iterable[Key],
+    run_types: Iterable[Key] | None = None,
     monitor_types: Iterable[Key] | None = None,
 ) -> Pipeline:
     """Remove unused types from a workflow.
@@ -116,6 +117,8 @@ def prune_nexus_domain_types(
     ----------
     workflow:
         Workflow to remove types from.
+    targets:
+        Unparametrized types to keep.
     targets_per_run:
         Types parametrized by run type to keep.
     targets_per_run_and_monitor:
@@ -159,18 +162,37 @@ def prune_nexus_domain_types(
         ...    run_types=[types.SampleRun],
         ...    monitor_types=[types.Monitor1, types.Monitor2],
         ... )
+
+    It is also possible to specify unparametrized tppes.
+    The following is similar to `workflow = workflow[NeXusSourceName]` but
+    `prune_nexus_domain_types` allows combining this with parametrized types and
+    specifying multiple targets.
+
+        >>> from ess.reduce.nexus import GenericNeXusWorkflow, types
+        >>> workflow = GenericNeXusWorkflow()
+        >>> prune_nexus_domain_types(
+        ...    workflow,
+        ...    targets=[types.NeXusSourceName],
+        ... )
     """
+    if run_types is not None and targets_per_run is None:
+        raise ValueError(
+            "`targets_per_run` must be provided if" "`run_types` is provided."
+        )
     if monitor_types is not None and targets_per_run_and_monitor is None:
         raise ValueError(
             "`targets_per_run_and_monitor` must be provided if"
             "`monitor_types` is provided."
         )
 
-    run_types = list(run_types)  # To support iterators because we iterate twice.
     graph = workflow.underlying_graph
     # Find all ancestors of the target types ...
     ancestors = set()
-    _add_ancestors(ancestors, graph, targets_per_run, run_types)
+    if targets is not None:
+        _add_ancestors(ancestors, graph, targets)
+    if targets_per_run is not None:
+        run_types = list(run_types)  # To support iterators because we iterate twice.
+        _add_ancestors(ancestors, graph, targets_per_run, run_types)
     if targets_per_run_and_monitor is not None:
         _add_ancestors(
             ancestors,
@@ -191,7 +213,9 @@ def _add_ancestors(
     *constraints: Iterable[type],
 ) -> None:
     for target, *types in itertools.product(targets, *constraints):
-        if len(types) == 1:
+        if len(types) == 0:
+            t = target
+        elif len(types) == 1:
             t = target[types[0]]
         else:
             t = target[types[0], types[1]]

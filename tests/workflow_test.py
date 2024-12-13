@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+from typing import NewType
+
 import pytest
 import scippnexus as snx
 from sciline import Pipeline, Scope
@@ -39,6 +41,9 @@ class C(Scope[RunType, int], int): ...
 class D(Scope[RunType, int], int): ...
 
 
+E = NewType('E', int)
+
+
 def foo(a: A[RunType]) -> B[RunType]:
     return B[RunType](a + 1)
 
@@ -49,6 +54,10 @@ def bar(a: A[RunType]) -> C[RunType]:
 
 def baz(a: A[RunType]) -> D[RunType]:
     return D[RunType](a + 3)
+
+
+def combine(b_s: B[SampleRun], b_b: B[BackgroundRun], c: C[SampleRun]) -> E:
+    return E(b_s + b_b + c)
 
 
 def test_pruning_nexus_workflow_includes_only_given_run_types() -> None:
@@ -183,6 +192,56 @@ def test_pruning_workflow_includes_multiple_run_types() -> None:
     assert B[EmptyBeamRun] not in graph
     assert C[EmptyBeamRun] not in graph
     assert D[EmptyBeamRun] not in graph
+
+
+def test_pruning_workflow_removes_children() -> None:
+    wf = Pipeline((foo, bar, baz, combine))
+    wf = prune_nexus_domain_types(
+        wf,
+        targets_per_run=[A],
+        run_types=[SampleRun],
+    )
+    graph = wf.underlying_graph
+    assert A[SampleRun] in graph
+    assert B[SampleRun] not in graph
+    assert C[SampleRun] not in graph
+    assert D[SampleRun] not in graph
+    assert E not in graph
+    assert A[BackgroundRun] not in graph
+    assert B[BackgroundRun] not in graph
+    assert C[BackgroundRun] not in graph
+    assert D[BackgroundRun] not in graph
+
+
+def test_prune_workflow_by_non_parametrized_type() -> None:
+    wf = Pipeline((foo, bar, baz, combine))
+    wf = prune_nexus_domain_types(
+        wf,
+        targets=(E,),
+    )
+    graph = wf.underlying_graph
+    assert A[SampleRun] in graph
+    assert A[BackgroundRun] in graph
+    assert A[EmptyBeamRun] not in graph
+    assert B[SampleRun] in graph
+    assert B[BackgroundRun] in graph
+    assert B[EmptyBeamRun] not in graph
+    assert C[SampleRun] in graph
+    assert C[BackgroundRun] not in graph
+    assert C[EmptyBeamRun] not in graph
+    assert D[SampleRun] not in graph
+    assert D[BackgroundRun] not in graph
+    assert D[EmptyBeamRun] not in graph
+    assert E in graph
+
+
+def test_pruning_nexus_workflow_requires_run_targets_if_run_types_given() -> None:
+    wf = GenericNeXusWorkflow()
+    with pytest.raises(ValueError, match='targets_per_run'):
+        prune_nexus_domain_types(
+            wf,
+            run_types=[SampleRun],
+        )
 
 
 def test_pruning_nexus_workflow_requires_monitor_targets_if_monitor_types_given() -> (
