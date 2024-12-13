@@ -10,8 +10,8 @@ from typing import Any
 import networkx as nx
 import sciline
 import scipp as sc
+import scipp.constants
 import scippnexus as snx
-from scipp.constants import g
 from scipp.core import label_based_index_to_positional_index
 from scippneutron.chopper import extract_chopper_from_nexus
 
@@ -80,7 +80,7 @@ def gravity_vector_neg_y() -> GravityVector:
     """
     Gravity vector for default instrument coordinate system where y is up.
     """
-    return GravityVector(sc.vector(value=[0, -1, 0]) * g)
+    return GravityVector(sc.vector(value=[0, -1, 0]) * sc.constants.g)
 
 
 def component_spec_by_name(
