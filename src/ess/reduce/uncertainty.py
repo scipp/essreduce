@@ -13,7 +13,7 @@ The recommended use of this module is via the :py:func:`broadcast_uncertainties`
 helper function.
 """
 
-from enum import Enum
+from enum import Enum, auto
 from typing import TypeVar, overload
 
 import numpy as np
@@ -23,18 +23,18 @@ from scipp.core.concepts import irreducible_mask
 T = TypeVar("T", bound=sc.Variable | sc.DataArray)
 
 
-UncertaintyBroadcastMode = Enum(
-    'UncertaintyBroadcastMode', ['drop', 'upper_bound', 'fail']
-)
-"""
-Mode for broadcasting uncertainties.
+class UncertaintyBroadcastMode(Enum):
+    """Mode for broadcasting uncertainties.
 
-- `drop`: Drop variances if the data is broadcasted.
-- `upper_bound`: Compute an upper bound for the variances.
-- `fail`: Do not broadcast, simply return the input data.
+    See https://doi.org/10.3233/JNR-220049 for context.
+    """
 
-See https://doi.org/10.3233/JNR-220049 for context.
-"""
+    drop = auto()
+    """Drop variances if the data is broadcast."""
+    upper_bound = auto()
+    """Compute an upper bound for the variances."""
+    fail = auto()
+    """Do not broadcast, simply return the input data."""
 
 
 @overload
