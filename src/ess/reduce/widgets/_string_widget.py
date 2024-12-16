@@ -27,6 +27,15 @@ class StringWidget(HBox, ValueWidget):
 
 
 class MultiStringWidget(StringWidget):
+    def __init__(
+        self, description: str, value: tuple[str, ...] | None = None, **kwargs
+    ):
+        # Special case handling to allow initialising with a single string
+        if not isinstance(value, str) and value is not None:
+            value = ', '.join(value)
+
+        super().__init__(description, value, **kwargs)
+
     @property
     def value(self) -> tuple[str, ...]:
         v = super().value
