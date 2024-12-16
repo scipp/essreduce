@@ -68,6 +68,7 @@ addopts = """
 testpaths = "tests"
 filterwarnings = [
   "error",
+  'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
 ]
 
 [tool.ruff]
