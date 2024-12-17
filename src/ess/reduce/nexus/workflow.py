@@ -660,6 +660,12 @@ def GenericNeXusWorkflow(
     This is useful to reduce the size of the workflow and make it easier to inspect.
     Make sure to add *all* required run types and monitor types when using this feature.
 
+    Attention
+    ---------
+    Filtering by run type and monitor type does not work with nested type vars.
+    E.g., if you have a type like ``Outer[Inner[RunType]]``, this type and its
+    provider will be removed.
+
     Parameters
     ----------
     run_types:
