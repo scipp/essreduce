@@ -12,16 +12,20 @@ from ess.reduce.nexus.types import (
     BackgroundRun,
     Choppers,
     DetectorData,
+    EmptyBeamRun,
     Filename,
     Monitor1,
     Monitor2,
     Monitor3,
     MonitorData,
+    MonitorType,
     NeXusComponentLocationSpec,
     NeXusName,
     NeXusTransformation,
+    RunType,
     SampleRun,
     TimeInterval,
+    TransmissionMonitor,
 )
 from ess.reduce.nexus.workflow import (
     GenericNeXusWorkflow,
@@ -574,16 +578,11 @@ def test_generic_nexus_workflow_load_analyzers() -> None:
     assert analyzer['usage'] == 'Bragg'
 
 
-def test_generic_nexus_workflow_raises_if_monitor_types_but_not_run_types_given() -> (
-    None
-):
-    with pytest.raises(ValueError, match='run_types'):
-        GenericNeXusWorkflow(monitor_types=[Monitor1])
-
-
 def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> None:
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[Monitor1, Monitor3])
     graph = wf.underlying_graph
+
+    # Check some examples to avoid relying entirely on complicated loops below.
     assert DetectorData[SampleRun] in graph
     assert DetectorData[BackgroundRun] not in graph
     assert MonitorData[SampleRun, Monitor1] in graph
@@ -592,7 +591,11 @@ def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> N
     assert MonitorData[BackgroundRun, Monitor1] not in graph
     assert MonitorData[BackgroundRun, Monitor2] not in graph
     assert MonitorData[BackgroundRun, Monitor3] not in graph
-    # Many other keys are also removed, this is just an example
+    assert Choppers[SampleRun] in graph
+    assert Choppers[BackgroundRun] not in graph
+    assert Analyzers[SampleRun] in graph
+    assert Analyzers[BackgroundRun] not in graph
+
     assert NeXusComponentLocationSpec[Monitor1, SampleRun] in graph
     assert NeXusComponentLocationSpec[Monitor2, SampleRun] not in graph
     assert NeXusComponentLocationSpec[Monitor3, SampleRun] in graph
@@ -605,3 +608,66 @@ def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> N
     assert NeXusComponentLocationSpec[snx.NXdetector, BackgroundRun] not in graph
     assert NeXusComponentLocationSpec[snx.NXsample, BackgroundRun] not in graph
     assert NeXusComponentLocationSpec[snx.NXsource, BackgroundRun] not in graph
+
+    excluded_run_types = set(RunType.__constraints__) - {SampleRun}
+    excluded_monitor_types = set(MonitorType.__constraints__) - {Monitor1, Monitor3}
+    for node in graph:
+        assert_not_contains_type_arg(node, excluded_run_types)
+        assert_not_contains_type_arg(node, excluded_monitor_types)
+
+
+def test_generic_nexus_workflow_includes_only_given_run_types() -> None:
+    wf = GenericNeXusWorkflow(run_types=[EmptyBeamRun])
+    graph = wf.underlying_graph
+
+    # Check some examples to avoid relying entirely on complicated loops below.
+    assert DetectorData[EmptyBeamRun] in graph
+    assert DetectorData[SampleRun] not in graph
+    assert MonitorData[EmptyBeamRun, Monitor1] in graph
+    assert MonitorData[EmptyBeamRun, Monitor2] in graph
+    assert MonitorData[EmptyBeamRun, Monitor3] in graph
+    assert MonitorData[SampleRun, Monitor1] not in graph
+    assert MonitorData[SampleRun, Monitor2] not in graph
+    assert MonitorData[SampleRun, Monitor3] not in graph
+    assert Choppers[EmptyBeamRun] in graph
+    assert Choppers[SampleRun] not in graph
+    assert Analyzers[EmptyBeamRun] in graph
+    assert Analyzers[SampleRun] not in graph
+
+    excluded_run_types = set(RunType.__constraints__) - {EmptyBeamRun}
+    for node in graph:
+        assert_not_contains_type_arg(node, excluded_run_types)
+
+
+def test_generic_nexus_workflow_includes_only_given_monitor_types() -> None:
+    wf = GenericNeXusWorkflow(monitor_types=[TransmissionMonitor, Monitor1])
+    graph = wf.underlying_graph
+
+    # Check some examples to avoid relying entirely on complicated loops below.
+    assert DetectorData[SampleRun] in graph
+    assert DetectorData[BackgroundRun] in graph
+    assert MonitorData[SampleRun, TransmissionMonitor] in graph
+    assert MonitorData[SampleRun, Monitor1] in graph
+    assert MonitorData[SampleRun, Monitor2] not in graph
+    assert MonitorData[SampleRun, Monitor3] not in graph
+    assert MonitorData[BackgroundRun, TransmissionMonitor] in graph
+    assert MonitorData[BackgroundRun, Monitor1] in graph
+    assert MonitorData[BackgroundRun, Monitor2] not in graph
+    assert MonitorData[BackgroundRun, Monitor3] not in graph
+    assert Choppers[SampleRun] in graph
+    assert Choppers[BackgroundRun] in graph
+    assert Analyzers[SampleRun] in graph
+    assert Analyzers[BackgroundRun] in graph
+
+    excluded_monitor_types = set(MonitorType.__constraints__) - {
+        Monitor1,
+        TransmissionMonitor,
+    }
+    for node in graph:
+        assert_not_contains_type_arg(node, excluded_monitor_types)
+
+
+def assert_not_contains_type_arg(node: object, excluded: set[type]) -> None:
+    assert not any(
+        arg in excluded for arg in getattr(node, "__args__", ())
+    ), f"Node {node} contains one of {excluded!r}"
