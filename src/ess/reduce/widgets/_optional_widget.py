@@ -69,15 +69,14 @@ class OptionalWidget(HBox):
     def set_fields(self, new_values: dict[str, Any]) -> None:
         new_values = dict(new_values)
         # Set the value of the option box
-        opted_out_flag = (
-            new_values.pop(  # We assume ``opted-out`` is not used in any wrapped widget
-                'opted-out',
-                self._option_box.value is None,
-            )
+        opted_out_flag = new_values.pop(
+            # We assume ``essreduce-opted-out`` is not used in any wrapped widget
+            'essreduce-opted-out',
+            self._option_box.value is None,
         )
         if not isinstance(opted_out_flag, bool):
             raise ValueError(
-                f"Invalid value for 'opted-out' field: {opted_out_flag}."
+                f"Invalid value for 'essreduce-opted-out' field: {opted_out_flag}."
                 " The value should be a boolean."
             )
         self._option_box.value = None if opted_out_flag else self.name
@@ -87,5 +86,5 @@ class OptionalWidget(HBox):
     def get_fields(self) -> dict[str, Any] | None:
         return {
             **(get_fields(self.wrapped) or {}),
-            'opted-out': self._option_box.value is None,
+            'essreduce-opted-out': self._option_box.value is None,
         }
