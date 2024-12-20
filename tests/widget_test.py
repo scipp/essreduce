@@ -11,6 +11,8 @@ from ipywidgets import FloatText, IntText
 
 from ess.reduce.parameter import (
     BinEdgesParameter,
+    FilenameParameter,
+    MultiFilenameParameter,
     Parameter,
     Vector3dParameter,
     parameter_registry,
@@ -539,3 +541,51 @@ def test_switchable_widget_get_fields_sub_fields() -> None:
         'z': 3,
         'unit': 'mm',
     }
+
+
+FilenameSampleRun = NewType('FilenameSampleRun', str)
+parameter_registry[FilenameSampleRun] = FilenameParameter.from_type(
+    FilenameSampleRun, default="SampleRun.hdf"
+)
+MultiFilenameSampleRun = NewType('MultiFilenameSampleRun', list[str])
+parameter_registry[MultiFilenameSampleRun] = MultiFilenameParameter.from_type(
+    MultiFilenameSampleRun, default=["file1.hdf", "file2.hdf"]
+)
+MultiFilenameBackgroundRun = NewType('MultiFilenameBackgroundRun', list[str])
+parameter_registry[MultiFilenameBackgroundRun] = MultiFilenameParameter.from_type(
+    MultiFilenameBackgroundRun, default="background.hdf"
+)
+
+
+def filename_print_provider(fname: FilenameSampleRun) -> str:
+    return str(fname)
+
+
+def multi_filename_print_provider(fnames: MultiFilenameSampleRun) -> list[str]:
+    return [str(fname) for fname in fnames]
+
+
+def multi_filename_print_provider_bis(fnames: MultiFilenameBackgroundRun) -> list[str]:
+    return [str(fname) for fname in fnames]
+
+
+def test_filename_widget_single() -> None:
+    widget = _ready_widget(providers=[filename_print_provider], output_selections=[str])
+    param_widget = _get_param_widget(widget, FilenameSampleRun)
+    assert param_widget.value == "SampleRun.hdf"
+
+
+def test_filename_widget_multiple() -> None:
+    widget = _ready_widget(
+        providers=[multi_filename_print_provider], output_selections=[list[str]]
+    )
+    param_widget = _get_param_widget(widget, MultiFilenameSampleRun)
+    assert param_widget.value == ("file1.hdf", "file2.hdf")
+
+
+def test_filename_widget_multiple_initialized_with_single_string() -> None:
+    widget = _ready_widget(
+        providers=[multi_filename_print_provider_bis], output_selections=[list[str]]
+    )
+    param_widget = _get_param_widget(widget, MultiFilenameBackgroundRun)
+    assert param_widget.value == ("background.hdf",)

@@ -78,7 +78,17 @@ RunType = TypeVar(
     TransmissionRun[BackgroundRun],
     VanadiumRun,
 )
-"""TypeVar used for specifying BackgroundRun, EmptyBeamRun or SampleRun"""
+"""TypeVar for specifying what run some data belongs to.
+
+Possible values:
+
+- :class:`BackgroundRun`
+- :class:`EmptyBeamRun`
+- :class:`SampleRun`
+- :class:`TransmissionRun`
+- :class:`VanadiumRun`
+"""
+
 
 # 1.2  Monitor types
 Monitor1 = NewType('Monitor1', int)
@@ -108,7 +118,20 @@ MonitorType = TypeVar(
     IncidentMonitor,
     TransmissionMonitor,
 )
-"""TypeVar used for specifying the monitor type such as Incident or Transmission"""
+"""TypeVar for specifying what monitor some data belongs to.
+
+Possible values:
+
+- :class:`Monitor1`
+- :class:`Monitor2`
+- :class:`Monitor3`
+- :class:`Monitor4`
+- :class:`Monitor5`
+- :class:`Monitor6`
+- :class:`IncidentMonitor`
+- :class:`TransmissionMonitor`
+"""
+
 
 Component = TypeVar(
     'Component',
