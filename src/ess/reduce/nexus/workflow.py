@@ -3,12 +3,12 @@
 
 """Workflow and workflow components for interacting with NeXus files."""
 
-from collections.abc import Sequence
+from collections.abc import Iterable
 from copy import deepcopy
 from typing import Any
 
-import networkx as nx
 import sciline
+import sciline.typing
 import scipp as sc
 import scippnexus as snx
 from scipp.constants import g
@@ -649,30 +649,39 @@ def LoadDetectorWorkflow() -> sciline.Pipeline:
 
 def GenericNeXusWorkflow(
     *,
-    run_types: Sequence[sciline.typing.Key] | None = None,
-    monitor_types: Sequence[sciline.typing.Key] | None = None,
+    run_types: Iterable[sciline.typing.Key] | None = None,
+    monitor_types: Iterable[sciline.typing.Key] | None = None,
 ) -> sciline.Pipeline:
     """
     Generic workflow for loading detector and monitor data from a NeXus file.
+
+    It is possible to limit which run types and monitor types
+    are supported by the returned workflow.
+    This is useful to reduce the size of the workflow and make it easier to inspect.
+    Make sure to add *all* required run types and monitor types when using this feature.
+
+    Attention
+    ---------
+    Filtering by run type and monitor type does not work with nested type vars.
+    E.g., if you have a type like ``Outer[Inner[RunType]]``, this type and its
+    provider will be removed.
 
     Parameters
     ----------
     run_types:
         List of run types to include in the workflow. If not provided, all run types
-        are included. It is recommended to specify run types to avoid creating very
-        large workflows.
+        are included.
+        Must be a possible value of :class:`ess.reduce.nexus.types.RunType`.
     monitor_types:
         List of monitor types to include in the workflow. If not provided, all monitor
-        types are included. It is recommended to specify monitor types to avoid creating
-        very large workflows.
+        types are included.
+        Must be a possible value of :class:`ess.reduce.nexus.types.MonitorType`.
 
     Returns
     -------
     :
         The workflow.
     """
-    if monitor_types is not None and run_types is None:
-        raise ValueError("run_types must be specified if monitor_types is specified")
     wf = sciline.Pipeline(
         (
             *_common_providers,
@@ -685,16 +694,34 @@ def GenericNeXusWorkflow(
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
 
-    g = wf.underlying_graph
-    ancestors = set()
-    # DetectorData and MonitorData are the "final" outputs, so finding and removing all
-    # their ancestors is what we need to strip unused run and monitor types.
-    for rt in run_types or ():
-        ancestors |= nx.ancestors(g, DetectorData[rt])
-        ancestors.add(DetectorData[rt])
-        for mt in monitor_types or ():
-            ancestors |= nx.ancestors(g, MonitorData[rt, mt])
-            ancestors.add(MonitorData[rt, mt])
-    if run_types is not None:
-        g.remove_nodes_from(set(g.nodes) - ancestors)
+    if run_types is not None or monitor_types is not None:
+        _prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
+
     return wf
+
+
+def _prune_type_vars(
+    workflow: sciline.Pipeline,
+    *,
+    run_types: Iterable[sciline.typing.Key] | None,
+    monitor_types: Iterable[sciline.typing.Key] | None,
+) -> None:
+    # Remove all nodes that use a run type or monitor types that is
+    # not listed in the function arguments.
+    excluded_run_types = _excluded_type_args(RunType, run_types)
+    excluded_monitor_types = _excluded_type_args(MonitorType, monitor_types)
+    excluded_types = excluded_run_types | excluded_monitor_types
+
+    graph = workflow.underlying_graph
+    to_remove = [
+        node for node in graph if excluded_types & set(getattr(node, "__args__", set()))
+    ]
+    graph.remove_nodes_from(to_remove)
+
+
+def _excluded_type_args(
+    type_var: Any, keep: Iterable[sciline.typing.Key] | None
+) -> set[sciline.typing.Key]:
+    if keep is None:
+        return set()
+    return set(type_var.__constraints__) - set(keep)
