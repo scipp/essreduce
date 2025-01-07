@@ -107,6 +107,16 @@ IncidentMonitor = NewType('IncidentMonitor', int)
 """Incident monitor"""
 TransmissionMonitor = NewType('TransmissionMonitor', int)
 """Transmission monitor"""
+FrameMonitor0 = NewType('FrameMonitor', int)
+"""Frame monitor number 0"""
+FrameMonitor1 = NewType('FrameMonitor', int)
+"""Frame monitor number 1"""
+FrameMonitor2 = NewType('FrameMonitor', int)
+"""Frame monitor number 2"""
+FrameMonitor3 = NewType('FrameMonitor', int)
+"""Frame monitor number 3"""
+CaveMonitor = NewType('CaveMonitor', int)
+"""A monitor located in the instrument cave"""
 MonitorType = TypeVar(
     'MonitorType',
     Monitor1,
@@ -117,6 +127,11 @@ MonitorType = TypeVar(
     Monitor6,
     IncidentMonitor,
     TransmissionMonitor,
+    FrameMonitor0,
+    FrameMonitor1,
+    FrameMonitor2,
+    FrameMonitor3,
+    CaveMonitor,
 )
 """TypeVar for specifying what monitor some data belongs to.
 
@@ -130,6 +145,11 @@ Possible values:
 - :class:`Monitor6`
 - :class:`IncidentMonitor`
 - :class:`TransmissionMonitor`
+- :class:`FrameMonitor0`
+- :class:`FrameMonitor1`
+- :class:`FrameMonitor2`
+- :class:`FrameMonitor3`
+- :class:`CaveMonitor`
 """
 
 
@@ -148,6 +168,11 @@ Component = TypeVar(
     Monitor6,
     IncidentMonitor,
     TransmissionMonitor,
+    FrameMonitor0,
+    FrameMonitor1,
+    FrameMonitor2,
+    FrameMonitor3,
+    CaveMonitor,
 )
 UniqueComponent = TypeVar('UniqueComponent', snx.NXsample, snx.NXsource)
 """Components that can be identified by their type as there will only be one."""
