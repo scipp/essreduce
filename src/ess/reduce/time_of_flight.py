@@ -209,6 +209,7 @@ def frame_at_detector_start_time(
 
 def tof_lookup(
     events: SimulationResults,
+    l1: PrimaryFlightPath,
     l2: SecondaryFlightPath,
     distance_resolution: DistanceResolution,
 ) -> TimeOfFlightLookupTable:
@@ -217,10 +218,13 @@ def tof_lookup(
 
     l2max = l2.max()
     ndist = int((l2max / distance_resolution.to(unit=l2.unit)).value) + 1
-    dist = sc.linspace('distance', 0, l2max.value, ndist, unit=l2.unit)
+    dist = sc.linspace(
+        'distance', 0, np.nextafter(l2max.value, np.inf), ndist, unit=l2.unit
+    )
 
+    time_unit = events.coords['toa'].unit
     toas = events.coords['toa'] + (dist / events.coords['speed']).to(
-        unit=events.coords['toa'].unit
+        unit=time_unit, copy=False
     )
 
     data = sc.DataArray(
@@ -244,8 +248,8 @@ def tof_lookup(
     h = sc.constants.h
     m_n = sc.constants.m_n
     velocity = (h / (wavelength * m_n)).to(unit='m/s')
-    timeofflight = sc.midpoints(binned.coords['distance']) / velocity
-    return TimeOfFlightLookupTable(timeofflight)
+    timeofflight = (l1 + sc.midpoints(binned.coords['distance'])) / velocity
+    return TimeOfFlightLookupTable(timeofflight.to(unit=time_unit, copy=False))
 
 
 # def time_of_flight_from_lookup(
@@ -490,8 +494,24 @@ def time_of_flight_from_lookup(
     )
 
     if toas.bins is not None:
-        l2 = sc.bins_like(toas.bins, l2).bins.concat().value
+        l2 = sc.bins_like(toas, l2).bins.concat().value
         toas = toas.bins.concat().value
 
     tofs = sc.array(dims=toas.dims, values=f((toas.values, l2.values)), unit=toas.unit)
     return TofCoord(tofs)
+
+
+providers = (
+    frame_period,
+    run_tof_model,
+    frame_at_detector_start_time,
+    tof_lookup,
+    unwrapped_time_of_arrival,
+    unwrapped_time_of_arrival_minus_frame_start_time,
+    time_of_arrival_minus_start_time_modulo_period,
+    time_of_arrival_folded_by_frame,
+    time_of_flight_from_lookup,
+)
+"""
+Providers of the time-of-flight workflow.
+"""
