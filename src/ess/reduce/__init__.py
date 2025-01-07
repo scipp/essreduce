@@ -4,7 +4,7 @@
 
 import importlib.metadata
 
-from . import nexus, uncertainty
+from . import nexus, time_of_flight, uncertainty
 
 try:
     __version__ = importlib.metadata.version("essreduce")
@@ -13,4 +13,4 @@ except importlib.metadata.PackageNotFoundError:
 
 del importlib
 
-__all__ = ['nexus', 'uncertainty']
+__all__ = ['nexus', 'time_of_flight', 'uncertainty']

@@ -9,11 +9,12 @@ from typing import NewType
 import numpy as np
 import scipp as sc
 import tof
-from scipp.core.bins import Lookup
 
-from .._utils import elem_unit
-from . import chopper_cascade
-from .to_events import to_events
+# from scipp.core.bins import Lookup
+from scippneutron._utils import elem_unit
+
+# from . import chopper_cascade
+# from .to_events import to_events
 
 Choppers = NewType('Choppers', list[tof.Chopper])
 """
@@ -24,7 +25,7 @@ PrimaryFlightPath = NewType('PrimaryFlightPath', sc.Variable)
 
 SecondaryFlightPath = NewType('SecondaryFlightPath', sc.Variable)
 
-SimulationResults = NewType('SimulationResults', tof.Results)
+SimulationResults = NewType('SimulationResults', tof.Result)
 
 
 DistanceResolution = NewType('DistanceResolution', sc.Variable)
@@ -39,13 +40,13 @@ TimeOfFlightLookupTable = NewType('TimeOfFlightLookupTable', sc.DataArray)
 # Frames of the chopper cascade.
 # """
 
-FrameAtDetector = NewType('FrameAtDetector', chopper_cascade.Frame)
-"""
-Result of passing the source pulse through the chopper cascade to the detector.
+# FrameAtDetector = NewType('FrameAtDetector', chopper_cascade.Frame)
+# """
+# Result of passing the source pulse through the chopper cascade to the detector.
 
-The detector may be a monitor or a detector after scattering off the sample. The frame
-bounds are then computed from this.
-"""
+# The detector may be a monitor or a detector after scattering off the sample. The frame
+# bounds are then computed from this.
+# """
 
 FramePeriod = NewType('FramePeriod', sc.Variable)
 """
