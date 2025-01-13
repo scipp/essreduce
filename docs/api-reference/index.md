@@ -27,6 +27,7 @@
    :template: module-template.rst
    :recursive:
 
+   live
    logging
    nexus
    streaming

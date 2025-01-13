@@ -111,6 +111,19 @@ class LogicalView:
     Logical view of a multi-dimensional detector.
 
     Instances can be used as a "projection" function for a detector view.
+
+    Parameters
+    ----------
+    fold:
+        Dimensions to fold. This is useful is the raw data has a single dimension that
+        corresponds to multiple dimensions in the logical view.
+    transpose:
+        Dimensions to transpose. This is useful for reordering dimensions.
+    select:
+        Dimensions with associated index to select from the data. This extracts a slice
+        of the data for each given dimension.
+    flatten:
+        Dimensions to flatten.
     """
 
     fold: dict[str, int] | None = None
