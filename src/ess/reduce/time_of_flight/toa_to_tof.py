@@ -90,6 +90,20 @@ def compute_tof_lookup_table(
     ltotal: Ltotal[RunType],
     distance_resolution: DistanceResolution,
 ) -> TimeOfFlightLookupTable[RunType]:
+    """
+    Compute a lookup table for time-of-flight as a function of distance and time-of-arrival.
+
+    Parameters
+    ----------
+    simulation:
+        Results of a time-of-flight simulation used to create a lookup table.
+        The results should be a flat table with columns for time-of-arrival, speed,
+        wavelength, and weight.
+    ltotal:
+        Total length of the flight path from the source to the detector.
+    distance_resolution:
+        Resolution of the distance axis in the lookup table.
+    """
     simulation_distance = simulation.distance.to(unit=ltotal.unit)
     dist = ltotal - simulation_distance
     res = distance_resolution.to(unit=dist.unit)
@@ -301,6 +315,22 @@ def time_of_flight_data(
     ltotal: Ltotal[RunType],
     toas: FrameFoldedTimeOfArrival[RunType],
 ) -> TofData[RunType]:
+    """
+    Convert the time-of-arrival data to time-of-flight data using a lookup table.
+    The output data will have a time-of-flight coordinate.
+
+    Parameters
+    ----------
+    da:
+        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
+        NXevent_data.
+    lookup:
+        Lookup table giving time-of-flight as a function of distance and time of arrival.
+    ltotal:
+        Total length of the flight path from the source to the detector.
+    toas:
+        Time of arrival of the neutron at the detector, folded by the frame period.
+    """
     from scipy.interpolate import RegularGridInterpolator
 
     lookup_values = lookup.data.to(unit=elem_unit(toas), copy=False).values
