@@ -9,7 +9,7 @@ from IPython import display
 from ipywidgets import Layout
 
 from .parameter import Parameter
-from .widgets import SwitchWidget, create_parameter_widget, default_layout
+from .widgets import Spinner, SwitchWidget, create_parameter_widget, default_layout
 from .widgets._base import get_fields, set_fields
 from .workflow import (
     Key,
@@ -127,7 +127,9 @@ class ResultBox(widgets.VBox):
         def run_workflow(_: widgets.Button) -> None:
             self.output.clear_output()
             with self.output:
+                display.display(Spinner())
                 compute_result = workflow_runner()
+                display.clear_output()
                 if result_registry is not None:
                     result_registry.clear()
                     result_registry.update(compute_result)
