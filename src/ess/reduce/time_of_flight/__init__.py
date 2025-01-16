@@ -6,7 +6,7 @@ Utilities for computing real neutron time-of-flight from chopper settings and
 neutron time-of-arrival at the detectors.
 """
 
-from .toa_to_tof import params, standard_providers
+from .toa_to_tof import params, re_histogram_tof_data, standard_providers
 from .types import (
     Facility,
     Choppers,
@@ -53,5 +53,6 @@ __all__ = [
     "TofData",
     "ReHistogrammedTofData",
     "params",
+    "re_histogram_tof_data",
     "standard_providers",
 ]
