@@ -3,6 +3,7 @@
 
 """NeXus loaders."""
 
+import errno
 from collections.abc import Generator, Mapping
 from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import dataclass
@@ -91,6 +92,8 @@ def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
 def _open_nexus_file(
     file_path: FilePath | NeXusFile | NeXusGroup,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+    *,
+    locking: bool | None = None,
 ) -> AbstractContextManager[snx.Group]:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         if (
@@ -101,9 +104,42 @@ def _open_nexus_file(
                 "Cannot apply new definitions to open nexus file or nexus group."
             )
         return nullcontext(file_path)
+
+    try:
+        return _open_nexus_file_from_path(file_path, definitions, locking=locking)
+    except OSError as err:
+        if err.errno == errno.EROFS:
+            # Failed to open because the filesystem is read-only.
+            # (According to https://www.ioplex.com/%7Emiallen/errcmpp.html
+            # this error code is universal.)
+            #
+            # On ESS machines, this happens for network filesystems of data that was
+            # ingested into SciCat, including raw data.
+            # In this case, it is safe to open the file without locking because:
+            # - For raw files, they were written on a separate machine and are synced
+            #   with the one running reduction software. So there cannot be concurrent
+            #   write and read accesses to the same file on the same filesystem.
+            #   The ground truth on the filesystem used by the file writer is protected
+            #   and cannot be corrupted by our reader.
+            # - For processed data, the file was copied to the read-only filesystem.
+            #   So the copy we are opening was not written by HDF5 directly and thus
+            #   locking has no effect anyway.
+            #
+            # When running on user machines, disabling locking can potentially corrupt
+            # files. But the risk is minimal because very few users will have read-only
+            # filesystems and do concurrent reads and writes.
+            return _open_nexus_file_from_path(file_path, definitions, locking=False)
+        raise
+
+
+def _open_nexus_file_from_path(
+    file_path: FilePath,
+    definitions: Mapping | None | NoNewDefinitionsType,
+    **kwargs: object,
+) -> AbstractContextManager[snx.Group]:
     if definitions is NoNewDefinitions:
-        return snx.File(file_path)
-    return snx.File(file_path, definitions=definitions)
+        return snx.File(file_path, **kwargs)
+    return snx.File(file_path, definitions=definitions, **kwargs)
 
 
 @contextmanager
