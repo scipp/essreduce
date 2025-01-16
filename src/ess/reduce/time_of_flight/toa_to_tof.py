@@ -1,7 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-# @author Simon Heybrock
-# @author Neil Vaytet
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 """
 Time-of-flight workflow for unwrapping the time of arrival of the neutron at the
 detector.
@@ -9,151 +7,40 @@ This workflow is used to convert raw detector data with event_time_zero and
 event_time_offset coordinates to data with a time-of-flight coordinate.
 """
 
-from collections.abc import Mapping
-from dataclasses import dataclass
+from collections.abc import Callable
 from functools import reduce
-from typing import NewType
 
 import numpy as np
 import scipp as sc
-import tof
 from scipp._scipp.core import _bins_no_validate
 
 from scippneutron._utils import elem_unit
-from scippneutron.chopper import DiskChopper
 from scippneutron.tof.to_events import to_events
 
-import sciline as sl
 
-from .nexus.types import RunType, DetectorData
-
-Facility = NewType('Facility', str)
-"""
-Facility where the experiment is performed.
-"""
-
-Choppers = NewType('Choppers', Mapping[str, DiskChopper])
-"""
-Choppers used to define the frame parameters.
-"""
-
-class Ltotal(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Total length of the flight path from the source to the detector.
-    """
-
-SimulationSeed = NewType('SimulationSeed', int)
-"""
-Seed for the random number generator used in the simulation.
-"""
-
-
-NumberOfNeutrons = NewType('NumberOfNeutrons', int)
-"""
-Number of neutrons to use in the simulation.
-"""
-
-
-@dataclass
-class SimulationResults:
-    """
-    Results of a time-of-flight simulation used to create a lookup table.
-    """
-
-    time_of_arrival: sc.Variable
-    speed: sc.Variable
-    wavelength: sc.Variable
-    weight: sc.Variable
-    distance: sc.Variable
-
-
-DistanceResolution = NewType('DistanceResolution', sc.Variable)
-"""
-Resolution of the distance axis in the lookup table.
-"""
-
-class TimeOfFlightLookupTable(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """
-    Lookup table giving time-of-flight as a function of distance and time of arrival.
-    """
-
-class MaskedTimeOfFlightLookupTable(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """
-    Lookup table giving time-of-flight as a function of distance and time of arrival, with
-    regions of large uncertainty masked out.
-    """
-
-LookupTableVarianceThreshold = NewType('LookupTableVarianceThreshold', float)
-
-FramePeriod = NewType('FramePeriod', sc.Variable)
-"""
-The period of a frame, a (small) integer multiple of the source period.
-"""
-
-class UnwrappedTimeOfArrival(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-    """
-
-class FrameAtDetectorStartTime(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of the start of the frame at the detector.
-    """
-
-class UnwrappedTimeOfArrivalMinusStartTime(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
-    the start time of the frame.
-    """
-
-class TimeOfArrivalMinusStartTimeModuloPeriod(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of arrival of the neutron at the detector minus the start time of the frame,
-    modulo the frame period.
-    """
-
-class FrameFoldedTimeOfArrival(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of arrival of the neutron at the detector, folded by the frame period.
-    """
-
-
-PulsePeriod = NewType('PulsePeriod', sc.Variable)
-"""
-Period of the source pulses, i.e., time between consecutive pulse starts.
-"""
-
-PulseStride = NewType('PulseStride', int)
-"""
-Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
-"""
-
-# TODO: the pulse stride offset may be different for sample and background runs?
-# It should maybe be turned into a generic type?
-PulseStrideOffset = NewType('PulseStrideOffset', int)
-"""
-When pulse-skipping, the offset of the first pulse in the stride.
-"""
-
-class FrameFoldedTimeOfArrival(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of arrival of the neutron at the detector, folded by the frame period.
-    """
-
-# RawData = NewType('RawData', sc.DataArray)
-# """
-# Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
-# """
-
-class TofData(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """
-    Detector data with time-of-flight coordinate.
-    """
-
-class ReHistogrammedTofData(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """
-    Detector data with time-of-flight coordinate, re-histogrammed.
-    """
+from ..nexus.types import RunType, DetectorData
+from .types import (
+    DistanceResolution,
+    Facility,
+    FrameFoldedTimeOfArrival,
+    FramePeriod,
+    Ltotal,
+    LookupTableVarianceThreshold,
+    MaskedTimeOfFlightLookupTable,
+    NumberOfNeutrons,
+    PulsePeriod,
+    PulseStride,
+    PulseStrideOffset,
+    ReHistogrammedTofData,
+    SimulationResults,
+    SimulationSeed,
+    TimeOfArrivalMinusPivotTimeModuloPeriod,
+    TimeOfFlightLookupTable,
+    TofData,
+    UnwrappedTimeOfArrival,
+    UnwrappedTimeOfArrivalMinusPivotTime,
+    PivotTimeAtDetector,
+)
 
 
 def pulse_period_from_source(facility: Facility) -> PulsePeriod:
@@ -166,7 +53,8 @@ def pulse_period_from_source(facility: Facility) -> PulsePeriod:
         Facility where the experiment is performed (used to determine the source pulse
         parameters).
     """
-    return PulsePeriod(1.0 / tof.facilities[facility].frequency)
+    facilities = {"ess": sc.scalar(14.0, unit="Hz")}
+    return PulsePeriod(1.0 / facilities[facility])
 
 
 def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
@@ -185,55 +73,7 @@ def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FrameP
     return FramePeriod(pulse_period * pulse_stride)
 
 
-def run_tof_model(
-    facility: Facility,
-    choppers: Choppers,
-    seed: SimulationSeed,
-    number_of_neutrons: NumberOfNeutrons,
-) -> SimulationResults:
-    tof_choppers = [
-        tof.Chopper(
-            frequency=abs(ch.frequency),
-            direction=tof.AntiClockwise
-            if (ch.frequency.value > 0.0)
-            else tof.Clockwise,
-            open=ch.slit_begin,
-            close=ch.slit_end,
-            phase=abs(ch.phase),
-            distance=ch.axle_position.fields.z,
-            name=name,
-        )
-        for name, ch in choppers.items()
-    ]
-    source = tof.Source(facility=facility, neutrons=number_of_neutrons, seed=seed)
-    if not tof_choppers:
-        events = source.data.squeeze()
-        return SimulationResults(
-            time_of_arrival=events.coords['time'],
-            speed=events.coords['speed'],
-            wavelength=events.coords['wavelength'],
-            weight=events.data,
-            distance=0.0 * sc.units.m,
-        )
-    model = tof.Model(source=source, choppers=tof_choppers)
-    results = model.run()
-    # Find name of the furthest chopper in tof_choppers
-    furthest_chopper = max(tof_choppers, key=lambda c: c.distance)
-    events = results[furthest_chopper.name].data.squeeze()
-    events = events[
-        ~(events.masks['blocked_by_others'] | events.masks['blocked_by_me'])
-    ]
-    return SimulationResults(
-        time_of_arrival=events.coords['toa'],
-        speed=events.coords['speed'],
-        wavelength=events.coords['wavelength'],
-        weight=events.data,
-        distance=furthest_chopper.distance,
-    )
-
-
-def extract_ltotal(
-    da: DetectorData[RunType]) -> Ltotal[RunType]:
+def extract_ltotal(da: DetectorData[RunType]) -> Ltotal[RunType]:
     """
     Extract the total length of the flight path from the source to the detector from the
     detector data.
@@ -244,8 +84,7 @@ def extract_ltotal(
         Raw detector data loaded from a NeXus file, e.g., NXdetector containing
         NXevent_data.
     """
-    return Ltotal[RunType](da.coords['Ltotal'])
-
+    return Ltotal[RunType](da.coords["Ltotal"])
 
 
 def compute_tof_lookup_table(
@@ -261,7 +100,7 @@ def compute_tof_lookup_table(
     min_dist, max_dist = dist.nanmin() - res, dist.nanmax() + res
     ndist = round(((max_dist - min_dist) / res).value) + 1
     distances = sc.linspace(
-        'distance', min_dist.value, max_dist.value, ndist, unit=dist.unit
+        "distance", min_dist.value, max_dist.value, ndist, unit=dist.unit
     )
 
     time_unit = simulation.time_of_arrival.unit
@@ -270,13 +109,13 @@ def compute_tof_lookup_table(
     )
 
     data = sc.DataArray(
-        data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to='event'),
+        data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
         coords={
-            'toa': toas.flatten(to='event'),
-            'wavelength': sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(
-                to='event'
+            "toa": toas.flatten(to="event"),
+            "wavelength": sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(
+                to="event"
             ),
-            'distance': sc.broadcast(distances, sizes=toas.sizes).flatten(to='event'),
+            "distance": sc.broadcast(distances, sizes=toas.sizes).flatten(to="event"),
         },
     )
 
@@ -284,19 +123,19 @@ def compute_tof_lookup_table(
     binned = data.bin(distance=ndist, toa=500)
     # Weighted mean of wavelength inside each bin
     wavelength = (
-        binned.bins.data * binned.bins.coords['wavelength']
+        binned.bins.data * binned.bins.coords["wavelength"]
     ).bins.sum() / binned.bins.sum()
     # Compute the variance of the wavelength to track regions with large uncertainty
     variance = (
-        binned.bins.data * (binned.bins.coords['wavelength'] - wavelength) ** 2
+        binned.bins.data * (binned.bins.coords["wavelength"] - wavelength) ** 2
     ).bins.sum() / binned.bins.sum()
 
     # Need to add the simulation distance to the distance coordinate
-    wavelength.coords['distance'] = wavelength.coords['distance'] + simulation_distance
+    wavelength.coords["distance"] = wavelength.coords["distance"] + simulation_distance
     h = sc.constants.h
     m_n = sc.constants.m_n
-    velocity = (h / (wavelength * m_n)).to(unit='m/s')
-    timeofflight = (sc.midpoints(wavelength.coords['distance'])) / velocity
+    velocity = (h / (wavelength * m_n)).to(unit="m/s")
+    timeofflight = (sc.midpoints(wavelength.coords["distance"])) / velocity
     out = timeofflight.to(unit=time_unit, copy=False)
     # Include the variances computed above
     out.variances = variance.values
@@ -328,9 +167,9 @@ def masked_tof_lookup_table(
     return MaskedTimeOfFlightLookupTable[RunType](out)
 
 
-def frame_at_detector_start_time(
+def pivot_time_at_detector(
     simulation: SimulationResults, ltotal: Ltotal[RunType]
-) -> FrameAtDetectorStartTime[RunType]:
+) -> PivotTimeAtDetector[RunType]:
     """
     Compute the start time of the frame at the detector.
     The assumption here is that the fastest neutron in the simulation results is the one
@@ -353,7 +192,7 @@ def frame_at_detector_start_time(
     toa = time_at_simulation + (dist / simulation.speed[ind]).to(
         unit=time_at_simulation.unit, copy=False
     )
-    return FrameAtDetectorStartTime[RunType](toa)
+    return PivotTimeAtDetector[RunType](toa)
 
 
 def unwrapped_time_of_arrival(
@@ -377,14 +216,14 @@ def unwrapped_time_of_arrival(
     """
     if da.bins is None:
         # Canonical name in NXmonitor
-        toa = da.coords['time_of_flight']
+        toa = da.coords["time_of_flight"]
     else:
         # To unwrap the time of arrival, we want to add the event_time_zero to the
         # event_time_offset. However, we do not really care about the exact datetimes,
         # we just want to know the offsets with respect to the start of the run.
         # Hence we use the smallest event_time_zero as the time origin.
-        time_zero = da.coords['event_time_zero'] - da.coords['event_time_zero'].min()
-        coord = da.bins.coords['event_time_offset']
+        time_zero = da.coords["event_time_zero"] - da.coords["event_time_zero"].min()
+        coord = da.bins.coords["event_time_offset"]
         unit = elem_unit(coord)
         toa = (
             coord
@@ -394,9 +233,9 @@ def unwrapped_time_of_arrival(
     return UnwrappedTimeOfArrival[RunType](toa)
 
 
-def unwrapped_time_of_arrival_minus_frame_start_time(
-    toa: UnwrappedTimeOfArrival[RunType], start_time: FrameAtDetectorStartTime[RunType]
-) -> UnwrappedTimeOfArrivalMinusStartTime[RunType]:
+def unwrapped_time_of_arrival_minus_frame_pivot_time(
+    toa: UnwrappedTimeOfArrival[RunType], pivot_time: PivotTimeAtDetector[RunType]
+) -> UnwrappedTimeOfArrivalMinusPivotTime[RunType]:
     """
     Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
     period, minus the start time of the frame.
@@ -407,40 +246,40 @@ def unwrapped_time_of_arrival_minus_frame_start_time(
     ----------
     toa:
         Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-    start_time:
+    pivot_time:
         Time of the start of the frame at the detector.
     """
     # Order of operation to preserve dimension order
-    return UnwrappedTimeOfArrivalMinusStartTime[RunType](
-        -start_time.to(unit=elem_unit(toa), copy=False) + toa
+    return UnwrappedTimeOfArrivalMinusPivotTime[RunType](
+        -pivot_time.to(unit=elem_unit(toa), copy=False) + toa
     )
 
 
-def time_of_arrival_minus_start_time_modulo_period(
-    toa_minus_start_time: UnwrappedTimeOfArrivalMinusStartTime[RunType],
+def time_of_arrival_minus_pivot_time_modulo_period(
+    toa_minus_pivot_time: UnwrappedTimeOfArrivalMinusPivotTime[RunType],
     frame_period: FramePeriod,
-) -> TimeOfArrivalMinusStartTimeModuloPeriod[RunType]:
+) -> TimeOfArrivalMinusPivotTimeModuloPeriod[RunType]:
     """
     Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
     period, minus the start time of the frame, modulo the frame period.
 
     Parameters
     ----------
-    toa_minus_start_time:
+    toa_minus_pivot_time:
         Time of arrival of the neutron at the detector, unwrapped at the pulse period,
         minus the start time of the frame.
     frame_period:
         Period of the frame, i.e., time between the start of two consecutive frames.
     """
-    return TimeOfArrivalMinusStartTimeModuloPeriod[RunType](
-        toa_minus_start_time
-        % frame_period.to(unit=elem_unit(toa_minus_start_time), copy=False)
+    return TimeOfArrivalMinusPivotTimeModuloPeriod[RunType](
+        toa_minus_pivot_time
+        % frame_period.to(unit=elem_unit(toa_minus_pivot_time), copy=False)
     )
 
 
 def time_of_arrival_folded_by_frame(
-    toa: TimeOfArrivalMinusStartTimeModuloPeriod[RunType],
-    start_time: FrameAtDetectorStartTime[RunType],
+    toa: TimeOfArrivalMinusPivotTimeModuloPeriod[RunType],
+    pivot_time: PivotTimeAtDetector[RunType],
 ) -> FrameFoldedTimeOfArrival[RunType]:
     """
     The time of arrival of the neutron at the detector, folded by the frame period.
@@ -450,11 +289,11 @@ def time_of_arrival_folded_by_frame(
     toa:
         Time of arrival of the neutron at the detector, unwrapped at the pulse period,
         minus the start time of the frame, modulo the frame period.
-    start_time:
+    pivot_time:
         Time of the start of the frame at the detector.
     """
     return FrameFoldedTimeOfArrival[RunType](
-        toa + start_time.to(unit=elem_unit(toa), copy=False)
+        toa + pivot_time.to(unit=elem_unit(toa), copy=False)
     )
 
 
@@ -476,18 +315,18 @@ def time_of_flight_data(
     f = RegularGridInterpolator(
         (
             sc.midpoints(
-                lookup.coords['toa'].to(unit=elem_unit(toas), copy=False)
+                lookup.coords["toa"].to(unit=elem_unit(toas), copy=False)
             ).values,
-            sc.midpoints(lookup.coords['distance']).values,
+            sc.midpoints(lookup.coords["distance"]).values,
         ),
         lookup_values.T,
-        method='linear',
+        method="linear",
         bounds_error=False,
     )
 
     if da.bins is not None:
-        ltotal = sc.bins_like(toas, ltotal).bins.constituents['data']
-        toas = toas.bins.constituents['data']
+        ltotal = sc.bins_like(toas, ltotal).bins.constituents["data"]
+        toas = toas.bins.constituents["data"]
 
     tofs = sc.array(
         dims=toas.dims, values=f((toas.values, ltotal.values)), unit=elem_unit(toas)
@@ -497,10 +336,10 @@ def time_of_flight_data(
     if out.bins is not None:
         parts = out.bins.constituents
         out.data = sc.bins(**parts)
-        parts['data'] = tofs
-        out.bins.coords['tof'] = _bins_no_validate(**parts)
+        parts["data"] = tofs
+        out.bins.coords["tof"] = _bins_no_validate(**parts)
     else:
-        out.coords['tof'] = tofs
+        out.coords["tof"] = tofs
     return TofData[RunType](out)
 
 
@@ -527,37 +366,17 @@ def re_histogram_tof_data(da: TofData[RunType]) -> ReHistogrammedTofData[RunType
     da:
         TofData with the time-of-flight coordinate.
     """
-    events = to_events(da.rename_dims(time_of_flight='tof'), 'event')
+    events = to_events(da.rename_dims(time_of_flight="tof"), "event")
 
     # Define a new bin width, close to the original bin width.
     # TODO: this could be a workflow parameter
-    coord = da.coords['tof']
-    bin_width = (coord['time_of_flight', 1:] - coord['time_of_flight', :-1]).nanmedian()
+    coord = da.coords["tof"]
+    bin_width = (coord["time_of_flight", 1:] - coord["time_of_flight", :-1]).nanmedian()
     rehist = events.hist(tof=bin_width)
     for key, var in da.coords.items():
-        if 'time_of_flight' not in var.dims:
+        if "time_of_flight" not in var.dims:
             rehist.coords[key] = var
     return ReHistogrammedTofData[RunType](rehist)
-
-
-def providers():
-    """
-    Providers of the time-of-flight workflow.
-    """
-    return (
-        pulse_period_from_source,
-        frame_period,
-        run_tof_model,
-        extract_ltotal,
-        frame_at_detector_start_time,
-        unwrapped_time_of_arrival,
-        unwrapped_time_of_arrival_minus_frame_start_time,
-        time_of_arrival_minus_start_time_modulo_period,
-        time_of_arrival_folded_by_frame,
-        time_of_flight_data,
-        compute_tof_lookup_table,
-        masked_tof_lookup_table,
-    )
 
 
 def params() -> dict:
@@ -567,8 +386,36 @@ def params() -> dict:
     return {
         PulseStride: 1,
         PulseStrideOffset: 0,
-        DistanceResolution: sc.scalar(1.0, unit='cm'),
+        DistanceResolution: sc.scalar(1.0, unit="cm"),
         LookupTableVarianceThreshold: 1.0e-2,
         SimulationSeed: 1234,
         NumberOfNeutrons: 1_000_000,
     }
+
+
+def _providers() -> tuple[Callable]:
+    """
+    Providers of the time-of-flight workflow.
+    """
+    return (
+        compute_tof_lookup_table,
+        extract_ltotal,
+        frame_period,
+        masked_tof_lookup_table,
+        pivot_time_at_detector,
+        pulse_period_from_source,
+        time_of_arrival_folded_by_frame,
+        time_of_arrival_minus_pivot_time_modulo_period,
+        time_of_flight_data,
+        unwrapped_time_of_arrival,
+        unwrapped_time_of_arrival_minus_frame_pivot_time,
+    )
+
+
+def standard_providers() -> tuple[Callable]:
+    """
+    Standard providers of the time-of-flight workflow.
+    """
+    from .tof_simulation import run_tof_simulation
+
+    return (*_providers(), run_tof_simulation)
