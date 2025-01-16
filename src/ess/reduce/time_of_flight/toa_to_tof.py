@@ -14,9 +14,9 @@ import numpy as np
 import scipp as sc
 from scipp._scipp.core import _bins_no_validate
 from scippneutron._utils import elem_unit
-from scippneutron.tof.to_events import to_events
 
 from ..nexus.types import DetectorData, RunType
+from .to_events import to_events
 from .types import (
     DistanceResolution,
     Facility,
