@@ -31,6 +31,7 @@
    logging
    nexus
    streaming
+   time_of_flight
    ui
    uncertainty
    widgets

@@ -1,10 +1,11 @@
-# Wavelength frame multiplication
+# Time-of-flight
 
 ```{toctree}
 ---
 maxdepth: 1
 ---
 
-wfm-time-of-flight
-dream-wfm
+frame-unwrapping
+wfm
+dream
 ```
