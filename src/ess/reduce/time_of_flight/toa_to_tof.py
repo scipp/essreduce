@@ -91,7 +91,8 @@ def compute_tof_lookup_table(
     distance_resolution: DistanceResolution,
 ) -> TimeOfFlightLookupTable[RunType]:
     """
-    Compute a lookup table for time-of-flight as a function of distance and time-of-arrival.
+    Compute a lookup table for time-of-flight as a function of distance and
+    time-of-arrival.
 
     Parameters
     ----------
@@ -325,7 +326,8 @@ def time_of_flight_data(
         Raw detector data loaded from a NeXus file, e.g., NXdetector containing
         NXevent_data.
     lookup:
-        Lookup table giving time-of-flight as a function of distance and time of arrival.
+        Lookup table giving time-of-flight as a function of distance and time of
+        arrival.
     ltotal:
         Total length of the flight path from the source to the detector.
     toas:
