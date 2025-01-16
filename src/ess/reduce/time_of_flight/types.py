@@ -5,12 +5,11 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import NewType
 
-import scipp as sc
 import sciline as sl
+import scipp as sc
 from scippneutron.chopper import DiskChopper
 
 from ..nexus.types import RunType
-
 
 Facility = NewType("Facility", str)
 """
@@ -68,8 +67,8 @@ class TimeOfFlightLookupTable(sl.Scope[RunType, sc.DataArray], sc.DataArray):
 
 class MaskedTimeOfFlightLookupTable(sl.Scope[RunType, sc.DataArray], sc.DataArray):
     """
-    Lookup table giving time-of-flight as a function of distance and time of arrival, with
-    regions of large uncertainty masked out.
+    Lookup table giving time-of-flight as a function of distance and time of arrival,
+    with regions of large uncertainty masked out.
     """
 
 

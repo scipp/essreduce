@@ -13,21 +13,20 @@ from functools import reduce
 import numpy as np
 import scipp as sc
 from scipp._scipp.core import _bins_no_validate
-
 from scippneutron._utils import elem_unit
 from scippneutron.tof.to_events import to_events
 
-
-from ..nexus.types import RunType, DetectorData
+from ..nexus.types import DetectorData, RunType
 from .types import (
     DistanceResolution,
     Facility,
     FrameFoldedTimeOfArrival,
     FramePeriod,
-    Ltotal,
     LookupTableVarianceThreshold,
+    Ltotal,
     MaskedTimeOfFlightLookupTable,
     NumberOfNeutrons,
+    PivotTimeAtDetector,
     PulsePeriod,
     PulseStride,
     PulseStrideOffset,
@@ -39,7 +38,6 @@ from .types import (
     TofData,
     UnwrappedTimeOfArrival,
     UnwrappedTimeOfArrivalMinusPivotTime,
-    PivotTimeAtDetector,
 )
 
 

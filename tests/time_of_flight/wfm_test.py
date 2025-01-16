@@ -6,14 +6,13 @@ from functools import partial
 import pytest
 import scipp as sc
 import tof as tof_pkg
-
 from scippneutron.chopper import DiskChopper
 from scippneutron.conversion.graph.beamline import beamline
 from scippneutron.conversion.graph.tof import elastic
 
 from ess.reduce import time_of_flight
-from ess.reduce.time_of_flight import fakes
 from ess.reduce.nexus.types import DetectorData, SampleRun
+from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
 

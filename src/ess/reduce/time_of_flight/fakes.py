@@ -16,7 +16,6 @@ from collections.abc import Callable
 
 import numpy as np
 import scipp as sc
-
 from scippneutron.chopper import DiskChopper
 
 
