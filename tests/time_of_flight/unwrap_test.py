@@ -8,7 +8,6 @@ from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
-from ess.reduce.nexus.types import DetectorData, SampleRun
 from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
@@ -46,14 +45,15 @@ def test_unwrap_with_no_choppers() -> None:
     mon, ref = beamline.get_monitor("detector")
 
     pl = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.params()
+        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
     )
     pl[time_of_flight.Facility] = "ess"
-    pl[DetectorData[SampleRun]] = mon
+    pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = {}
-    pl[time_of_flight.LookupTableVarianceThreshold] = 1.0
+    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    pl[time_of_flight.LookupTableRelativeErrorThreshold] = 1.0
 
-    tofs = pl.compute(time_of_flight.TofData[SampleRun])
+    tofs = pl.compute(time_of_flight.TofData)
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -82,13 +82,14 @@ def test_standard_unwrap(dist) -> None:
     mon, ref = beamline.get_monitor("detector")
 
     pl = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.params()
+        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
     )
     pl[time_of_flight.Facility] = "ess"
-    pl[DetectorData[SampleRun]] = mon
+    pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = fakes.psc_choppers
+    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
 
-    tofs = pl.compute(time_of_flight.TofData[SampleRun])
+    tofs = pl.compute(time_of_flight.TofData)
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -127,12 +128,13 @@ def test_standard_unwrap_histogram_mode(dist) -> None:
 
     pl = sl.Pipeline(
         (*time_of_flight.standard_providers(), time_of_flight.re_histogram_tof_data),
-        params=time_of_flight.params(),
+        params=time_of_flight.default_parameters(),
     )
     pl[time_of_flight.Facility] = "ess"
-    pl[DetectorData[SampleRun]] = mon
+    pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = fakes.psc_choppers
-    tofs = pl.compute(time_of_flight.ReHistogrammedTofData[SampleRun])
+    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    tofs = pl.compute(time_of_flight.ReHistogrammedTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
     ref = ref.bins.concat().value.hist(wavelength=wavs.coords["wavelength"])
@@ -156,14 +158,15 @@ def test_pulse_skipping_unwrap() -> None:
     mon, ref = beamline.get_monitor("detector")
 
     pl = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.params()
+        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
     )
     pl[time_of_flight.Facility] = "ess"
-    pl[DetectorData[SampleRun]] = mon
+    pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = choppers
+    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
     pl[time_of_flight.PulseStride] = 2
 
-    tofs = pl.compute(time_of_flight.TofData[SampleRun])
+    tofs = pl.compute(time_of_flight.TofData)
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -192,15 +195,16 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
     mon, ref = beamline.get_monitor("detector")
 
     pl = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.params()
+        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
     )
     pl[time_of_flight.Facility] = "ess"
-    pl[DetectorData[SampleRun]] = mon
+    pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = choppers
+    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
 
-    tofs = pl.compute(time_of_flight.TofData[SampleRun])
+    tofs = pl.compute(time_of_flight.TofData)
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -229,17 +233,18 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     mon, ref = beamline.get_monitor("detector")
 
     pl = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.params()
+        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
     )
     pl[time_of_flight.Facility] = "ess"
-    pl[DetectorData[SampleRun]] = mon[
+    pl[time_of_flight.RawData] = mon[
         1:
     ].copy()  # Skip first pulse = half of the first frame
     pl[time_of_flight.Choppers] = choppers
+    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
 
-    tofs = pl.compute(time_of_flight.TofData[SampleRun])
+    tofs = pl.compute(time_of_flight.TofData)
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -278,13 +283,14 @@ def test_pulse_skipping_unwrap_histogram_mode() -> None:
 
     pl = sl.Pipeline(
         (*time_of_flight.standard_providers(), time_of_flight.re_histogram_tof_data),
-        params=time_of_flight.params(),
+        params=time_of_flight.default_parameters(),
     )
     pl[time_of_flight.Facility] = "ess"
-    pl[DetectorData[SampleRun]] = mon
+    pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = fakes.psc_choppers
+    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
     pl[time_of_flight.PulseStride] = 2
-    tofs = pl.compute(time_of_flight.ReHistogrammedTofData[SampleRun])
+    tofs = pl.compute(time_of_flight.ReHistogrammedTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
     ref = ref.bins.concat().value.hist(wavelength=wavs.coords["wavelength"])
