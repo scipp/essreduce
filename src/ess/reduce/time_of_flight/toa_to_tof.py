@@ -92,6 +92,78 @@ def extract_ltotal(da: RawData) -> Ltotal:
     return Ltotal(da.coords["Ltotal"])
 
 
+# def compute_tof_lookup_table(
+#     simulation: SimulationResults,
+#     ltotal_range: LtotalRange,
+#     distance_resolution: DistanceResolution,
+#     toa_resolution: TimeOfArrivalResolution,
+# ) -> TimeOfFlightLookupTable:
+#     distance_unit = "m"
+#     res = distance_resolution.to(unit=distance_unit)
+#     simulation_distance = simulation.distance.to(unit=distance_unit)
+
+#     # We need to bin the data below, to compute the weighted mean of the wavelength.
+#     # This results in data with bin edges.
+#     # However, the 2d interpolator expects bin centers.
+#     # We want to give the 2d interpolator a table that covers the requested range,
+#     # hence we need to extend the range by half a resolution in each direction.
+#     min_dist, max_dist = [
+#         x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
+#     ]
+#     min_dist, max_dist = min_dist - 0.5 * res, max_dist + 0.5 * res
+
+#     dist_edges = sc.array(
+#         dims=["distance"],
+#         values=np.arange(
+#             min_dist.value, np.nextafter(max_dist.value, np.inf), res.value
+#         ),
+#         unit=distance_unit,
+#     )
+#     distances = sc.midpoints(dist_edges)
+
+#     time_unit = simulation.time_of_arrival.unit
+#     toas = simulation.time_of_arrival + (distances / simulation.speed).to(
+#         unit=time_unit, copy=False
+#     )
+
+#     data = sc.DataArray(
+#         data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
+#         coords={
+#             "toa": toas.flatten(to="event"),
+#             "wavelength": sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(
+#                 to="event"
+#             ),
+#             "distance": sc.broadcast(distances, sizes=toas.sizes).flatten(to="event"),
+#         },
+#     )
+
+#     binned = data.bin(distance=dist_edges, toa=toa_resolution)
+#     # Weighted mean of wavelength inside each bin
+#     wavelength = (
+#         binned.bins.data * binned.bins.coords["wavelength"]
+#     ).bins.sum() / binned.bins.sum()
+#     # Compute the variance of the wavelength to track regions with large uncertainty
+#     variance = (
+#         binned.bins.data * (binned.bins.coords["wavelength"] - wavelength) ** 2
+#     ).bins.sum() / binned.bins.sum()
+
+#     # Need to add the simulation distance to the distance coordinate
+#     wavelength.coords["distance"] = wavelength.coords["distance"] + simulation_distance
+#     h = sc.constants.h
+#     m_n = sc.constants.m_n
+#     velocity = (h / (wavelength * m_n)).to(unit="m/s")
+#     timeofflight = (sc.midpoints(wavelength.coords["distance"])) / velocity
+#     out = timeofflight.to(unit=time_unit, copy=False)
+#     # Include the variances computed above
+#     out.variances = variance.values
+
+#     # Convert coordinates to midpoints
+#     out.coords["toa"] = sc.midpoints(out.coords["toa"])
+#     out.coords["distance"] = sc.midpoints(out.coords["distance"])
+
+#     return TimeOfFlightLookupTable(out)
+
+
 def compute_tof_lookup_table(
     simulation: SimulationResults,
     ltotal_range: LtotalRange,
@@ -126,42 +198,57 @@ def compute_tof_lookup_table(
         unit=time_unit, copy=False
     )
 
+    # Compute time-of-flight for all neutrons
+    # wavs = sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(to="event")
+    # wavs *= sc.constants.m_n
+    # dist = sc.broadcast(distances, sizes=toas.sizes).flatten(to="event")
+    # velocity = (sc.constants.h / wavs).to(unit="m/s")
+    # tofs = dist / velocity
+
+    wavs = sc.broadcast(simulation.wavelength.to(unit="m"), sizes=toas.sizes).flatten(
+        to="event"
+    )
+    dist = sc.broadcast(distances + simulation_distance, sizes=toas.sizes).flatten(
+        to="event"
+    )
+    tofs = dist * sc.constants.m_n
+    tofs *= wavs
+    tofs /= sc.constants.h
+
     data = sc.DataArray(
         data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
         coords={
             "toa": toas.flatten(to="event"),
-            "wavelength": sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(
-                to="event"
-            ),
-            "distance": sc.broadcast(distances, sizes=toas.sizes).flatten(to="event"),
+            "tof": tofs.to(unit=time_unit, copy=False),
+            "distance": dist,
         },
     )
 
-    binned = data.bin(distance=dist_edges, toa=toa_resolution)
-    # Weighted mean of wavelength inside each bin
-    wavelength = (
-        binned.bins.data * binned.bins.coords["wavelength"]
+    binned = data.bin(distance=dist_edges + simulation_distance, toa=toa_resolution)
+    # Weighted mean of tof inside each bin
+    mean_tof = (
+        binned.bins.data * binned.bins.coords["tof"]
     ).bins.sum() / binned.bins.sum()
     # Compute the variance of the wavelength to track regions with large uncertainty
     variance = (
-        binned.bins.data * (binned.bins.coords["wavelength"] - wavelength) ** 2
+        binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
     ).bins.sum() / binned.bins.sum()
 
-    # Need to add the simulation distance to the distance coordinate
-    wavelength.coords["distance"] = wavelength.coords["distance"] + simulation_distance
-    h = sc.constants.h
-    m_n = sc.constants.m_n
-    velocity = (h / (wavelength * m_n)).to(unit="m/s")
-    timeofflight = (sc.midpoints(wavelength.coords["distance"])) / velocity
-    out = timeofflight.to(unit=time_unit, copy=False)
+    # # Need to add the simulation distance to the distance coordinate
+    # mean_tof.coords["distance"] = mean_tof.coords["distance"] + simulation_distance
+    # h = sc.constants.h
+    # m_n = sc.constants.m_n
+    # velocity = (h / (wavelength * m_n)).to(unit="m/s")
+    # timeofflight = (sc.midpoints(wavelength.coords["distance"])) / velocity
+    # out = timeofflight.to(unit=time_unit, copy=False)
     # Include the variances computed above
-    out.variances = variance.values
+    mean_tof.variances = variance.values
 
     # Convert coordinates to midpoints
-    out.coords["toa"] = sc.midpoints(out.coords["toa"])
-    out.coords["distance"] = sc.midpoints(out.coords["distance"])
+    mean_tof.coords["toa"] = sc.midpoints(mean_tof.coords["toa"])
+    mean_tof.coords["distance"] = sc.midpoints(mean_tof.coords["distance"])
 
-    return TimeOfFlightLookupTable(out)
+    return TimeOfFlightLookupTable(mean_tof)
 
 
 def masked_tof_lookup_table(
@@ -348,6 +435,9 @@ def time_of_flight_data(
         # Set masked values to NaN
         lookup_values[one_mask] = np.nan
 
+    # TODO: to make use of multi-threading, we could write our own interpolator.
+    # This should be simple enough as we are making the bins linspace, so computing
+    # bin indices is fast.
     f = RegularGridInterpolator(
         (
             lookup.coords["toa"].to(unit=elem_unit(toas), copy=False).values,

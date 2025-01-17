@@ -105,16 +105,16 @@ PivotTimeAtDetector = NewType("PivotTimeAtDetector", sc.Variable)
 Pivot time at the detector, i.e., the time of the start of the frame at the detector.
 """
 
-UnwrappedTimeOfArrivalMinusStartTime = NewType(
-    "UnwrappedTimeOfArrivalMinusStartTime", sc.Variable
+UnwrappedTimeOfArrivalMinusPivotTime = NewType(
+    "UnwrappedTimeOfArrivalMinusPivotTime", sc.Variable
 )
 """
 Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
 the start time of the frame.
 """
 
-TimeOfArrivalMinusStartTimeModuloPeriod = NewType(
-    "TimeOfArrivalMinusStartTimeModuloPeriod", sc.Variable
+TimeOfArrivalMinusPivotTimeModuloPeriod = NewType(
+    "TimeOfArrivalMinusPivotTimeModuloPeriod", sc.Variable
 )
 """
 Time of arrival of the neutron at the detector minus the start time of the frame,
