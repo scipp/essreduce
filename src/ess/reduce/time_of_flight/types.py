@@ -5,11 +5,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import NewType
 
-import sciline as sl
 import scipp as sc
 from scippneutron.chopper import DiskChopper
 
-from ..nexus.types import RunType
 
 Facility = NewType("Facility", str)
 """
@@ -21,12 +19,10 @@ Choppers = NewType("Choppers", Mapping[str, DiskChopper])
 Choppers used to define the frame parameters.
 """
 
-
-class Ltotal(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Total length of the flight path from the source to the detector.
-    """
-
+Ltotal = NewType("Ltotal", sc.Variable)
+"""
+Total length of the flight path from the source to the detector.
+"""
 
 SimulationSeed = NewType("SimulationSeed", int)
 """
@@ -53,24 +49,44 @@ class SimulationResults:
     distance: sc.Variable
 
 
+@dataclass
+class FastestNeutron:
+    """
+    Properties of the fastest neutron in the simulation results.
+    """
+
+    time_of_arrival: sc.Variable
+    speed: sc.Variable
+    distance: sc.Variable
+
+
+LtotalRange = NewType("LtotalRange", tuple[sc.Variable, sc.Variable])
+"""
+Range (min, max) of the total length of the flight path from the source to the detector.
+"""
+
+
 DistanceResolution = NewType("DistanceResolution", sc.Variable)
 """
 Resolution of the distance axis in the lookup table.
 """
 
+TimeOfArrivalResolution = NewType("TimeOfArrivalResolution", int | sc.Variable)
+"""
+Resolution of the time of arrival axis in the lookup table.
+Can be an integer (number of bins) or a sc.Variable (bin width).
+"""
 
-class TimeOfFlightLookupTable(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """
-    Lookup table giving time-of-flight as a function of distance and time of arrival.
-    """
+TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataArray)
+"""
+Lookup table giving time-of-flight as a function of distance and time of arrival.
+"""
 
-
-class MaskedTimeOfFlightLookupTable(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """
-    Lookup table giving time-of-flight as a function of distance and time of arrival,
-    with regions of large uncertainty masked out.
-    """
-
+MaskedTimeOfFlightLookupTable = NewType("MaskedTimeOfFlightLookupTable", sc.DataArray)
+"""
+Lookup table giving time-of-flight as a function of distance and time of arrival, with
+regions of large uncertainty masked out.
+"""
 
 LookupTableVarianceThreshold = NewType("LookupTableVarianceThreshold", float)
 
@@ -79,40 +95,33 @@ FramePeriod = NewType("FramePeriod", sc.Variable)
 The period of a frame, a (small) integer multiple of the source period.
 """
 
+UnwrappedTimeOfArrival = NewType("UnwrappedTimeOfArrival", sc.Variable)
+"""
+Time of arrival of the neutron at the detector, unwrapped at the pulse period.
+"""
 
-class UnwrappedTimeOfArrival(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-    """
+PivotTimeAtDetector = NewType("PivotTimeAtDetector", sc.Variable)
+"""
+Pivot time at the detector, i.e., the time of the start of the frame at the detector.
+"""
 
+UnwrappedTimeOfArrivalMinusStartTime = NewType(
+    "UnwrappedTimeOfArrivalMinusStartTime", sc.Variable
+)
+"""
+Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
+the start time of the frame.
+"""
 
-class PivotTimeAtDetector(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Pivot time at the detector, i.e., the time of the start of the frame at the
-    detector.
-    """
+TimeOfArrivalMinusStartTimeModuloPeriod = NewType(
+    "TimeOfArrivalMinusStartTimeModuloPeriod", sc.Variable
+)
+"""
+Time of arrival of the neutron at the detector minus the start time of the frame,
+modulo the frame period.
+"""
 
-
-class UnwrappedTimeOfArrivalMinusPivotTime(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
-    the start time of the frame.
-    """
-
-
-class TimeOfArrivalMinusPivotTimeModuloPeriod(
-    sl.Scope[RunType, sc.Variable], sc.Variable
-):
-    """
-    Time of arrival of the neutron at the detector minus the start time of the frame,
-    modulo the frame period.
-    """
-
-
-class FrameFoldedTimeOfArrival(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """
-    Time of arrival of the neutron at the detector, folded by the frame period.
-    """
+FrameFoldedTimeOfArrival = NewType("FrameFoldedTimeOfArrival", sc.Variable)
 
 
 PulsePeriod = NewType("PulsePeriod", sc.Variable)
@@ -125,21 +134,22 @@ PulseStride = NewType("PulseStride", int)
 Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
 """
 
-# TODO: the pulse stride offset may be different for sample and background runs?
-# It should maybe be turned into a generic type?
 PulseStrideOffset = NewType("PulseStrideOffset", int)
 """
 When pulse-skipping, the offset of the first pulse in the stride.
 """
 
+RawData = NewType("RawData", sc.DataArray)
+"""
+Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
+"""
 
-class TofData(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """
-    Detector data with time-of-flight coordinate.
-    """
+TofData = NewType("TofData", sc.DataArray)
+"""
+Detector data with time-of-flight coordinate.
+"""
 
-
-class ReHistogrammedTofData(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """
-    Detector data with time-of-flight coordinate, re-histogrammed.
-    """
+ReHistogrammedTofData = NewType("ReHistogrammedTofData", sc.DataArray)
+"""
+Detector data with time-of-flight coordinate, re-histogrammed.
+"""
