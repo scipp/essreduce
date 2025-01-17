@@ -10,7 +10,6 @@ event_time_offset coordinates to data with a time-of-flight coordinate.
 from __future__ import annotations
 
 from collections.abc import Callable
-from functools import reduce
 from typing import Any
 
 import numpy as np
@@ -270,9 +269,9 @@ def masked_tof_lookup_table(
     """
     variances = sc.variances(tof_lookup.data)
     mask = variances > sc.scalar(variance_threshold, unit=variances.unit)
-    out = tof_lookup.copy(deep=False)
-    if mask.any():
-        out.masks["uncertain"] = mask
+    out = tof_lookup.copy()
+    # Use numpy for indexing as table is 2D
+    out.values[mask.values] = np.nan
     return MaskedTimeOfFlightLookupTable(out)
 
 
@@ -427,13 +426,6 @@ def time_of_flight_data(
     toas: FrameFoldedTimeOfArrival,
 ) -> TofData:
     from scipy.interpolate import RegularGridInterpolator
-
-    lookup_values = lookup.data.to(unit=elem_unit(toas), copy=False).values
-    # Merge all masks into a single mask
-    if lookup.masks:
-        one_mask = reduce(lambda a, b: a | b, lookup.masks.values()).values
-        # Set masked values to NaN
-        lookup_values[one_mask] = np.nan
 
     # TODO: to make use of multi-threading, we could write our own interpolator.
     # This should be simple enough as we are making the bins linspace, so computing
