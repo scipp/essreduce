@@ -25,7 +25,7 @@ from .types import (
     FastestNeutron,
     FrameFoldedTimeOfArrival,
     FramePeriod,
-    LookupTableVarianceThreshold,
+    LookupTableRelativeErrorThreshold,
     Ltotal,
     LtotalRange,
     MaskedTimeOfFlightLookupTable,
@@ -89,78 +89,6 @@ def extract_ltotal(da: RawData) -> Ltotal:
         NXevent_data.
     """
     return Ltotal(da.coords["Ltotal"])
-
-
-# def compute_tof_lookup_table(
-#     simulation: SimulationResults,
-#     ltotal_range: LtotalRange,
-#     distance_resolution: DistanceResolution,
-#     toa_resolution: TimeOfArrivalResolution,
-# ) -> TimeOfFlightLookupTable:
-#     distance_unit = "m"
-#     res = distance_resolution.to(unit=distance_unit)
-#     simulation_distance = simulation.distance.to(unit=distance_unit)
-
-#     # We need to bin the data below, to compute the weighted mean of the wavelength.
-#     # This results in data with bin edges.
-#     # However, the 2d interpolator expects bin centers.
-#     # We want to give the 2d interpolator a table that covers the requested range,
-#     # hence we need to extend the range by half a resolution in each direction.
-#     min_dist, max_dist = [
-#         x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
-#     ]
-#     min_dist, max_dist = min_dist - 0.5 * res, max_dist + 0.5 * res
-
-#     dist_edges = sc.array(
-#         dims=["distance"],
-#         values=np.arange(
-#             min_dist.value, np.nextafter(max_dist.value, np.inf), res.value
-#         ),
-#         unit=distance_unit,
-#     )
-#     distances = sc.midpoints(dist_edges)
-
-#     time_unit = simulation.time_of_arrival.unit
-#     toas = simulation.time_of_arrival + (distances / simulation.speed).to(
-#         unit=time_unit, copy=False
-#     )
-
-#     data = sc.DataArray(
-#         data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
-#         coords={
-#             "toa": toas.flatten(to="event"),
-#             "wavelength": sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(
-#                 to="event"
-#             ),
-#             "distance": sc.broadcast(distances, sizes=toas.sizes).flatten(to="event"),
-#         },
-#     )
-
-#     binned = data.bin(distance=dist_edges, toa=toa_resolution)
-#     # Weighted mean of wavelength inside each bin
-#     wavelength = (
-#         binned.bins.data * binned.bins.coords["wavelength"]
-#     ).bins.sum() / binned.bins.sum()
-#     # Compute the variance of the wavelength to track regions with large uncertainty
-#     variance = (
-#         binned.bins.data * (binned.bins.coords["wavelength"] - wavelength) ** 2
-#     ).bins.sum() / binned.bins.sum()
-
-#     # Need to add the simulation distance to the distance coordinate
-#     wavelength.coords["distance"] = wavelength.coords["distance"] + simulation_distance
-#     h = sc.constants.h
-#     m_n = sc.constants.m_n
-#     velocity = (h / (wavelength * m_n)).to(unit="m/s")
-#     timeofflight = (sc.midpoints(wavelength.coords["distance"])) / velocity
-#     out = timeofflight.to(unit=time_unit, copy=False)
-#     # Include the variances computed above
-#     out.variances = variance.values
-
-#     # Convert coordinates to midpoints
-#     out.coords["toa"] = sc.midpoints(out.coords["toa"])
-#     out.coords["distance"] = sc.midpoints(out.coords["distance"])
-
-#     return TimeOfFlightLookupTable(out)
 
 
 def compute_tof_lookup_table(
@@ -233,6 +161,10 @@ def compute_tof_lookup_table(
         binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
     ).bins.sum() / binned.bins.sum()
 
+    # variance = (
+    #     binned.bins.data * (binned.bins.coords["tof"] - mean_tof) / mean_tof
+    # ).bins.sum() / binned.bins.sum()
+
     # # Need to add the simulation distance to the distance coordinate
     # mean_tof.coords["distance"] = mean_tof.coords["distance"] + simulation_distance
     # h = sc.constants.h
@@ -252,7 +184,7 @@ def compute_tof_lookup_table(
 
 def masked_tof_lookup_table(
     tof_lookup: TimeOfFlightLookupTable,
-    variance_threshold: LookupTableVarianceThreshold,
+    error_threshold: LookupTableRelativeErrorThreshold,
 ) -> MaskedTimeOfFlightLookupTable:
     """
     Mask regions of the lookup table where the variance of the projected time-of-flight
@@ -267,8 +199,8 @@ def masked_tof_lookup_table(
         Threshold for the variance of the projected time-of-flight above which regions
         are masked.
     """
-    variances = sc.variances(tof_lookup.data)
-    mask = variances > sc.scalar(variance_threshold, unit=variances.unit)
+    relative_error = sc.stddevs(tof_lookup.data) / sc.values(tof_lookup.data)
+    mask = relative_error > sc.scalar(error_threshold)
     out = tof_lookup.copy()
     # Use numpy for indexing as table is 2D
     out.values[mask.values] = np.nan
@@ -435,7 +367,7 @@ def time_of_flight_data(
             lookup.coords["toa"].to(unit=elem_unit(toas), copy=False).values,
             lookup.coords["distance"].to(unit=ltotal.unit, copy=False).values,
         ),
-        lookup_values.T,
+        lookup.values.T,
         method="linear",
         bounds_error=False,
     )
@@ -504,7 +436,7 @@ def default_parameters() -> dict:
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(1.0, unit="cm"),
         TimeOfArrivalResolution: 500,
-        LookupTableVarianceThreshold: 1.0e-2,
+        LookupTableRelativeErrorThreshold: 1.0e-2,
         SimulationSeed: 1234,
         NumberOfNeutrons: 1_000_000,
     }
@@ -555,7 +487,7 @@ class TofWorkflow:
         pulse_stride_offset=None,
         distance_resolution=None,
         toa_resolution=None,
-        variance_threshold=None,
+        error_threshold=None,
         seed=None,
         number_of_neutrons=None,
     ):
@@ -577,8 +509,8 @@ class TofWorkflow:
         self.pipeline[TimeOfArrivalResolution] = (
             toa_resolution or params[TimeOfArrivalResolution]
         )
-        self.pipeline[LookupTableVarianceThreshold] = (
-            variance_threshold or params[LookupTableVarianceThreshold]
+        self.pipeline[LookupTableRelativeErrorThreshold] = (
+            error_threshold or params[LookupTableRelativeErrorThreshold]
         )
         self.pipeline[SimulationSeed] = seed or params[SimulationSeed]
         self.pipeline[NumberOfNeutrons] = number_of_neutrons or params[NumberOfNeutrons]

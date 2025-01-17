@@ -87,7 +87,7 @@ Lookup table giving time-of-flight as a function of distance and time of arrival
 regions of large uncertainty masked out.
 """
 
-LookupTableVarianceThreshold = NewType("LookupTableVarianceThreshold", float)
+LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
 
 FramePeriod = NewType("FramePeriod", sc.Variable)
 """
