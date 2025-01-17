@@ -109,7 +109,8 @@ def compute_tof_lookup_table(
     min_dist, max_dist = [
         x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
     ]
-    min_dist, max_dist = min_dist - 0.5 * res, max_dist + 0.5 * res
+    pad = (1.0 + int(sc.identical(min_dist, max_dist))) * 0.5 * res
+    min_dist, max_dist = min_dist - pad, max_dist + pad
 
     dist_edges = sc.array(
         dims=["distance"],
@@ -267,7 +268,7 @@ def unwrapped_time_of_arrival(
     return UnwrappedTimeOfArrival(toa)
 
 
-def unwrapped_time_of_arrival_minus_frame_start_time(
+def unwrapped_time_of_arrival_minus_frame_pivot_time(
     toa: UnwrappedTimeOfArrival, pivot_time: PivotTimeAtDetector
 ) -> UnwrappedTimeOfArrivalMinusPivotTime:
     """
@@ -290,8 +291,8 @@ def unwrapped_time_of_arrival_minus_frame_start_time(
     )
 
 
-def time_of_arrival_minus_start_time_modulo_period(
-    toa_minus_start_time: UnwrappedTimeOfArrivalMinusPivotTime,
+def time_of_arrival_minus_pivot_time_modulo_period(
+    toa_minus_pivot_time: UnwrappedTimeOfArrivalMinusPivotTime,
     frame_period: FramePeriod,
 ) -> TimeOfArrivalMinusPivotTimeModuloPeriod:
     """
@@ -300,15 +301,15 @@ def time_of_arrival_minus_start_time_modulo_period(
 
     Parameters
     ----------
-    toa_minus_start_time:
+    toa_minus_pivot_time:
         Time of arrival of the neutron at the detector, unwrapped at the pulse period,
         minus the start time of the frame.
     frame_period:
         Period of the frame, i.e., time between the start of two consecutive frames.
     """
     return TimeOfArrivalMinusPivotTimeModuloPeriod(
-        toa_minus_start_time
-        % frame_period.to(unit=elem_unit(toa_minus_start_time), copy=False)
+        toa_minus_pivot_time
+        % frame_period.to(unit=elem_unit(toa_minus_pivot_time), copy=False)
     )
 
 
@@ -437,10 +438,10 @@ def _providers() -> tuple[Callable]:
         pivot_time_at_detector,
         pulse_period_from_source,
         time_of_arrival_folded_by_frame,
-        time_of_arrival_minus_start_time_modulo_period,
+        time_of_arrival_minus_pivot_time_modulo_period,
         time_of_flight_data,
         unwrapped_time_of_arrival,
-        unwrapped_time_of_arrival_minus_frame_start_time,
+        unwrapped_time_of_arrival_minus_frame_pivot_time,
     )
 
 
