@@ -10,8 +10,6 @@ This provides data in a structure as typically provided in a NeXus file, includi
 - Monitor event data including event_time_offset and event_time_zero
 """
 
-# from __future__ import annotations
-
 from collections.abc import Callable
 
 import numpy as np
