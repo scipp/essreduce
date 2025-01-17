@@ -126,12 +126,6 @@ def compute_tof_lookup_table(
     )
 
     # Compute time-of-flight for all neutrons
-    # wavs = sc.broadcast(simulation.wavelength, sizes=toas.sizes).flatten(to="event")
-    # wavs *= sc.constants.m_n
-    # dist = sc.broadcast(distances, sizes=toas.sizes).flatten(to="event")
-    # velocity = (sc.constants.h / wavs).to(unit="m/s")
-    # tofs = dist / velocity
-
     wavs = sc.broadcast(simulation.wavelength.to(unit="m"), sizes=toas.sizes).flatten(
         to="event"
     )
@@ -156,23 +150,11 @@ def compute_tof_lookup_table(
     mean_tof = (
         binned.bins.data * binned.bins.coords["tof"]
     ).bins.sum() / binned.bins.sum()
-    # Compute the variance of the wavelength to track regions with large uncertainty
+    # Compute the variance of the tofs to track regions with large uncertainty
     variance = (
         binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
     ).bins.sum() / binned.bins.sum()
 
-    # variance = (
-    #     binned.bins.data * (binned.bins.coords["tof"] - mean_tof) / mean_tof
-    # ).bins.sum() / binned.bins.sum()
-
-    # # Need to add the simulation distance to the distance coordinate
-    # mean_tof.coords["distance"] = mean_tof.coords["distance"] + simulation_distance
-    # h = sc.constants.h
-    # m_n = sc.constants.m_n
-    # velocity = (h / (wavelength * m_n)).to(unit="m/s")
-    # timeofflight = (sc.midpoints(wavelength.coords["distance"])) / velocity
-    # out = timeofflight.to(unit=time_unit, copy=False)
-    # Include the variances computed above
     mean_tof.variances = variance.values
 
     # Convert coordinates to midpoints
@@ -367,7 +349,7 @@ def time_of_flight_data(
             lookup.coords["toa"].to(unit=elem_unit(toas), copy=False).values,
             lookup.coords["distance"].to(unit=ltotal.unit, copy=False).values,
         ),
-        lookup.values.T,
+        lookup.data.to(unit=elem_unit(toas), copy=False).values.T,
         method="linear",
         bounds_error=False,
     )
