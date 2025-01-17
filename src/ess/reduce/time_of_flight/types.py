@@ -8,7 +8,6 @@ from typing import NewType
 import scipp as sc
 from scippneutron.chopper import DiskChopper
 
-
 Facility = NewType("Facility", str)
 """
 Facility where the experiment is performed.
