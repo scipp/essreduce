@@ -106,9 +106,9 @@ def compute_tof_lookup_table(
     # However, the 2d interpolator expects bin centers.
     # We want to give the 2d interpolator a table that covers the requested range,
     # hence we need to extend the range by half a resolution in each direction.
-    min_dist, max_dist = [
+    min_dist, max_dist = (
         x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
-    ]
+    )
     pad = (1.0 + int(sc.identical(min_dist, max_dist))) * 0.5 * res
     min_dist, max_dist = min_dist - pad, max_dist + pad
 
@@ -417,7 +417,7 @@ def default_parameters() -> dict:
     return {
         PulseStride: 1,
         PulseStrideOffset: 0,
-        DistanceResolution: sc.scalar(1.0, unit="cm"),
+        DistanceResolution: sc.scalar(0.1, unit="m"),
         TimeOfArrivalResolution: 500,
         LookupTableRelativeErrorThreshold: 1.0e-2,
         SimulationSeed: 1234,
