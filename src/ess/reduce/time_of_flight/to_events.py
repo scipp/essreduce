@@ -12,6 +12,7 @@ def to_events(
 ) -> sc.DataArray:
     """
     Convert a histogrammed data array to an event list.
+    The generated events have a uniform distribution within each bin.
     Each dimension with a bin-edge coordinate is converted to an event coordinate.
     The contract is that if we re-histogram the event list with the same bin edges,
     we should get the original counts back.

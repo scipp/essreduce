@@ -97,6 +97,22 @@ def compute_tof_lookup_table(
     distance_resolution: DistanceResolution,
     toa_resolution: TimeOfArrivalResolution,
 ) -> TimeOfFlightLookupTable:
+    """
+    Compute a lookup table for time-of-flight as a function of distance and
+    time-of-arrival.
+    Parameters
+    ----------
+    simulation:
+        Results of a time-of-flight simulation used to create a lookup table.
+        The results should be a flat table with columns for time-of-arrival, speed,
+        wavelength, and weight.
+    ltotal_range:
+        Range of total flight path lengths from the source to the detector.
+    distance_resolution:
+        Resolution of the distance axis in the lookup table.
+    toa_resolution:
+        Resolution of the time-of-arrival axis in the lookup table.
+    """
     distance_unit = "m"
     res = distance_resolution.to(unit=distance_unit)
     simulation_distance = simulation.distance.to(unit=distance_unit)
@@ -341,6 +357,22 @@ def time_of_flight_data(
     ltotal: Ltotal,
     toas: FrameFoldedTimeOfArrival,
 ) -> TofData:
+    """
+    Convert the time-of-arrival data to time-of-flight data using a lookup table.
+    The output data will have a time-of-flight coordinate.
+    Parameters
+    ----------
+    da:
+        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
+        NXevent_data.
+    lookup:
+        Lookup table giving time-of-flight as a function of distance and time of
+        arrival.
+    ltotal:
+        Total length of the flight path from the source to the detector.
+    toas:
+        Time of arrival of the neutron at the detector, folded by the frame period.
+    """
     from scipy.interpolate import RegularGridInterpolator
 
     # TODO: to make use of multi-threading, we could write our own interpolator.
