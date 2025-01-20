@@ -17,24 +17,28 @@ class SimulationResults:
     """
     Results of a time-of-flight simulation used to create a lookup table.
 
-    The results should be flat lists (1d arrays) of the properties of the neutrons in
-    the simulation.
+    The results (apart from ``distance``) should be flat lists (1d arrays) of length N
+    where N is the number of neutrons, containing the properties of the neutrons in the
+    simulation.
 
     Parameters
     ----------
     time_of_arrival:
-        Time of arrival of the neutrons at the position where the events were recorded.
-        For a ``tof`` simulation, this is just the position of the component (chopper or
-        detector) where the events are recorded. For a ``McStas`` simulation, this is
-        the position of the event monitor.
+        Time of arrival of the neutrons at the position where the events were recorded
+        (1d array of size N).
     speed:
-        Speed of the neutrons (typically derived from the wavelength of the neutrons).
+        Speed of the neutrons, typically derived from the wavelength of the neutrons
+        (1d array of size N).
     wavelength:
-        Wavelength of the neutrons.
+        Wavelength of the neutrons (1d array of size N).
     weight:
-        Weight/probability of the neutrons.
+        Weight/probability of the neutrons (1d array of size N).
     distance:
-        Distance from the source to the position where the events were recorded.
+        Distance from the source to the position where the events were recorded
+        (single value; we assume all neutrons were recorded at the same position).
+        For a ``tof`` simulation, this is just the position of the detector where the
+        events are recorded. For a ``McStas`` simulation, this is the distance between
+        the source and the event monitor.
     """
 
     time_of_arrival: sc.Variable
