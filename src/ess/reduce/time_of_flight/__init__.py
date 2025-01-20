@@ -6,8 +6,6 @@ Utilities for computing real neutron time-of-flight from chopper settings and
 neutron time-of-arrival at the detectors.
 """
 
-# import sciline as sl
-
 from .toa_to_tof import (
     default_parameters,
     re_histogram_tof_data,
@@ -29,7 +27,7 @@ from .types import (
     PulseStride,
     PulseStrideOffset,
     RawData,
-    ReHistogrammedTofData,
+    ResampledTofData,
     SimulationResults,
     SimulationSeed,
     TimeOfArrivalMinusPivotTimeModuloPeriod,
@@ -38,12 +36,6 @@ from .types import (
     UnwrappedTimeOfArrival,
     UnwrappedTimeOfArrivalMinusPivotTime,
 )
-
-
-# def TofWorkflow() -> sl.Pipeline:
-#     wf = sl.Pipeline(standard_providers(), params=params())
-#     wf[Facility] = "ess"
-#     return wf
 
 
 __all__ = [
@@ -61,7 +53,7 @@ __all__ = [
     "PulseStride",
     "PulseStrideOffset",
     "RawData",
-    "ReHistogrammedTofData",
+    "ResampledTofData",
     "SimulationResults",
     "SimulationSeed",
     "TimeOfArrivalMinusPivotTimeModuloPeriod",

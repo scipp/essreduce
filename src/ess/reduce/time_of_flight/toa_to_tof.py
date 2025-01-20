@@ -35,7 +35,7 @@ from .types import (
     PulseStride,
     PulseStrideOffset,
     RawData,
-    ReHistogrammedTofData,
+    ResampledTofData,
     SimulationResults,
     SimulationSeed,
     TimeOfArrivalMinusPivotTimeModuloPeriod,
@@ -375,7 +375,7 @@ def time_of_flight_data(
     return TofData(out)
 
 
-def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
+def resample_tof_data(da: TofData) -> ResampledTofData:
     """
     Histogrammed data that has been converted to `tof` will typically have
     unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
@@ -389,14 +389,13 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     This function is highly experimental, has limitations and should be used with
     caution. It is a workaround to the issue that rebinning data with unsorted bin
     edges is not supported in scipp.
-    We also do not support variances on the data.
     As such, this function is not part of the default set of providers, and needs to be
     inserted manually into the workflow.
 
     Parameters
     ----------
     da:
-        TofData with the time-of-flight coordinate.
+        Histogrammed data with the time-of-flight coordinate.
     """
     events = to_events(da.rename_dims(time_of_flight="tof"), "event")
 
@@ -408,7 +407,7 @@ def re_histogram_tof_data(da: TofData) -> ReHistogrammedTofData:
     for key, var in da.coords.items():
         if "time_of_flight" not in var.dims:
             rehist.coords[key] = var
-    return ReHistogrammedTofData(rehist)
+    return ResampledTofData(rehist)
 
 
 def default_parameters() -> dict:

@@ -134,7 +134,7 @@ def test_standard_unwrap_histogram_mode(dist) -> None:
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = fakes.psc_choppers
     pl[time_of_flight.LtotalRange] = distance, distance
-    tofs = pl.compute(time_of_flight.ReHistogrammedTofData)
+    tofs = pl.compute(time_of_flight.ResampledTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
     ref = ref.bins.concat().value.hist(wavelength=wavs.coords["wavelength"])
@@ -290,7 +290,7 @@ def test_pulse_skipping_unwrap_histogram_mode() -> None:
     pl[time_of_flight.Choppers] = fakes.psc_choppers
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
-    tofs = pl.compute(time_of_flight.ReHistogrammedTofData)
+    tofs = pl.compute(time_of_flight.ResampledTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
     ref = ref.bins.concat().value.hist(wavelength=wavs.coords["wavelength"])

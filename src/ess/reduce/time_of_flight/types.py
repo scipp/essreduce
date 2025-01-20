@@ -65,6 +65,11 @@ Range (min, max) of the total length of the flight path from the source to the d
 This is used to create the lookup table to compute the neutron time-of-flight.
 Note that the resulting table will extend slightly beyond this range, as the supplied
 range is not necessarily a multiple of the distance resolution.
+
+Note also that the range of total flight paths is supplied manually to the workflow
+instead of being read from the input data, as it allows us to compute the expensive part
+of the workflow in advance (the lookup table) and does not need to be repeated for each
+run, or for new data coming in in the case of live data collection.
 """
 
 DistanceResolution = NewType("DistanceResolution", sc.Variable)
@@ -150,7 +155,20 @@ TofData = NewType("TofData", sc.DataArray)
 Detector data with time-of-flight coordinate.
 """
 
-ReHistogrammedTofData = NewType("ReHistogrammedTofData", sc.DataArray)
+ResampledTofData = NewType("ResampledTofData", sc.DataArray)
 """
-Detector data with time-of-flight coordinate, re-histogrammed.
+Histogrammed detector data with time-of-flight coordinate, that has been resampled.
+
+Histogrammed data that has been converted to `tof` will typically have
+unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
+overlap between subframes).
+We thus resample the data to ensure that the bin edges are sorted.
+It makes use of the ``to_events`` helper which generates a number of events in each
+bin with a uniform distribution. The new events are then histogrammed using a set of
+sorted bin edges to yield a new histogram with sorted bin edges.
+
+WARNING:
+This function is highly experimental, has limitations and should be used with
+caution. It is a workaround to the issue that rebinning data with unsorted bin
+edges is not supported in scipp.
 """
