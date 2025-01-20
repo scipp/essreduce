@@ -40,8 +40,8 @@ class SimulationResults:
     """
     Results of a time-of-flight simulation used to create a lookup table.
 
-    The results should be flat lists of the properties of the neutrons in the
-    simulation.
+    The results should be flat lists (1d arrays) of the properties of the neutrons in
+    the simulation.
 
     Parameters
     ----------
@@ -93,7 +93,9 @@ run, or for new data coming in in the case of live data collection.
 
 DistanceResolution = NewType("DistanceResolution", sc.Variable)
 """
-Resolution of the distance axis in the lookup table.
+Step size of the distance axis in the lookup table.
+Should be a single scalar value with a unit of length.
+This is typically of the order of 1-10 cm.
 """
 
 TimeOfArrivalResolution = NewType("TimeOfArrivalResolution", int | sc.Variable)
