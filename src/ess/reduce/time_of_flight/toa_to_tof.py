@@ -461,29 +461,55 @@ class TofWorkflow:
     """
     Helper class to build a time-of-flight workflow and cache the expensive part of
     the computation: running the simulation and building the lookup table.
+
+    Parameters
+    ----------
+    simulated_neutrons:
+        Results of a time-of-flight simulation used to create a lookup table.
+        The results should be a flat table with columns for time-of-arrival, speed,
+        wavelength, and weight.
+    ltotal_range:
+        Range of total flight path lengths from the source to the detector.
+        This is used to create the lookup table to compute the neutron time-of-flight.
+        Note that the resulting table will extend slightly beyond this range, as the
+        supplied range is not necessarily a multiple of the distance resolution.
+    pulse_stride:
+        Stride of used pulses. Usually 1, but may be a small integer when
+        pulse-skipping.
+    pulse_stride_offset:
+        Integer offset of the first pulse in the stride (typically zero unless we are
+        using pulse-skipping and the events do not begin with the first pulse in the
+        stride).
+    distance_resolution:
+        Resolution of the distance axis in the lookup table.
+        Should be a single scalar value with a unit of length.
+        This is typically of the order of 1-10 cm.
+    toa_resolution:
+        Resolution of the time of arrival axis in the lookup table.
+        Can be an integer (number of bins) or a sc.Variable (bin width).
+    error_threshold:
+        Threshold for the variance of the projected time-of-flight above which regions
+        are masked.
     """
 
     def __init__(
         self,
-        choppers,
-        facility,
-        ltotal_range,
-        pulse_stride=None,
-        pulse_stride_offset=None,
-        distance_resolution=None,
-        toa_resolution=None,
-        error_threshold=None,
-        seed=None,
-        number_of_neutrons=None,
+        simulated_neutrons: SimulationResults,
+        ltotal_range: LtotalRange,
+        pulse_stride: PulseStride | None = None,
+        pulse_stride_offset: PulseStrideOffset | None = None,
+        distance_resolution: DistanceResolution | None = None,
+        toa_resolution: TimeOfArrivalResolution | None = None,
+        error_threshold: LookupTableRelativeErrorThreshold | None = None,
     ):
         import sciline as sl
 
-        self.pipeline = sl.Pipeline(standard_providers())
-        self.pipeline[Facility] = facility
-        self.pipeline[Choppers] = choppers
+        self.pipeline = sl.Pipeline(providers())
+        self.pipeline[SimulationResults] = simulated_neutrons
         self.pipeline[LtotalRange] = ltotal_range
 
         params = default_parameters()
+        self.pipeline[PulsePeriod] = params[PulsePeriod]
         self.pipeline[PulseStride] = pulse_stride or params[PulseStride]
         self.pipeline[PulseStrideOffset] = (
             pulse_stride_offset or params[PulseStrideOffset]
@@ -497,8 +523,6 @@ class TofWorkflow:
         self.pipeline[LookupTableRelativeErrorThreshold] = (
             error_threshold or params[LookupTableRelativeErrorThreshold]
         )
-        self.pipeline[SimulationSeed] = seed or params[SimulationSeed]
-        self.pipeline[NumberOfNeutrons] = number_of_neutrons or params[NumberOfNeutrons]
 
     def __getitem__(self, key):
         return self.pipeline[key]

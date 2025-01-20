@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import NewType
 
 import scipp as sc
-from scippneutron.chopper import DiskChopper
 
 Ltotal = NewType("Ltotal", sc.Variable)
 """
