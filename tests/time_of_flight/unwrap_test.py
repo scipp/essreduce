@@ -50,7 +50,7 @@ def test_unwrap_with_no_choppers() -> None:
     pl[time_of_flight.Facility] = "ess"
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = {}
-    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.LookupTableRelativeErrorThreshold] = 1.0
 
     tofs = pl.compute(time_of_flight.TofData)
@@ -87,7 +87,7 @@ def test_standard_unwrap(dist) -> None:
     pl[time_of_flight.Facility] = "ess"
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = fakes.psc_choppers
-    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    pl[time_of_flight.LtotalRange] = distance, distance
 
     tofs = pl.compute(time_of_flight.TofData)
 
@@ -133,7 +133,7 @@ def test_standard_unwrap_histogram_mode(dist) -> None:
     pl[time_of_flight.Facility] = "ess"
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = fakes.psc_choppers
-    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    pl[time_of_flight.LtotalRange] = distance, distance
     tofs = pl.compute(time_of_flight.ReHistogrammedTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
@@ -163,7 +163,7 @@ def test_pulse_skipping_unwrap() -> None:
     pl[time_of_flight.Facility] = "ess"
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = choppers
-    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
 
     tofs = pl.compute(time_of_flight.TofData)
@@ -200,7 +200,7 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
     pl[time_of_flight.Facility] = "ess"
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = choppers
-    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
 
@@ -240,7 +240,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
         1:
     ].copy()  # Skip first pulse = half of the first frame
     pl[time_of_flight.Choppers] = choppers
-    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
 
@@ -288,7 +288,7 @@ def test_pulse_skipping_unwrap_histogram_mode() -> None:
     pl[time_of_flight.Facility] = "ess"
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.Choppers] = fakes.psc_choppers
-    pl[time_of_flight.LtotalRange] = 0.9 * distance, 1.1 * distance
+    pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     tofs = pl.compute(time_of_flight.ReHistogrammedTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}

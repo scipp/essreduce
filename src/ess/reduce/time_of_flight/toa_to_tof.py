@@ -105,18 +105,19 @@ def compute_tof_lookup_table(
     # This results in data with bin edges.
     # However, the 2d interpolator expects bin centers.
     # We want to give the 2d interpolator a table that covers the requested range,
-    # hence we need to extend the range by half a resolution in each direction.
+    # hence we need to extend the range by at least half a resolution in each direction.
+    # Then, we make the choice that the resolution in distance is the quantity that
+    # should be preserved. Because the difference between min and max distance is
+    # not necessarily an integer multiple of the resolution, we need to add a pad to
+    # ensure that the last bin is not cut off. We want the upper edge to be higher than
+    # the maximum distance, hence we add 1.5 x resolution.
     min_dist, max_dist = (
         x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
     )
-    pad = (1.0 + int(sc.identical(min_dist, max_dist))) * 0.5 * res
-    min_dist, max_dist = min_dist - pad, max_dist + pad
-
+    pad = 2.0 * res
     dist_edges = sc.array(
         dims=["distance"],
-        values=np.arange(
-            min_dist.value, np.nextafter(max_dist.value, np.inf), res.value
-        ),
+        values=np.arange((min_dist - pad).value, (max_dist + pad).value, res.value),
         unit=distance_unit,
     )
     distances = sc.midpoints(dist_edges)
@@ -342,8 +343,6 @@ def time_of_flight_data(
 ) -> TofData:
     from scipy.interpolate import RegularGridInterpolator
 
-    print("DISTANCE", lookup.coords["distance"].to(unit=ltotal.unit, copy=False).values)
-
     # TODO: to make use of multi-threading, we could write our own interpolator.
     # This should be simple enough as we are making the bins linspace, so computing
     # bin indices is fast.
@@ -360,18 +359,6 @@ def time_of_flight_data(
     if da.bins is not None:
         ltotal = sc.bins_like(toas, ltotal).bins.constituents["data"]
         toas = toas.bins.constituents["data"]
-
-    print("LTOTAL", ltotal.values)
-    print("F", f.grid)
-    a = f.grid[1][0]
-    b = ltotal.values.min()
-    print(a, b, a - b)
-    a = f.grid[0][0]
-    b = toas.values.min()
-    print(a, b, a - b)
-
-    print("TOAS", toas.values)
-    print("TOAS", toas.values.min(), toas.values.max())
 
     tofs = sc.array(
         dims=toas.dims, values=f((toas.values, ltotal.values)), unit=elem_unit(toas)

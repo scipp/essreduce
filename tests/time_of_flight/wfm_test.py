@@ -179,7 +179,7 @@ def test_dream_wfm(dream_choppers, npulses, ltotal, time_offset_unit, distance_u
     workflow[time_of_flight.Facility] = "ess"
     workflow[time_of_flight.RawData] = raw_data
     workflow[time_of_flight.Choppers] = dream_choppers
-    workflow[time_of_flight.LtotalRange] = ltotal.min() * 0.99, ltotal.max()
+    workflow[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
     workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
@@ -281,11 +281,14 @@ def test_dream_wfm_with_subframe_time_overlap(
     workflow[time_of_flight.Facility] = "ess"
     workflow[time_of_flight.RawData] = raw_data
     workflow[time_of_flight.Choppers] = dream_choppers_with_frame_overlap
-    workflow[time_of_flight.LookupTableVarianceThreshold] = 1.0e-3
+    workflow[time_of_flight.LookupTableRelativeErrorThreshold] = 0.01
+    workflow[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
     workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
-    # Make sure the lookup table has a mask
-    assert len(workflow.compute(time_of_flight.MaskedTimeOfFlightLookupTable).masks) > 0
+    # Make sure some values in the lookup table have been masked (turned to NaNs)
+    original_table = workflow.compute(time_of_flight.TimeOfFlightLookupTable)
+    masked_table = workflow.compute(time_of_flight.MaskedTimeOfFlightLookupTable)
+    assert sc.isnan(masked_table).data.sum() > sc.isnan(original_table).data.sum()
 
     # Compute time-of-flight
     tofs = workflow.compute(time_of_flight.TofData)
@@ -381,6 +384,7 @@ def test_v20_compute_wavelengths_from_wfm(
     workflow[time_of_flight.Facility] = "ess"
     workflow[time_of_flight.RawData] = raw_data
     workflow[time_of_flight.Choppers] = fakes.wfm_choppers
+    workflow[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
     workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
