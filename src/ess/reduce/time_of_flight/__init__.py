@@ -8,20 +8,18 @@ neutron time-of-arrival at the detectors.
 
 from .toa_to_tof import (
     default_parameters,
-    re_histogram_tof_data,
-    standard_providers,
+    resample_tof_data,
+    providers,
     TofWorkflow,
 )
+from .simulation import simulate_beamline
 from .types import (
-    Choppers,
     DistanceResolution,
-    Facility,
     FrameFoldedTimeOfArrival,
     FramePeriod,
     LookupTableRelativeErrorThreshold,
     LtotalRange,
     MaskedTimeOfFlightLookupTable,
-    NumberOfNeutrons,
     PivotTimeAtDetector,
     PulsePeriod,
     PulseStride,
@@ -29,7 +27,6 @@ from .types import (
     RawData,
     ResampledTofData,
     SimulationResults,
-    SimulationSeed,
     TimeOfArrivalMinusPivotTimeModuloPeriod,
     TimeOfFlightLookupTable,
     TofData,
@@ -39,15 +36,12 @@ from .types import (
 
 
 __all__ = [
-    "Choppers",
     "DistanceResolution",
-    "Facility",
     "FrameFoldedTimeOfArrival",
     "FramePeriod",
     "LookupTableRelativeErrorThreshold",
     "LtotalRange",
     "MaskedTimeOfFlightLookupTable",
-    "NumberOfNeutrons",
     "PivotTimeAtDetector",
     "PulsePeriod",
     "PulseStride",
@@ -55,7 +49,6 @@ __all__ = [
     "RawData",
     "ResampledTofData",
     "SimulationResults",
-    "SimulationSeed",
     "TimeOfArrivalMinusPivotTimeModuloPeriod",
     "TimeOfFlightLookupTable",
     "TofData",
@@ -63,6 +56,7 @@ __all__ = [
     "UnwrappedTimeOfArrival",
     "UnwrappedTimeOfArrivalMinusPivotTime",
     "default_parameters",
-    "re_histogram_tof_data",
-    "standard_providers",
+    "providers",
+    "resample_tof_data",
+    "simulate_beamline",
 ]

@@ -8,30 +8,9 @@ from typing import NewType
 import scipp as sc
 from scippneutron.chopper import DiskChopper
 
-Facility = NewType("Facility", str)
-"""
-Facility where the experiment is performed.
-"""
-
-Choppers = NewType("Choppers", Mapping[str, DiskChopper])
-"""
-Choppers used to define the frame parameters.
-"""
-
 Ltotal = NewType("Ltotal", sc.Variable)
 """
 Total length of the flight path from the source to the detector.
-"""
-
-SimulationSeed = NewType("SimulationSeed", int)
-"""
-Seed for the random number generator used in the simulation.
-"""
-
-
-NumberOfNeutrons = NewType("NumberOfNeutrons", int)
-"""
-Number of neutrons to use in the simulation.
 """
 
 

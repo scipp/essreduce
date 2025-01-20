@@ -216,24 +216,28 @@ pulse_skipping = DiskChopper(
     radius=sc.scalar(30.0, unit="cm"),
 )
 
-wfm_choppers = {
-    "wfm1": wfm1_chopper,
-    "wfm2": wfm2_chopper,
-    "foc1": foc1_chopper,
-    "foc2": foc2_chopper,
-    "pol": pol_chopper,
-}
 
-psc_choppers = {
-    name: DiskChopper(
-        frequency=ch.frequency,
-        beam_position=ch.beam_position,
-        phase=ch.phase,
-        axle_position=ch.axle_position,
-        slit_begin=ch.slit_begin[0:1],
-        slit_end=ch.slit_end[0:1],
-        slit_height=ch.slit_height[0:1],
-        radius=ch.radius,
-    )
-    for name, ch in wfm_choppers.items()
-}
+def wfm_choppers():
+    return {
+        "wfm1": wfm1_chopper,
+        "wfm2": wfm2_chopper,
+        "foc1": foc1_chopper,
+        "foc2": foc2_chopper,
+        "pol": pol_chopper,
+    }
+
+
+def psc_choppers():
+    return {
+        name: DiskChopper(
+            frequency=ch.frequency,
+            beam_position=ch.beam_position,
+            phase=ch.phase,
+            axle_position=ch.axle_position,
+            slit_begin=ch.slit_begin[0:1],
+            slit_end=ch.slit_end[0:1],
+            slit_height=ch.slit_height[0:1],
+            radius=ch.radius,
+        )
+        for name, ch in wfm_choppers().items()
+    }

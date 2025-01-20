@@ -1,22 +1,36 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
+from collections.abc import Mapping
+
 import scipp as sc
+from scippneutron.chopper import DiskChopper
 
-from .types import (
-    Choppers,
-    Facility,
-    NumberOfNeutrons,
-    SimulationResults,
-    SimulationSeed,
-)
+from .types import SimulationResults
 
 
-def run_tof_simulation(
-    facility: Facility,
-    choppers: Choppers,
-    seed: SimulationSeed,
-    number_of_neutrons: NumberOfNeutrons,
+def simulate_beamline(
+    choppers: Mapping[str, DiskChopper],
+    neutrons: int = 1_000_000,
+    seed: int | None = None,
+    facility: str = 'ess',
 ) -> SimulationResults:
+    """
+    Simulate a pulse of neutrons propagating through a chopper cascade using the
+    ``tof`` package (https://tof.readthedocs.io).
+
+    Parameters
+    ----------
+    choppers:
+        A dict of DiskChopper objects representing the choppers in the beamline. See
+        https://scipp.github.io/scippneutron/user-guide/chopper/processing-nexus-choppers.html#Build-DiskChopper
+        for more information.
+    neutrons:
+        Number of neutrons to simulate.
+    seed:
+        Seed for the random number generator used in the simulation.
+    facility:
+        Facility where the experiment is performed.
+    """
     import tof
 
     tof_choppers = [
@@ -33,7 +47,7 @@ def run_tof_simulation(
         )
         for name, ch in choppers.items()
     ]
-    source = tof.Source(facility=facility, neutrons=number_of_neutrons, seed=seed)
+    source = tof.Source(facility=facility, neutrons=neutrons, seed=seed)
     if not tof_choppers:
         events = source.data.squeeze()
         return SimulationResults(

@@ -19,9 +19,7 @@ from scippneutron._utils import elem_unit
 
 from .to_events import to_events
 from .types import (
-    Choppers,
     DistanceResolution,
-    Facility,
     FastestNeutron,
     FrameFoldedTimeOfArrival,
     FramePeriod,
@@ -29,7 +27,6 @@ from .types import (
     Ltotal,
     LtotalRange,
     MaskedTimeOfFlightLookupTable,
-    NumberOfNeutrons,
     PivotTimeAtDetector,
     PulsePeriod,
     PulseStride,
@@ -37,7 +34,6 @@ from .types import (
     RawData,
     ResampledTofData,
     SimulationResults,
-    SimulationSeed,
     TimeOfArrivalMinusPivotTimeModuloPeriod,
     TimeOfArrivalResolution,
     TimeOfFlightLookupTable,
@@ -45,20 +41,6 @@ from .types import (
     UnwrappedTimeOfArrival,
     UnwrappedTimeOfArrivalMinusPivotTime,
 )
-
-
-def pulse_period_from_source(facility: Facility) -> PulsePeriod:
-    """
-    Return the period of the source pulses, i.e., time between consecutive pulse starts.
-
-    Parameters
-    ----------
-    facility:
-        Facility where the experiment is performed (used to determine the source pulse
-        parameters).
-    """
-    facilities = {"ess": sc.scalar(14.0, unit="Hz")}
-    return PulsePeriod(1.0 / facilities[facility])
 
 
 def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
@@ -447,19 +429,18 @@ def default_parameters() -> dict:
     Default parameters of the time-of-flight workflow.
     """
     return {
+        PulsePeriod: 1.0 / sc.scalar(14.0, unit="Hz"),
         PulseStride: 1,
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(0.1, unit="m"),
         TimeOfArrivalResolution: 500,
         LookupTableRelativeErrorThreshold: 0.1,
-        SimulationSeed: 1234,
-        NumberOfNeutrons: 1_000_000,
     }
 
 
-def _providers() -> tuple[Callable]:
+def providers() -> tuple[Callable]:
     """
-    Base providers of the time-of-flight workflow.
+    Providers of the time-of-flight workflow.
     """
     return (
         compute_tof_lookup_table,
@@ -468,23 +449,12 @@ def _providers() -> tuple[Callable]:
         frame_period,
         masked_tof_lookup_table,
         pivot_time_at_detector,
-        pulse_period_from_source,
         time_of_arrival_folded_by_frame,
         time_of_arrival_minus_pivot_time_modulo_period,
         time_of_flight_data,
         unwrapped_time_of_arrival,
         unwrapped_time_of_arrival_minus_frame_pivot_time,
     )
-
-
-def standard_providers() -> tuple[Callable]:
-    """
-    Standard providers of the time-of-flight workflow, using the ``tof`` library to
-    build the time-of-arrival to time-of-flight lookup table.
-    """
-    from .tof_simulation import run_tof_simulation
-
-    return (*_providers(), run_tof_simulation)
 
 
 class TofWorkflow:
