@@ -11,7 +11,6 @@ from scippneutron.conversion.graph.beamline import beamline
 from scippneutron.conversion.graph.tof import elastic
 
 from ess.reduce import time_of_flight
-from ess.reduce.nexus.types import DetectorData, SampleRun
 from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
@@ -175,15 +174,16 @@ def test_dream_wfm(dream_choppers, npulses, ltotal, time_offset_unit, distance_u
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.params()
+        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
     )
     workflow[time_of_flight.Facility] = "ess"
-    workflow[DetectorData[SampleRun]] = raw_data
+    workflow[time_of_flight.RawData] = raw_data
     workflow[time_of_flight.Choppers] = dream_choppers
+    workflow[time_of_flight.LtotalRange] = ltotal.min() * 0.99, ltotal.max()
     workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
-    tofs = workflow.compute(time_of_flight.TofData[SampleRun])
+    tofs = workflow.compute(time_of_flight.TofData)
     assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
 
     # Convert to wavelength
@@ -276,26 +276,19 @@ def test_dream_wfm_with_subframe_time_overlap(
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.params()
+        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
     )
     workflow[time_of_flight.Facility] = "ess"
-    workflow[DetectorData[SampleRun]] = raw_data
+    workflow[time_of_flight.RawData] = raw_data
     workflow[time_of_flight.Choppers] = dream_choppers_with_frame_overlap
     workflow[time_of_flight.LookupTableVarianceThreshold] = 1.0e-3
     workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
     # Make sure the lookup table has a mask
-    assert (
-        len(
-            workflow.compute(
-                time_of_flight.MaskedTimeOfFlightLookupTable[SampleRun]
-            ).masks
-        )
-        > 0
-    )
+    assert len(workflow.compute(time_of_flight.MaskedTimeOfFlightLookupTable).masks) > 0
 
     # Compute time-of-flight
-    tofs = workflow.compute(time_of_flight.TofData[SampleRun])
+    tofs = workflow.compute(time_of_flight.TofData)
     assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
 
     # Convert to wavelength
@@ -383,15 +376,15 @@ def test_v20_compute_wavelengths_from_wfm(
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.params()
+        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
     )
     workflow[time_of_flight.Facility] = "ess"
-    workflow[DetectorData[SampleRun]] = raw_data
+    workflow[time_of_flight.RawData] = raw_data
     workflow[time_of_flight.Choppers] = fakes.wfm_choppers
     workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
-    tofs = workflow.compute(time_of_flight.TofData[SampleRun])
+    tofs = workflow.compute(time_of_flight.TofData)
     assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
 
     # Convert to wavelength

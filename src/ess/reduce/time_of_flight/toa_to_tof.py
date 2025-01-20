@@ -342,6 +342,8 @@ def time_of_flight_data(
 ) -> TofData:
     from scipy.interpolate import RegularGridInterpolator
 
+    print("DISTANCE", lookup.coords["distance"].to(unit=ltotal.unit, copy=False).values)
+
     # TODO: to make use of multi-threading, we could write our own interpolator.
     # This should be simple enough as we are making the bins linspace, so computing
     # bin indices is fast.
@@ -358,6 +360,18 @@ def time_of_flight_data(
     if da.bins is not None:
         ltotal = sc.bins_like(toas, ltotal).bins.constituents["data"]
         toas = toas.bins.constituents["data"]
+
+    print("LTOTAL", ltotal.values)
+    print("F", f.grid)
+    a = f.grid[1][0]
+    b = ltotal.values.min()
+    print(a, b, a - b)
+    a = f.grid[0][0]
+    b = toas.values.min()
+    print(a, b, a - b)
+
+    print("TOAS", toas.values)
+    print("TOAS", toas.values.min(), toas.values.max())
 
     tofs = sc.array(
         dims=toas.dims, values=f((toas.values, ltotal.values)), unit=elem_unit(toas)
@@ -419,7 +433,7 @@ def default_parameters() -> dict:
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(0.1, unit="m"),
         TimeOfArrivalResolution: 500,
-        LookupTableRelativeErrorThreshold: 1.0e-2,
+        LookupTableRelativeErrorThreshold: 0.1,
         SimulationSeed: 1234,
         NumberOfNeutrons: 1_000_000,
     }
