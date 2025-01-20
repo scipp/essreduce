@@ -62,8 +62,10 @@ class FastestNeutron:
 LtotalRange = NewType("LtotalRange", tuple[sc.Variable, sc.Variable])
 """
 Range (min, max) of the total length of the flight path from the source to the detector.
+This is used to create the lookup table to compute the neutron time-of-flight.
+Note that the resulting table will extend slightly beyond this range, as the supplied
+range is not necessarily a multiple of the distance resolution.
 """
-
 
 DistanceResolution = NewType("DistanceResolution", sc.Variable)
 """
