@@ -48,7 +48,7 @@ def test_unwrap_with_no_choppers() -> None:
         time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
 
-    sim = time_of_flight.simulate_beamline(choppers={}, neutrons=300_000)
+    sim = time_of_flight.simulate_beamline(choppers={}, neutrons=300_000, seed=1234)
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
@@ -84,7 +84,9 @@ def test_standard_unwrap(dist) -> None:
     )
     mon, ref = beamline.get_monitor("detector")
 
-    sim = time_of_flight.simulate_beamline(choppers=choppers, neutrons=300_000)
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, seed=1234
+    )
 
     pl = sl.Pipeline(
         time_of_flight.providers(), params=time_of_flight.default_parameters()
@@ -132,7 +134,9 @@ def test_standard_unwrap_histogram_mode(dist) -> None:
         .rename(event_time_offset="time_of_flight")
     )
 
-    sim = time_of_flight.simulate_beamline(choppers=choppers, neutrons=300_000)
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, seed=1234
+    )
 
     pl = sl.Pipeline(
         (*time_of_flight.providers(), time_of_flight.resample_tof_data),
@@ -165,7 +169,9 @@ def test_pulse_skipping_unwrap() -> None:
     )
     mon, ref = beamline.get_monitor("detector")
 
-    sim = time_of_flight.simulate_beamline(choppers=choppers, neutrons=300_000)
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, seed=1234
+    )
 
     pl = sl.Pipeline(
         time_of_flight.providers(), params=time_of_flight.default_parameters()
@@ -204,7 +210,9 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
     )
     mon, ref = beamline.get_monitor("detector")
 
-    sim = time_of_flight.simulate_beamline(choppers=choppers, neutrons=300_000)
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, seed=1234
+    )
 
     pl = sl.Pipeline(
         time_of_flight.providers(), params=time_of_flight.default_parameters()
@@ -244,7 +252,9 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     )
     mon, ref = beamline.get_monitor("detector")
 
-    sim = time_of_flight.simulate_beamline(choppers=choppers, neutrons=300_000)
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, seed=1234
+    )
 
     pl = sl.Pipeline(
         time_of_flight.providers(), params=time_of_flight.default_parameters()
@@ -295,7 +305,9 @@ def test_pulse_skipping_unwrap_histogram_mode() -> None:
         .rename(event_time_offset="time_of_flight")
     )
 
-    sim = time_of_flight.simulate_beamline(choppers=choppers, neutrons=300_000)
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, seed=1234
+    )
 
     pl = sl.Pipeline(
         (*time_of_flight.providers(), time_of_flight.resample_tof_data),

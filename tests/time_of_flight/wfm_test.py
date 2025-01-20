@@ -16,7 +16,6 @@ from ess.reduce.time_of_flight import fakes
 sl = pytest.importorskip("sciline")
 
 
-@pytest.fixture
 def dream_choppers():
     psc1 = DiskChopper(
         frequency=sc.scalar(14.0, unit="Hz"),
@@ -92,9 +91,8 @@ def dream_choppers():
     return {"psc1": psc1, "psc2": psc2, "oc": oc, "bcc": bcc, "t0": t0}
 
 
-@pytest.fixture
-def dream_choppers_with_frame_overlap(dream_choppers):
-    out = dream_choppers.copy()
+def dream_choppers_with_frame_overlap():
+    out = dream_choppers()
     out["bcc"] = DiskChopper(
         frequency=sc.scalar(112.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
@@ -106,6 +104,13 @@ def dream_choppers_with_frame_overlap(dream_choppers):
         radius=sc.scalar(30.0, unit="cm"),
     )
     return out
+
+
+@pytest.fixture(scope="module")
+def simulation_dream_choppers():
+    return time_of_flight.simulate_beamline(
+        choppers=dream_choppers(), neutrons=100_000, seed=432
+    )
 
 
 @pytest.mark.parametrize("npulses", [1, 2])
@@ -123,7 +128,13 @@ def dream_choppers_with_frame_overlap(dream_choppers):
 )
 @pytest.mark.parametrize("time_offset_unit", ["s", "ms", "us", "ns"])
 @pytest.mark.parametrize("distance_unit", ["m", "mm"])
-def test_dream_wfm(dream_choppers, npulses, ltotal, time_offset_unit, distance_unit):
+def test_dream_wfm(
+    simulation_dream_choppers,
+    npulses,
+    ltotal,
+    time_offset_unit,
+    distance_unit,
+):
     monitors = {
         f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to="detector"))
     }
@@ -134,7 +145,7 @@ def test_dream_wfm(dream_choppers, npulses, ltotal, time_offset_unit, distance_u
     )
     birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit="ms")
     ess_beamline = fakes.FakeBeamline(
-        choppers=dream_choppers,
+        choppers=dream_choppers(),
         monitors=monitors,
         run_length=sc.scalar(1 / 14, unit="s") * npulses,
         events_per_pulse=len(wavelengths),
@@ -174,13 +185,12 @@ def test_dream_wfm(dream_choppers, npulses, ltotal, time_offset_unit, distance_u
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
+        time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
-    workflow[time_of_flight.Facility] = "ess"
+
     workflow[time_of_flight.RawData] = raw_data
-    workflow[time_of_flight.Choppers] = dream_choppers
+    workflow[time_of_flight.SimulationResults] = simulation_dream_choppers
     workflow[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
-    workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
     tofs = workflow.compute(time_of_flight.TofData)
@@ -202,6 +212,13 @@ def test_dream_wfm(dream_choppers, npulses, ltotal, time_offset_unit, distance_u
             )
 
 
+@pytest.fixture(scope="module")
+def simulation_dream_choppers_time_overlap():
+    return time_of_flight.simulate_beamline(
+        choppers=dream_choppers_with_frame_overlap(), neutrons=100_000, seed=432
+    )
+
+
 @pytest.mark.parametrize("npulses", [1, 2])
 @pytest.mark.parametrize(
     "ltotal",
@@ -218,7 +235,11 @@ def test_dream_wfm(dream_choppers, npulses, ltotal, time_offset_unit, distance_u
 @pytest.mark.parametrize("time_offset_unit", ["s", "ms", "us", "ns"])
 @pytest.mark.parametrize("distance_unit", ["m", "mm"])
 def test_dream_wfm_with_subframe_time_overlap(
-    dream_choppers_with_frame_overlap, npulses, ltotal, time_offset_unit, distance_unit
+    simulation_dream_choppers_time_overlap,
+    npulses,
+    ltotal,
+    time_offset_unit,
+    distance_unit,
 ):
     monitors = {
         f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to="detector"))
@@ -236,7 +257,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     birth_times = sc.array(dims=["event"], values=birth_times, unit="ms")
 
     ess_beamline = fakes.FakeBeamline(
-        choppers=dream_choppers_with_frame_overlap,
+        choppers=dream_choppers_with_frame_overlap(),
         monitors=monitors,
         run_length=sc.scalar(1 / 14, unit="s") * npulses,
         events_per_pulse=len(wavelengths),
@@ -276,14 +297,13 @@ def test_dream_wfm_with_subframe_time_overlap(
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
+        time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
-    workflow[time_of_flight.Facility] = "ess"
+
     workflow[time_of_flight.RawData] = raw_data
-    workflow[time_of_flight.Choppers] = dream_choppers_with_frame_overlap
+    workflow[time_of_flight.SimulationResults] = simulation_dream_choppers_time_overlap
     workflow[time_of_flight.LookupTableRelativeErrorThreshold] = 0.01
     workflow[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
-    workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
     # Make sure some values in the lookup table have been masked (turned to NaNs)
     original_table = workflow.compute(time_of_flight.TimeOfFlightLookupTable)
@@ -313,6 +333,13 @@ def test_dream_wfm_with_subframe_time_overlap(
             assert sc.isnan(computed_wavelengths[-1])
 
 
+@pytest.fixture(scope="module")
+def simulation_v20_choppers():
+    return time_of_flight.simulate_beamline(
+        choppers=fakes.wfm_choppers(), neutrons=300_000, seed=432
+    )
+
+
 @pytest.mark.parametrize("npulses", [1, 2])
 @pytest.mark.parametrize(
     "ltotal",
@@ -327,7 +354,7 @@ def test_dream_wfm_with_subframe_time_overlap(
 @pytest.mark.parametrize("time_offset_unit", ["s", "ms", "us", "ns"])
 @pytest.mark.parametrize("distance_unit", ["m", "mm"])
 def test_v20_compute_wavelengths_from_wfm(
-    npulses, ltotal, time_offset_unit, distance_unit
+    simulation_v20_choppers, npulses, ltotal, time_offset_unit, distance_unit
 ):
     monitors = {
         f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to="detector"))
@@ -339,7 +366,7 @@ def test_v20_compute_wavelengths_from_wfm(
     )
     birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit="ms")
     ess_beamline = fakes.FakeBeamline(
-        choppers=fakes.wfm_choppers,
+        choppers=fakes.wfm_choppers(),
         monitors=monitors,
         run_length=sc.scalar(1 / 14, unit="s") * npulses,
         events_per_pulse=len(wavelengths),
@@ -379,13 +406,12 @@ def test_v20_compute_wavelengths_from_wfm(
 
     # Set up the workflow
     workflow = sl.Pipeline(
-        time_of_flight.standard_providers(), params=time_of_flight.default_parameters()
+        time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
-    workflow[time_of_flight.Facility] = "ess"
+
     workflow[time_of_flight.RawData] = raw_data
-    workflow[time_of_flight.Choppers] = fakes.wfm_choppers
+    workflow[time_of_flight.SimulationResults] = simulation_v20_choppers
     workflow[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
-    workflow[time_of_flight.NumberOfNeutrons] = 100_000
 
     # Compute time-of-flight
     tofs = workflow.compute(time_of_flight.TofData)
