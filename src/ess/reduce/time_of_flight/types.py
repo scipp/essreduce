@@ -39,6 +39,25 @@ Number of neutrons to use in the simulation.
 class SimulationResults:
     """
     Results of a time-of-flight simulation used to create a lookup table.
+
+    The results should be flat lists of the properties of the neutrons in the
+    simulation.
+
+    Parameters
+    ----------
+    time_of_arrival:
+        Time of arrival of the neutrons at the position where the events were recorded.
+        For a ``tof`` simulation, this is just the position of the component (chopper or
+        detector) where the events are recorded. For a ``McStas`` simulation, this is
+        the position of the event monitor.
+    speed:
+        Speed of the neutrons (typically derived from the wavelength of the neutrons).
+    wavelength:
+        Wavelength of the neutrons.
+    weight:
+        Weight/probability of the neutrons.
+    distance:
+        Distance from the source to the position where the events were recorded.
     """
 
     time_of_arrival: sc.Variable
