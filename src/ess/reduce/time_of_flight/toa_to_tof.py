@@ -99,6 +99,9 @@ def compute_tof_lookup_table(
     res = distance_resolution.to(unit=distance_unit)
     simulation_distance = simulation.distance.to(unit=distance_unit)
 
+    min_dist, max_dist = (
+        x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
+    )
     # We need to bin the data below, to compute the weighted mean of the wavelength.
     # This results in data with bin edges.
     # However, the 2d interpolator expects bin centers.
@@ -108,10 +111,7 @@ def compute_tof_lookup_table(
     # should be preserved. Because the difference between min and max distance is
     # not necessarily an integer multiple of the resolution, we need to add a pad to
     # ensure that the last bin is not cut off. We want the upper edge to be higher than
-    # the maximum distance, hence we add 1.5 x resolution.
-    min_dist, max_dist = (
-        x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
-    )
+    # the maximum distance, hence we pad with an additional 1.5 x resolution.
     pad = 2.0 * res
     dist_edges = sc.array(
         dims=["distance"],
