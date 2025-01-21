@@ -19,6 +19,7 @@ from . import _nexus_loader as nexus
 from .types import (
     AllNeXusComponents,
     Analyzers,
+    Beamline,
     CalibratedBeamline,
     CalibratedDetector,
     CalibratedMonitor,
@@ -29,6 +30,7 @@ from .types import (
     DetectorPositionOffset,
     Filename,
     GravityVector,
+    Measurement,
     MonitorData,
     MonitorPositionOffset,
     MonitorType,
@@ -45,6 +47,7 @@ from .types import (
     Position,
     PreopenNeXusFile,
     RunType,
+    SampleRun,
     TimeInterval,
     UniqueComponent,
 )
@@ -586,6 +589,18 @@ def _add_variances(da: sc.DataArray) -> sc.DataArray:
     return out
 
 
+def load_beamline_metadata_from_nexus(file_spec: NeXusFileSpec[SampleRun]) -> Beamline:
+    """Load beamline metadata from a sample NeXus file."""
+    return nexus.load_metadata(file_spec.value, Beamline)
+
+
+def load_measurement_metadata_from_nexus(
+    file_spec: NeXusFileSpec[SampleRun],
+) -> Measurement:
+    """Load measurement metadata from a sample NeXus file."""
+    return nexus.load_metadata(file_spec.value, Measurement)
+
+
 definitions = snx.base_definitions()
 definitions["NXdetector"] = _StrippedDetector
 definitions["NXmonitor"] = _StrippedMonitor
@@ -630,6 +645,11 @@ _detector_providers = (
 _chopper_providers = (parse_disk_choppers,)
 
 _analyzer_providers = (parse_analyzers,)
+
+_metadata_providers = (
+    load_beamline_metadata_from_nexus,
+    load_measurement_metadata_from_nexus,
+)
 
 
 def LoadMonitorWorkflow() -> sciline.Pipeline:
@@ -689,6 +709,7 @@ def GenericNeXusWorkflow(
             *_detector_providers,
             *_chopper_providers,
             *_analyzer_providers,
+            *_metadata_providers,
         )
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})

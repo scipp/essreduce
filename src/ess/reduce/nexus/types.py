@@ -7,6 +7,7 @@ from typing import Any, BinaryIO, Generic, NewType, TypeVar
 import sciline
 import scipp as sc
 import scippnexus as snx
+from scippneutron import meta as scn_meta
 
 FilePath = NewType('FilePath', Path)
 """Full path to a NeXus file on disk."""
@@ -176,6 +177,9 @@ Component = TypeVar(
 )
 UniqueComponent = TypeVar('UniqueComponent', snx.NXsample, snx.NXsource)
 """Components that can be identified by their type as there will only be one."""
+
+Beamline = scn_meta.Beamline
+Measurement = scn_meta.Measurement
 
 
 class NeXusName(sciline.Scope[Component, str], str):
