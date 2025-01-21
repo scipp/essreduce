@@ -1,13 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2023 Scipp contributors (https://github.com/scipp)
-# @author Simon Heybrock
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 """
 A fake time-of-flight neutron beamline for documentation and testing.
 
-This provides data in a structure as typically provided in a NeXus file, including:
-
-- Detector event data including event_time_offset and event_time_zero
-- Monitor event data including event_time_offset and event_time_zero
+This provides detector event data in a structure as typically provided in a NeXus file,
+with event_time_offset and event_time_zero information.
 """
 
 from collections.abc import Callable
