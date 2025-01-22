@@ -378,14 +378,13 @@ def time_of_flight_data(
         dims=toas.dims, values=f((toas.values, ltotal.values)), unit=elem_unit(toas)
     )
 
-    out = da.copy(deep=False)
-    if out.bins is not None:
-        parts = out.bins.constituents
-        out.data = sc.bins(**parts)
+    if da.bins is not None:
+        parts = da.bins.constituents
         parts["data"] = tofs
-        out.bins.coords["tof"] = _bins_no_validate(**parts)
+        out = da.bins.assign_coords(tof=_bins_no_validate(**parts))
     else:
-        out.coords["tof"] = tofs
+        out = da.assign_coords(tof=tofs)
+
     return TofData(out)
 
 
