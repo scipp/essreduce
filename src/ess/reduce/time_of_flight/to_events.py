@@ -86,6 +86,10 @@ def to_events(
     val = sc.broadcast(sc.values(data) / float(events_per_bin), sizes=sizes)
     kwargs = {'dims': sizes.keys(), 'values': val.values, 'unit': data.unit}
     if data.variances is not None:
+        # Note here that all the events are correlated.
+        # If we later histogram the events with different edges than the original
+        # histogram, then neighboring bins will be correlated, and the error obtained
+        # will be too small. It is however not clear what can be done to improve this.
         kwargs['variances'] = sc.broadcast(
             sc.variances(data) / float(events_per_bin), sizes=sizes
         ).values
