@@ -34,7 +34,7 @@ comm==0.2.2
     # via
     #   ipykernel
     #   ipywidgets
-debugpy==1.8.11
+debugpy==1.8.12
     # via ipykernel
 decorator==5.1.1
     # via ipython
@@ -48,7 +48,7 @@ docutils==0.21.2
     #   sphinx
 exceptiongroup==1.2.2
     # via ipython
-executing==2.1.0
+executing==2.2.0
     # via stack-data
 fastjsonschema==2.21.1
     # via nbformat
@@ -137,7 +137,7 @@ pexpect==4.9.0
     # via ipython
 platformdirs==4.3.6
     # via jupyter-core
-prompt-toolkit==3.0.48
+prompt-toolkit==3.0.50
     # via ipython
 psutil==6.1.1
     # via ipykernel
@@ -160,7 +160,7 @@ pyzmq==26.2.0
     # via
     #   ipykernel
     #   jupyter-client
-referencing==0.35.1
+referencing==0.36.1
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -183,7 +183,7 @@ sphinx==8.1.3
     #   sphinx-autodoc-typehints
     #   sphinx-copybutton
     #   sphinx-design
-sphinx-autodoc-typehints==3.0.0
+sphinx-autodoc-typehints==3.0.1
     # via -r docs.in
 sphinx-copybutton==0.5.2
     # via -r docs.in
@@ -231,6 +231,7 @@ typing-extensions==4.12.2
     #   ipython
     #   mistune
     #   pydata-sphinx-theme
+    #   referencing
 urllib3==2.3.0
     # via requests
 wcwidth==0.2.13
