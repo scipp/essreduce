@@ -82,6 +82,7 @@ def compute_tof_lookup_table(
     """
     Compute a lookup table for time-of-flight as a function of distance and
     time-of-arrival.
+
     Parameters
     ----------
     simulation:
@@ -342,6 +343,7 @@ def time_of_flight_data(
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
     The output data will have a time-of-flight coordinate.
+
     Parameters
     ----------
     da:
