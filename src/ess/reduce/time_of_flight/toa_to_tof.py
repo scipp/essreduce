@@ -540,6 +540,6 @@ class TofWorkflow:
         return self.pipeline.visualize(*args, **kwargs)
 
     def copy(self) -> TofWorkflow:
-        out = self.__class__(choppers=None, facility=None, ltotal_range=None)
+        out = self.__class__(simulated_neutrons=None, ltotal_range=None)
         out.pipeline = self.pipeline.copy()
         return out
