@@ -459,7 +459,15 @@ def providers() -> tuple[Callable]:
     )
 
 
-class TofWorkflow:
+def tof_workflow(
+    simulated_neutrons: SimulationResults,
+    ltotal_range: LtotalRange,
+    pulse_stride: PulseStride | None = None,
+    pulse_stride_offset: PulseStrideOffset | None = None,
+    distance_resolution: DistanceResolution | None = None,
+    toa_resolution: TimeOfArrivalResolution | None = None,
+    error_threshold: LookupTableRelativeErrorThreshold | None = None,
+):
     """
     Helper class to build a time-of-flight workflow and cache the expensive part of
     the computation: running the simulation and building the lookup table.
@@ -494,58 +502,53 @@ class TofWorkflow:
         are masked.
     """
 
-    def __init__(
-        self,
-        simulated_neutrons: SimulationResults,
-        ltotal_range: LtotalRange,
-        pulse_stride: PulseStride | None = None,
-        pulse_stride_offset: PulseStrideOffset | None = None,
-        distance_resolution: DistanceResolution | None = None,
-        toa_resolution: TimeOfArrivalResolution | None = None,
-        error_threshold: LookupTableRelativeErrorThreshold | None = None,
-    ):
-        import sciline as sl
+    import sciline as sl
 
-        self.pipeline = sl.Pipeline(providers())
-        self.pipeline[SimulationResults] = simulated_neutrons
-        self.pipeline[LtotalRange] = ltotal_range
+    pipeline = sl.Pipeline(providers())
+    pipeline[SimulationResults] = simulated_neutrons
+    pipeline[LtotalRange] = ltotal_range
 
-        params = default_parameters()
-        self.pipeline[PulsePeriod] = params[PulsePeriod]
-        self.pipeline[PulseStride] = pulse_stride or params[PulseStride]
-        self.pipeline[PulseStrideOffset] = (
-            pulse_stride_offset or params[PulseStrideOffset]
-        )
-        self.pipeline[DistanceResolution] = (
-            distance_resolution or params[DistanceResolution]
-        )
-        self.pipeline[TimeOfArrivalResolution] = (
-            toa_resolution or params[TimeOfArrivalResolution]
-        )
-        self.pipeline[LookupTableRelativeErrorThreshold] = (
-            error_threshold or params[LookupTableRelativeErrorThreshold]
-        )
+    params = default_parameters()
+    pipeline[PulsePeriod] = params[PulsePeriod]
+    pipeline[PulseStride] = pulse_stride or params[PulseStride]
+    pipeline[PulseStrideOffset] = pulse_stride_offset or params[PulseStrideOffset]
+    pipeline[DistanceResolution] = distance_resolution or params[DistanceResolution]
+    pipeline[TimeOfArrivalResolution] = (
+        toa_resolution or params[TimeOfArrivalResolution]
+    )
+    pipeline[LookupTableRelativeErrorThreshold] = (
+        error_threshold or params[LookupTableRelativeErrorThreshold]
+    )
 
-    def __getitem__(self, key):
-        return self.pipeline[key]
+    return pipeline
 
-    def __setitem__(self, key, value):
-        self.pipeline[key] = value
 
-    def persist(self) -> None:
-        for t in (SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron):
-            self.pipeline[t] = self.pipeline.compute(t)
+def cache_expensive_part(pipeline: sl.Pipeline):
+    out = pipeline.copy()
+    for t in (SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron):
+        out[t] = out.compute(t)
+    return out
 
-    def compute(self, *args, **kwargs) -> Any:
-        return self.pipeline.compute(*args, **kwargs)
+    # def __getitem__(self, key):
+    #     return pipeline[key]
 
-    def visualize(self, *args, **kwargs) -> Any:
-        return self.pipeline.visualize(*args, **kwargs)
+    # def __setitem__(self, key, value):
+    #     pipeline[key] = value
 
-    def copy(self) -> TofWorkflow:
-        out = self.__class__(None, None)
-        out.pipeline = self.pipeline.copy()
-        return out
+    # def persist(self) -> None:
+    #     for t in (SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron):
+    #         pipeline[t] = pipeline.compute(t)
 
-    def insert(self, *args, **kwargs) -> None:
-        self.pipeline.insert(*args, **kwargs)
+    # def compute(self, *args, **kwargs) -> Any:
+    #     return pipeline.compute(*args, **kwargs)
+
+    # def visualize(self, *args, **kwargs) -> Any:
+    #     return pipeline.visualize(*args, **kwargs)
+
+    # def copy(self) -> TofWorkflow:
+    #     out = __class__(None, None)
+    #     out.pipeline = pipeline.copy()
+    #     return out
+
+    # def insert(self, *args, **kwargs) -> None:
+    #     pipeline.insert(*args, **kwargs)
