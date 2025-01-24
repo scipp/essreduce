@@ -589,7 +589,7 @@ def test_generic_nexus_workflow_load_beamline_metadata() -> None:
 
     assert beamline.name == 'BIFROST'
     assert beamline.facility == 'ESS'
-    assert beamline.site is None
+    assert beamline.site == 'ESS'
 
 
 def test_generic_nexus_workflow_load_measurement_metadata() -> None:
