@@ -6,6 +6,7 @@
 ---
 maxdepth: 2
 ---
+tof/index
 widget
 reduction-workflow-guidelines
 ```
