@@ -294,7 +294,7 @@ class RollingDetectorView(Detector):
             noise_replica_count = 0
         else:
             noise_replica_count = 4
-        wf = GenericNeXusWorkflow()
+        wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
         wf[RollingDetectorViewWindow] = window
         if isinstance(projection, LogicalView):
             wf[LogicalView] = projection
