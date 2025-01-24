@@ -114,7 +114,8 @@ def test_standard_unwrap(dist) -> None:
 # At 80m, event_time_offset does not wrap around (all events are within the same pulse).
 # At 85m, event_time_offset wraps around.
 @pytest.mark.parametrize("dist", [80.0, 85.0])
-def test_standard_unwrap_histogram_mode(dist) -> None:
+@pytest.mark.parametrize("dim", ["time_of_flight", "tof"])
+def test_standard_unwrap_histogram_mode(dist, dim) -> None:
     distance = sc.scalar(dist, unit="m")
     choppers = fakes.psc_choppers()
     beamline = fakes.FakeBeamline(
@@ -131,7 +132,7 @@ def test_standard_unwrap_histogram_mode(dist) -> None:
             ).to(unit="s")
         )
         .sum("pulse")
-        .rename(event_time_offset="time_of_flight")
+        .rename(event_time_offset=dim)
     )
 
     sim = time_of_flight.simulate_beamline(
