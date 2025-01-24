@@ -542,6 +542,9 @@ class TofWorkflow:
         return self.pipeline.visualize(*args, **kwargs)
 
     def copy(self) -> TofWorkflow:
-        out = self.__class__(simulated_neutrons=None, ltotal_range=None)
+        out = self.__class__(None, None)
         out.pipeline = self.pipeline.copy()
         return out
+
+    def insert(self, *args, **kwargs) -> None:
+        self.pipeline.insert(*args, **kwargs)
