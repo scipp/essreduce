@@ -7,10 +7,11 @@ neutron time-of-arrival at the detectors.
 """
 
 from .toa_to_tof import (
+    cache_results,
     default_parameters,
     resample_tof_data,
     providers,
-    TofWorkflow,
+    tof_workflow,
 )
 from .simulation import simulate_beamline
 from .types import (
@@ -54,11 +55,12 @@ __all__ = [
     "TimeOfArrivalMinusPivotTimeModuloPeriod",
     "TimeOfFlightLookupTable",
     "TofData",
-    "TofWorkflow",
     "UnwrappedTimeOfArrival",
     "UnwrappedTimeOfArrivalMinusPivotTime",
+    "cache_results",
     "default_parameters",
     "providers",
     "resample_tof_data",
     "simulate_beamline",
+    "tof_workflow",
 ]

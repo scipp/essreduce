@@ -10,12 +10,16 @@ event_time_offset coordinates to data with a time-of-flight coordinate.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 import scipp as sc
 from scipp._scipp.core import _bins_no_validate
 from scippneutron._utils import elem_unit
+
+if TYPE_CHECKING:
+    import sciline
+
 
 from .to_events import to_events
 from .types import (
@@ -467,10 +471,9 @@ def tof_workflow(
     distance_resolution: DistanceResolution | None = None,
     toa_resolution: TimeOfArrivalResolution | None = None,
     error_threshold: LookupTableRelativeErrorThreshold | None = None,
-):
+) -> sciline.Pipeline:
     """
-    Helper class to build a time-of-flight workflow and cache the expensive part of
-    the computation: running the simulation and building the lookup table.
+    Helper function to make it easy to build a time-of-flight workflow.
 
     Parameters
     ----------
@@ -523,32 +526,22 @@ def tof_workflow(
     return pipeline
 
 
-def cache_expensive_part(pipeline: sl.Pipeline):
+def cache_results(
+    pipeline: sciline.Pipeline,
+    results=(SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron),
+) -> sciline.Pipeline:
+    """
+    Cache a list of (usually expensive to compute) intermediate results of the
+    time-of-flight workflow and return a new pipeline with these results computed.
+
+    Parameters
+    ----------
+    pipeline:
+        Time-of-flight workflow pipeline.
+    results:
+        List of results to cache.
+    """
     out = pipeline.copy()
-    for t in (SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron):
+    for t in results:
         out[t] = out.compute(t)
     return out
-
-    # def __getitem__(self, key):
-    #     return pipeline[key]
-
-    # def __setitem__(self, key, value):
-    #     pipeline[key] = value
-
-    # def persist(self) -> None:
-    #     for t in (SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron):
-    #         pipeline[t] = pipeline.compute(t)
-
-    # def compute(self, *args, **kwargs) -> Any:
-    #     return pipeline.compute(*args, **kwargs)
-
-    # def visualize(self, *args, **kwargs) -> Any:
-    #     return pipeline.visualize(*args, **kwargs)
-
-    # def copy(self) -> TofWorkflow:
-    #     out = __class__(None, None)
-    #     out.pipeline = pipeline.copy()
-    #     return out
-
-    # def insert(self, *args, **kwargs) -> None:
-    #     pipeline.insert(*args, **kwargs)
