@@ -7,19 +7,12 @@ This workflow is used to convert raw detector data with event_time_zero and
 event_time_offset coordinates to data with a time-of-flight coordinate.
 """
 
-from __future__ import annotations
-
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 import numpy as np
 import scipp as sc
 from scipp._scipp.core import _bins_no_validate
 from scippneutron._utils import elem_unit
-
-if TYPE_CHECKING:
-    import sciline
-
 
 from .to_events import to_events
 from .types import (
@@ -463,85 +456,85 @@ def providers() -> tuple[Callable]:
     )
 
 
-def tof_workflow(
-    simulated_neutrons: SimulationResults,
-    ltotal_range: LtotalRange,
-    pulse_stride: PulseStride | None = None,
-    pulse_stride_offset: PulseStrideOffset | None = None,
-    distance_resolution: DistanceResolution | None = None,
-    toa_resolution: TimeOfArrivalResolution | None = None,
-    error_threshold: LookupTableRelativeErrorThreshold | None = None,
-) -> sciline.Pipeline:
-    """
-    Helper function to make it easy to build a time-of-flight workflow.
+class TofWorkflow:
+    def __init__(
+        self,
+        simulated_neutrons: SimulationResults,
+        ltotal_range: LtotalRange,
+        pulse_stride: PulseStride | None = None,
+        pulse_stride_offset: PulseStrideOffset | None = None,
+        distance_resolution: DistanceResolution | None = None,
+        toa_resolution: TimeOfArrivalResolution | None = None,
+        error_threshold: LookupTableRelativeErrorThreshold | None = None,
+    ):
+        """
+        Helper class to make it easy to build a time-of-flight workflow.
 
-    Parameters
-    ----------
-    simulated_neutrons:
-        Results of a time-of-flight simulation used to create a lookup table.
-        The results should be a flat table with columns for time-of-arrival, speed,
-        wavelength, and weight.
-    ltotal_range:
-        Range of total flight path lengths from the source to the detector.
-        This is used to create the lookup table to compute the neutron time-of-flight.
-        Note that the resulting table will extend slightly beyond this range, as the
-        supplied range is not necessarily a multiple of the distance resolution.
-    pulse_stride:
-        Stride of used pulses. Usually 1, but may be a small integer when
-        pulse-skipping.
-    pulse_stride_offset:
-        Integer offset of the first pulse in the stride (typically zero unless we are
-        using pulse-skipping and the events do not begin with the first pulse in the
-        stride).
-    distance_resolution:
-        Resolution of the distance axis in the lookup table.
-        Should be a single scalar value with a unit of length.
-        This is typically of the order of 1-10 cm.
-    toa_resolution:
-        Resolution of the time of arrival axis in the lookup table.
-        Can be an integer (number of bins) or a sc.Variable (bin width).
-    error_threshold:
-        Threshold for the variance of the projected time-of-flight above which regions
-        are masked.
-    """
+        Parameters
+        ----------
+        simulated_neutrons:
+            Results of a time-of-flight simulation used to create a lookup table.
+            The results should be a flat table with columns for time-of-arrival, speed,
+            wavelength, and weight.
+        ltotal_range:
+            Range of total flight path lengths from the source to the detector.
+            This is used to create the lookup table to compute the neutron
+            time-of-flight.
+            Note that the resulting table will extend slightly beyond this range, as the
+            supplied range is not necessarily a multiple of the distance resolution.
+        pulse_stride:
+            Stride of used pulses. Usually 1, but may be a small integer when
+            pulse-skipping.
+        pulse_stride_offset:
+            Integer offset of the first pulse in the stride (typically zero unless we
+            are using pulse-skipping and the events do not begin with the first pulse in
+            the stride).
+        distance_resolution:
+            Resolution of the distance axis in the lookup table.
+            Should be a single scalar value with a unit of length.
+            This is typically of the order of 1-10 cm.
+        toa_resolution:
+            Resolution of the time of arrival axis in the lookup table.
+            Can be an integer (number of bins) or a sc.Variable (bin width).
+        error_threshold:
+            Threshold for the variance of the projected time-of-flight above which
+            regions are masked.
+        """
 
-    import sciline as sl
+        import sciline as sl
 
-    pipeline = sl.Pipeline(providers())
-    pipeline[SimulationResults] = simulated_neutrons
-    pipeline[LtotalRange] = ltotal_range
+        self.pipeline = sl.Pipeline(providers())
+        self.pipeline[SimulationResults] = simulated_neutrons
+        self.pipeline[LtotalRange] = ltotal_range
 
-    params = default_parameters()
-    pipeline[PulsePeriod] = params[PulsePeriod]
-    pipeline[PulseStride] = pulse_stride or params[PulseStride]
-    pipeline[PulseStrideOffset] = pulse_stride_offset or params[PulseStrideOffset]
-    pipeline[DistanceResolution] = distance_resolution or params[DistanceResolution]
-    pipeline[TimeOfArrivalResolution] = (
-        toa_resolution or params[TimeOfArrivalResolution]
-    )
-    pipeline[LookupTableRelativeErrorThreshold] = (
-        error_threshold or params[LookupTableRelativeErrorThreshold]
-    )
+        params = default_parameters()
+        self.pipeline[PulsePeriod] = params[PulsePeriod]
+        self.pipeline[PulseStride] = pulse_stride or params[PulseStride]
+        self.pipeline[PulseStrideOffset] = (
+            pulse_stride_offset or params[PulseStrideOffset]
+        )
+        self.pipeline[DistanceResolution] = (
+            distance_resolution or params[DistanceResolution]
+        )
+        self.pipeline[TimeOfArrivalResolution] = (
+            toa_resolution or params[TimeOfArrivalResolution]
+        )
+        self.pipeline[LookupTableRelativeErrorThreshold] = (
+            error_threshold or params[LookupTableRelativeErrorThreshold]
+        )
 
-    return pipeline
+    def cache_results(
+        self,
+        results=(SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron),
+    ) -> None:
+        """
+        Cache a list of (usually expensive to compute) intermediate results of the
+        time-of-flight workflow and return a new pipeline with these results computed.
 
-
-def cache_results(
-    pipeline: sciline.Pipeline,
-    results=(SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron),
-) -> sciline.Pipeline:
-    """
-    Cache a list of (usually expensive to compute) intermediate results of the
-    time-of-flight workflow and return a new pipeline with these results computed.
-
-    Parameters
-    ----------
-    pipeline:
-        Time-of-flight workflow pipeline.
-    results:
-        List of results to cache.
-    """
-    out = pipeline.copy()
-    for t in results:
-        out[t] = out.compute(t)
-    return out
+        Parameters
+        ----------
+        results:
+            List of results to cache.
+        """
+        for t in results:
+            self.pipeline[t] = self.pipeline.compute(t)
