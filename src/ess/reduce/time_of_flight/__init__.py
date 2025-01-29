@@ -6,8 +6,9 @@ Utilities for computing real neutron time-of-flight from chopper settings and
 neutron time-of-arrival at the detectors.
 """
 
-from .toa_to_tof import default_parameters, resample_tof_data, providers, TofWorkflow
 from .simulation import simulate_beamline
+from .toa_to_tof import default_parameters, resample_tof_data, providers, TofWorkflow
+from .to_events import to_events
 from .types import (
     DistanceResolution,
     FrameFoldedTimeOfArrival,
@@ -56,4 +57,5 @@ __all__ = [
     "providers",
     "resample_tof_data",
     "simulate_beamline",
+    "to_events",
 ]

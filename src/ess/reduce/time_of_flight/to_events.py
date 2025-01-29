@@ -54,6 +54,8 @@ def to_events(
         nans = np.isnan(low) | np.isnan(high)
         low = np.where(nans, 0.0, low)
         high = np.where(nans, 0.0, high)
+        # Ensure low <= high
+        low, high = np.minimum(low, high), np.maximum(low, high)
 
         # In each bin, we generate a number of events with a uniform distribution.
         events = rng.uniform(
