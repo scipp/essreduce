@@ -368,8 +368,32 @@ class RollingDetectorView(Detector):
                 data += self._history['window', 0 : self._current].sum('window')
         return data
 
+    def add_events(self, data: sc.DataArray) -> None:
+        """
+        Add counts in the form of events grouped by pixel ID.
+
+        Parameters
+        ----------
+        data:
+            Events grouped by pixel ID, given by binned data.
+        """
+        counts = data.bins.size().to(dtype='int32', copy=False)
+        counts.unit = 'counts'
+        self._add_counts(counts)
+
     def add_counts(self, data: Sequence[int]) -> None:
+        """
+        Add counts in the form of a sequence of pixel IDs.
+
+        Parameters
+        ----------
+        data:
+            List of pixel IDs.
+        """
         counts = self.bincount(data)
+        self._add_counts(counts)
+
+    def _add_counts(self, counts: sc.Variable) -> None:
         if self._projection is not None:
             counts = self._projection(counts)
         self._cache -= self._history['window', self._current]
