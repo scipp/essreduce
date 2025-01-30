@@ -230,16 +230,6 @@ class RollingDetectorView(Detector):
         self._current = 0
         self._history: sc.DataArray | None = None
         self._cache: sc.DataArray | None = None
-        # Setup ROI filter for given projection
-        if isinstance(projection, Histogrammer):
-            indices = projection.input_indices()
-            self._roi_filter = roi.ROIFilter(indices)
-        else:
-            indices = sc.ones(sizes=detector_number.sizes, dtype='int32', unit=None)
-            indices = sc.cumsum(indices, mode='exclusive')
-            if isinstance(projection, LogicalView):
-                indices = projection(indices)
-            self._roi_filter = roi.ROIFilter(indices)
 
         counts = self.bincount([])
         if self._projection is not None:
@@ -251,9 +241,15 @@ class RollingDetectorView(Detector):
         )
         self._cache = self._history.sum('window')
 
-    @property
-    def roi_filter(self) -> roi.ROIFilter:
-        return self._roi_filter
+    def make_roi_filter(self) -> roi.ROIFilter:
+        if isinstance(self._projection, Histogrammer):
+            indices = self._projection.input_indices()
+        else:
+            indices = sc.ones(sizes=self.data.sizes, dtype='int32', unit=None)
+            indices = sc.cumsum(indices, mode='exclusive')
+            if isinstance(self._projection, LogicalView):
+                indices = self._projection(indices)
+        return roi.ROIFilter(indices)
 
     @staticmethod
     def from_detector_and_histogrammer(
