@@ -54,7 +54,7 @@ def to_events(
         nans = np.isnan(left) | np.isnan(right)
         left = np.where(nans, 0.0, left)
         right = np.where(nans, 0.0, right)
-        # Ensure low <= high
+        # Ensure left <= right
         left, right = np.minimum(left, right), np.maximum(left, right)
 
         # In each bin, we generate a number of events with a uniform distribution.
