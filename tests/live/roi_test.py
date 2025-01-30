@@ -156,8 +156,22 @@ def test_ROIFilter_defaults_to_empty_roi(roi_filter: roi.ROIFilter):
 
 
 def test_ROIFilter_applies_roi(roi_filter: roi.ROIFilter):
-    data = sc.linspace('detector_number', 1.0, 24.0, num=24, unit='counts')
     roi_filter.set_roi_from_intervals(sc.DataGroup(x=(1, 3), y=(2, 4)))
+    data = sc.linspace('detector_number', 1.0, 24.0, num=24, unit='counts')
+    result = roi_filter.apply(data)
+    assert sc.identical(
+        result,
+        sc.array(
+            dims=['detector_number'], values=[13.0, 15.0, 21.0, 23.0], unit='counts'
+        ),
+    )
+
+
+def test_ROIFilter_applies_roi_to_2d_data(roi_filter: roi.ROIFilter):
+    roi_filter.set_roi_from_intervals(sc.DataGroup(x=(1, 3), y=(2, 4)))
+    data = sc.linspace('detector_number', 1.0, 24.0, num=24, unit='counts').fold(
+        dim='detector_number', sizes={'x': 3, 'y': 4, 'z': 2}
+    )
     result = roi_filter.apply(data)
     assert sc.identical(
         result,

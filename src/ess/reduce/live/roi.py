@@ -75,4 +75,6 @@ class ROIFilter:
         self._roi = select_indices_in_intervals(intervals, self._indices)
 
     def apply(self, data: T) -> T:
+        if data.ndim != 1:
+            data = data.flatten(to='detector_number')
         return apply_selection(data, selection=self._roi)
