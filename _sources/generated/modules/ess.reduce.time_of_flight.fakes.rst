@@ -1,0 +1,39 @@
+ess.reduce.time\_of\_flight.fakes
+=================================
+
+.. automodule:: ess.reduce.time_of_flight.fakes
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+   
+      psc_choppers
+      wfm_choppers
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: class-template.rst
+   
+      FakeBeamline
+   
+   
+
+   
+   
+   
+
+
+
