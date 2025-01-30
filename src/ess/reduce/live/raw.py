@@ -104,6 +104,17 @@ class Histogrammer:
         coords = self._coords[self._replica_dim, self._current % self._replicas]
         return sc.DataArray(da.data, coords=coords).hist(self._edges)
 
+    def input_indices(self) -> sc.Variable:
+        """Return an array with input indices corresponding to each histogram bin."""
+        dim = 'detector_number'
+        coords = self._coords.broadcast(sizes=self._coords.sizes).flatten(to=dim)
+        ndet = sc.index(coords.sizes[dim] // self._replicas)
+        da = sc.DataArray(
+            sc.arange(dim, coords.sizes[dim], dtype='int64', unit=None) % ndet,
+            coords=coords,
+        )
+        return da.bin(self._edges).bins.data
+
 
 @dataclass
 class LogicalView:

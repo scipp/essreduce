@@ -160,3 +160,64 @@ def test_project_onto_cylinder_z() -> None:
         result['arc_length'],
         sc.array(dims=['point'], values=[radius.value * np.pi * 0.5, 0.0], unit='m'),
     )
+
+
+def make_grid_cube(
+    nx: int = 5,
+    ny: int = 5,
+    nz: int = 5,
+    center: tuple = (0.0, 0.0, 10.0),
+    size: float = 1.0,
+) -> sc.Variable:
+    """Create a grid of points in a cube centered at specified position.
+
+    Parameters
+    ----------
+    nx : int, optional
+        Number of points along x-axis, by default 5
+    ny : int, optional
+        Number of points along y-axis, by default 5
+    nz : int, optional
+        Number of points along z-axis, by default 5
+    center : tuple, optional
+        (x, y, z) coordinates of cube center, by default (0.0, 0.0, 10.0)
+    size : float, optional
+        Side length of cube in meters, by default 1.0
+
+    Returns
+    -------
+    sc.Variable
+        Scipp variable containing grid points with shape (nx * ny * nz, 3)
+
+    Examples
+    --------
+    >>> grid = make_grid_cube(nx=3, ny=3, nz=3)
+    >>> grid.shape
+    (27, 3)
+    """
+    # Create coordinate arrays
+    x = np.linspace(-size / 2, size / 2, nx) + center[0]
+    y = np.linspace(-size / 2, size / 2, ny) + center[1]
+    z = np.linspace(-size / 2, size / 2, nz) + center[2]
+
+    # Create meshgrid
+    X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
+
+    # Stack into points array
+    points = np.stack([X.flatten(), Y.flatten(), Z.flatten()]).T
+
+    return sc.vectors(dims=['point'], values=points, unit='m')
+
+
+def test_histogrammer_input_indices() -> None:
+    nx, ny, nz = 3, 3, 3
+    coords = raw.project_xy(
+        make_grid_cube(nx=nx, ny=ny, nz=nz, center=(0.0, 3.0, 10.0))
+    )
+    coords = sc.concat([coords], 'replica')
+
+    resolution = {'x': 4, 'y': 5}
+    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
+    indices = histogrammer.input_indices()
+    assert indices.bins.size().sum().value == nx * ny * nz
+    assert indices.sizes == resolution
