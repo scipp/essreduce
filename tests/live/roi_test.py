@@ -142,9 +142,9 @@ def logical_view():
 
 @pytest.fixture
 def roi_filter(logical_view: raw.LogicalView):
-    return roi.ROIFilter.from_logical_view(
-        sizes={'detector_number': 24}, logical_view=logical_view
-    )
+    indices = sc.ones(sizes={'detector_number': 24}, dtype='int32', unit=None)
+    indices = sc.cumsum(indices, mode='exclusive')
+    return roi.ROIFilter(logical_view(indices))
 
 
 def test_ROIFilter_defaults_to_empty_roi(roi_filter: roi.ROIFilter):

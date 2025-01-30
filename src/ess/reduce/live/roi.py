@@ -4,13 +4,10 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import TypeVar
 
 import numpy as np
 import scipp as sc
-
-from . import raw
 
 
 def select_indices_in_intervals(
@@ -49,6 +46,8 @@ def apply_selection(data: T, *, selection: sc.Variable) -> T:
     Apply selection to data.
     """
     indices, counts = np.unique(selection.values, return_counts=True)
+    if data.ndim != 1:
+        data = data.flatten(to='detector_number')
     scale = sc.array(dims=[data.dim], values=counts, dtype=data.dtype)
     return data[indices] * scale
 
@@ -56,25 +55,10 @@ def apply_selection(data: T, *, selection: sc.Variable) -> T:
 class ROIFilter:
     def __init__(self, indices: sc.Variable):
         self._indices = indices
-        self._roi = sc.array(dims=['index'], values=[])
-
-    @staticmethod
-    def from_histogrammer(histogrammer: raw.Histogrammer) -> ROIFilter:
-        indices = histogrammer.input_indices()
-        return ROIFilter(indices)
-
-    @staticmethod
-    def from_logical_view(
-        *, sizes: Mapping[str, int], logical_view: raw.LogicalView
-    ) -> ROIFilter:
-        indices = sc.ones(sizes=sizes, dtype='int32', unit=None)
-        indices = sc.cumsum(indices, mode='exclusive')
-        return ROIFilter(logical_view(indices))
+        self._selection = sc.array(dims=['index'], values=[])
 
     def set_roi_from_intervals(self, intervals: sc.DataGroup) -> None:
-        self._roi = select_indices_in_intervals(intervals, self._indices)
+        self._selection = select_indices_in_intervals(intervals, self._indices)
 
     def apply(self, data: T) -> T:
-        if data.ndim != 1:
-            data = data.flatten(to='detector_number')
-        return apply_selection(data, selection=self._roi)
+        return apply_selection(data, selection=self._selection)

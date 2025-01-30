@@ -40,6 +40,8 @@ from ess.reduce.nexus.types import (
 )
 from ess.reduce.nexus.workflow import GenericNeXusWorkflow
 
+from . import roi
+
 CalibratedPositionWithNoisyReplicas = NewType(
     'CalibratedPositionWithNoisyReplicas', sc.Variable
 )
@@ -228,6 +230,16 @@ class RollingDetectorView(Detector):
         self._current = 0
         self._history: sc.DataArray | None = None
         self._cache: sc.DataArray | None = None
+        # Setup ROI filter for given projection
+        if isinstance(projection, Histogrammer):
+            indices = projection.input_indices()
+            self._roi_filter = roi.ROIFilter(indices)
+        else:
+            indices = sc.ones(sizes=detector_number.sizes, dtype='int32', unit=None)
+            indices = sc.cumsum(indices, mode='exclusive')
+            if isinstance(projection, LogicalView):
+                indices = projection(indices)
+            self._roi_filter = roi.ROIFilter(indices)
 
         counts = self.bincount([])
         if self._projection is not None:
@@ -238,6 +250,10 @@ class RollingDetectorView(Detector):
             .copy()
         )
         self._cache = self._history.sum('window')
+
+    @property
+    def roi_filter(self) -> roi.ROIFilter:
+        return self._roi_filter
 
     @staticmethod
     def from_detector_and_histogrammer(
