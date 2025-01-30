@@ -173,20 +173,20 @@ def make_grid_cube(
 
     Parameters
     ----------
-    nx : int, optional
+    nx:
         Number of points along x-axis, by default 5
-    ny : int, optional
+    ny:
         Number of points along y-axis, by default 5
-    nz : int, optional
+    nz:
         Number of points along z-axis, by default 5
-    center : tuple, optional
+    center:
         (x, y, z) coordinates of cube center, by default (0.0, 0.0, 10.0)
-    size : float, optional
+    size:
         Side length of cube in meters, by default 1.0
 
     Returns
     -------
-    sc.Variable
+    :
         Scipp variable containing grid points with shape (nx * ny * nz, 3)
 
     Examples
