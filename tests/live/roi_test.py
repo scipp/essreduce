@@ -3,7 +3,7 @@
 import pytest
 import scipp as sc
 
-from ess.reduce.live import roi
+from ess.reduce.live import raw, roi
 
 
 @pytest.fixture
@@ -133,3 +133,35 @@ def test_apply_selection_fails_with_out_of_bounds_index():
     data = sc.arange('detector_number', 5, dtype='int32')
     with pytest.raises(IndexError):
         roi.apply_selection(data, selection=selection)
+
+
+@pytest.fixture
+def logical_view():
+    return raw.LogicalView(fold={'x': 3, 'y': 4, 'z': 2}, select={'z': 0})
+
+
+@pytest.fixture
+def roi_filter(logical_view: raw.LogicalView):
+    return roi.ROIFilter.from_logical_view(
+        sizes={'detector_number': 24}, logical_view=logical_view
+    )
+
+
+def test_ROIFilter_defaults_to_empty_roi(roi_filter: roi.ROIFilter):
+    data = sc.linspace('detector_number', 0.0, 1.0, num=24, unit='counts')
+    result = roi_filter.apply(data)
+    assert sc.identical(
+        result, sc.array(dims=['detector_number'], values=[], unit='counts')
+    )
+
+
+def test_ROIFilter_applies_roi(roi_filter: roi.ROIFilter):
+    data = sc.linspace('detector_number', 1.0, 24.0, num=24, unit='counts')
+    roi_filter.set_roi_from_intervals(sc.DataGroup(x=(1, 3), y=(2, 4)))
+    result = roi_filter.apply(data)
+    assert sc.identical(
+        result,
+        sc.array(
+            dims=['detector_number'], values=[13.0, 15.0, 21.0, 23.0], unit='counts'
+        ),
+    )

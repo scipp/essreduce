@@ -219,5 +219,6 @@ def test_histogrammer_input_indices() -> None:
     resolution = {'x': 4, 'y': 5}
     histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
     indices = histogrammer.input_indices()
+    assert set(indices.coords) == {'x', 'y'}
     assert indices.bins.size().sum().value == nx * ny * nz
     assert indices.sizes == resolution

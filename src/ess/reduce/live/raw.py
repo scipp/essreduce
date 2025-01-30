@@ -19,6 +19,8 @@ options:
   flatten dimensions of the data.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from math import ceil
@@ -76,7 +78,7 @@ class Histogrammer:
     @staticmethod
     def from_coords(
         coords: ProjectedCoords, resolution: DetectorViewResolution
-    ) -> 'Histogrammer':
+    ) -> Histogrammer:
         """
         Create a histogrammer from coordinates and resolution.
 
@@ -113,7 +115,7 @@ class Histogrammer:
             sc.arange(dim, coords.sizes[dim], dtype='int64', unit=None) % ndet,
             coords=coords,
         )
-        return da.bin(self._edges).bins.data
+        return sc.DataArray(da.bin(self._edges).bins.data, coords=self._edges)
 
 
 @dataclass
@@ -242,7 +244,7 @@ class RollingDetectorView(Detector):
         detector: CalibratedDetector[SampleRun],
         window: RollingDetectorViewWindow,
         projection: Histogrammer,
-    ) -> 'RollingDetectorView':
+    ) -> RollingDetectorView:
         """Helper for constructing via a Sciline workflow."""
         return RollingDetectorView(
             detector_number=detector.coords['detector_number'],
@@ -255,7 +257,7 @@ class RollingDetectorView(Detector):
         detector: CalibratedDetector[SampleRun],
         window: RollingDetectorViewWindow,
         projection: LogicalView,
-    ) -> 'RollingDetectorView':
+    ) -> RollingDetectorView:
         """Helper for constructing via a Sciline workflow."""
         return RollingDetectorView(
             detector_number=detector.coords['detector_number'],
@@ -272,7 +274,7 @@ class RollingDetectorView(Detector):
         projection: Literal['xy_plane', 'cylinder_mantle_z'] | LogicalView,
         resolution: dict[str, int] | None = None,
         pixel_noise: Literal['cylindrical'] | sc.Variable | None = None,
-    ) -> 'RollingDetectorView':
+    ) -> RollingDetectorView:
         """
         Create a rolling detector view from a NeXus file using GenericNeXusWorkflow.
 
