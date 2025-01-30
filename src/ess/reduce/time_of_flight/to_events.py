@@ -45,19 +45,21 @@ def to_events(
     edge_sizes = {dim: da.sizes[dim] for dim in edge_dims}
     for dim in edge_dims:
         coord = da.coords[dim]
-        low = sc.broadcast(coord[dim, :-1], sizes=edge_sizes).values
-        high = sc.broadcast(coord[dim, 1:], sizes=edge_sizes).values
+        left = sc.broadcast(coord[dim, :-1], sizes=edge_sizes).values
+        right = sc.broadcast(coord[dim, 1:], sizes=edge_sizes).values
 
         # The numpy.random.uniform function below does not support NaNs, so we need to
         # replace them with zeros, and then replace them back after the random numbers
         # have been generated.
-        nans = np.isnan(low) | np.isnan(high)
-        low = np.where(nans, 0.0, low)
-        high = np.where(nans, 0.0, high)
+        nans = np.isnan(left) | np.isnan(right)
+        left = np.where(nans, 0.0, left)
+        right = np.where(nans, 0.0, right)
+        # Ensure left <= right
+        left, right = np.minimum(left, right), np.maximum(left, right)
 
         # In each bin, we generate a number of events with a uniform distribution.
         events = rng.uniform(
-            low, high, size=(events_per_bin, *list(edge_sizes.values()))
+            left, right, size=(events_per_bin, *list(edge_sizes.values()))
         )
         events[..., nans] = np.nan
         event_coords[dim] = sc.array(
@@ -77,20 +79,20 @@ def to_events(
     data = da.data
     if event_masks:
         inv_mask = (~reduce(lambda a, b: a | b, event_masks.values())).to(dtype=int)
-        inv_mask.unit = ''
+        inv_mask.unit = ""
         data = data * inv_mask
 
     # Create the data counts, which are the original counts divided by the number of
     # events per bin
     sizes = {event_dim: events_per_bin} | da.sizes
     val = sc.broadcast(sc.values(data) / float(events_per_bin), sizes=sizes)
-    kwargs = {'dims': sizes.keys(), 'values': val.values, 'unit': data.unit}
+    kwargs = {"dims": sizes.keys(), "values": val.values, "unit": data.unit}
     if data.variances is not None:
         # Note here that all the events are correlated.
         # If we later histogram the events with different edges than the original
         # histogram, then neighboring bins will be correlated, and the error obtained
         # will be too small. It is however not clear what can be done to improve this.
-        kwargs['variances'] = sc.broadcast(
+        kwargs["variances"] = sc.broadcast(
             sc.variances(data) / float(events_per_bin), sizes=sizes
         ).values
     new_data = sc.array(**kwargs)

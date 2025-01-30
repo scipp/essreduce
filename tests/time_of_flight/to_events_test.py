@@ -109,3 +109,18 @@ def test_to_events_two_masks():
     assert "m1" not in result.masks
     assert sc.identical(hist.masks["m2"], result.masks["m2"])
     assert result["x", 2:4].data.sum() == sc.scalar(0.0, unit=table.unit)
+
+
+def test_to_events_1d_unsorted_bin_edges():
+    table = sc.data.table_xyz(1000)
+    hist = table.hist(x=10)
+    hist.coords["x"].values = hist.coords["x"].values[
+        [0, 1, 2, 3, 5, 4, 6, 7, 8, 9, 10]
+    ]
+    events = to_events(hist, "event")
+    assert "x" not in events.dims
+    result = events.hist(x=sc.sort(hist.coords["x"], "x"))
+    assert sc.allclose(hist.data[:3], result.data[:3])
+    assert sc.allclose(hist.data[6:], result.data[6:])
+    # The data in the middle gets re-ordered, but the sum should still be the same
+    assert sc.isclose(hist.data[3:6].sum(), result.data[3:6].sum())
