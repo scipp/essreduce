@@ -53,12 +53,28 @@ def apply_selection(data: T, *, selection: sc.Variable) -> T:
 
 
 class ROIFilter:
+    """Filter for selecting a region of interest (ROI)."""
+
     def __init__(self, indices: sc.Variable):
+        """
+        Create a new ROI filter.
+
+        Parameters
+        ----------
+        indices:
+            Variable with indices to filter. The indices facilitate selecting a 2-D
+            ROI in a projection of a 3-D dataset. Typically the indices are given by a
+            2-D array. Each element in the array may correspond to a single index (when
+            there is no projection) or a list of indices that were projected into an
+            output pixel.
+        """
         self._indices = indices
         self._selection = sc.array(dims=['index'], values=[])
 
     def set_roi_from_intervals(self, intervals: sc.DataGroup) -> None:
+        """Set the ROI from (typically 1 or 2) intervals."""
         self._selection = select_indices_in_intervals(intervals, self._indices)
 
     def apply(self, data: T) -> T:
+        """Apply the ROI filter to data."""
         return apply_selection(data, selection=self._selection)
