@@ -110,7 +110,8 @@ class Histogrammer:
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         self._current += 1
         coords = self._coords[self._replica_dim, self._current % self._replicas]
-        return sc.DataArray(da.data, coords=coords).hist(self._edges)
+        # If input is multi-dim we need to flatten since those dims cannot be preserved.
+        return sc.DataArray(da.data, coords=coords).flatten(to='_').hist(self._edges)
 
     def input_indices(self) -> sc.DataArray:
         """Return an array with input indices corresponding to each histogram bin."""
@@ -247,6 +248,7 @@ class RollingDetectorView(Detector):
         self._cache = self._history.sum('window')
 
     def make_roi_filter(self) -> roi.ROIFilter:
+        """Return a ROI filter operating via the projection plane of the view."""
         norm = 1.0
         if isinstance(self._projection, Histogrammer):
             indices = self._projection.input_indices()
