@@ -41,21 +41,31 @@ def select_indices_in_intervals(
 T = TypeVar('T', sc.DataArray, sc.Variable)
 
 
-def apply_selection(data: T, *, selection: sc.Variable) -> T:
+def apply_selection(data: T, *, selection: sc.Variable, norm: float = 1.0) -> T:
     """
     Apply selection to data.
+
+    Parameters
+    ----------
+    data:
+        Data to filter.
+    selection:
+        Variable with indices to select.
+    norm:
+        Normalization factor to apply to the selected data. This is used for cases where
+        indices may be selected multiple times.
     """
     indices, counts = np.unique(selection.values, return_counts=True)
     if data.ndim != 1:
         data = data.flatten(to='detector_number')
-    scale = sc.array(dims=[data.dim], values=counts, dtype=data.dtype)
+    scale = (sc.array(dims=[data.dim], values=counts) / norm).to(dtype='float32')
     return data[indices] * scale
 
 
 class ROIFilter:
     """Filter for selecting a region of interest (ROI)."""
 
-    def __init__(self, indices: sc.Variable):
+    def __init__(self, indices: sc.Variable | sc.DataArray, norm: float = 1.0) -> None:
         """
         Create a new ROI filter.
 
@@ -70,6 +80,7 @@ class ROIFilter:
         """
         self._indices = indices
         self._selection = sc.array(dims=['index'], values=[])
+        self._norm = norm
 
     def set_roi_from_intervals(self, intervals: sc.DataGroup) -> None:
         """Set the ROI from (typically 1 or 2) intervals."""
@@ -77,4 +88,4 @@ class ROIFilter:
 
     def apply(self, data: T) -> T:
         """Apply the ROI filter to data."""
-        return apply_selection(data, selection=self._selection)
+        return apply_selection(data, selection=self._selection, norm=self._norm)

@@ -77,6 +77,10 @@ class Histogrammer:
         self._coords = coords
         self._edges = edges
 
+    @property
+    def replicas(self) -> int:
+        return self._replicas
+
     @staticmethod
     def from_coords(
         coords: ProjectedCoords, resolution: DetectorViewResolution
@@ -108,7 +112,7 @@ class Histogrammer:
         coords = self._coords[self._replica_dim, self._current % self._replicas]
         return sc.DataArray(da.data, coords=coords).hist(self._edges)
 
-    def input_indices(self) -> sc.Variable:
+    def input_indices(self) -> sc.DataArray:
         """Return an array with input indices corresponding to each histogram bin."""
         dim = 'detector_number'
         coords = self._coords.broadcast(sizes=self._coords.sizes).flatten(to=dim)
@@ -242,14 +246,16 @@ class RollingDetectorView(Detector):
         self._cache = self._history.sum('window')
 
     def make_roi_filter(self) -> roi.ROIFilter:
+        norm = 1.0
         if isinstance(self._projection, Histogrammer):
             indices = self._projection.input_indices()
+            norm = self._projection.replicas
         else:
             indices = sc.ones(sizes=self.data.sizes, dtype='int32', unit=None)
             indices = sc.cumsum(indices, mode='exclusive')
             if isinstance(self._projection, LogicalView):
                 indices = self._projection(indices)
-        return roi.ROIFilter(indices)
+        return roi.ROIFilter(indices=indices, norm=norm)
 
     @staticmethod
     def from_detector_and_histogrammer(
