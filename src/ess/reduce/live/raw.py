@@ -170,6 +170,7 @@ class Detector:
             sc.zeros(sizes=detector_number.sizes, unit='counts', dtype='int32'),
             coords={'detector_number': detector_number},
         )
+        self._detector_number = detector_number
         self._flat_detector_number = detector_number.flatten(to='event_id')
         self._start = int(self._flat_detector_number[0].value)
         self._stop = int(self._flat_detector_number[-1].value)
@@ -178,6 +179,10 @@ class Detector:
             raise ValueError("Detector numbers must be sorted.")
         if self._stop - self._start + 1 != self._size:
             raise ValueError("Detector numbers must be consecutive.")
+
+    @property
+    def detector_number(self) -> sc.Variable:
+        return self._detector_number
 
     @property
     def data(self) -> sc.DataArray:
