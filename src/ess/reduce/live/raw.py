@@ -115,7 +115,8 @@ class Histogrammer:
     def input_indices(self) -> sc.DataArray:
         """Return an array with input indices corresponding to each histogram bin."""
         dim = 'detector_number'
-        coords = self._coords.broadcast(sizes=self._coords.sizes).flatten(to=dim)
+        # For some projections one of the coords is a scalar, convert to flat table.
+        coords = self._coords.broadcast(sizes=self._coords.sizes).flatten(to=dim).copy()
         ndet = sc.index(coords.sizes[dim] // self._replicas)
         da = sc.DataArray(
             sc.arange(dim, coords.sizes[dim], dtype='int64', unit=None) % ndet,

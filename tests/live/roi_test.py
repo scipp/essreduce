@@ -57,41 +57,27 @@ def test_select_indices_fails_without_required_coords():
 def test_apply_selection_empty_yields_empty_result():
     selection = sc.array(dims=['index'], values=[], unit=None, dtype='int32')
     data = sc.arange('detector_number', 12, dtype='int32')
-    result = roi.apply_selection(data, selection=selection)
+    result, _ = roi.apply_selection(data, selection=selection)
     assert sc.identical(
-        result, sc.array(dims=['detector_number'], values=[], dtype='float32')
+        result, sc.array(dims=['detector_number'], values=[], dtype='int32')
     )
 
 
 def test_apply_selection_single_value():
     selection = sc.array(dims=['index'], values=[3], unit=None, dtype='int32')
     data = sc.arange('detector_number', 5, dtype='int32')
-    result = roi.apply_selection(data, selection=selection)
+    result, _ = roi.apply_selection(data, selection=selection)
     assert sc.identical(
-        result, sc.array(dims=['detector_number'], values=[3], dtype='float32')
+        result, sc.array(dims=['detector_number'], values=[3], dtype='int32')
     )
 
 
 def test_apply_selection_repeated_indices():
     selection = sc.array(dims=['index'], values=[1, 1, 2, 1], unit=None, dtype='int32')
-    data = sc.arange('detector_number', 5, dtype='int32')
-    result = roi.apply_selection(data, selection=selection)
-    assert sc.identical(
-        result,
-        sc.array(dims=['detector_number'], values=[1, 2], dtype='float32')
-        * sc.array(dims=['detector_number'], values=[3, 1], dtype='int32'),
-    )
-
-
-@pytest.mark.parametrize('norm', [2, 3])
-def test_apply_selection_repeated_indices_with_norm(norm):
-    selection = sc.array(dims=['index'], values=[1, 1, 2, 1], unit=None, dtype='int32')
-    data = sc.arange('detector_number', 5, dtype='int32')
-    result = roi.apply_selection(data, selection=selection, norm=norm)
-    assert sc.identical(
-        result,
-        sc.array(dims=[data.dim], values=[1 * 3 / norm, 2 * 1 / norm], dtype='float32'),
-    )
+    data = sc.arange('detector_number', 5)
+    result, scale = roi.apply_selection(data, selection=selection)
+    assert sc.identical(result, sc.array(dims=['detector_number'], values=[1, 2]))
+    assert sc.identical(scale, sc.array(dims=['detector_number'], values=[3.0, 1]))
 
 
 def test_apply_selection_with_data_array():
@@ -100,7 +86,7 @@ def test_apply_selection_with_data_array():
         data=sc.arange('detector_number', 3, dtype='float64'),
         coords={'pos': sc.arange('detector_number', 3, unit='m', dtype='float64')},
     )
-    result = roi.apply_selection(data, selection=selection)
+    result, _ = roi.apply_selection(data, selection=selection)
     expected = sc.DataArray(
         data=sc.array(dims=['detector_number'], values=[0.0, 2.0], dtype='float64')
         * sc.array(dims=['detector_number'], values=[2, 1], dtype='float64'),
@@ -112,30 +98,26 @@ def test_apply_selection_with_data_array():
 def test_apply_selection_with_units():
     selection = sc.array(dims=['index'], values=[1, 1, 1], unit=None, dtype='int32')
     data = sc.arange('detector_number', 3, unit='K', dtype='float64')
-    result = roi.apply_selection(data, selection=selection)
-    expected = sc.array(dims=['detector_number'], values=[1.0], unit='K') * sc.array(
-        dims=['detector_number'], values=[3.0], dtype='float64'
+    result, _ = roi.apply_selection(data, selection=selection)
+    assert sc.identical(
+        result, sc.array(dims=['detector_number'], values=[1.0], unit='K')
     )
-    assert sc.identical(result, expected)
 
 
 def test_apply_selection_non_contiguous_indices():
     selection = sc.array(dims=['index'], values=[0, 4, 4, 8], unit=None, dtype='int32')
-    data = sc.arange('detector_number', 10, dtype='int32')
-    result = roi.apply_selection(data, selection=selection)
-    assert sc.identical(
-        result,
-        sc.array(dims=['detector_number'], values=[0, 4, 8], dtype='float32')
-        * sc.array(dims=['detector_number'], values=[1, 2, 1], dtype='int32'),
-    )
+    data = sc.arange('detector_number', 10)
+    result, scale = roi.apply_selection(data, selection=selection)
+    assert sc.identical(result, sc.array(dims=['detector_number'], values=[0, 4, 8]))
+    assert sc.identical(scale, sc.array(dims=['detector_number'], values=[1.0, 2, 1]))
 
 
 def test_apply_selection_ignores_selection_dim():
     selection = sc.array(dims=['ignored'], values=[1, 2], dtype='int32')
     data = sc.arange('detector_number', 5, dtype='int32')
-    result = roi.apply_selection(data, selection=selection)
+    result, _ = roi.apply_selection(data, selection=selection)
     assert sc.identical(
-        result, sc.array(dims=['detector_number'], values=[1, 2], dtype='float32')
+        result, sc.array(dims=['detector_number'], values=[1, 2], dtype='int32')
     )
 
 
@@ -160,7 +142,7 @@ def roi_filter(logical_view: raw.LogicalView):
 
 def test_ROIFilter_defaults_to_empty_roi(roi_filter: roi.ROIFilter):
     data = sc.linspace('detector_number', 0.0, 1.0, num=24, unit='counts')
-    result = roi_filter.apply(data)
+    result, _ = roi_filter.apply(data)
     assert sc.identical(
         result, sc.array(dims=['detector_number'], values=[], unit='counts')
     )
@@ -169,7 +151,7 @@ def test_ROIFilter_defaults_to_empty_roi(roi_filter: roi.ROIFilter):
 def test_ROIFilter_applies_roi(roi_filter: roi.ROIFilter):
     roi_filter.set_roi_from_intervals(sc.DataGroup(x=(1, 3), y=(2, 4)))
     data = sc.linspace('detector_number', 1.0, 24.0, num=24, unit='counts')
-    result = roi_filter.apply(data)
+    result, _ = roi_filter.apply(data)
     assert sc.identical(
         result,
         sc.array(
@@ -183,7 +165,7 @@ def test_ROIFilter_applies_roi_to_2d_data(roi_filter: roi.ROIFilter):
     data = sc.linspace('detector_number', 1.0, 24.0, num=24, unit='counts').fold(
         dim='detector_number', sizes={'x': 3, 'y': 4, 'z': 2}
     )
-    result = roi_filter.apply(data)
+    result, _ = roi_filter.apply(data)
     assert sc.identical(
         result,
         sc.array(

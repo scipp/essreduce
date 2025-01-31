@@ -41,7 +41,9 @@ def select_indices_in_intervals(
 T = TypeVar('T', sc.DataArray, sc.Variable)
 
 
-def apply_selection(data: T, *, selection: sc.Variable, norm: float = 1.0) -> T:
+def apply_selection(
+    data: T, *, selection: sc.Variable, norm: float = 1.0
+) -> tuple[T, sc.Variable]:
     """
     Apply selection to data.
 
@@ -54,12 +56,17 @@ def apply_selection(data: T, *, selection: sc.Variable, norm: float = 1.0) -> T:
     norm:
         Normalization factor to apply to the selected data. This is used for cases where
         indices may be selected multiple times.
+
+    Returns
+    -------
+    :
+        Filtered data and scale factor.
     """
     indices, counts = np.unique(selection.values, return_counts=True)
     if data.ndim != 1:
         data = data.flatten(to='detector_number')
-    scale = (sc.array(dims=[data.dim], values=counts) / norm).to(dtype='float32')
-    return data[indices] * scale
+    scale = sc.array(dims=[data.dim], values=counts) / norm
+    return data[indices], scale
 
 
 class ROIFilter:
@@ -86,6 +93,22 @@ class ROIFilter:
         """Set the ROI from (typically 1 or 2) intervals."""
         self._selection = select_indices_in_intervals(intervals, self._indices)
 
-    def apply(self, data: T) -> T:
-        """Apply the ROI filter to data."""
+    def apply(self, data: T) -> tuple[T, sc.Variable]:
+        """
+        Apply the ROI filter to data.
+
+        The returned scale factor can be used to handle filtering via a projection, to
+        take into account that fractions of source data point contribute to a data point
+        in the projection.
+
+        Parameters
+        ----------
+        data:
+            Data to filter.
+
+        Returns
+        -------
+        :
+            Filtered data and scale factor.
+        """
         return apply_selection(data, selection=self._selection, norm=self._norm)
