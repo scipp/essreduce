@@ -75,6 +75,8 @@ def compute_tof_lookup_table(
     ltotal_range: LtotalRange,
     distance_resolution: DistanceResolution,
     toa_resolution: TimeOfArrivalResolution,
+    pulse_period: PulsePeriod,
+    pulse_stride: PulseStride,
 ) -> TimeOfFlightLookupTable:
     """
     Compute a lookup table for time-of-flight as a function of distance and
@@ -134,16 +136,27 @@ def compute_tof_lookup_table(
     tofs *= wavs
     tofs /= sc.constants.h
 
+    toas = toas.flatten(to="event")
+    pulse_period = pulse_period.to(unit=time_unit)
+
     data = sc.DataArray(
         data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
         coords={
-            "toa": toas.flatten(to="event"),
+            "toa": toas,
             "tof": tofs.to(unit=time_unit, copy=False),
             "distance": dist,
+            'event_time_offset': toas % pulse_period,
         },
     )
 
-    binned = data.bin(distance=dist_edges + simulation_distance, toa=toa_resolution)
+    binned = data.bin(
+        toa=sc.arange('toa', pulse_stride + 2)
+        * pulse_period.rename_dims(toa='pulse').drop_coords('toa')
+    )
+    # Merge the first and last bins because the last bin is a spill-over bin
+    binned['pulse', 0].bins.concatenate(binned['pulse', -1], out=binned['pulse', 0])
+    binned = binned['pulse', :-1]
+
     # Weighted mean of tof inside each bin
     mean_tof = (
         binned.bins.data * binned.bins.coords["tof"]
