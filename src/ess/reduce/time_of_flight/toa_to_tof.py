@@ -173,7 +173,7 @@ def compute_tof_lookup_table(
             binned['pulse', 1:-1],
         ],
         'pulse',
-    ).squeeze()
+    )  # .squeeze()
 
     # Weighted mean of tof inside each bin
     mean_tof = (
@@ -224,6 +224,9 @@ def time_of_flight_data(
     da: RawData,
     lookup: MaskedTimeOfFlightLookupTable,
     ltotal: Ltotal,
+    pulse_period: PulsePeriod,
+    # frame_period: FramePeriod,
+    pulse_stride: PulseStride,
 ) -> TofData:
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
@@ -247,17 +250,33 @@ def time_of_flight_data(
     etos = da.bins.coords["event_time_offset"]
     eto_unit = elem_unit(etos)
 
-    # TODO: Need to take into account pulse-skipping
+    frame_period = (pulse_period * pulse_stride).to(unit=eto_unit)
+
+    # Compute a pulse index for every event: it is the index of the pulse within a
+    # frame period. When there is no pulse skipping, those are all zero. When there is
+    # pulse skipping, the index ranges from zero to pulse_stride - 1.
+    etz = da.bins.concat().value.coords['event_time_zero']
+    tmin = etz.min()
+    # pulse_period = (1.0 / sc.scalar(14., unit='Hz')).to(unit='us')
+    # pulse_stride = 2
+    # frame_period = pulse_period * pulse_stride
+    pulse_period = pulse_period.to(unit=eto_unit)
+    pulse_index = (
+        ((da.bins.coords['event_time_zero'] - tmin) + 0.5 * pulse_period)
+        % frame_period.to(unit=eto_unit)
+    ) // pulse_period
+    # pulse_index
 
     # TODO: to make use of multi-threading, we could write our own interpolator.
     # This should be simple enough as we are making the bins linspace, so computing
     # bin indices is fast.
     f = RegularGridInterpolator(
         (
-            lookup.coords["event_time_offset"].to(unit=eto_unit, copy=False).values,
+            np.arange(float(pulse_stride)),
             lookup.coords["distance"].to(unit=ltotal.unit, copy=False).values,
+            lookup.coords["event_time_offset"].to(unit=eto_unit, copy=False).values,
         ),
-        lookup.data.to(unit=eto_unit, copy=False).values.T,
+        lookup.data.to(unit=eto_unit, copy=False).values,  # .T,
         method="linear",
         bounds_error=False,
     )
@@ -265,9 +284,12 @@ def time_of_flight_data(
     if da.bins is not None:
         ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
         etos = etos.bins.constituents["data"]
+        pulse_index = pulse_index.bins.constituents["data"]
 
     tofs = sc.array(
-        dims=etos.dims, values=f((etos.values, ltotal.values)), unit=eto_unit
+        dims=etos.dims,
+        values=f((pulse_index.values, ltotal.values, etos.values)),
+        unit=eto_unit,
     )
 
     if da.bins is not None:
@@ -337,7 +359,7 @@ def providers() -> tuple[Callable]:
     return (
         compute_tof_lookup_table,
         extract_ltotal,
-        frame_period,
+        # frame_period,
         masked_tof_lookup_table,
         time_of_flight_data,
     )

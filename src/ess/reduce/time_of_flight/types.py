@@ -89,10 +89,10 @@ regions of large uncertainty masked out.
 
 LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
 
-# FramePeriod = NewType("FramePeriod", sc.Variable)
-# """
-# The period of a frame, a (small) integer multiple of the source period.
-# """
+FramePeriod = NewType("FramePeriod", sc.Variable)
+"""
+The period of a frame, a (small) integer multiple of the source period.
+"""
 
 # UnwrappedTimeOfArrival = NewType("UnwrappedTimeOfArrival", sc.Variable)
 # """
