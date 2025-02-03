@@ -27,6 +27,20 @@ def test_Detector_bincount_drops_out_of_range_ids() -> None:
     )
 
 
+def test_Detector_bincount_raises_if_detector_number_not_sorted() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 3, 2], unit=None)
+    det = raw.Detector(detector_number)
+    with pytest.raises(ValueError, match="sorted"):
+        det.bincount([1])
+
+
+def test_Detector_bincount_raises_if_detector_number_not_consecutive() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 4], unit=None)
+    det = raw.Detector(detector_number)
+    with pytest.raises(ValueError, match="consecutive"):
+        det.bincount([1])
+
+
 def test_RollingDetectorView_full_window() -> None:
     detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
     det = raw.RollingDetectorView(detector_number=detector_number, window=2)
@@ -41,6 +55,26 @@ def test_RollingDetectorView_full_window() -> None:
     assert det.get().sum().value == 5
     det.add_counts([])
     assert det.get().sum().value == 2
+
+
+def test_RollingDetectorView_add_events_accepts_unsorted_detector_number() -> None:
+    detector_number = sc.array(dims=['detector_number'], values=[1, 3, 2], unit=None)
+    det = raw.RollingDetectorView(detector_number=detector_number, window=2)
+    pixel = sc.array(dims=['event'], values=[1, 2, 3, 2], unit=None)
+    events = sc.DataArray(sc.ones_like(pixel), coords={'detector_number': pixel})
+    det.add_events(events.group(detector_number))
+    assert det.get().sum().value == 4
+
+
+def test_RollingDetectorView_add_events_accepts_non_consecutive_detector_number() -> (
+    None
+):
+    detector_number = sc.array(dims=['detector_number'], values=[1, 2, 4], unit=None)
+    det = raw.RollingDetectorView(detector_number=detector_number, window=2)
+    pixel = sc.array(dims=['event'], values=[1, 2, 4, 2], unit=None)
+    events = sc.DataArray(sc.ones_like(pixel), coords={'detector_number': pixel})
+    det.add_events(events.group(detector_number))
+    assert det.get().sum().value == 4
 
 
 def test_RollingDetectorView_partial_window() -> None:

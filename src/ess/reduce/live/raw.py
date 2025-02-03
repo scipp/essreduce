@@ -175,10 +175,8 @@ class Detector:
         self._start = int(self._flat_detector_number[0].value)
         self._stop = int(self._flat_detector_number[-1].value)
         self._size = int(self._flat_detector_number.size)
-        if not sc.issorted(self._flat_detector_number, dim='event_id'):
-            raise ValueError("Detector numbers must be sorted.")
-        if self._stop - self._start + 1 != self._size:
-            raise ValueError("Detector numbers must be consecutive.")
+        self._sorted = sc.issorted(self._flat_detector_number, dim='event_id')
+        self._consecutive = self._stop - self._start + 1 == self._size
 
     @property
     def detector_number(self) -> sc.Variable:
@@ -189,6 +187,10 @@ class Detector:
         return self._data
 
     def bincount(self, data: Sequence[int]) -> sc.DataArray:
+        if not self._sorted:
+            raise ValueError("Detector numbers must be sorted to use `bincount`.")
+        if not self._consecutive:
+            raise ValueError("Detector numbers must be consecutive to use `bincount`.")
         offset = np.asarray(data, dtype=np.int32) - self._start
         # Ignore events with detector numbers outside the range of the detector. This
         # should not happen in valid files but for now it is useful until we are sure
@@ -242,7 +244,7 @@ class RollingDetectorView(Detector):
         self._history: sc.DataArray | None = None
         self._cache: sc.DataArray | None = None
 
-        counts = self.bincount([])
+        counts = sc.zeros_like(self.data)
         if self._projection is not None:
             counts = self._projection(counts)
         self._history = (
