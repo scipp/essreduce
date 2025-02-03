@@ -32,8 +32,8 @@ from .types import (
     ResampledTofData,
     SimulationResults,
     TimeOfArrivalMinusPivotTimeModuloPeriod,
-    TimeOfArrivalResolution,
     TimeOfFlightLookupTable,
+    TimeResolution,
     TofData,
     UnwrappedTimeOfArrival,
     UnwrappedTimeOfArrivalMinusPivotTime,
@@ -74,7 +74,7 @@ def compute_tof_lookup_table(
     simulation: SimulationResults,
     ltotal_range: LtotalRange,
     distance_resolution: DistanceResolution,
-    toa_resolution: TimeOfArrivalResolution,
+    time_resolution: TimeResolution,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
 ) -> TimeOfFlightLookupTable:
@@ -136,24 +136,33 @@ def compute_tof_lookup_table(
     tofs *= wavs
     tofs /= sc.constants.h
 
-    toas = toas.flatten(to="event")
+    # toas = toas.flatten(to="event")
     pulse_period = pulse_period.to(unit=time_unit)
 
     data = sc.DataArray(
         data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
         coords={
-            "toa": toas,
+            "toa": toas.flatten(to="event"),
             "tof": tofs.to(unit=time_unit, copy=False),
             "distance": dist,
-            'event_time_offset': toas % pulse_period,
         },
     )
+    data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
 
-    binned = data.bin(
-        toa=sc.arange('toa', pulse_stride + 2)
-        * pulse_period.rename_dims(toa='pulse').drop_coords('toa')
+    binned = (
+        data.bin(
+            toa=sc.arange('toa', pulse_stride + 2) * pulse_period,
+            distance=dist_edges + simulation_distance,
+            event_time_offset=time_resolution,
+        )
+        .rename_dims(toa='pulse')
+        .drop_coords('toa')
     )
+
+    return binned
+
     # Merge the first and last bins because the last bin is a spill-over bin
+    print('binned.sizes', binned.sizes)
     binned['pulse', 0].bins.concatenate(binned['pulse', -1], out=binned['pulse', 0])
     binned = binned['pulse', :-1]
 
@@ -450,7 +459,7 @@ def default_parameters() -> dict:
         PulseStride: 1,
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(0.1, unit="m"),
-        TimeOfArrivalResolution: 500,
+        TimeResolution: 500,
         LookupTableRelativeErrorThreshold: 0.1,
     }
 
@@ -517,7 +526,7 @@ class TofWorkflow:
         pulse_stride: PulseStride | None = None,
         pulse_stride_offset: PulseStrideOffset | None = None,
         distance_resolution: DistanceResolution | None = None,
-        toa_resolution: TimeOfArrivalResolution | None = None,
+        toa_resolution: TimeResolution | None = None,
         error_threshold: LookupTableRelativeErrorThreshold | None = None,
     ):
         import sciline as sl
@@ -535,9 +544,7 @@ class TofWorkflow:
         self.pipeline[DistanceResolution] = (
             distance_resolution or params[DistanceResolution]
         )
-        self.pipeline[TimeOfArrivalResolution] = (
-            toa_resolution or params[TimeOfArrivalResolution]
-        )
+        self.pipeline[TimeResolution] = toa_resolution or params[TimeResolution]
         self.pipeline[LookupTableRelativeErrorThreshold] = (
             error_threshold or params[LookupTableRelativeErrorThreshold]
         )

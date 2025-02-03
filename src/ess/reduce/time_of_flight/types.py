@@ -79,9 +79,9 @@ Should be a single scalar value with a unit of length.
 This is typically of the order of 1-10 cm.
 """
 
-TimeOfArrivalResolution = NewType("TimeOfArrivalResolution", int | sc.Variable)
+TimeResolution = NewType("TimeResolution", int | sc.Variable)
 """
-Resolution of the time of arrival axis in the lookup table.
+Resolution of the time of arrival (event_time_offset) axis in the lookup table.
 Can be an integer (number of bins) or a sc.Variable (bin width).
 """
 
