@@ -131,9 +131,8 @@ def compute_tof_lookup_table(
     dist = sc.broadcast(distances + simulation_distance, sizes=toas.sizes).flatten(
         to="event"
     )
-    tofs = dist * sc.constants.m_n
+    tofs = dist * (sc.constants.m_n / sc.constants.h)
     tofs *= wavs
-    tofs /= sc.constants.h
 
     data = sc.DataArray(
         data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
@@ -164,24 +163,19 @@ def compute_tof_lookup_table(
         unit=pulse_period.unit,
     )
 
+    frame_period = (pulse_period * pulse_stride).to(unit=time_unit)
+    data.coords['pulse'] = (data.coords['toa'] % frame_period) // pulse_period
+
     binned = (
-        data.bin(
-            toa=sc.arange('toa', pulse_stride + 2) * pulse_period,
+        data.group('pulse').bin(
+            # toa=sc.arange('toa', pulse_stride + 2) * pulse_period,
             distance=dist_edges + simulation_distance,
             event_time_offset=time_bins,
         )
-        .rename_dims(toa='pulse')
-        .drop_coords('toa')
+        # .rename_dims(toa='pulse')
+        # .drop_coords('toa')
     )
 
-    # Merge the first and last bins because the last bin is a spill-over bin
-    binned = sc.concat(
-        [
-            binned['pulse', 0].bins.concatenate(binned['pulse', -1]),
-            binned['pulse', 1:-1],
-        ],
-        'pulse',
-    )  # .squeeze()
     print(f"Time to bin data: {time.time() - start}")
     start = time.time()
 
