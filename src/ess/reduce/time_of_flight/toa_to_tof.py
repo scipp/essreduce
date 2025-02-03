@@ -88,6 +88,9 @@ def compute_tof_lookup_table(
     toa_resolution:
         Resolution of the time-of-arrival axis in the lookup table.
     """
+    import time
+
+    start = time.time()
     distance_unit = "m"
     res = distance_resolution.to(unit=distance_unit)
     simulation_distance = simulation.distance.to(unit=distance_unit)
@@ -118,6 +121,9 @@ def compute_tof_lookup_table(
         unit=time_unit, copy=False
     )
 
+    print(f"Time to compute toas: {time.time() - start}")
+    start = time.time()
+
     # Compute time-of-flight for all neutrons
     wavs = sc.broadcast(simulation.wavelength.to(unit="m"), sizes=toas.sizes).flatten(
         to="event"
@@ -141,6 +147,8 @@ def compute_tof_lookup_table(
     # Add the event_time_offset coordinate to the data.
     pulse_period = pulse_period.to(unit=time_unit)
     data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
+    print(f"Time to compute tofs: {time.time() - start}")
+    start = time.time()
 
     # Create some time bins for event_time_offset.
     # For the bilinear interpolation, we need to have values on the edges of the bins.
@@ -174,6 +182,8 @@ def compute_tof_lookup_table(
         ],
         'pulse',
     )  # .squeeze()
+    print(f"Time to bin data: {time.time() - start}")
+    start = time.time()
 
     # Weighted mean of tof inside each bin
     mean_tof = (
@@ -191,6 +201,7 @@ def compute_tof_lookup_table(
         mean_tof.coords["event_time_offset"]
     )
     mean_tof.coords["distance"] = sc.midpoints(mean_tof.coords["distance"])
+    print(f"Time to compute lookup table: {time.time() - start}")
 
     return TimeOfFlightLookupTable(mean_tof)
 
@@ -262,21 +273,27 @@ def time_of_flight_data(
     # frame_period = pulse_period * pulse_stride
     pulse_period = pulse_period.to(unit=eto_unit)
     pulse_index = (
-        ((da.bins.coords['event_time_zero'] - tmin) + 0.5 * pulse_period)
-        % frame_period.to(unit=eto_unit)
+        ((da.bins.coords['event_time_zero'] - tmin) + 0.5 * pulse_period) % frame_period
     ) // pulse_period
     # pulse_index
 
     # TODO: to make use of multi-threading, we could write our own interpolator.
     # This should be simple enough as we are making the bins linspace, so computing
     # bin indices is fast.
+
+    # Here, we use a trick where we duplicate the lookup values in the 'pulse' dimension
+    # so that the interpolator has values on bin edges for that dimension.
+    # The interpolator raises an error if axes coordinates are not stricly monotonic,
+    # so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of pulse_stride=2.
+    # Instead we use [-0.25, 0.25, 0.75, 1.25].
+    base_grid = np.arange(float(pulse_stride))
     f = RegularGridInterpolator(
         (
-            np.arange(float(pulse_stride)),
+            np.sort(np.concatenate([base_grid - 0.25, base_grid + 0.25])),
             lookup.coords["distance"].to(unit=ltotal.unit, copy=False).values,
             lookup.coords["event_time_offset"].to(unit=eto_unit, copy=False).values,
         ),
-        lookup.data.to(unit=eto_unit, copy=False).values,  # .T,
+        np.repeat(lookup.data.to(unit=eto_unit, copy=False).values, 2, axis=0),  # .T,
         method="linear",
         bounds_error=False,
     )
