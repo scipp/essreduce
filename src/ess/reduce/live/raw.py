@@ -243,7 +243,15 @@ class RollingDetectorView(Detector):
         self._current = 0
         self._history: sc.DataArray | None = None
         self._cache: sc.DataArray | None = None
+        self.clear_counts()
 
+    def clear_counts(self) -> None:
+        """
+        Clear counts.
+
+        Overrides Detector.clear_counts, to properly clear sliding window history and
+        cache.
+        """
         counts = sc.zeros_like(self.data)
         if self._projection is not None:
             counts = self._projection(counts)

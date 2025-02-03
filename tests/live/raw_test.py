@@ -107,6 +107,23 @@ def test_RollingDetectorView_partial_window() -> None:
     assert det.get(3).sum().value == 4
 
 
+def test_RollingDetectorView_clear_counts() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    det = raw.RollingDetectorView(detector_number=detector_number, window=3)
+    det.add_counts([1, 2, 3, 2])
+    assert det.get(0).sum().value == 0
+    assert det.get(1).sum().value == 4
+    assert det.get(2).sum().value == 4
+    assert det.get(3).sum().value == 4
+    assert det.get().sum().value == 4
+    det.clear_counts()
+    assert det.get(0).sum().value == 0
+    assert det.get(1).sum().value == 0
+    assert det.get(2).sum().value == 0
+    assert det.get(3).sum().value == 0
+    assert det.get().sum().value == 0
+
+
 def test_RollingDetectorView_raises_if_subwindow_exceeds_window() -> None:
     detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
     det = raw.RollingDetectorView(detector_number=detector_number, window=3)
