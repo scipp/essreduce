@@ -48,17 +48,6 @@ class SimulationResults:
     distance: sc.Variable
 
 
-@dataclass
-class FastestNeutron:
-    """
-    Properties of the fastest neutron in the simulation results.
-    """
-
-    time_of_arrival: sc.Variable
-    speed: sc.Variable
-    distance: sc.Variable
-
-
 LtotalRange = NewType("LtotalRange", tuple[sc.Variable, sc.Variable])
 """
 Range (min, max) of the total length of the flight path from the source to the detector.
@@ -79,10 +68,12 @@ Should be a single scalar value with a unit of length.
 This is typically of the order of 1-10 cm.
 """
 
-TimeResolution = NewType("TimeResolution", int | sc.Variable)
+TimeResolution = NewType("TimeResolution", int)
 """
-Resolution of the time of arrival (event_time_offset) axis in the lookup table.
-Can be an integer (number of bins) or a sc.Variable (bin width).
+Number of bins to use for the time of arrival (event_time_offset) axis in the lookup
+table. Should be around 1000.
+If some artefacts are present in the computed time-of-flight, around the 71ms mark,
+this can be increased to improve the quality of the results.
 """
 
 TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataArray)
@@ -98,38 +89,38 @@ regions of large uncertainty masked out.
 
 LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
 
-FramePeriod = NewType("FramePeriod", sc.Variable)
-"""
-The period of a frame, a (small) integer multiple of the source period.
-"""
+# FramePeriod = NewType("FramePeriod", sc.Variable)
+# """
+# The period of a frame, a (small) integer multiple of the source period.
+# """
 
-UnwrappedTimeOfArrival = NewType("UnwrappedTimeOfArrival", sc.Variable)
-"""
-Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-"""
+# UnwrappedTimeOfArrival = NewType("UnwrappedTimeOfArrival", sc.Variable)
+# """
+# Time of arrival of the neutron at the detector, unwrapped at the pulse period.
+# """
 
-PivotTimeAtDetector = NewType("PivotTimeAtDetector", sc.Variable)
-"""
-Pivot time at the detector, i.e., the time of the start of the frame at the detector.
-"""
+# PivotTimeAtDetector = NewType("PivotTimeAtDetector", sc.Variable)
+# """
+# Pivot time at the detector, i.e., the time of the start of the frame at the detector.
+# """
 
-UnwrappedTimeOfArrivalMinusPivotTime = NewType(
-    "UnwrappedTimeOfArrivalMinusPivotTime", sc.Variable
-)
-"""
-Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
-the start time of the frame.
-"""
+# UnwrappedTimeOfArrivalMinusPivotTime = NewType(
+#     "UnwrappedTimeOfArrivalMinusPivotTime", sc.Variable
+# )
+# """
+# Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
+# the start time of the frame.
+# """
 
-TimeOfArrivalMinusPivotTimeModuloPeriod = NewType(
-    "TimeOfArrivalMinusPivotTimeModuloPeriod", sc.Variable
-)
-"""
-Time of arrival of the neutron at the detector minus the start time of the frame,
-modulo the frame period.
-"""
+# TimeOfArrivalMinusPivotTimeModuloPeriod = NewType(
+#     "TimeOfArrivalMinusPivotTimeModuloPeriod", sc.Variable
+# )
+# """
+# Time of arrival of the neutron at the detector minus the start time of the frame,
+# modulo the frame period.
+# """
 
-FrameFoldedTimeOfArrival = NewType("FrameFoldedTimeOfArrival", sc.Variable)
+# FrameFoldedTimeOfArrival = NewType("FrameFoldedTimeOfArrival", sc.Variable)
 
 
 PulsePeriod = NewType("PulsePeriod", sc.Variable)
