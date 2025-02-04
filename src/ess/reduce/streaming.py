@@ -205,15 +205,70 @@ class StreamProcessor:
     def add_chunk(
         self, chunks: dict[sciline.typing.Key, Any]
     ) -> dict[sciline.typing.Key, Any]:
+        """
+        Legacy interface for accumulating values from chunks and finalizing the result.
+
+        It is recommended to use :py:meth:`accumulate` and :py:meth:`finalize` instead.
+
+        Warning
+        -------
+
+        This method automatically bypasses accumulators for keys that are not in the
+        accumulators dict. This is useful for dynamic keys that are not "terminated" in
+        any accumulator. USE WITH CARE! This will lead to incorrect results unless the
+        values for these keys are valid for all chunks comprised in the final result.
+
+        Parameters
+        ----------
+        chunks:
+            Chunks to be processed.
+
+        Returns
+        -------
+        :
+            Finalized result.
+        """
+        self.accumulate(chunks, allow_bypass=True)
+        return self.finalize()
+
+    def accumulate(
+        self, chunks: dict[sciline.typing.Key, Any], allow_bypass: bool = False
+    ) -> None:
+        """
+        Accumulate values from chunks without finalizing the result.
+
+        Parameters
+        ----------
+        chunks:
+            Chunks to be processed.
+        allow_bypass:
+            If True, allow bypassing accumulators for keys that are not in the
+            accumulators dict. This is useful for dynamic keys that are not "terminated"
+            in any accumulator. USE WITH CARE! This will lead to incorrect results
+            unless the values for these keys are valid for all chunks comprised in the
+            final result.
+        """
         for key, value in chunks.items():
             self._process_chunk_workflow[key] = value
             # There can be dynamic keys that do not "terminate" in any accumulator. In
             # that case, we need to make sure they can be and are used when computing
             # the target keys.
-            self._finalize_workflow[key] = value
+            if allow_bypass:
+                self._finalize_workflow[key] = value
         to_accumulate = self._process_chunk_workflow.compute(self._accumulators)
         for key, processed in to_accumulate.items():
             self._accumulators[key].push(processed)
+
+    def finalize(self) -> dict[sciline.typing.Key, Any]:
+        """
+        Get the final result by computing the target keys based on accumulated values.
+
+        Returns
+        -------
+        :
+            Finalized result.
+        """
+        for key in self._accumulators:
             self._finalize_workflow[key] = self._accumulators[key].value
         return self._finalize_workflow.compute(self._target_keys)
 
