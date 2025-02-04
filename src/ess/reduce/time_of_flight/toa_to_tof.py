@@ -54,6 +54,7 @@ def compute_tof_lookup_table(
     time_resolution: TimeResolution,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
+    pulse_stride_offset: PulseStrideOffset,
     error_threshold: LookupTableRelativeErrorThreshold,
 ) -> TimeOfFlightLookupTable:
     """
@@ -77,6 +78,8 @@ def compute_tof_lookup_table(
     pulse_stride:
         Stride of used pulses. Usually 1, but may be a small integer when
         pulse-skipping.
+    pulse_stride_offset:
+        When pulse-skipping, the offset of the first pulse in the stride.
     error_threshold:
         Threshold for the relative standard deviation (coefficient of variation) of the
         projected time-of-flight above which values are masked.
@@ -145,7 +148,10 @@ def compute_tof_lookup_table(
         # Add the event_time_offset and pulse index coordinate to the data.
         pulse_period = pulse_period.to(unit=time_unit)
         data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
-        data.coords['pulse'] = (data.coords['toa'] % frame_period) // pulse_period
+        pulse_index = (data.coords['toa'] % frame_period) // pulse_period
+        pulse_index += pulse_stride_offset
+        pulse_index %= pulse_stride
+        data.coords['pulse'] = pulse_index
 
         # Create some time bins for event_time_offset. They must strictly cover the
         # range [0, pulse_period].
@@ -204,7 +210,6 @@ def time_of_flight_data(
     ltotal: Ltotal,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
-    pulse_stride_offset: PulseStrideOffset,
 ) -> TofData:
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
@@ -225,8 +230,6 @@ def time_of_flight_data(
     pulse_stride:
         Stride of used pulses. Usually 1, but may be a small integer when
         pulse-skipping.
-    pulse_stride_offset:
-        When pulse-skipping, the offset of the first pulse in the stride.
     """
     from scipy.interpolate import RegularGridInterpolator
 
@@ -244,8 +247,6 @@ def time_of_flight_data(
     pulse_index = (
         ((da.bins.coords['event_time_zero'] - tmin) + 0.5 * pulse_period) % frame_period
     ) // pulse_period
-    pulse_index += pulse_stride_offset
-    pulse_index %= pulse_stride
 
     # TODO: to make use of multi-threading, we could write our own interpolator.
     # This should be simple enough as we are making the bins linspace, so computing
