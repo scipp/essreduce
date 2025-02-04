@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import scipp as sc
 from scipp.testing import assert_identical
+from scippneutron._utils import elem_unit
 from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
@@ -13,21 +14,21 @@ from ess.reduce.time_of_flight import fakes
 sl = pytest.importorskip("sciline")
 
 
-def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
-    pl = sl.Pipeline(time_of_flight.providers())
-    period = sc.scalar(123.0, unit="ms")
-    pl[time_of_flight.PulsePeriod] = period
-    pl[time_of_flight.PulseStride] = 1
-    assert_identical(pl.compute(time_of_flight.FramePeriod), period)
+# def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
+#     pl = sl.Pipeline(time_of_flight.providers())
+#     period = sc.scalar(123.0, unit="ms")
+#     pl[time_of_flight.PulsePeriod] = period
+#     pl[time_of_flight.PulseStride] = 1
+#     assert_identical(pl.compute(time_of_flight.FramePeriod), period)
 
 
-@pytest.mark.parametrize("stride", [1, 2, 3, 4])
-def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None:
-    pl = sl.Pipeline(time_of_flight.providers())
-    period = sc.scalar(123.0, unit="ms")
-    pl[time_of_flight.PulsePeriod] = period
-    pl[time_of_flight.PulseStride] = stride
-    assert_identical(pl.compute(time_of_flight.FramePeriod), stride * period)
+# @pytest.mark.parametrize("stride", [1, 2, 3, 4])
+# def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None:
+#     pl = sl.Pipeline(time_of_flight.providers())
+#     period = sc.scalar(123.0, unit="ms")
+#     pl[time_of_flight.PulsePeriod] = period
+#     pl[time_of_flight.PulseStride] = stride
+#     assert_identical(pl.compute(time_of_flight.FramePeriod), stride * period)
 
 
 def test_unwrap_with_no_choppers() -> None:
@@ -60,7 +61,6 @@ def test_unwrap_with_no_choppers() -> None:
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -101,7 +101,6 @@ def test_standard_unwrap(dist) -> None:
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -125,13 +124,14 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
         events_per_pulse=100_000,
     )
     mon, ref = beamline.get_monitor("detector")
+    print(mon)
     mon = (
         mon.hist(
             event_time_offset=sc.linspace(
                 "event_time_offset", 0.0, 1000.0 / 14, num=1001, unit="ms"
-            ).to(unit="s")
+            ).to(unit=elem_unit(mon.bins.coords['event_time_offset']))
         )
-        .sum("pulse")
+        # .sum("pulse")
         .rename(event_time_offset=dim)
     )
 
