@@ -81,47 +81,11 @@ TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataArray)
 Lookup table giving time-of-flight as a function of distance and time of arrival.
 """
 
-MaskedTimeOfFlightLookupTable = NewType("MaskedTimeOfFlightLookupTable", sc.DataArray)
-"""
-Lookup table giving time-of-flight as a function of distance and time of arrival, with
-regions of large uncertainty masked out.
-"""
-
 LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
-
-FramePeriod = NewType("FramePeriod", sc.Variable)
 """
-The period of a frame, a (small) integer multiple of the source period.
+Threshold for the relative standard deviation (coefficient of variation) of the
+projected time-of-flight above which values are masked.
 """
-
-# UnwrappedTimeOfArrival = NewType("UnwrappedTimeOfArrival", sc.Variable)
-# """
-# Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-# """
-
-# PivotTimeAtDetector = NewType("PivotTimeAtDetector", sc.Variable)
-# """
-# Pivot time at the detector, i.e., the time of the start of the frame at the detector.
-# """
-
-# UnwrappedTimeOfArrivalMinusPivotTime = NewType(
-#     "UnwrappedTimeOfArrivalMinusPivotTime", sc.Variable
-# )
-# """
-# Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
-# the start time of the frame.
-# """
-
-# TimeOfArrivalMinusPivotTimeModuloPeriod = NewType(
-#     "TimeOfArrivalMinusPivotTimeModuloPeriod", sc.Variable
-# )
-# """
-# Time of arrival of the neutron at the detector minus the start time of the frame,
-# modulo the frame period.
-# """
-
-# FrameFoldedTimeOfArrival = NewType("FrameFoldedTimeOfArrival", sc.Variable)
-
 
 PulsePeriod = NewType("PulsePeriod", sc.Variable)
 """

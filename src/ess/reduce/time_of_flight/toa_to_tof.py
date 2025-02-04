@@ -12,16 +12,15 @@ from collections.abc import Callable
 import numpy as np
 import scipp as sc
 from scipp._scipp.core import _bins_no_validate
+from scipp.scipy.interpolate import interp1d
 from scippneutron._utils import elem_unit
 
 from .to_events import to_events
 from .types import (
     DistanceResolution,
-    # FramePeriod,
     LookupTableRelativeErrorThreshold,
     Ltotal,
     LtotalRange,
-    MaskedTimeOfFlightLookupTable,
     PulsePeriod,
     PulseStride,
     PulseStrideOffset,
@@ -32,21 +31,6 @@ from .types import (
     TimeResolution,
     TofData,
 )
-
-# def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
-#     """
-#     Return the period of a frame, which is defined by the pulse period times the pulse
-#     stride.
-
-#     Parameters
-#     ----------
-#     pulse_period:
-#         Period of the source pulses, i.e., time between consecutive pulse starts.
-#     pulse_stride:
-#         Stride of used pulses. Usually 1, but may be a small integer when
-#         pulse-skipping.
-#     """
-#     return FramePeriod(pulse_period * pulse_stride)
 
 
 def extract_ltotal(da: RawData) -> Ltotal:
@@ -70,6 +54,7 @@ def compute_tof_lookup_table(
     time_resolution: TimeResolution,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
+    error_threshold: LookupTableRelativeErrorThreshold,
 ) -> TimeOfFlightLookupTable:
     """
     Compute a lookup table for time-of-flight as a function of distance and
@@ -85,15 +70,22 @@ def compute_tof_lookup_table(
         Range of total flight path lengths from the source to the detector.
     distance_resolution:
         Resolution of the distance axis in the lookup table.
-    toa_resolution:
-        Resolution of the time-of-arrival axis in the lookup table.
+    time_resolution:
+        Resolution of the time-of-arrival axis in the lookup table. Must be an integer.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
+    pulse_stride:
+        Stride of used pulses. Usually 1, but may be a small integer when
+        pulse-skipping.
+    error_threshold:
+        Threshold for the relative standard deviation (coefficient of variation) of the
+        projected time-of-flight above which values are masked.
     """
-    import time
-
-    start = time.time()
     distance_unit = "m"
+    time_unit = simulation.time_of_arrival.unit
     res = distance_resolution.to(unit=distance_unit)
     simulation_distance = simulation.distance.to(unit=distance_unit)
+    frame_period = (pulse_period * pulse_stride).to(unit=time_unit)
 
     min_dist, max_dist = (
         x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
@@ -114,9 +106,6 @@ def compute_tof_lookup_table(
         values=np.arange((min_dist - pad).value, (max_dist + pad).value, res.value),
         unit=distance_unit,
     )
-    # distances = sc.midpoints(dist_edges)
-
-    time_unit = simulation.time_of_arrival.unit
 
     # To avoid a too large RAM usage, we compute the table in chunks, and piece them
     # together at the end.
@@ -133,9 +122,6 @@ def compute_tof_lookup_table(
         toas = simulation.time_of_arrival + (distances / simulation.speed).to(
             unit=time_unit, copy=False
         )
-
-        print(f"Time to compute toas: {time.time() - start}")
-        start = time.time()
 
         # Compute time-of-flight for all neutrons
         wavs = sc.broadcast(
@@ -156,41 +142,24 @@ def compute_tof_lookup_table(
             },
         )
 
-        # Add the event_time_offset coordinate to the data.
+        # Add the event_time_offset and pulse index coordinate to the data.
         pulse_period = pulse_period.to(unit=time_unit)
         data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
-        print(f"Time to compute tofs: {time.time() - start}")
-        start = time.time()
+        data.coords['pulse'] = (data.coords['toa'] % frame_period) // pulse_period
 
-        # Create some time bins for event_time_offset.
-        # For the bilinear interpolation, we need to have values on the edges of the bins.
-        # So we offsets the bins by half a resolution to compute the means inside the bins,
-        # and later convert the axes to bin midpoints.
-        # The table need to cover exactly the range [0, pulse_period].
-        half_width = (pulse_period / time_resolution).value * 0.5
+        # Create some time bins for event_time_offset. They must strictly cover the
+        # range [0, pulse_period].
         time_bins = sc.linspace(
             'event_time_offset',
-            -half_width,
-            pulse_period.value + half_width,
-            time_resolution + 2,  # nbins + 1 for bin edges, + 1 for the extra padding
+            0.0,
+            pulse_period.value,
+            time_resolution + 1,
             unit=pulse_period.unit,
         )
 
-        frame_period = (pulse_period * pulse_stride).to(unit=time_unit)
-        data.coords['pulse'] = (data.coords['toa'] % frame_period) // pulse_period
-
-        binned = (
-            data.group('pulse').bin(
-                # toa=sc.arange('toa', pulse_stride + 2) * pulse_period,
-                distance=edges + simulation_distance,
-                event_time_offset=time_bins,
-            )
-            # .rename_dims(toa='pulse')
-            # .drop_coords('toa')
+        binned = data.group('pulse').bin(
+            distance=edges + simulation_distance, event_time_offset=time_bins
         )
-
-        print(f"Time to bin data: {time.time() - start}")
-        start = time.time()
 
         # Weighted mean of tof inside each bin
         mean_tof = (
@@ -202,58 +171,40 @@ def compute_tof_lookup_table(
         ).bins.sum() / binned.bins.sum()
 
         mean_tof.variances = variance.values
-
         mean_tof.coords["distance"] = sc.midpoints(mean_tof.coords["distance"])
-
         pieces.append(mean_tof)
 
-    out = sc.concat(pieces, 'distance')
+    table = sc.concat(pieces, 'distance')
 
-    # Convert coordinates to midpoints
-    out.coords["event_time_offset"] = sc.midpoints(out.coords["event_time_offset"])
+    # We now have the data values in the centers of the bins (we computed means inside
+    # bins). For the event_time_offset axis, we need to cover the exact range
+    # [0, pulse_period]. So we move the values to the bin edges using linear
+    # interpolation.
+    dim = 'event_time_offset'
+    mid = table.copy(deep=False)
+    mid.coords[dim] = sc.midpoints(table.coords[dim])
+    fval = interp1d(sc.values(mid), dim, fill_value="extrapolate")
+    fvar = interp1d(sc.variances(mid), dim, fill_value="extrapolate")
+    data = fval(table.coords[dim]).data
+    data.variances = fvar(table.coords[dim]).values
+    out = sc.DataArray(data=data, coords=table.coords)
 
-    # # Convert coordinates to midpoints
-    # mean_tof.coords["event_time_offset"] = sc.midpoints(
-    #     mean_tof.coords["event_time_offset"]
-    # )
-    # mean_tof.coords["distance"] = sc.midpoints(mean_tof.coords["distance"])
-    print(f"Time to compute lookup table: {time.time() - start}")
+    # Finally, mask regions with large uncertainty with NaNs.
+    relative_error = sc.stddevs(out.data) / sc.values(out.data)
+    mask = relative_error > sc.scalar(error_threshold)
+    # Use numpy for indexing as table is 2D
+    out.values[mask.values] = np.nan
 
     return TimeOfFlightLookupTable(out)
 
 
-def masked_tof_lookup_table(
-    tof_lookup: TimeOfFlightLookupTable,
-    error_threshold: LookupTableRelativeErrorThreshold,
-) -> MaskedTimeOfFlightLookupTable:
-    """
-    Mask regions of the lookup table where the variance of the projected time-of-flight
-    is larger than a given threshold.
-
-    Parameters
-    ----------
-    tof_lookup:
-        Lookup table giving time-of-flight as a function of distance and
-        time-of-arrival.
-    variance_threshold:
-        Threshold for the variance of the projected time-of-flight above which regions
-        are masked.
-    """
-    relative_error = sc.stddevs(tof_lookup.data) / sc.values(tof_lookup.data)
-    mask = relative_error > sc.scalar(error_threshold)
-    out = tof_lookup.copy()
-    # Use numpy for indexing as table is 2D
-    out.values[mask.values] = np.nan
-    return MaskedTimeOfFlightLookupTable(out)
-
-
 def time_of_flight_data(
     da: RawData,
-    lookup: MaskedTimeOfFlightLookupTable,
+    lookup: TimeOfFlightLookupTable,
     ltotal: Ltotal,
     pulse_period: PulsePeriod,
-    # frame_period: FramePeriod,
     pulse_stride: PulseStride,
+    pulse_stride_offset: PulseStrideOffset,
 ) -> TofData:
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
@@ -269,8 +220,13 @@ def time_of_flight_data(
         arrival.
     ltotal:
         Total length of the flight path from the source to the detector.
-    toas:
-        Time of arrival of the neutron at the detector, folded by the frame period.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
+    pulse_stride:
+        Stride of used pulses. Usually 1, but may be a small integer when
+        pulse-skipping.
+    pulse_stride_offset:
+        When pulse-skipping, the offset of the first pulse in the stride.
     """
     from scipy.interpolate import RegularGridInterpolator
 
@@ -284,22 +240,26 @@ def time_of_flight_data(
     # pulse skipping, the index ranges from zero to pulse_stride - 1.
     etz = da.bins.concat().value.coords['event_time_zero']
     tmin = etz.min()
-    # pulse_period = (1.0 / sc.scalar(14., unit='Hz')).to(unit='us')
-    # pulse_stride = 2
-    # frame_period = pulse_period * pulse_stride
     pulse_period = pulse_period.to(unit=eto_unit)
     pulse_index = (
         ((da.bins.coords['event_time_zero'] - tmin) + 0.5 * pulse_period) % frame_period
     ) // pulse_period
-    # pulse_index
+    pulse_index += pulse_stride_offset
+    pulse_index %= pulse_stride
 
     # TODO: to make use of multi-threading, we could write our own interpolator.
     # This should be simple enough as we are making the bins linspace, so computing
     # bin indices is fast.
 
+    # In the pulse dimension, it could be that for a given event_time_offset and
+    # distance, a tof value is finite in one pulse and NaN in the other.
+    # When using the bilinear interpolation, even if the value of the requested point is
+    # exactly 0 or 1 (in the case of pulse_stride=2), the interpolator will still
+    # use all 4 corners surrounding the point. This means that if one of the corners
+    # is NaN, the result will be NaN.
     # Here, we use a trick where we duplicate the lookup values in the 'pulse' dimension
     # so that the interpolator has values on bin edges for that dimension.
-    # The interpolator raises an error if axes coordinates are not stricly monotonic,
+    # The interpolator raises an error if axes coordinates are not strictly monotonic,
     # so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of pulse_stride=2.
     # Instead we use [-0.25, 0.25, 0.75, 1.25].
     base_grid = np.arange(float(pulse_stride))
@@ -309,9 +269,10 @@ def time_of_flight_data(
             lookup.coords["distance"].to(unit=ltotal.unit, copy=False).values,
             lookup.coords["event_time_offset"].to(unit=eto_unit, copy=False).values,
         ),
-        np.repeat(lookup.data.to(unit=eto_unit, copy=False).values, 2, axis=0),  # .T,
+        np.repeat(lookup.data.to(unit=eto_unit, copy=False).values, 2, axis=0),
         method="linear",
         bounds_error=False,
+        fill_value=np.nan,
     )
 
     if da.bins is not None:
@@ -380,7 +341,7 @@ def default_parameters() -> dict:
         PulseStride: 1,
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(0.1, unit="m"),
-        TimeResolution: 1000,
+        TimeResolution: 256,
         LookupTableRelativeErrorThreshold: 0.1,
     }
 
@@ -389,93 +350,4 @@ def providers() -> tuple[Callable]:
     """
     Providers of the time-of-flight workflow.
     """
-    return (
-        compute_tof_lookup_table,
-        extract_ltotal,
-        # frame_period,
-        masked_tof_lookup_table,
-        time_of_flight_data,
-    )
-
-
-# class TofWorkflow:
-#     """
-#     Helper class to build a time-of-flight workflow and cache the expensive part of the
-#     computation: running the simulation and building the lookup table.
-
-#     Parameters
-#     ----------
-#     simulated_neutrons:
-#         Results of a time-of-flight simulation used to create a lookup table.
-#         The results should be a flat table with columns for time-of-arrival, speed,
-#         wavelength, and weight.
-#     ltotal_range:
-#         Range of total flight path lengths from the source to the detector.
-#         This is used to create the lookup table to compute the neutron
-#         time-of-flight.
-#         Note that the resulting table will extend slightly beyond this range, as the
-#         supplied range is not necessarily a multiple of the distance resolution.
-#     pulse_stride:
-#         Stride of used pulses. Usually 1, but may be a small integer when
-#         pulse-skipping.
-#     pulse_stride_offset:
-#         Integer offset of the first pulse in the stride (typically zero unless we
-#         are using pulse-skipping and the events do not begin with the first pulse in
-#         the stride).
-#     distance_resolution:
-#         Resolution of the distance axis in the lookup table.
-#         Should be a single scalar value with a unit of length.
-#         This is typically of the order of 1-10 cm.
-#     toa_resolution:
-#         Resolution of the time of arrival axis in the lookup table.
-#         Can be an integer (number of bins) or a sc.Variable (bin width).
-#     error_threshold:
-#         Threshold for the variance of the projected time-of-flight above which
-#         regions are masked.
-#     """
-
-#     def __init__(
-#         self,
-#         simulated_neutrons: SimulationResults,
-#         ltotal_range: LtotalRange,
-#         pulse_stride: PulseStride | None = None,
-#         pulse_stride_offset: PulseStrideOffset | None = None,
-#         distance_resolution: DistanceResolution | None = None,
-#         toa_resolution: TimeResolution | None = None,
-#         error_threshold: LookupTableRelativeErrorThreshold | None = None,
-#     ):
-#         import sciline as sl
-
-#         self.pipeline = sl.Pipeline(providers())
-#         self.pipeline[SimulationResults] = simulated_neutrons
-#         self.pipeline[LtotalRange] = ltotal_range
-
-#         params = default_parameters()
-#         self.pipeline[PulsePeriod] = params[PulsePeriod]
-#         self.pipeline[PulseStride] = pulse_stride or params[PulseStride]
-#         self.pipeline[PulseStrideOffset] = (
-#             pulse_stride_offset or params[PulseStrideOffset]
-#         )
-#         self.pipeline[DistanceResolution] = (
-#             distance_resolution or params[DistanceResolution]
-#         )
-#         self.pipeline[TimeResolution] = toa_resolution or params[TimeResolution]
-#         self.pipeline[LookupTableRelativeErrorThreshold] = (
-#             error_threshold or params[LookupTableRelativeErrorThreshold]
-#         )
-
-#     def cache_results(
-#         self,
-#         results=(SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron),
-#     ) -> None:
-#         """
-#         Cache a list of (usually expensive to compute) intermediate results of the
-#         time-of-flight workflow.
-
-#         Parameters
-#         ----------
-#         results:
-#             List of results to cache.
-#         """
-#         for t in results:
-#             self.pipeline[t] = self.pipeline.compute(t)
+    return (compute_tof_lookup_table, extract_ltotal, time_of_flight_data)

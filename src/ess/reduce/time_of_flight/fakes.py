@@ -71,38 +71,8 @@ class FakeBeamline:
     def get_monitor(self, name: str) -> sc.DataGroup:
         nx_event_data = self.model_result.to_nxevent_data(name)
         raw_data = self.model_result.detectors[name].data.flatten(to="event")
-        # Select only the neutrons that make it to the detector
         raw_data = raw_data[~raw_data.masks["blocked_by_others"]].copy()
-
         return nx_event_data, raw_data
-        # # Create some fake pulse time zero
-        # start = sc.datetime("2024-01-01T12:00:00.000000")
-        # period = sc.reciprocal(self.frequency)
-
-        # detector = self.model_result.detectors[name]
-        # raw_data = detector.data.flatten(to="event")
-        # # Select only the neutrons that make it to the detector
-        # raw_data = raw_data[~raw_data.masks["blocked_by_others"]].copy()
-        # raw_data.coords["Ltotal"] = detector.distance
-
-        # # Format the data in a way that resembles data loaded from NeXus
-        # event_data = raw_data.copy(deep=False)
-        # dt = period.to(unit="us")
-        # event_time_zero = (dt * (event_data.coords["toa"] // dt)).to(dtype=int) + start
-        # raw_data.coords["event_time_zero"] = event_time_zero
-        # event_data.coords["event_time_zero"] = event_time_zero
-        # event_data.coords["event_time_offset"] = (
-        #     event_data.coords.pop("toa").to(unit="s") % period
-        # )
-        # del event_data.coords["tof"]
-        # del event_data.coords["speed"]
-        # del event_data.coords["time"]
-        # del event_data.coords["wavelength"]
-
-        # return (
-        #     event_data.group("event_time_zero").rename_dims(event_time_zero="pulse"),
-        #     raw_data.group("event_time_zero").rename_dims(event_time_zero="pulse"),
-        # )
 
 
 wfm1_chopper = DiskChopper(
