@@ -114,90 +114,112 @@ def compute_tof_lookup_table(
         values=np.arange((min_dist - pad).value, (max_dist + pad).value, res.value),
         unit=distance_unit,
     )
-    distances = sc.midpoints(dist_edges)
+    # distances = sc.midpoints(dist_edges)
 
     time_unit = simulation.time_of_arrival.unit
-    toas = simulation.time_of_arrival + (distances / simulation.speed).to(
-        unit=time_unit, copy=False
-    )
 
-    print(f"Time to compute toas: {time.time() - start}")
-    start = time.time()
+    # To avoid a too large RAM usage, we compute the table in chunks, and piece them
+    # together at the end.
+    ndist = len(dist_edges) - 1
+    max_size = 2e7
+    total_size = ndist * len(simulation.time_of_arrival)
+    nchunks = total_size / max_size
+    chunk_size = int(ndist / nchunks) + 1
+    pieces = []
+    for i in range(int(nchunks) + 1):
+        edges = dist_edges[i * chunk_size : (i + 1) * chunk_size + 1]
+        distances = sc.midpoints(edges)
 
-    # Compute time-of-flight for all neutrons
-    wavs = sc.broadcast(simulation.wavelength.to(unit="m"), sizes=toas.sizes).flatten(
-        to="event"
-    )
-    dist = sc.broadcast(distances + simulation_distance, sizes=toas.sizes).flatten(
-        to="event"
-    )
-    tofs = dist * (sc.constants.m_n / sc.constants.h)
-    tofs *= wavs
-
-    data = sc.DataArray(
-        data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
-        coords={
-            "toa": toas.flatten(to="event"),
-            "tof": tofs.to(unit=time_unit, copy=False),
-            "distance": dist,
-        },
-    )
-
-    # Add the event_time_offset coordinate to the data.
-    pulse_period = pulse_period.to(unit=time_unit)
-    data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
-    print(f"Time to compute tofs: {time.time() - start}")
-    start = time.time()
-
-    # Create some time bins for event_time_offset.
-    # For the bilinear interpolation, we need to have values on the edges of the bins.
-    # So we offsets the bins by half a resolution to compute the means inside the bins,
-    # and later convert the axes to bin midpoints.
-    # The table need to cover exactly the range [0, pulse_period].
-    half_width = (pulse_period / time_resolution).value * 0.5
-    time_bins = sc.linspace(
-        'event_time_offset',
-        -half_width,
-        pulse_period.value + half_width,
-        time_resolution + 2,  # nbins + 1 for bin edges, + 1 for the extra padding
-        unit=pulse_period.unit,
-    )
-
-    frame_period = (pulse_period * pulse_stride).to(unit=time_unit)
-    data.coords['pulse'] = (data.coords['toa'] % frame_period) // pulse_period
-
-    binned = (
-        data.group('pulse').bin(
-            # toa=sc.arange('toa', pulse_stride + 2) * pulse_period,
-            distance=dist_edges + simulation_distance,
-            event_time_offset=time_bins,
+        toas = simulation.time_of_arrival + (distances / simulation.speed).to(
+            unit=time_unit, copy=False
         )
-        # .rename_dims(toa='pulse')
-        # .drop_coords('toa')
-    )
 
-    print(f"Time to bin data: {time.time() - start}")
-    start = time.time()
+        print(f"Time to compute toas: {time.time() - start}")
+        start = time.time()
 
-    # Weighted mean of tof inside each bin
-    mean_tof = (
-        binned.bins.data * binned.bins.coords["tof"]
-    ).bins.sum() / binned.bins.sum()
-    # Compute the variance of the tofs to track regions with large uncertainty
-    variance = (
-        binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
-    ).bins.sum() / binned.bins.sum()
+        # Compute time-of-flight for all neutrons
+        wavs = sc.broadcast(
+            simulation.wavelength.to(unit="m"), sizes=toas.sizes
+        ).flatten(to="event")
+        dist = sc.broadcast(distances + simulation_distance, sizes=toas.sizes).flatten(
+            to="event"
+        )
+        tofs = dist * (sc.constants.m_n / sc.constants.h)
+        tofs *= wavs
 
-    mean_tof.variances = variance.values
+        data = sc.DataArray(
+            data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
+            coords={
+                "toa": toas.flatten(to="event"),
+                "tof": tofs.to(unit=time_unit, copy=False),
+                "distance": dist,
+            },
+        )
+
+        # Add the event_time_offset coordinate to the data.
+        pulse_period = pulse_period.to(unit=time_unit)
+        data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
+        print(f"Time to compute tofs: {time.time() - start}")
+        start = time.time()
+
+        # Create some time bins for event_time_offset.
+        # For the bilinear interpolation, we need to have values on the edges of the bins.
+        # So we offsets the bins by half a resolution to compute the means inside the bins,
+        # and later convert the axes to bin midpoints.
+        # The table need to cover exactly the range [0, pulse_period].
+        half_width = (pulse_period / time_resolution).value * 0.5
+        time_bins = sc.linspace(
+            'event_time_offset',
+            -half_width,
+            pulse_period.value + half_width,
+            time_resolution + 2,  # nbins + 1 for bin edges, + 1 for the extra padding
+            unit=pulse_period.unit,
+        )
+
+        frame_period = (pulse_period * pulse_stride).to(unit=time_unit)
+        data.coords['pulse'] = (data.coords['toa'] % frame_period) // pulse_period
+
+        binned = (
+            data.group('pulse').bin(
+                # toa=sc.arange('toa', pulse_stride + 2) * pulse_period,
+                distance=edges + simulation_distance,
+                event_time_offset=time_bins,
+            )
+            # .rename_dims(toa='pulse')
+            # .drop_coords('toa')
+        )
+
+        print(f"Time to bin data: {time.time() - start}")
+        start = time.time()
+
+        # Weighted mean of tof inside each bin
+        mean_tof = (
+            binned.bins.data * binned.bins.coords["tof"]
+        ).bins.sum() / binned.bins.sum()
+        # Compute the variance of the tofs to track regions with large uncertainty
+        variance = (
+            binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
+        ).bins.sum() / binned.bins.sum()
+
+        mean_tof.variances = variance.values
+
+        mean_tof.coords["distance"] = sc.midpoints(mean_tof.coords["distance"])
+
+        pieces.append(mean_tof)
+
+    out = sc.concat(pieces, 'distance')
 
     # Convert coordinates to midpoints
-    mean_tof.coords["event_time_offset"] = sc.midpoints(
-        mean_tof.coords["event_time_offset"]
-    )
-    mean_tof.coords["distance"] = sc.midpoints(mean_tof.coords["distance"])
+    out.coords["event_time_offset"] = sc.midpoints(out.coords["event_time_offset"])
+
+    # # Convert coordinates to midpoints
+    # mean_tof.coords["event_time_offset"] = sc.midpoints(
+    #     mean_tof.coords["event_time_offset"]
+    # )
+    # mean_tof.coords["distance"] = sc.midpoints(mean_tof.coords["distance"])
     print(f"Time to compute lookup table: {time.time() - start}")
 
-    return TimeOfFlightLookupTable(mean_tof)
+    return TimeOfFlightLookupTable(out)
 
 
 def masked_tof_lookup_table(
