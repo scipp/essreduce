@@ -233,20 +233,46 @@ def time_of_flight_data(
     """
     from scipy.interpolate import RegularGridInterpolator
 
-    etos = da.bins.coords["event_time_offset"]
-    eto_unit = elem_unit(etos)
+    if da.bins is None:
+        # 'time_of_flight' is the canonical name in NXmonitor, but in some files, it
+        # may be called 'tof'.
+        key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof"}))
+        etos = da.coords[key]
 
-    frame_period = (pulse_period * pulse_stride).to(unit=eto_unit)
+        # In histogram mode, the lookup table cannot have a pulse dimension because we
+        # cannot know in the histogrammed data which pulse the events belong to.
+        # So we merge the pulse dimension in the lookup table. A quick way to do this
+        # is to take the mean of the data along the pulse dimension (there should
+        # mainly be regions that are NaN in one pulse and finite in the other).
+        merged = lookup.data.nanmean('pulse')
+        dim = merged.dims[0]
+        lookup = sc.DataArray(
+            data=merged.fold(dim=dim, sizes={'pulse': 1, dim: merged.sizes[dim]}),
+            coords={
+                'pulse': sc.arange('pulse', 1.0),
+                'distance': lookup.coords['distance'],
+                'event_time_offset': lookup.coords['event_time_offset'],
+            },
+        )
+        eto_unit = elem_unit(etos)
+        pulse_index = sc.zeros(sizes=etos.sizes)
 
-    # Compute a pulse index for every event: it is the index of the pulse within a
-    # frame period. When there is no pulse skipping, those are all zero. When there is
-    # pulse skipping, the index ranges from zero to pulse_stride - 1.
-    etz = da.bins.concat().value.coords['event_time_zero']
-    tmin = etz.min()
-    pulse_period = pulse_period.to(unit=eto_unit)
-    pulse_index = (
-        ((da.bins.coords['event_time_zero'] - tmin) + 0.5 * pulse_period) % frame_period
-    ) // pulse_period
+    else:
+        etos = da.bins.coords["event_time_offset"]
+        eto_unit = elem_unit(etos)
+
+        pulse_period = pulse_period.to(unit=eto_unit)
+        frame_period = pulse_period * pulse_stride
+
+        # Compute a pulse index for every event: it is the index of the pulse within a
+        # frame period. When there is no pulse skipping, those are all zero. When there is
+        # pulse skipping, the index ranges from zero to pulse_stride - 1.
+        etz = da.bins.concat().value.coords['event_time_zero']
+        tmin = etz.min()
+        pulse_index = (
+            ((da.bins.coords['event_time_zero'] - tmin) + 0.5 * pulse_period)
+            % frame_period
+        ) // pulse_period
 
     # TODO: to make use of multi-threading, we could write our own interpolator.
     # This should be simple enough as we are making the bins linspace, so computing
@@ -263,7 +289,7 @@ def time_of_flight_data(
     # The interpolator raises an error if axes coordinates are not strictly monotonic,
     # so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of pulse_stride=2.
     # Instead we use [-0.25, 0.25, 0.75, 1.25].
-    base_grid = np.arange(float(pulse_stride))
+    base_grid = np.arange(float(lookup.sizes["pulse"]))
     f = RegularGridInterpolator(
         (
             np.sort(np.concatenate([base_grid - 0.25, base_grid + 0.25])),

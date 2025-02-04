@@ -36,17 +36,20 @@ def to_events(
     edge_dims = []
     midp_dims = []
     # Separate bin-edge and midpoints coords
-    for dim in da.dims:
-        if da.coords.is_edges(dim):
-            edge_dims.append(dim)
+    # for dim in da.dims:
+    for name in da.coords:
+        if da.coords[name].dims and da.coords.is_edges(name):
+            edge_dims.append(name)
         else:
-            midp_dims.append(dim)
+            midp_dims.append(name)
 
-    edge_sizes = {dim: da.sizes[dim] for dim in edge_dims}
+    edge_sizes = {dim: da.sizes[da.coords[dim].dim] for dim in edge_dims}
     for dim in edge_dims:
         coord = da.coords[dim]
-        left = sc.broadcast(coord[dim, :-1], sizes=edge_sizes).values
-        right = sc.broadcast(coord[dim, 1:], sizes=edge_sizes).values
+        # left = sc.broadcast(coord[dim, :-1], sizes=edge_sizes).values
+        # right = sc.broadcast(coord[dim, 1:], sizes=edge_sizes).values
+        left = sc.broadcast(coord[:-1], sizes=edge_sizes).values
+        right = sc.broadcast(coord[1:], sizes=edge_sizes).values
 
         # The numpy.random.uniform function below does not support NaNs, so we need to
         # replace them with zeros, and then replace them back after the random numbers
