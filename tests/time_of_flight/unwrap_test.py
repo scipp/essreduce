@@ -60,7 +60,7 @@ def test_unwrap_with_no_choppers() -> None:
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
+    # ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -101,7 +101,7 @@ def test_standard_unwrap(dist) -> None:
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
+    # ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -150,7 +150,8 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
     tofs = pl.compute(time_of_flight.ResampledTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
-    ref = ref.bins.concat().value.hist(wavelength=wavs.coords["wavelength"])
+    # ref = ref.bins.concat().value.hist(wavelength=wavs.coords["wavelength"])
+    ref = ref.hist(wavelength=wavs.coords["wavelength"])
     # We divide by the maximum to avoid large relative differences at the edges of the
     # frames where the counts are low.
     diff = (wavs - ref) / ref.max()
