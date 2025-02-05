@@ -167,6 +167,8 @@ def compute_tof_lookup_table(
         pulse_index += time_bins_half_width
         pulse_index %= frame_period
         pulse_index //= pulse_period
+        pulse_index += pulse_stride_offset
+        pulse_index %= pulse_stride
         data.coords['pulse'] = pulse_index
 
         # Because we staggered the mesh by half a bin width, we want the values above
@@ -208,9 +210,11 @@ def compute_tof_lookup_table(
     slab = sc.empty_like(table['event_time_offset', 0])
     slab.coords['event_time_offset'] = pulse_period
     table = sc.concat([table, slab], dim='event_time_offset')
-    # Then, copy over the values
-    for i in range(pulse_stride):
-        pulse = (i + 1) % pulse_stride
+    # Then, copy over the values. Instead of using pulse_stride, we use the number of
+    # pulses in the table, as it could be that there were no events in the first pulse.
+    npulses = table.sizes['pulse']
+    for i in range(npulses):
+        pulse = (i + 1) % npulses
         left_edge = table.data['pulse', pulse]['event_time_offset', 0]
         table.data['pulse', i]['event_time_offset', -1] = left_edge
 
