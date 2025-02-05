@@ -12,7 +12,6 @@ from collections.abc import Callable
 import numpy as np
 import scipp as sc
 from scipp._scipp.core import _bins_no_validate
-from scipp.scipy.interpolate import interp1d
 from scippneutron._utils import elem_unit
 
 from .to_events import to_events
@@ -153,8 +152,8 @@ def compute_tof_lookup_table(
         pulse_index %= pulse_stride
         data.coords['pulse'] = pulse_index
 
-        # Create some time bins for event_time_offset. They must strictly cover the
-        # range [0, pulse_period].
+        # Create some time bins for event_time_offset. We want our final table to
+        # strictly cover the range [0, pulse_period].
         time_bins = sc.linspace(
             'event_time_offset',
             0.0,
@@ -162,6 +161,11 @@ def compute_tof_lookup_table(
             time_resolution + 1,
             unit=pulse_period.unit,
         )
+        # Subtract half a bin width
+        half_width = 0.5 * (time_bins[1] - time_bins[0])
+        time_bins -= half_width
+        data.coords['event_time_offset'] %= (pulse_period - half_width)
+
 
         binned = data.group('pulse').bin(
             distance=edges + simulation_distance, event_time_offset=time_bins
@@ -182,18 +186,24 @@ def compute_tof_lookup_table(
 
     table = sc.concat(pieces, 'distance')
 
-    # We now have the data values in the centers of the bins (we computed means inside
-    # bins). For the event_time_offset axis, we need to cover the exact range
-    # [0, pulse_period]. So we move the values to the bin edges using linear
-    # interpolation.
-    dim = 'event_time_offset'
-    mid = table.copy(deep=False)
-    mid.coords[dim] = sc.midpoints(table.coords[dim])
-    fval = interp1d(sc.values(mid), dim, fill_value="extrapolate")
-    fvar = interp1d(sc.variances(mid), dim, fill_value="extrapolate")
-    data = fval(table.coords[dim]).data
-    data.variances = fvar(table.coords[dim]).values
-    out = sc.DataArray(data=data, coords=table.coords)
+    table.coords["event_time_offset"] = sc.midpoints(table.coords["event_time_offset"])
+    # Copy over the left edge to the right edge
+    left_edge = table['event_time_offset', 0].copy()
+    left_edge.coords['event_time_offset'] = pulse_period
+    out = sc.concat([table, left_edge], dim='event_time_offset')
+
+    # # We now have the data values in the centers of the bins (we computed means inside
+    # # bins). For the event_time_offset axis, we need to cover the exact range
+    # # [0, pulse_period]. So we move the values to the bin edges using linear
+    # # interpolation.
+    # dim = 'event_time_offset'
+    # mid = table.copy(deep=False)
+    # mid.coords[dim] = sc.midpoints(table.coords[dim])
+    # fval = interp1d(sc.values(mid), dim, fill_value="extrapolate")
+    # fvar = interp1d(sc.variances(mid), dim, fill_value="extrapolate")
+    # data = fval(table.coords[dim]).data
+    # data.variances = fvar(table.coords[dim]).values
+    # out = sc.DataArray(data=data, coords=table.coords)
 
     # Finally, mask regions with large uncertainty with NaNs.
     relative_error = sc.stddevs(out.data) / sc.values(out.data)
