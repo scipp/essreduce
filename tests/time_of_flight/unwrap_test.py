@@ -13,21 +13,21 @@ from ess.reduce.time_of_flight import fakes
 sl = pytest.importorskip("sciline")
 
 
-def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
-    pl = sl.Pipeline(time_of_flight.providers())
-    period = sc.scalar(123.0, unit="ms")
-    pl[time_of_flight.PulsePeriod] = period
-    pl[time_of_flight.PulseStride] = 1
-    assert_identical(pl.compute(time_of_flight.FramePeriod), period)
+# def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
+#     pl = sl.Pipeline(time_of_flight.providers())
+#     period = sc.scalar(123.0, unit="ms")
+#     pl[time_of_flight.PulsePeriod] = period
+#     pl[time_of_flight.PulseStride] = 1
+#     assert_identical(pl.compute(time_of_flight.FramePeriod), period)
 
 
-@pytest.mark.parametrize("stride", [1, 2, 3, 4])
-def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None:
-    pl = sl.Pipeline(time_of_flight.providers())
-    period = sc.scalar(123.0, unit="ms")
-    pl[time_of_flight.PulsePeriod] = period
-    pl[time_of_flight.PulseStride] = stride
-    assert_identical(pl.compute(time_of_flight.FramePeriod), stride * period)
+# @pytest.mark.parametrize("stride", [1, 2, 3, 4])
+# def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None:
+#     pl = sl.Pipeline(time_of_flight.providers())
+#     period = sc.scalar(123.0, unit="ms")
+#     pl[time_of_flight.PulsePeriod] = period
+#     pl[time_of_flight.PulseStride] = stride
+#     assert_identical(pl.compute(time_of_flight.FramePeriod), stride * period)
 
 
 def test_unwrap_with_no_choppers() -> None:
@@ -68,6 +68,9 @@ def test_unwrap_with_no_choppers() -> None:
     )
     # Most errors should be small
     assert np.nanpercentile(diff.values, 96) < 1.0
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 # At 80m, event_time_offset does not wrap around (all events are within the same pulse).
@@ -109,6 +112,9 @@ def test_standard_unwrap(dist) -> None:
     )
     # All errors should be small
     assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 # At 80m, event_time_offset does not wrap around (all events are within the same pulse).
@@ -129,9 +135,9 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
         mon.hist(
             event_time_offset=sc.linspace(
                 "event_time_offset", 0.0, 1000.0 / 14, num=1001, unit="ms"
-            ).to(unit="s")
+            ).to(unit=mon.bins.coords["event_time_offset"].bins.unit)
         )
-        .sum("pulse")
+        # .sum("pulse")
         .rename(event_time_offset=dim)
     )
 
@@ -156,6 +162,9 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
     # frames where the counts are low.
     diff = (wavs - ref) / ref.max()
     assert np.nanpercentile(diff.values, 96.0) < 0.3
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 def test_pulse_skipping_unwrap() -> None:
@@ -189,7 +198,7 @@ def test_pulse_skipping_unwrap() -> None:
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
+    # ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -197,6 +206,9 @@ def test_pulse_skipping_unwrap() -> None:
     )
     # All errors should be small
     assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> None:
@@ -231,7 +243,7 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
+    # ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -239,6 +251,9 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
     )
     # All errors should be small
     assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> None:

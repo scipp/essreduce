@@ -8,7 +8,6 @@ event_time_offset coordinates to data with a time-of-flight coordinate.
 """
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 import numpy as np
 import scipp as sc
@@ -31,9 +30,6 @@ from .types import (
     TimeResolution,
     TofData,
 )
-
-if TYPE_CHECKING:
-    from scipy.interpolate import RegularGridInterpolator
 
 
 def extract_ltotal(da: RawData) -> Ltotal:
@@ -218,7 +214,7 @@ def compute_tof_lookup_table(
 
 def _make_tof_interpolator(
     lookup: sc.DataArray, distance_unit: str, time_unit: str
-) -> RegularGridInterpolator:
+) -> Callable:
     from scipy.interpolate import RegularGridInterpolator
 
     # TODO: to make use of multi-threading, we could write our own interpolator.
@@ -266,13 +262,11 @@ def _time_of_flight_data_histogram(
     # need to insert a bin edge at that exact location to avoid having the last bin
     # with one finite left edge and a NaN right edge (it becomes NaN as it would be
     # outside the range of the lookup table).
-    # unit = mon.coords['time_of_flight'].unit
     new_bins = sc.sort(
         sc.concat(
-            [da.coords[key], sc.scalar(0.0, unit=eto_unit), pulse_period],
-            dim='time_of_flight',
+            [da.coords[key], sc.scalar(0.0, unit=eto_unit), pulse_period], dim=key
         ),
-        key='time_of_flight',
+        key=key,
     )
     rebinned = da.rebin({key: new_bins})
     etos = rebinned.coords[key]
@@ -335,16 +329,15 @@ def _time_of_flight_data_events(
         lookup, distance_unit=ltotal.unit, time_unit=eto_unit
     )
 
+    # Operate on events (broadcast distances to all events)
+    ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
+    etos = etos.bins.constituents["data"]
+    pulse_index = pulse_index.bins.constituents["data"]
+
     # Compute time-of-flight for all neutrons using the interpolator
     tofs = sc.array(
         dims=etos.dims,
-        values=interp(
-            (
-                pulse_index.bins.constituents["data"].values,
-                sc.bins_like(etos, ltotal).bins.constituents["data"].values,
-                etos.bins.constituents["data"].values,
-            )
-        ),
+        values=interp((pulse_index.values, ltotal.values, etos.values)),
         unit=eto_unit,
     )
 
