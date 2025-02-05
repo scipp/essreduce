@@ -173,6 +173,19 @@ def compute_tof_lookup_table(
         pulse_index %= pulse_stride
         data.coords['pulse'] = pulse_index
 
+        # TODO: Use a sc.lookup for the pulse_index instead.
+        edges = (
+            sc.arange('pulse', 1, 3)
+            * sc.concat([pulse_period - time_bins_half_width, pulse_period], 'toa')
+        ).flatten(to='toa')
+        edges = sc.concat([sc.scalar(0.0, unit=time_unit), edges], 'toa')
+        pulse_lookup = sc.DataArray(
+            data=sc.array(
+                dims=['toa'], values=np.roll(np.repeat(np.arange(pulse_stride), 2), -1)
+            ),
+            coords={'toa': edges},
+        )
+
         # Because we staggered the mesh by half a bin width, we want the values above
         # the last bin edge to wrap around to the first bin.
         # Technically, those values should end up between -0.5*bin_width and 0, but
