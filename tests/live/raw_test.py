@@ -7,6 +7,17 @@ import scipp as sc
 from ess.reduce.live import raw
 
 
+@pytest.mark.parametrize(
+    'sigma',
+    [sc.scalar(0.01, unit='m'), sc.scalar(1.0, unit='cm'), sc.scalar(10.0, unit='mm')],
+)
+def test_gaussian_position_noise_is_sigma_unit_independent(sigma: sc.Variable) -> None:
+    sigma_m = sigma.to(unit='m')
+    reference = raw.gaussian_position_noise(sigma=sigma_m)
+    noise = raw.gaussian_position_noise(sigma=sigma)
+    assert sc.identical(noise, reference)
+
+
 def test_clear_counts_resets_counts_to_zero() -> None:
     detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
     det = raw.Detector(detector_number)

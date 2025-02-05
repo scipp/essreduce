@@ -528,9 +528,12 @@ def position_noise_for_cylindrical_pixel(
 
 
 def gaussian_position_noise(sigma: PositionNoiseSigma) -> PositionNoise:
+    sigma = sigma.to(unit='m', copy=False)
     size = _noise_size
     position = sc.empty(sizes={'position': size}, unit='m', dtype=sc.DType.vector3)
-    position.values = np.random.default_rng().normal(0, sigma.value, size=(size, 3))
+    position.values = np.random.default_rng(seed=1234).normal(
+        0, sigma.value, size=(size, 3)
+    )
     return PositionNoise(position)
 
 
