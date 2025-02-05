@@ -277,9 +277,14 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
         time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
 
-    pl[time_of_flight.RawData] = mon[
-        1:
-    ].copy()  # Skip first pulse = half of the first frame
+    # pl[time_of_flight.RawData] = mon[
+    #     1:
+    # ].copy()
+    # Skip first pulse = half of the first frame
+    a = mon.group('event_time_zero')['event_time_zero', 1:]
+    a.bins.coords['event_time_zero'] = sc.bins_like(a, a.coords['event_time_zero'])
+    pl[time_of_flight.RawData] = a.bins.concat('event_time_zero')
+
     pl[time_of_flight.SimulationResults] = sim
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
@@ -290,7 +295,20 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref[1:].copy().bins.concat().value
+    # ref = ref[1:].copy()  # .bins.concat().value
+    ref = (
+        ref.bin(
+            toa=sc.concat(
+                [
+                    sc.scalar(1 / 14, unit='s').to(unit=ref.coords['toa'].unit),
+                    ref.coords['toa'].max() * 1.01,
+                ],
+                dim='toa',
+            )
+        )
+        .bins.concat()
+        .value
+    )
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])

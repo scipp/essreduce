@@ -164,6 +164,11 @@ def compute_tof_lookup_table(
         # Add the event_time_offset and pulse index coordinate to the data.
         data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
         pulse_index = (data.coords['toa'] % frame_period) // pulse_period
+
+        # pulse_index = data.coords['toa'] % frame_period
+        # pulse_index %= frame_period - time_bins_half_width
+        # pulse_index = pulse_index // pulse_period
+
         pulse_index += pulse_stride_offset
         pulse_index %= pulse_stride
         data.coords['pulse'] = pulse_index
@@ -199,6 +204,7 @@ def compute_tof_lookup_table(
     # We are still missing the upper edge of the table in the event_time_offset axis
     # (at pulse_period). Because the event_time_offset is periodic, we can simply copy
     # the left edge over to the right edge.
+    # Note that the
     left_edge = table['event_time_offset', 0].copy()
     left_edge.coords['event_time_offset'] = pulse_period
     out = sc.concat([table, left_edge], dim='event_time_offset')
