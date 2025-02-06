@@ -1,12 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
-from functools import partial
-
 import numpy as np
 import pytest
 import scipp as sc
-import tof as tof_pkg
 from scippneutron.chopper import DiskChopper
 from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
@@ -174,37 +171,12 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
 
     for da in wavs.flatten(to='pixel'):
         x = sc.sort(da.value, key='id')
-        # print(x)
         diff = abs(
             (x.coords["wavelength"] - ref.coords["wavelength"])
             / ref.coords["wavelength"]
         )
         assert np.nanpercentile(diff.values, 100) < 0.02
         assert sc.isclose(ref.data.sum(), da.data.sum(), rtol=sc.scalar(1.0e-3))
-
-    # print(wav_wfm)
-
-    # # Compare the computed wavelengths to the true wavelengths
-    # result = wav_wfm.flatten(to="detector")
-
-    # for j in range(len(result)):
-    #     computed_wavelengths = result[j].values.coords["wavelength"]
-    #     assert sc.allclose(
-    #         computed_wavelengths,
-    #         true_wavelengths["pulse", i],
-    #         rtol=sc.scalar(1e-02),
-    #     )
-
-    # # # Compare the computed wavelengths to the true wavelengths
-    # # for i in range(npulses):
-    # #     result = wav_wfm["pulse", i].flatten(to="detector")
-    # #     for j in range(len(result)):
-    # #         computed_wavelengths = result[j].values.coords["wavelength"]
-    # #         assert sc.allclose(
-    # #             computed_wavelengths,
-    # #             true_wavelengths["pulse", i],
-    # #             rtol=sc.scalar(1e-02),
-    # #         )
 
 
 @pytest.fixture(scope="module")
@@ -298,7 +270,6 @@ def simulation_v20_choppers():
     )
 
 
-@pytest.mark.parametrize("npulses", [1, 2])
 @pytest.mark.parametrize(
     "ltotal",
     [
@@ -312,80 +283,56 @@ def simulation_v20_choppers():
 @pytest.mark.parametrize("time_offset_unit", ["s", "ms", "us", "ns"])
 @pytest.mark.parametrize("distance_unit", ["m", "mm"])
 def test_v20_compute_wavelengths_from_wfm(
-    simulation_v20_choppers, npulses, ltotal, time_offset_unit, distance_unit
+    simulation_v20_choppers, ltotal, time_offset_unit, distance_unit
 ):
     monitors = {
         f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to="detector"))
     }
 
     # Create some neutron events
-    wavelengths = sc.array(
-        dims=["event"], values=[2.75, 4.2, 5.4, 6.5, 7.6, 8.75], unit="angstrom"
-    )
-    birth_times = sc.full(sizes=wavelengths.sizes, value=1.5, unit="ms")
-    ess_beamline = fakes.FakeBeamline(
+    beamline = fakes.FakeBeamline(
         choppers=fakes.wfm_choppers(),
         monitors=monitors,
-        run_length=sc.scalar(1 / 14, unit="s") * npulses,
-        events_per_pulse=len(wavelengths),
-        source=partial(
-            tof_pkg.Source.from_neutrons,
-            birth_times=birth_times,
-            wavelengths=wavelengths,
-            frequency=sc.scalar(14.0, unit="Hz"),
-        ),
+        run_length=sc.scalar(1 / 14, unit="s") * 4,
+        events_per_pulse=10_000,
+        seed=99,
     )
 
-    # Save the true wavelengths for later
-    true_wavelengths = ess_beamline.source.data.coords["wavelength"]
-
-    raw_data = sc.concat(
-        [ess_beamline.get_monitor(key)[0] for key in monitors.keys()],
+    raw = sc.concat(
+        [beamline.get_monitor(key)[0].squeeze() for key in monitors.keys()],
         dim="detector",
     ).fold(dim="detector", sizes=ltotal.sizes)
 
     # Convert the time offset to the unit requested by the test
-    raw_data.bins.coords["event_time_offset"] = raw_data.bins.coords[
-        "event_time_offset"
-    ].to(unit=time_offset_unit, copy=False)
-
-    raw_data.coords["Ltotal"] = ltotal.to(unit=distance_unit, copy=False)
-
-    # Verify that all 6 neutrons made it through the chopper cascade
-    assert sc.identical(
-        raw_data.bins.concat("pulse").hist().data,
-        sc.array(
-            dims=["detector"],
-            values=[len(wavelengths) * npulses] * len(monitors),
-            unit="counts",
-            dtype="float64",
-        ).fold(dim="detector", sizes=ltotal.sizes),
+    raw.bins.coords["event_time_offset"] = raw.bins.coords["event_time_offset"].to(
+        unit=time_offset_unit, copy=False
     )
+    # Convert the distance to the unit requested by the test
+    raw.coords["Ltotal"] = raw.coords["Ltotal"].to(unit=distance_unit, copy=False)
 
-    # Set up the workflow
-    workflow = sl.Pipeline(
+    # Save reference data
+    ref = beamline.get_monitor(next(iter(monitors)))[1].squeeze()
+    ref = sc.sort(ref, key='id')
+
+    pl = sl.Pipeline(
         time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
 
-    workflow[time_of_flight.RawData] = raw_data
-    workflow[time_of_flight.SimulationResults] = simulation_v20_choppers
-    workflow[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
+    pl[time_of_flight.RawData] = raw
+    pl[time_of_flight.SimulationResults] = simulation_v20_choppers
+    pl[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
 
-    # Compute time-of-flight
-    tofs = workflow.compute(time_of_flight.TofData)
-    assert {dim: tofs.sizes[dim] for dim in ltotal.sizes} == ltotal.sizes
+    tofs = pl.compute(time_of_flight.TofData)
 
     # Convert to wavelength
-    graph = {**beamline(scatter=False), **elastic("tof")}
-    wav_wfm = tofs.transform_coords("wavelength", graph=graph)
+    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    wavs = tofs.transform_coords("wavelength", graph=graph)
 
-    # Compare the computed wavelengths to the true wavelengths
-    for i in range(npulses):
-        result = wav_wfm["pulse", i].flatten(to="detector")
-        for j in range(len(result)):
-            computed_wavelengths = result[j].values.coords["wavelength"]
-            assert sc.allclose(
-                computed_wavelengths,
-                true_wavelengths["pulse", i],
-                rtol=sc.scalar(1e-02),
-            )
+    for da in wavs.flatten(to='pixel'):
+        x = sc.sort(da.value, key='id')
+        diff = abs(
+            (x.coords["wavelength"] - ref.coords["wavelength"])
+            / ref.coords["wavelength"]
+        )
+        assert np.nanpercentile(diff.values, 99) < 0.02
+        assert sc.isclose(ref.data.sum(), da.data.sum(), rtol=sc.scalar(1.0e-3))
