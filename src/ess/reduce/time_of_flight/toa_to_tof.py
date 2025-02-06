@@ -126,6 +126,28 @@ def compute_tof_lookup_table(
     time_bins_half_width = 0.5 * (time_bins[1] - time_bins[0])
     time_bins -= time_bins_half_width
 
+    # Create a lookup to compute the pulse index that accounts for periodicity in the
+    # event_time_offset, and the staggering of the mesh below by half a bin width.
+    # In the case of a pulse stride of 2, the range [0, pulse_period - half_bin_width]
+    # belongs to pulse 0, and [pulse_period - half_bin_width, pulse_period] belongs to
+    # pulse 1. The range [pulse_period, 2*pulse_period - half_bin_width] belongs to
+    # pulse 1, and [2*pulse_period - half_bin_width, 2*pulse_period] belongs to pulse 0.
+    toa_edges = (
+        (sc.arange('pulse', pulse_stride + 1) * pulse_period)
+        + sc.concat(
+            [sc.scalar(0.0, unit=time_unit), pulse_period - time_bins_half_width], 'toa'
+        )
+    ).flatten(to='toa')[:-1]
+    pulse_indices = (
+        np.roll(np.repeat(np.arange(pulse_stride), 2), -1) + pulse_stride_offset
+    ) % pulse_stride
+    pulse_lookup = sc.lookup(
+        sc.DataArray(
+            data=sc.array(dims=['toa'], values=pulse_indices), coords={'toa': toa_edges}
+        ),
+        'toa',
+    )
+
     # To avoid a too large RAM usage, we compute the table in chunks, and piece them
     # together at the end.
     ndist = len(distance_bins) - 1
@@ -163,13 +185,7 @@ def compute_tof_lookup_table(
 
         # Add the event_time_offset and pulse index coordinate to the data.
         data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
-        pulse_index = data.coords['toa'] % frame_period
-        pulse_index += time_bins_half_width
-        pulse_index %= frame_period
-        pulse_index //= pulse_period
-        pulse_index += pulse_stride_offset
-        pulse_index %= pulse_stride
-        data.coords['pulse'] = pulse_index
+        data.coords['pulse'] = pulse_lookup[data.coords['toa'] % frame_period]
 
         # Because we staggered the mesh by half a bin width, we want the values above
         # the last bin edge to wrap around to the first bin.
@@ -203,7 +219,7 @@ def compute_tof_lookup_table(
     # (at pulse_period). Because the event_time_offset is periodic, we can simply copy
     # the left edge over to the right edge.
     # Note that this needs to be done pulse by pulse, as the left edge of the second
-    # pulse is not the same as the right edge of the first pulse, and so on (in the case
+    # pulse is the same as the right edge of the first pulse, and so on (in the case
     # of pulse_stride > 1).
 
     # First, extend the table to the right by 1, and set the coordinate to pulse_period.
@@ -290,7 +306,7 @@ def _time_of_flight_data_histogram(
     # cannot know in the histogrammed data which pulse the events belong to.
     # So we merge the pulse dimension in the lookup table. A quick way to do this
     # is to take the mean of the data along the pulse dimension (there should
-    # mainly be regions that are NaN in one pulse and finite in the other).
+    # only be regions that are NaN in one pulse and finite in the other).
     merged = lookup.data.nanmean('pulse')
     dim = merged.dims[0]
     lookup = sc.DataArray(
