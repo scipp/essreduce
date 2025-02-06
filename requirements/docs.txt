@@ -12,21 +12,21 @@ alabaster==1.0.0
     # via sphinx
 asttokens==3.0.0
     # via stack-data
-attrs==24.3.0
+attrs==25.1.0
     # via
     #   jsonschema
     #   referencing
-babel==2.16.0
+babel==2.17.0
     # via
     #   pydata-sphinx-theme
     #   sphinx
-beautifulsoup4==4.12.3
+beautifulsoup4==4.13.3
     # via
     #   nbconvert
     #   pydata-sphinx-theme
 bleach[css]==6.2.0
     # via nbconvert
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 charset-normalizer==3.4.1
     # via requests
@@ -46,8 +46,6 @@ docutils==0.21.2
     #   nbsphinx
     #   pydata-sphinx-theme
     #   sphinx
-exceptiongroup==1.2.2
-    # via ipython
 executing==2.2.0
     # via stack-data
 fastjsonschema==2.21.1
@@ -62,7 +60,7 @@ importlib-resources==6.5.2
     # via tof
 ipykernel==6.29.5
     # via -r docs.in
-ipython==8.31.0
+ipython==8.32.0
     # via
     #   -r docs.in
     #   ipykernel
@@ -112,13 +110,13 @@ mdit-py-plugins==0.4.2
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.1.0
+mistune==3.1.1
     # via nbconvert
 myst-parser==4.0.0
     # via -r docs.in
 nbclient==0.10.2
     # via nbconvert
-nbconvert==7.16.5
+nbconvert==7.16.6
     # via nbsphinx
 nbformat==5.10.4
     # via
@@ -156,11 +154,11 @@ pygments==2.19.1
     #   sphinx
 pyyaml==6.0.2
     # via myst-parser
-pyzmq==26.2.0
+pyzmq==26.2.1
     # via
     #   ipykernel
     #   jupyter-client
-referencing==0.36.1
+referencing==0.36.2
     # via
     #   jsonschema
     #   jsonschema-specifications
@@ -205,10 +203,8 @@ stack-data==0.6.3
     # via ipython
 tinycss2==1.4.0
     # via bleach
-tof==25.1.2
+tof==25.2.0
     # via -r docs.in
-tomli==2.2.1
-    # via sphinx
 tornado==6.4.2
     # via
     #   ipykernel
@@ -228,8 +224,7 @@ traitlets==5.14.3
     #   nbsphinx
 typing-extensions==4.12.2
     # via
-    #   ipython
-    #   mistune
+    #   beautifulsoup4
     #   pydata-sphinx-theme
     #   referencing
 urllib3==2.3.0

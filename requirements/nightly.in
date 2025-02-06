@@ -6,7 +6,7 @@ pooch
 pytest
 scipy>=1.7.0
 scippnexus @ git+https://github.com/scipp/scippnexus@main
-scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+scipp @ https://github.com/scipp/scipp/releases/download/nightly/scipp-nightly-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 sciline @ git+https://github.com/scipp/sciline@main
 cyclebane @ git+https://github.com/scipp/cyclebane@main
 scippneutron @ git+https://github.com/scipp/scippneutron@main
