@@ -22,6 +22,7 @@ def test_unwrap_with_no_choppers() -> None:
         monitors={"detector": distance},
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=100_000,
+        seed=1,
     )
 
     mon, ref = beamline.get_monitor("detector")
@@ -65,6 +66,7 @@ def test_standard_unwrap(dist) -> None:
         monitors={"detector": distance},
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=100_000,
+        seed=2,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -109,6 +111,7 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
         monitors={"detector": distance},
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=100_000,
+        seed=3,
     )
     mon, ref = beamline.get_monitor("detector")
     mon = mon.hist(
@@ -152,6 +155,7 @@ def test_pulse_skipping_unwrap() -> None:
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
+        seed=4,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -195,6 +199,7 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
+        seed=5,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -239,6 +244,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
+        seed=6,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -308,6 +314,7 @@ def test_pulse_skipping_unwrap_histogram_mode() -> None:
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
+        seed=7,
     )
     mon, ref = beamline.get_monitor("detector")
     mon = mon.hist(

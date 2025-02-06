@@ -21,6 +21,7 @@ class FakeBeamline:
         monitors: dict[str, sc.Variable],
         run_length: sc.Variable,
         events_per_pulse: int = 200000,
+        seed: int | None = None,
         source: Callable | None = None,
     ):
         import math
@@ -35,7 +36,10 @@ class FakeBeamline:
         # Create a source
         if source is None:
             self.source = tof_pkg.Source(
-                facility="ess", neutrons=self.events_per_pulse, pulses=self.npulses
+                facility="ess",
+                neutrons=self.events_per_pulse,
+                pulses=self.npulses,
+                seed=seed,
             )
         else:
             self.source = source(pulses=self.npulses)

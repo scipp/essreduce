@@ -352,7 +352,11 @@ def _time_of_flight_data_events(
     etz = da.bins.concat().value.coords['event_time_zero']
     tmin = etz.min()
     pulse_index = (
-        ((da.bins.coords['event_time_zero'] - tmin) + 0.5 * pulse_period) % frame_period
+        (
+            (da.bins.coords['event_time_zero'] - tmin).to(unit=eto_unit)
+            + 0.5 * pulse_period
+        )
+        % frame_period
     ) // pulse_period
 
     # Create 2D interpolator
