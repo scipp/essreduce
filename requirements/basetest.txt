@@ -19,9 +19,13 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
+exceptiongroup==1.2.2
+    # via
+    #   ipython
+    #   pytest
 executing==2.2.0
     # via stack-data
-fonttools==4.55.8
+fonttools==4.56.0
     # via matplotlib
 idna==3.10
     # via requests
@@ -96,12 +100,16 @@ stack-data==0.6.3
     # via ipython
 tof==25.2.0
     # via -r basetest.in
+tomli==2.2.1
+    # via pytest
 traitlets==5.14.3
     # via
     #   comm
     #   ipython
     #   ipywidgets
     #   matplotlib-inline
+typing-extensions==4.12.2
+    # via ipython
 urllib3==2.3.0
     # via requests
 wcwidth==0.2.13

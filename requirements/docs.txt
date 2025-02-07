@@ -46,6 +46,8 @@ docutils==0.21.2
     #   nbsphinx
     #   pydata-sphinx-theme
     #   sphinx
+exceptiongroup==1.2.2
+    # via ipython
 executing==2.2.0
     # via stack-data
 fastjsonschema==2.21.1
@@ -205,6 +207,8 @@ tinycss2==1.4.0
     # via bleach
 tof==25.2.0
     # via -r docs.in
+tomli==2.2.1
+    # via sphinx
 tornado==6.4.2
     # via
     #   ipykernel
@@ -225,6 +229,8 @@ traitlets==5.14.3
 typing-extensions==4.12.2
     # via
     #   beautifulsoup4
+    #   ipython
+    #   mistune
     #   pydata-sphinx-theme
     #   referencing
 urllib3==2.3.0
