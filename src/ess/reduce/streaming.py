@@ -4,6 +4,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from copy import deepcopy
 from typing import Any, Generic, TypeVar
 
 import networkx as nx
@@ -29,6 +30,8 @@ def maybe_hist(value: T) -> T:
     :
         Histogram.
     """
+    if not isinstance(value, sc.Variable | sc.DataArray):
+        return value
     return value if value.bins is None else value.hist()
 
 
@@ -90,11 +93,11 @@ class EternalAccumulator(Accumulator[T]):
 
     @property
     def value(self) -> T:
-        return self._value.copy()
+        return deepcopy(self._value)
 
     def _do_push(self, value: T) -> None:
         if self._value is None:
-            self._value = value.copy()
+            self._value = deepcopy(value)
         else:
             self._value += value
 
@@ -146,6 +149,7 @@ class StreamProcessor:
         target_keys: tuple[sciline.typing.Key, ...],
         accumulators: dict[sciline.typing.Key, Accumulator, Callable[..., Accumulator]]
         | tuple[sciline.typing.Key, ...],
+        allow_bypass: bool = False,
     ) -> None:
         """
         Create a stream processor.
@@ -163,6 +167,12 @@ class StreamProcessor:
             passed, :py:class:`EternalAccumulator` is used for all keys. Otherwise, a
             dict mapping keys to accumulator instances can be passed. If a dict value is
             a callable, base_workflow.bind_and_call(value) is used to make an instance.
+        allow_bypass:
+            If True, allow bypassing accumulators for keys that are not in the
+            accumulators dict. This is useful for dynamic keys that are not "terminated"
+            in any accumulator. USE WITH CARE! This will lead to incorrect results
+            unless the values for these keys are valid for all chunks comprised in the
+            final accumulators at the point where :py:meth:`finalize` is called.
         """
         workflow = sciline.Pipeline()
         for key in target_keys:
@@ -201,19 +211,59 @@ class StreamProcessor:
             for key, value in self._accumulators.items()
         }
         self._target_keys = target_keys
+        self._allow_bypass = allow_bypass
 
     def add_chunk(
         self, chunks: dict[sciline.typing.Key, Any]
     ) -> dict[sciline.typing.Key, Any]:
+        """
+        Legacy interface for accumulating values from chunks and finalizing the result.
+
+        It is recommended to use :py:meth:`accumulate` and :py:meth:`finalize` instead.
+
+        Parameters
+        ----------
+        chunks:
+            Chunks to be processed.
+
+        Returns
+        -------
+        :
+            Finalized result.
+        """
+        self.accumulate(chunks)
+        return self.finalize()
+
+    def accumulate(self, chunks: dict[sciline.typing.Key, Any]) -> None:
+        """
+        Accumulate values from chunks without finalizing the result.
+
+        Parameters
+        ----------
+        chunks:
+            Chunks to be processed.
+        """
         for key, value in chunks.items():
             self._process_chunk_workflow[key] = value
             # There can be dynamic keys that do not "terminate" in any accumulator. In
             # that case, we need to make sure they can be and are used when computing
             # the target keys.
-            self._finalize_workflow[key] = value
+            if self._allow_bypass:
+                self._finalize_workflow[key] = value
         to_accumulate = self._process_chunk_workflow.compute(self._accumulators)
         for key, processed in to_accumulate.items():
             self._accumulators[key].push(processed)
+
+    def finalize(self) -> dict[sciline.typing.Key, Any]:
+        """
+        Get the final result by computing the target keys based on accumulated values.
+
+        Returns
+        -------
+        :
+            Finalized result.
+        """
+        for key in self._accumulators:
             self._finalize_workflow[key] = self._accumulators[key].value
         return self._finalize_workflow.compute(self._target_keys)
 
