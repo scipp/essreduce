@@ -3,6 +3,7 @@
 
 from typing import NewType
 
+import pytest
 import sciline
 import scipp as sc
 
@@ -214,6 +215,7 @@ def test_StreamProcess_with_zero_accumulators_for_buffered_workflow_calls() -> N
         dynamic_keys=(DynamicA, DynamicB),
         target_keys=(Target,),
         accumulators=(),
+        allow_bypass=True,
     )
     result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
     assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
@@ -222,3 +224,101 @@ def test_StreamProcess_with_zero_accumulators_for_buffered_workflow_calls() -> N
     result = streaming_wf.add_chunk({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
     assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 6.0))
     assert make_static_a.call_count == 1
+
+
+def test_StreamProcessor_with_bypass() -> None:
+    def _make_static_a() -> StaticA:
+        _make_static_a.call_count += 1
+        return StaticA(2.0)
+
+    _make_static_a.call_count = 0
+
+    base_workflow = sciline.Pipeline(
+        (_make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+    orig_workflow = base_workflow.copy()
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA,),  # Note: No AccumB
+        allow_bypass=True,
+    )
+    streaming_wf.accumulate({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+    streaming_wf.accumulate({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    result = streaming_wf.finalize()
+    # Note denominator is 5, not 9
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 5.0))
+    streaming_wf.accumulate({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    result = streaming_wf.finalize()
+    # Note denominator is 6, not 15
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 6.0))
+    assert _make_static_a.call_count == 1
+
+    # Consistency check: Run the original workflow with the same inputs, all at once
+    orig_workflow[DynamicA] = sc.scalar(1 + 2 + 3)
+    orig_workflow[DynamicB] = sc.scalar(6)
+    expected = orig_workflow.compute(Target)
+    assert sc.identical(expected, result[Target])
+
+
+def test_StreamProcessor_without_bypass_raises() -> None:
+    def _make_static_a() -> StaticA:
+        _make_static_a.call_count += 1
+        return StaticA(2.0)
+
+    _make_static_a.call_count = 0
+
+    base_workflow = sciline.Pipeline(
+        (_make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA,),  # Note: No AccumB
+    )
+    streaming_wf.accumulate({DynamicA: 1, DynamicB: 4})
+    # Sciline passes `None` to the provider that needs AccumB.
+    with pytest.raises(TypeError, match='unsupported operand type'):
+        _ = streaming_wf.finalize()
+
+
+def test_StreamProcessor_calls_providers_after_accumulators_only_when_finalizing() -> (
+    None
+):
+    def _make_target(accum_a: AccumA, accum_b: AccumB) -> Target:
+        _make_target.call_count += 1
+        return Target(accum_a / accum_b)
+
+    _make_target.call_count = 0
+
+    base_workflow = sciline.Pipeline(
+        (make_accum_a, make_accum_b, _make_target), params={StaticA: 2.0}
+    )
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA, AccumB),
+    )
+    streaming_wf.accumulate({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    streaming_wf.accumulate({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    assert _make_target.call_count == 0
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 9.0))
+    assert _make_target.call_count == 1
+    streaming_wf.accumulate({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    assert _make_target.call_count == 1
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 15.0))
+    assert _make_target.call_count == 2
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 15.0))
+    # Outputs are not cached.
+    assert _make_target.call_count == 3
