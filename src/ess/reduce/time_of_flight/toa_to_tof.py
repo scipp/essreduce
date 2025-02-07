@@ -195,7 +195,6 @@ def compute_tof_lookup_table(
     time_resolution: TimeResolution,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
-    pulse_stride_offset: PulseStrideOffset,
     error_threshold: LookupTableRelativeErrorThreshold,
 ) -> TimeOfFlightLookupTable:
     """
@@ -219,8 +218,6 @@ def compute_tof_lookup_table(
     pulse_stride:
         Stride of used pulses. Usually 1, but may be a small integer when
         pulse-skipping.
-    pulse_stride_offset:
-        When pulse-skipping, the offset of the first pulse in the stride.
     error_threshold:
         Threshold for the relative standard deviation (coefficient of variation) of the
         projected time-of-flight above which values are masked.
@@ -401,6 +398,7 @@ def _time_of_flight_data_events(
     ltotal: sc.Variable,
     pulse_period: sc.Variable,
     pulse_stride: int,
+    pulse_stride_offset: int,
 ) -> sc.DataArray:
     etos = da.bins.coords["event_time_offset"]
     eto_unit = elem_unit(etos)
@@ -418,6 +416,9 @@ def _time_of_flight_data_events(
         )
         % frame_period
     ) // pulse_period
+    # Apply the pulse_stride_offset
+    pulse_index += pulse_stride_offset
+    pulse_index %= pulse_stride
 
     # Create 2D interpolator
     interp = _make_tof_interpolator(
@@ -447,6 +448,7 @@ def time_of_flight_data(
     ltotal: Ltotal,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
+    pulse_stride_offset: PulseStrideOffset,
 ) -> TofData:
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
@@ -467,6 +469,9 @@ def time_of_flight_data(
     pulse_stride:
         Stride of used pulses. Usually 1, but may be a small integer when
         pulse-skipping.
+    pulse_stride_offset:
+        When pulse-skipping, the offset of the first pulse in the stride. This is
+        typically zero but can be a small integer < pulse_stride.
     """
 
     if da.bins is None:
@@ -480,6 +485,7 @@ def time_of_flight_data(
             ltotal=ltotal,
             pulse_period=pulse_period,
             pulse_stride=pulse_stride,
+            pulse_stride_offset=pulse_stride_offset,
         )
     return TofData(out)
 
