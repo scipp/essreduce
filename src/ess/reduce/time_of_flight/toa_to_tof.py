@@ -349,8 +349,7 @@ def _time_of_flight_data_events(
     # Compute a pulse index for every event: it is the index of the pulse within a
     # frame period. When there is no pulse skipping, those are all zero. When there is
     # pulse skipping, the index ranges from zero to pulse_stride - 1.
-    etz = da.bins.concat().value.coords['event_time_zero']
-    tmin = etz.min()
+    tmin = da.bins.coords['event_time_zero'].min()
     pulse_index = (
         (
             (da.bins.coords['event_time_zero'] - tmin).to(unit=eto_unit)
