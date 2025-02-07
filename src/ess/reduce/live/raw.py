@@ -110,8 +110,11 @@ class Histogrammer:
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         self._current += 1
         coords = self._coords[self._replica_dim, self._current % self._replicas]
+        return self._hist(da.data, coords=coords)
+
+    def _hist(self, data: sc.Variable, *, coords: sc.DataGroup) -> sc.DataArray:
         # If input is multi-dim we need to flatten since those dims cannot be preserved.
-        return sc.DataArray(da.data, coords=coords).flatten(to='_').hist(self._edges)
+        return sc.DataArray(data, coords=coords).flatten(to='_').hist(self._edges)
 
     def input_indices(self) -> sc.DataArray:
         """Return an array with input indices corresponding to each histogram bin."""
@@ -124,6 +127,31 @@ class Histogrammer:
             coords=coords,
         )
         return sc.DataArray(da.bin(self._edges).bins.data, coords=self._edges)
+
+    def intersection_weights(self, threshold: float = 0.25) -> sc.DataArray:
+        """
+        Compute weights as the number of points projected to each bin.
+
+        This is useful for removing projection effects from projected data.
+
+        Parameters
+        ----------
+        threshold:
+            Threshold for identifying bins with a low number of intersections. If the
+            number of intersections is below the threshold times the median number of
+            intersections, the bin is marked as invalid.
+
+        Returns
+        -------
+        :
+            DataArray with the intersection weights.
+        """
+        var = sc.ones(sizes=self._coords.sizes, dtype='float32', unit='')
+        xs = self._hist(var, coords=self._coords)
+        nonempty = xs.values[xs.values > 0]
+        mask = xs.values < threshold * np.median(nonempty)
+        xs.values[mask] = np.nan
+        return xs / self.replicas
 
 
 @dataclass
@@ -244,6 +272,11 @@ class RollingDetectorView(Detector):
         self._history: sc.DataArray | None = None
         self._cache: sc.DataArray | None = None
         self.clear_counts()
+        self._norm = (
+            self._projection.intersection_weights()
+            if hasattr(self._projection, 'intersection_weights')
+            else None
+        )
 
     def clear_counts(self) -> None:
         """
@@ -342,7 +375,7 @@ class RollingDetectorView(Detector):
             pixel_noise = sc.scalar(0.0, unit='m')
             noise_replica_count = 0
         else:
-            noise_replica_count = 4
+            noise_replica_count = 16
         wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
         wf[RollingDetectorViewWindow] = window
         if isinstance(projection, LogicalView):
@@ -378,7 +411,26 @@ class RollingDetectorView(Detector):
         wf[NeXusDetectorName] = detector_name
         return wf.compute(RollingDetectorView)
 
-    def get(self, window: int | None = None) -> sc.DataArray:
+    def get(self, *, window: int | None = None, normalize: bool = True) -> sc.DataArray:
+        """
+        Get the sum of counts over a window of the most recent counts.
+
+        Parameters
+        ----------
+        window:
+            Size of the window to use. If None, the full history is used.
+        normalize:
+            If True, normalize the data by the number of (fractional) points
+            contributing to each bin. This option is relevant only when the view
+            performs and actual projection. If the projection is modelling a non-point
+            like voxel via the pixel-noise-based replica mechanism, the normalization
+            also takes into account fractional contributions of each point to a pixel.
+
+        Returns
+        -------
+        :
+            Sum of counts over the window.
+        """
         if window is not None and not 0 <= window <= self._window:
             raise ValueError("Window size must be less than the history size.")
         if window is None or window == self._window:
@@ -390,7 +442,7 @@ class RollingDetectorView(Detector):
             else:
                 data = self._history['window', start % self._window :].sum('window')
                 data += self._history['window', 0 : self._current].sum('window')
-        return data
+        return data * self._norm if normalize and self._norm is not None else data
 
     def add_events(self, data: sc.DataArray) -> None:
         """
