@@ -8,14 +8,16 @@ from collections.abc import Generator, Mapping
 from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import dataclass
 from math import prod
-from typing import cast
+from typing import TypeVar, cast
 
 import scipp as sc
 import scippnexus as snx
 
 from ..logging import get_logger
 from .types import (
+    Beamline,
     FilePath,
+    Measurement,
     NeXusAllLocationSpec,
     NeXusEntryName,
     NeXusFile,
@@ -26,6 +28,8 @@ from .types import (
 
 class NoNewDefinitionsType: ...
 
+
+_Model = TypeVar('_Model', Beamline, Measurement)
 
 NoNewDefinitions = NoNewDefinitionsType()
 
@@ -72,6 +76,18 @@ def load_all_components(
             loaded['nexus_component_name'] = name
             components[name] = loaded
     return components
+
+
+def load_metadata(
+    file_path: FilePath | NeXusFile | NeXusGroup,
+    model: type[_Model],
+    *,
+    entry_name: NeXusEntryName | None = None,
+    definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
+) -> _Model:
+    with _open_nexus_file(file_path, definitions=definitions) as f:
+        entry = _unique_child_group(f, snx.NXentry, entry_name)
+        return model.from_nexus_entry(entry)
 
 
 def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
