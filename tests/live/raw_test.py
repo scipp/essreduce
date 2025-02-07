@@ -7,6 +7,17 @@ import scipp as sc
 from ess.reduce.live import raw
 
 
+@pytest.mark.parametrize(
+    'sigma',
+    [sc.scalar(0.01, unit='m'), sc.scalar(1.0, unit='cm'), sc.scalar(10.0, unit='mm')],
+)
+def test_gaussian_position_noise_is_sigma_unit_independent(sigma: sc.Variable) -> None:
+    sigma_m = sigma.to(unit='m')
+    reference = raw.gaussian_position_noise(sigma=sigma_m)
+    noise = raw.gaussian_position_noise(sigma=sigma)
+    assert sc.identical(noise, reference)
+
+
 def test_clear_counts_resets_counts_to_zero() -> None:
     detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
     det = raw.Detector(detector_number)
@@ -27,6 +38,20 @@ def test_Detector_bincount_drops_out_of_range_ids() -> None:
     )
 
 
+def test_Detector_bincount_raises_if_detector_number_not_sorted() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 3, 2], unit=None)
+    det = raw.Detector(detector_number)
+    with pytest.raises(ValueError, match="sorted"):
+        det.bincount([1])
+
+
+def test_Detector_bincount_raises_if_detector_number_not_consecutive() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 4], unit=None)
+    det = raw.Detector(detector_number)
+    with pytest.raises(ValueError, match="consecutive"):
+        det.bincount([1])
+
+
 def test_RollingDetectorView_full_window() -> None:
     detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
     det = raw.RollingDetectorView(detector_number=detector_number, window=2)
@@ -41,6 +66,26 @@ def test_RollingDetectorView_full_window() -> None:
     assert det.get().sum().value == 5
     det.add_counts([])
     assert det.get().sum().value == 2
+
+
+def test_RollingDetectorView_add_events_accepts_unsorted_detector_number() -> None:
+    detector_number = sc.array(dims=['detector_number'], values=[1, 3, 2], unit=None)
+    det = raw.RollingDetectorView(detector_number=detector_number, window=2)
+    pixel = sc.array(dims=['event'], values=[1, 2, 3, 2], unit=None)
+    events = sc.DataArray(sc.ones_like(pixel), coords={'detector_number': pixel})
+    det.add_events(events.group(detector_number))
+    assert det.get().sum().value == 4
+
+
+def test_RollingDetectorView_add_events_accepts_non_consecutive_detector_number() -> (
+    None
+):
+    detector_number = sc.array(dims=['detector_number'], values=[1, 2, 4], unit=None)
+    det = raw.RollingDetectorView(detector_number=detector_number, window=2)
+    pixel = sc.array(dims=['event'], values=[1, 2, 4, 2], unit=None)
+    events = sc.DataArray(sc.ones_like(pixel), coords={'detector_number': pixel})
+    det.add_events(events.group(detector_number))
+    assert det.get().sum().value == 4
 
 
 def test_RollingDetectorView_partial_window() -> None:
@@ -71,6 +116,23 @@ def test_RollingDetectorView_partial_window() -> None:
     assert det.get(1).sum().value == 2
     assert det.get(2).sum().value == 2
     assert det.get(3).sum().value == 4
+
+
+def test_RollingDetectorView_clear_counts() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    det = raw.RollingDetectorView(detector_number=detector_number, window=3)
+    det.add_counts([1, 2, 3, 2])
+    assert det.get(0).sum().value == 0
+    assert det.get(1).sum().value == 4
+    assert det.get(2).sum().value == 4
+    assert det.get(3).sum().value == 4
+    assert det.get().sum().value == 4
+    det.clear_counts()
+    assert det.get(0).sum().value == 0
+    assert det.get(1).sum().value == 0
+    assert det.get(2).sum().value == 0
+    assert det.get(3).sum().value == 0
+    assert det.get().sum().value == 0
 
 
 def test_RollingDetectorView_raises_if_subwindow_exceeds_window() -> None:
@@ -160,3 +222,158 @@ def test_project_onto_cylinder_z() -> None:
         result['arc_length'],
         sc.array(dims=['point'], values=[radius.value * np.pi * 0.5, 0.0], unit='m'),
     )
+
+
+def make_grid_cube(
+    nx: int = 5,
+    ny: int = 5,
+    nz: int = 5,
+    center: tuple = (0.0, 0.0, 10.0),
+    size: float = 1.0,
+) -> sc.Variable:
+    """Create a grid of points in a cube centered at specified position.
+
+    Parameters
+    ----------
+    nx:
+        Number of points along x-axis, by default 5
+    ny:
+        Number of points along y-axis, by default 5
+    nz:
+        Number of points along z-axis, by default 5
+    center:
+        (x, y, z) coordinates of cube center, by default (0.0, 0.0, 10.0)
+    size:
+        Side length of cube in meters, by default 1.0
+
+    Returns
+    -------
+    :
+        Scipp variable containing grid points with shape (nx * ny * nz, 3)
+
+    Examples
+    --------
+    >>> grid = make_grid_cube(nx=3, ny=3, nz=3)
+    >>> grid.shape
+    (27, 3)
+    """
+    # Create coordinate arrays
+    x = np.linspace(-size / 2, size / 2, nx) + center[0]
+    y = np.linspace(-size / 2, size / 2, ny) + center[1]
+    z = np.linspace(-size / 2, size / 2, nz) + center[2]
+
+    # Create meshgrid
+    X, Y, Z = np.meshgrid(x, y, z, indexing='ij')
+
+    # Stack into points array
+    points = np.stack([X.flatten(), Y.flatten(), Z.flatten()]).T
+
+    return sc.vectors(dims=['point'], values=points, unit='m')
+
+
+def test_histogrammer_input_indices() -> None:
+    nx, ny, nz = 3, 3, 3
+    coords = raw.project_xy(
+        make_grid_cube(nx=nx, ny=ny, nz=nz, center=(0.0, 3.0, 10.0))
+    )
+    coords = sc.concat([coords], 'replica')
+
+    resolution = {'x': 4, 'y': 5}
+    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
+    indices = histogrammer.input_indices()
+    assert set(indices.coords) == {'x', 'y'}
+    assert indices.bins.size().sum().value == nx * ny * nz
+    assert indices.sizes == resolution
+
+
+def test_ROIFilter_from_trivial_RollingDetectorView() -> None:
+    detector_number = sc.array(
+        dims=['x', 'y'], values=[[1, 2, 3], [4, 5, 6]], unit=None
+    )
+    view = raw.RollingDetectorView(detector_number=detector_number, window=2)
+    roi_filter = view.make_roi_filter()
+    data = detector_number.copy()
+    data.unit = 'counts'
+    flat = data.flatten(to='detector_number')
+
+    result, scale = roi_filter.apply(data)
+    # ROIFilter defaults to include nothing
+    assert sc.identical(result, flat[0:0])
+    assert sc.identical(scale, sc.zeros(dims=['detector_number'], shape=[0]))
+
+    roi_filter.set_roi_from_intervals(sc.DataGroup(x=(1, 2)))
+    result, scale = roi_filter.apply(data)
+    assert sc.identical(result, flat[3:6])
+    assert sc.identical(scale, sc.ones(dims=['detector_number'], shape=[3]))
+
+    roi_filter.set_roi_from_intervals(sc.DataGroup(x=(1, 2), y=(1, 3)))
+    result, scale = roi_filter.apply(data)
+    assert sc.identical(result, flat[4:6])
+    assert sc.identical(scale, sc.ones(dims=['detector_number'], shape=[2]))
+
+
+def test_ROIFilter_from_RollingDetectorView_with_LogicalView() -> None:
+    logical_view = raw.LogicalView(select={'z': 0})
+    detector_number = sc.array(
+        dims=['x', 'y', 'z'], values=[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], unit=None
+    )
+    view = raw.RollingDetectorView(
+        detector_number=detector_number, window=2, projection=logical_view
+    )
+    roi_filter = view.make_roi_filter()
+    data = detector_number.copy()
+    data.unit = 'counts'
+    flat = data['z', 0].flatten(to='detector_number')
+
+    result, scale = roi_filter.apply(data)
+    # ROIFilter defaults to include nothing
+    assert sc.identical(result, flat[0:0])
+    assert sc.identical(scale, sc.zeros(dims=['detector_number'], shape=[0]))
+
+    roi_filter.set_roi_from_intervals(sc.DataGroup(x=(1, 2)))
+    result, scale = roi_filter.apply(data)
+    assert sc.identical(result, flat[2:4])
+    assert sc.identical(scale, sc.ones(dims=['detector_number'], shape=[2]))
+
+    roi_filter.set_roi_from_intervals(sc.DataGroup(x=(1, 2), y=(1, 3)))
+    result, scale = roi_filter.apply(data)
+    assert sc.identical(result, flat[3:4])
+    assert sc.identical(scale, sc.ones(dims=['detector_number'], shape=[1]))
+
+
+def test_ROIFilter_from_RollingDetectorView_with_xy_projection() -> None:
+    detector_number = sc.array(
+        dims=['x', 'y', 'z'], values=[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], unit=None
+    )
+    nx, ny, nz = 2, 2, 2
+    coords = raw.project_xy(
+        make_grid_cube(nx=nx, ny=ny, nz=nz, center=(0.0, 0.0, 10.0))
+    )
+    coords = sc.concat(
+        [coords.fold(dim='point', sizes=detector_number.sizes)], 'replica'
+    )
+
+    resolution = {'x': 4, 'y': 4}
+    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
+    view = raw.RollingDetectorView(
+        detector_number=detector_number, window=1, projection=histogrammer
+    )
+    roi_filter = view.make_roi_filter()
+    data = detector_number.copy()
+    data.unit = 'counts'
+    flat = data.flatten(to='detector_number')
+
+    result, scale = roi_filter.apply(data)
+    # ROIFilter defaults to include nothing
+    assert sc.identical(result, flat[0:0])
+    assert sc.identical(scale, sc.zeros(dims=['detector_number'], shape=[0]))
+
+    roi_filter.set_roi_from_intervals(sc.DataGroup(x=(0, 2)))
+    result, scale = roi_filter.apply(data)
+    assert sc.identical(scale, sc.ones(dims=['detector_number'], shape=[4]))
+    assert sc.identical(result, flat[:4])
+
+    roi_filter.set_roi_from_intervals(sc.DataGroup(x=(0, 2), y=(0, 2)))
+    result, scale = roi_filter.apply(data)
+    assert sc.identical(scale, sc.ones(dims=['detector_number'], shape=[2]))
+    assert sc.identical(result, flat[0:2])

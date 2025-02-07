@@ -19,6 +19,8 @@ options:
   flatten dimensions of the data.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from math import ceil
@@ -37,6 +39,8 @@ from ess.reduce.nexus.types import (
     SampleRun,
 )
 from ess.reduce.nexus.workflow import GenericNeXusWorkflow
+
+from . import roi
 
 CalibratedPositionWithNoisyReplicas = NewType(
     'CalibratedPositionWithNoisyReplicas', sc.Variable
@@ -73,10 +77,14 @@ class Histogrammer:
         self._coords = coords
         self._edges = edges
 
+    @property
+    def replicas(self) -> int:
+        return self._replicas
+
     @staticmethod
     def from_coords(
         coords: ProjectedCoords, resolution: DetectorViewResolution
-    ) -> 'Histogrammer':
+    ) -> Histogrammer:
         """
         Create a histogrammer from coordinates and resolution.
 
@@ -102,7 +110,20 @@ class Histogrammer:
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         self._current += 1
         coords = self._coords[self._replica_dim, self._current % self._replicas]
-        return sc.DataArray(da.data, coords=coords).hist(self._edges)
+        # If input is multi-dim we need to flatten since those dims cannot be preserved.
+        return sc.DataArray(da.data, coords=coords).flatten(to='_').hist(self._edges)
+
+    def input_indices(self) -> sc.DataArray:
+        """Return an array with input indices corresponding to each histogram bin."""
+        dim = 'detector_number'
+        # For some projections one of the coords is a scalar, convert to flat table.
+        coords = self._coords.broadcast(sizes=self._coords.sizes).flatten(to=dim).copy()
+        ndet = sc.index(coords.sizes[dim] // self._replicas)
+        da = sc.DataArray(
+            sc.arange(dim, coords.sizes[dim], dtype='int64', unit=None) % ndet,
+            coords=coords,
+        )
+        return sc.DataArray(da.bin(self._edges).bins.data, coords=self._edges)
 
 
 @dataclass
@@ -149,20 +170,27 @@ class Detector:
             sc.zeros(sizes=detector_number.sizes, unit='counts', dtype='int32'),
             coords={'detector_number': detector_number},
         )
+        self._detector_number = detector_number
         self._flat_detector_number = detector_number.flatten(to='event_id')
         self._start = int(self._flat_detector_number[0].value)
         self._stop = int(self._flat_detector_number[-1].value)
         self._size = int(self._flat_detector_number.size)
-        if not sc.issorted(self._flat_detector_number, dim='event_id'):
-            raise ValueError("Detector numbers must be sorted.")
-        if self._stop - self._start + 1 != self._size:
-            raise ValueError("Detector numbers must be consecutive.")
+        self._sorted = sc.issorted(self._flat_detector_number, dim='event_id')
+        self._consecutive = self._stop - self._start + 1 == self._size
+
+    @property
+    def detector_number(self) -> sc.Variable:
+        return self._detector_number
 
     @property
     def data(self) -> sc.DataArray:
         return self._data
 
     def bincount(self, data: Sequence[int]) -> sc.DataArray:
+        if not self._sorted:
+            raise ValueError("Detector numbers must be sorted to use `bincount`.")
+        if not self._consecutive:
+            raise ValueError("Detector numbers must be consecutive to use `bincount`.")
         offset = np.asarray(data, dtype=np.int32) - self._start
         # Ignore events with detector numbers outside the range of the detector. This
         # should not happen in valid files but for now it is useful until we are sure
@@ -215,8 +243,16 @@ class RollingDetectorView(Detector):
         self._current = 0
         self._history: sc.DataArray | None = None
         self._cache: sc.DataArray | None = None
+        self.clear_counts()
 
-        counts = self.bincount([])
+    def clear_counts(self) -> None:
+        """
+        Clear counts.
+
+        Overrides Detector.clear_counts, to properly clear sliding window history and
+        cache.
+        """
+        counts = sc.zeros_like(self.data)
         if self._projection is not None:
             counts = self._projection(counts)
         self._history = (
@@ -226,12 +262,25 @@ class RollingDetectorView(Detector):
         )
         self._cache = self._history.sum('window')
 
+    def make_roi_filter(self) -> roi.ROIFilter:
+        """Return a ROI filter operating via the projection plane of the view."""
+        norm = 1.0
+        if isinstance(self._projection, Histogrammer):
+            indices = self._projection.input_indices()
+            norm = self._projection.replicas
+        else:
+            indices = sc.ones(sizes=self.data.sizes, dtype='int32', unit=None)
+            indices = sc.cumsum(indices, mode='exclusive')
+            if isinstance(self._projection, LogicalView):
+                indices = self._projection(indices)
+        return roi.ROIFilter(indices=indices, norm=norm)
+
     @staticmethod
     def from_detector_and_histogrammer(
         detector: CalibratedDetector[SampleRun],
         window: RollingDetectorViewWindow,
         projection: Histogrammer,
-    ) -> 'RollingDetectorView':
+    ) -> RollingDetectorView:
         """Helper for constructing via a Sciline workflow."""
         return RollingDetectorView(
             detector_number=detector.coords['detector_number'],
@@ -244,7 +293,7 @@ class RollingDetectorView(Detector):
         detector: CalibratedDetector[SampleRun],
         window: RollingDetectorViewWindow,
         projection: LogicalView,
-    ) -> 'RollingDetectorView':
+    ) -> RollingDetectorView:
         """Helper for constructing via a Sciline workflow."""
         return RollingDetectorView(
             detector_number=detector.coords['detector_number'],
@@ -261,7 +310,7 @@ class RollingDetectorView(Detector):
         projection: Literal['xy_plane', 'cylinder_mantle_z'] | LogicalView,
         resolution: dict[str, int] | None = None,
         pixel_noise: Literal['cylindrical'] | sc.Variable | None = None,
-    ) -> 'RollingDetectorView':
+    ) -> RollingDetectorView:
         """
         Create a rolling detector view from a NeXus file using GenericNeXusWorkflow.
 
@@ -343,8 +392,32 @@ class RollingDetectorView(Detector):
                 data += self._history['window', 0 : self._current].sum('window')
         return data
 
+    def add_events(self, data: sc.DataArray) -> None:
+        """
+        Add counts in the form of events grouped by pixel ID.
+
+        Parameters
+        ----------
+        data:
+            Events grouped by pixel ID, given by binned data.
+        """
+        counts = data.bins.size().to(dtype='int32', copy=False)
+        counts.unit = 'counts'
+        self._add_counts(counts)
+
     def add_counts(self, data: Sequence[int]) -> None:
+        """
+        Add counts in the form of a sequence of pixel IDs.
+
+        Parameters
+        ----------
+        data:
+            List of pixel IDs.
+        """
         counts = self.bincount(data)
+        self._add_counts(counts)
+
+    def _add_counts(self, counts: sc.Variable) -> None:
         if self._projection is not None:
             counts = self._projection(counts)
         self._cache -= self._history['window', self._current]
@@ -455,9 +528,12 @@ def position_noise_for_cylindrical_pixel(
 
 
 def gaussian_position_noise(sigma: PositionNoiseSigma) -> PositionNoise:
+    sigma = sigma.to(unit='m', copy=False)
     size = _noise_size
     position = sc.empty(sizes={'position': size}, unit='m', dtype=sc.DType.vector3)
-    position.values = np.random.default_rng().normal(0, sigma.value, size=(size, 3))
+    position.values = np.random.default_rng(seed=1234).normal(
+        0, sigma.value, size=(size, 3)
+    )
     return PositionNoise(position)
 
 
