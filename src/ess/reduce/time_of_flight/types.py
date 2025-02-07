@@ -68,12 +68,16 @@ Should be a single scalar value with a unit of length.
 This is typically of the order of 1-10 cm.
 """
 
-TimeResolution = NewType("TimeResolution", int)
+TimeResolution = NewType("TimeResolution", sc.Variable)
 """
-Number of bins to use for the time of arrival (event_time_offset) axis in the lookup
-table. Should be around 1000.
-If some artefacts are present in the computed time-of-flight, around the 71ms mark,
-this can be increased to improve the quality of the results.
+Step size of the event_time_offset axis in the lookup table.
+This is basically the 'time-of-flight' resolution of the detector.
+Should be a single scalar value with a unit of time.
+This is typically of the order of 0.1-0.5 ms.
+
+Since the event_time_offset range needs to span exactly one pulse period, the final
+resolution in the lookup table will be at least the supplied value here, but may be
+smaller if the pulse period is not an integer multiple of the time resolution.
 """
 
 TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataArray)

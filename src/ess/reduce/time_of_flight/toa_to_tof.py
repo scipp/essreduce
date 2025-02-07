@@ -116,12 +116,9 @@ def compute_tof_lookup_table(
     # centers. Instead, we stagger the mesh by half a bin width so we are computing
     # values for the final mesh edges (the bilinear interpolation needs values on the
     # edges/corners).
+    nbins = int(frame_period / time_resolution.to(unit=time_unit)) + 1
     time_bins = sc.linspace(
-        'event_time_offset',
-        0.0,
-        frame_period.value,
-        (time_resolution * pulse_stride) + 1,
-        unit=pulse_period.unit,
+        'event_time_offset', 0.0, frame_period.value, nbins + 1, unit=pulse_period.unit
     )
     time_bins_half_width = 0.5 * (time_bins[1] - time_bins[0])
     time_bins -= time_bins_half_width
@@ -449,7 +446,7 @@ def default_parameters() -> dict:
         PulseStride: 1,
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(0.1, unit="m"),
-        TimeResolution: 256,
+        TimeResolution: sc.scalar(250.0, unit='us'),
         LookupTableRelativeErrorThreshold: 0.1,
     }
 
