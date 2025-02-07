@@ -160,28 +160,21 @@ def compute_tof_lookup_table(
         dist_edges = distance_bins[i * chunk_size : (i + 1) * chunk_size + 1]
         distances = sc.midpoints(dist_edges)
 
+        # Compute arrival and flight times for all neutrons
         toas = simulation.time_of_arrival + (distances / simulation.speed).to(
             unit=time_unit, copy=False
         )
-
-        # Compute time-of-flight for all neutrons
-        wavs = sc.broadcast(
-            simulation.wavelength.to(unit="m"), sizes=toas.sizes
-        ).flatten(to="event")
-        dist = sc.broadcast(distances + simulation_distance, sizes=toas.sizes).flatten(
-            to="event"
-        )
-        tofs = dist * (sc.constants.m_n / sc.constants.h)
-        tofs *= wavs
+        dist = distances + simulation_distance
+        tofs = dist * (sc.constants.m_n / sc.constants.h) * simulation.wavelength
 
         data = sc.DataArray(
-            data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
+            data=sc.broadcast(simulation.weight, sizes=toas.sizes),
             coords={
-                "toa": toas.flatten(to="event"),
+                "toa": toas,
                 "tof": tofs.to(unit=time_unit, copy=False),
                 "distance": dist,
             },
-        )
+        ).flatten(to="event")
 
         # Add the event_time_offset and pulse index coordinate to the data.
         data.coords['event_time_offset'] = data.coords['toa'] % pulse_period
