@@ -138,9 +138,11 @@ class Histogrammer:
         Parameters
         ----------
         threshold:
-            Threshold for identifying bins with a low number of intersections. If the
-            number of intersections is below the threshold times the median number of
-            intersections, the bin is marked as invalid.
+            Threshold for identifying bins with a low number of contributing points. If
+            the number of points is below the threshold times the median number of
+            points, the bin is marked as invalid. This is relevant to avoid issues with
+            color scales in plots, where noise in bins with very few points may dominate
+            the color scale if auto-scaling is used.
 
         Returns
         -------
