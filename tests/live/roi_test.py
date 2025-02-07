@@ -35,6 +35,16 @@ def test_select_indices_label_based_indexing(binned_indices):
     assert selected.sizes[selected.dim] < binned_indices.bins.size().sum().value
 
 
+def test_select_indices_label_based_indexing_reverse_order(binned_indices):
+    selected = roi.select_indices_in_intervals(
+        intervals=sc.DataGroup(x=(sc.scalar(0.5, unit='m'), sc.scalar(0.3, unit='m'))),
+        indices=binned_indices,
+    )
+    assert selected.dim == 'index'
+    assert selected.sizes[selected.dim] > 0
+    assert selected.sizes[selected.dim] < binned_indices.bins.size().sum().value
+
+
 def test_select_indices_fails_with_invalid_dimension():
     data = sc.data.table_xyz(10)
     with pytest.raises(sc.DimensionError):

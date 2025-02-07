@@ -29,7 +29,8 @@ def select_indices_in_intervals(
         indices will be returned concatenated into a dense array.
     """
     out_dim = 'index'
-    for dim, (low, high) in intervals.items():
+    for dim, bounds in intervals.items():
+        low, high = sorted(bounds)
         indices = indices[dim, low:high]
     indices = indices.flatten(to=out_dim)
     if indices.bins is None:
