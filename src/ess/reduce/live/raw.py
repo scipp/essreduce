@@ -46,6 +46,7 @@ CalibratedPositionWithNoisyReplicas = NewType(
     'CalibratedPositionWithNoisyReplicas', sc.Variable
 )
 DetectorViewResolution = NewType('DetectorViewResolution', dict[str, int])
+IntersectionWeightThreshold = NewType('IntersectionWeightThreshold', float)
 PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
 PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
 PixelShape = NewType('PixelShape', sc.DataGroup)
@@ -249,6 +250,7 @@ class RollingDetectorView(Detector):
         detector_number: sc.Variable,
         window: int,
         projection: Callable[[sc.DataArray], sc.DataArray] | None = None,
+        intersection_weight_threshold: float = 0.25,
     ):
         """
         Create a rolling detector view.
@@ -264,6 +266,9 @@ class RollingDetectorView(Detector):
             Optional projection function to apply to the counts before storing them in
             the history. This can be used to project the data onto a different
             coordinate system or to reduce the dimensionality of the data.
+        intersection_weight_threshold:
+            Threshold for identifying bins with a low number of intersections, forwarded
+            to :py:class:`Histogrammer` in case such a projection is used.
         """
         super().__init__(detector_number=detector_number)
         self._projection = projection
@@ -273,7 +278,9 @@ class RollingDetectorView(Detector):
         self._cache: sc.DataArray | None = None
         self.clear_counts()
         self._norm = (
-            self._projection.intersection_weights()
+            self._projection.intersection_weights(
+                threshold=intersection_weight_threshold
+            )
             if hasattr(self._projection, 'intersection_weights')
             else None
         )
@@ -313,12 +320,14 @@ class RollingDetectorView(Detector):
         detector: CalibratedDetector[SampleRun],
         window: RollingDetectorViewWindow,
         projection: Histogrammer,
+        intersection_weight_threshold: IntersectionWeightThreshold,
     ) -> RollingDetectorView:
         """Helper for constructing via a Sciline workflow."""
         return RollingDetectorView(
             detector_number=detector.coords['detector_number'],
             window=window,
             projection=projection,
+            intersection_weight_threshold=intersection_weight_threshold,
         )
 
     @staticmethod
@@ -343,6 +352,7 @@ class RollingDetectorView(Detector):
         projection: Literal['xy_plane', 'cylinder_mantle_z'] | LogicalView,
         resolution: dict[str, int] | None = None,
         pixel_noise: Literal['cylindrical'] | sc.Variable | None = None,
+        intersection_weight_threshold: float = 0.25,
     ) -> RollingDetectorView:
         """
         Create a rolling detector view from a NeXus file using GenericNeXusWorkflow.
@@ -370,6 +380,9 @@ class RollingDetectorView(Detector):
             Gaussian noise to the pixel positions or the string 'cylindrical' to add
             noise to the pixel positions of a cylindrical detector. Adding noise can be
             useful to avoid artifacts when projecting the data.
+        intersection_weight_threshold:
+            Threshold for identifying bins with a low number of intersections. This is
+            forwarded to the Histogrammer in case non-logical projection is used.
         """
         if pixel_noise is None:
             pixel_noise = sc.scalar(0.0, unit='m')
@@ -377,6 +390,7 @@ class RollingDetectorView(Detector):
         else:
             noise_replica_count = 16
         wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
+        wf[IntersectionWeightThreshold] = intersection_weight_threshold
         wf[RollingDetectorViewWindow] = window
         if isinstance(projection, LogicalView):
             wf[LogicalView] = projection
@@ -442,7 +456,7 @@ class RollingDetectorView(Detector):
             else:
                 data = self._history['window', start % self._window :].sum('window')
                 data += self._history['window', 0 : self._current].sum('window')
-        return data * self._norm if normalize and self._norm is not None else data
+        return data / self._norm if normalize and self._norm is not None else data
 
     def add_events(self, data: sc.DataArray) -> None:
         """
