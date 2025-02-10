@@ -414,7 +414,8 @@ def _time_of_flight_data_events(
     # Compute a pulse index for every event: it is the index of the pulse within a
     # frame period. When there is no pulse skipping, those are all zero. When there is
     # pulse skipping, the index ranges from zero to pulse_stride - 1.
-    tmin = da.bins.coords['event_time_zero'].min()
+    # tmin = da.bins.coords['event_time_zero'].min()
+    tmin = sc.datetime(0, unit=eto_unit)  # + pulse_period.to(dtype=int)
     pulse_index = (
         (
             (da.bins.coords['event_time_zero'] - tmin).to(unit=eto_unit)
@@ -422,9 +423,10 @@ def _time_of_flight_data_events(
         )
         % frame_period
     ) // pulse_period
-    # Apply the pulse_stride_offset
-    pulse_index += pulse_stride_offset
-    pulse_index %= pulse_stride
+
+    # # Apply the pulse_stride_offset
+    # pulse_index += pulse_stride_offset
+    # pulse_index %= pulse_stride
 
     # Create 2D interpolator
     interp = _make_tof_interpolator(
@@ -437,11 +439,28 @@ def _time_of_flight_data_events(
     pulse_index = pulse_index.bins.constituents["data"]
 
     # Compute time-of-flight for all neutrons using the interpolator
-    tofs = sc.array(
-        dims=etos.dims,
-        values=interp((pulse_index.values, ltotal.values, etos.values)),
-        unit=eto_unit,
-    )
+    if pulse_stride_offset is None:
+        tofs = []
+        for i in range(pulse_stride):
+            pulse_inds = (pulse_index + i) % pulse_stride
+            tofs.append(
+                sc.array(
+                    dims=etos.dims,
+                    values=interp((pulse_inds.values, ltotal.values, etos.values)),
+                    unit=eto_unit,
+                )
+            )
+        # Find the entry in the list with the least number of nan values
+        tofs = min(tofs, key=lambda x: sc.isnan(x).sum())
+
+    else:
+        # Apply the pulse_stride_offset
+        pulse_index = (pulse_index + pulse_stride_offset) % pulse_stride
+        tofs = sc.array(
+            dims=etos.dims,
+            values=interp((pulse_index.values, ltotal.values, etos.values)),
+            unit=eto_unit,
+        )
 
     parts = da.bins.constituents
     parts["data"] = tofs
