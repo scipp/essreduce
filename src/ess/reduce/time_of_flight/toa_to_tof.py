@@ -405,6 +405,11 @@ def _time_of_flight_data_events(
     pulse_period = pulse_period.to(unit=eto_unit)
     frame_period = pulse_period * pulse_stride
 
+    # TODO: Finding the `tmin` below will not work in the case were data is processed
+    # in chunks, as taking the minimum time in each chunk will lead to inconsistent
+    # pulse indices (this will be the case in live data, or when using the
+    # StreamProcessor). We could instead read it from the first chunk and store it?
+
     # Compute a pulse index for every event: it is the index of the pulse within a
     # frame period. When there is no pulse skipping, those are all zero. When there is
     # pulse skipping, the index ranges from zero to pulse_stride - 1.
