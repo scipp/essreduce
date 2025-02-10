@@ -380,7 +380,7 @@ def test_ROIFilter_from_RollingDetectorView_with_xy_projection() -> None:
     assert sc.identical(result, flat[0:2])
 
 
-def test_Histogrammer_intersection_weights_given_empty_bins_returns_nans() -> None:
+def test_Histogrammer_given_empty_bins_returns_nans_in_transform_weights() -> None:
     x = sc.array(dims=['replica', 'pixel'], values=[[0.0, 1.0]], unit='m')
     coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
     resolution = {'y': 1, 'x': 4}
@@ -396,7 +396,7 @@ def test_Histogrammer_intersection_weights_given_empty_bins_returns_nans() -> No
     )
 
 
-def test_Histogrammer_intersection_weights_threshold_based_on_non_empty_bins() -> None:
+def test_Histogrammer_threshold_based_on_non_empty_bins_in_transform_weights() -> None:
     x = sc.array(dims=['replica', 'pixel'], values=[[0.0, 0.0, 1.0]], unit='m')
     coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
     resolution = {'y': 1, 'x': 4}
@@ -414,7 +414,7 @@ def test_Histogrammer_intersection_weights_threshold_based_on_non_empty_bins() -
     )
 
 
-def test_Histogrammer_intersection_weights_replicas_do_not_affect_weights() -> None:
+def test_Histogrammer_replicas_do_not_affect_transformed_weights() -> None:
     resolution = {'y': 1, 'x': 4}
     x = sc.array(dims=['replica', 'pixel'], values=[[0.0, 0.0, 0.5, 1.0]], unit='m')
     coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
@@ -473,3 +473,37 @@ def test_RollingDetectorView_normalization() -> None:
     assert_identical(view.get().data / weights, expected)
     expected.values = [[1.0, 0.0, 0.0, 1.0]]
     assert_identical(view.get().data, expected.to(dtype='int32'))
+
+
+def test_transform_weights_raises_given_bad_sizes() -> None:
+    resolution = {'y': 1, 'x': 4}
+    x = sc.array(dims=['replica', 'pixel'], values=[[0.0, 0.0, 0.3, 1.0]], unit='m')
+    coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
+    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3, 4], unit=None)
+    view = raw.RollingDetectorView(
+        detector_number=detector_number, window=1, projection=histogrammer
+    )
+    with pytest.raises(sc.DimensionError):
+        view.transform_weights(sc.ones(dims=['x'], shape=[4]))
+    with pytest.raises(sc.DimensionError):
+        view.transform_weights(sc.ones(dims=['pixel'], shape=[3]))
+
+
+def test_transform_weights_raises_given_DataArray_with_bad_det_num() -> None:
+    resolution = {'y': 1, 'x': 4}
+    x = sc.array(dims=['replica', 'pixel'], values=[[0.0, 0.0, 1.0]], unit='m')
+    coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
+    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    view = raw.RollingDetectorView(
+        detector_number=detector_number, window=1, projection=histogrammer
+    )
+    weights = sc.DataArray(
+        data=sc.ones(dims=['pixel'], shape=[3]),
+        coords={
+            'detector_number': sc.array(dims=['pixel'], values=[1, 2, 4], unit=None)
+        },
+    )
+    with pytest.raises(sc.CoordError):
+        view.transform_weights(weights)

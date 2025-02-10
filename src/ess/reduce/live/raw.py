@@ -312,13 +312,19 @@ class RollingDetectorView(Detector):
             weights = sc.ones(
                 sizes=self.detector_number.sizes, dtype='float32', unit=''
             )
-        elif isinstance(weights, sc.DataArray):
-            if weights.dims != self.data.dims:
-                raise ValueError("Norm must have the same dimensions as the data.")
-            if (detector_number := weights.coords.get('detector_number')) is not None:
-                if detector_number != self.detector_number:
-                    raise ValueError("Detector numbers in norm and data do not match.")
-            weights = weights.data
+        else:
+            if weights.sizes != self.detector_number.sizes:
+                raise sc.DimensionError(
+                    f'Invalid {weights.sizes=} for {self.detector_number.sizes=}.'
+                )
+            if (
+                isinstance(weights, sc.DataArray)
+                and (detector_number := weights.coords.get('detector_number'))
+                is not None
+            ):
+                if not sc.identical(detector_number, self.detector_number):
+                    raise sc.CoordError("Mismatching detector numbers in weights.")
+                weights = weights.data
         if isinstance(self._projection, Histogrammer):
             xs = self._projection.apply_full(weights)  # Use all replicas
         elif self._projection is not None:
