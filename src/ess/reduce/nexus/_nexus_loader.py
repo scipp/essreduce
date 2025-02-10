@@ -30,6 +30,14 @@ class NoNewDefinitionsType: ...
 NoNewDefinitions = NoNewDefinitionsType()
 
 
+class NoLockingIfNeededType:
+    def __repr__(self) -> str:
+        return "NoLockingIfNeeded"
+
+
+NoLockingIfNeeded = NoLockingIfNeededType()
+
+
 def load_component(
     location: NeXusLocationSpec,
     *,
@@ -93,7 +101,7 @@ def _open_nexus_file(
     file_path: FilePath | NeXusFile | NeXusGroup,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
     *,
-    locking: bool | None = None,
+    locking: bool | str | None | NoLockingIfNeededType = NoLockingIfNeeded,
 ) -> AbstractContextManager[snx.Group]:
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         if (
@@ -106,30 +114,61 @@ def _open_nexus_file(
         return nullcontext(file_path)
 
     try:
-        return _open_nexus_file_from_path(file_path, definitions, locking=locking)
+        return _open_nexus_file_from_path(
+            file_path,
+            definitions,
+            locking=None if locking is NoLockingIfNeeded else locking,
+        )
     except OSError as err:
-        if err.errno == errno.EROFS:
-            # Failed to open because the filesystem is read-only.
-            # (According to https://www.ioplex.com/%7Emiallen/errcmpp.html
-            # this error code is universal.)
-            #
-            # On ESS machines, this happens for network filesystems of data that was
-            # ingested into SciCat, including raw data.
-            # In this case, it is safe to open the file without locking because:
-            # - For raw files, they were written on a separate machine and are synced
-            #   with the one running reduction software. So there cannot be concurrent
-            #   write and read accesses to the same file on the same filesystem.
-            #   The ground truth on the filesystem used by the file writer is protected
-            #   and cannot be corrupted by our reader.
-            # - For processed data, the file was copied to the read-only filesystem.
-            #   So the copy we are opening was not written by HDF5 directly and thus
-            #   locking has no effect anyway.
-            #
-            # When running on user machines, disabling locking can potentially corrupt
-            # files. But the risk is minimal because very few users will have read-only
-            # filesystems and do concurrent reads and writes.
+        if _attempt_to_open_without_locking(err, locking):
             return _open_nexus_file_from_path(file_path, definitions, locking=False)
         raise
+
+
+# On ESS machines, some network filesystems are read-only.
+# E.g., data that was ingested into SciCat, including raw data.
+# HDF5 fails to open such files because it cannot lock the files.
+# In this case, it is safe(*) to open the file without locking because:
+#
+# - For raw files, they were written on a separate machine and are synced
+#   with the one running reduction software. So there cannot be concurrent
+#   write and read accesses to the same file on the same filesystem.
+#   The ground truth on the filesystem used by the file writer is protected
+#   and cannot be corrupted by our reader.
+# - For processed data, the file was copied to the read-only filesystem.
+#   So the copy we are opening was not written by HDF5 directly and thus
+#   locking has no effect anyway.
+#
+# When running on user machines, disabling locking can potentially corrupt
+# files. But the risk is minimal because very few users will have read-only
+# filesystems and do concurrent reads and writes.
+#
+# (*) Files on the read-only filesystem may still change while a file is open for
+# reading if they get updated from the original file. E.g., when reading a file that is
+# currently being written to. This can crash the reader. But our code is anyway not set
+# up to deal with changing files, so the added risk is not significant.
+#
+# See https://github.com/HDFGroup/hdf5/blob/e9ab45f0f4d7240937d5f88055f6c217da80f0d4/doxygen/dox/file-locking.dox
+# about HDF5 file locking.
+def _attempt_to_open_without_locking(
+    err: OSError, locking: bool | str | None | NoLockingIfNeededType
+) -> bool:
+    if locking is not NoLockingIfNeeded:
+        return False  # Respect user's choice.
+    if err.errno == errno.EROFS:
+        # Read-only filesystem.
+        # (According to https://www.ioplex.com/%7Emiallen/errcmpp.html
+        # this error code is universal.)
+        return True
+
+    # HDF5 tracks file locking flags internally within a single process.
+    # If the same file is opened multiple times, we can get a flag mismatch.
+    # We can try opening without locking, maybe this matches the original flags.
+    if "file locking flag values don't match" in err.args[0]:
+        return True
+    if "file locking 'ignore disabled locks' flag values don't match" in err.args[0]:
+        return True
+    return False
 
 
 def _open_nexus_file_from_path(
