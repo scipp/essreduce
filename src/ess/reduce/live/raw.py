@@ -293,7 +293,7 @@ class RollingDetectorView(Detector):
         self,
         weights: sc.Variable | sc.DataArray | None = None,
         *,
-        threshold: float = 0.25,
+        threshold: float = 0.1,
     ) -> sc.DataArray:
         """
         Transform raw pixel weights to the projection plane.
