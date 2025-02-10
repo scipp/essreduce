@@ -110,8 +110,11 @@ class Histogrammer:
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         self._current += 1
         coords = self._coords[self._replica_dim, self._current % self._replicas]
+        return self._hist(da.data, coords=coords)
+
+    def _hist(self, data: sc.Variable, *, coords: sc.DataGroup) -> sc.DataArray:
         # If input is multi-dim we need to flatten since those dims cannot be preserved.
-        return sc.DataArray(da.data, coords=coords).flatten(to='_').hist(self._edges)
+        return sc.DataArray(data, coords=coords).flatten(to='_').hist(self._edges)
 
     def input_indices(self) -> sc.DataArray:
         """Return an array with input indices corresponding to each histogram bin."""
@@ -124,6 +127,17 @@ class Histogrammer:
             coords=coords,
         )
         return sc.DataArray(da.bin(self._edges).bins.data, coords=self._edges)
+
+    def apply_full(self, var: sc.Variable) -> sc.DataArray:
+        """
+        Apply the histogrammer to a variable using all replicas.
+
+        This is used for one-off operations where the full data is needed, e.g., for
+        transforming pixel weights. Compare to :py:meth:`__call__`, which applies the
+        histogrammer to a single replica for efficiency.
+        """
+        replicated = sc.concat([var] * self.replicas, dim=self._replica_dim)
+        return self._hist(replicated, coords=self._coords) / self.replicas
 
 
 @dataclass
@@ -275,6 +289,50 @@ class RollingDetectorView(Detector):
                 indices = self._projection(indices)
         return roi.ROIFilter(indices=indices, norm=norm)
 
+    def transform_weights(
+        self,
+        weights: sc.Variable | sc.DataArray | None = None,
+        *,
+        threshold: float = 0.1,
+    ) -> sc.DataArray:
+        """
+        Transform raw pixel weights to the projection plane.
+
+        Parameters
+        ----------
+        weights:
+            Raw pixel weights to transform. If None, default weights of 1 are used.
+        threshold:
+            Threshold for identifying bins with a low weight. If the weight is below the
+            threshold times the median weight, the bin is marked as invalid. This is
+            relevant to avoid issues with color scales in plots, where noise in bins
+            with low weight may dominate the color scale if auto-scaling is used.
+        """
+        if weights is None:
+            weights = sc.ones(
+                sizes=self.detector_number.sizes, dtype='float32', unit=''
+            )
+        else:
+            if weights.sizes != self.detector_number.sizes:
+                raise sc.DimensionError(
+                    f'Invalid {weights.sizes=} for {self.detector_number.sizes=}.'
+                )
+            if isinstance(weights, sc.DataArray):
+                if (det_num := weights.coords.get('detector_number')) is not None:
+                    if not sc.identical(det_num, self.detector_number):
+                        raise sc.CoordError("Mismatching detector numbers in weights.")
+                weights = weights.data
+        if isinstance(self._projection, Histogrammer):
+            xs = self._projection.apply_full(weights)  # Use all replicas
+        elif self._projection is not None:
+            xs = self._projection(weights)
+        else:
+            xs = weights.copy()
+        nonempty = xs.values[xs.values > 0]
+        mask = xs.values < threshold * np.median(nonempty)
+        xs.values[mask] = np.nan
+        return xs if isinstance(xs, sc.DataArray) else sc.DataArray(xs)
+
     @staticmethod
     def from_detector_and_histogrammer(
         detector: CalibratedDetector[SampleRun],
@@ -342,7 +400,7 @@ class RollingDetectorView(Detector):
             pixel_noise = sc.scalar(0.0, unit='m')
             noise_replica_count = 0
         else:
-            noise_replica_count = 4
+            noise_replica_count = 16
         wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
         wf[RollingDetectorViewWindow] = window
         if isinstance(projection, LogicalView):
@@ -378,7 +436,20 @@ class RollingDetectorView(Detector):
         wf[NeXusDetectorName] = detector_name
         return wf.compute(RollingDetectorView)
 
-    def get(self, window: int | None = None) -> sc.DataArray:
+    def get(self, *, window: int | None = None) -> sc.DataArray:
+        """
+        Get the sum of counts over a window of the most recent counts.
+
+        Parameters
+        ----------
+        window:
+            Size of the window to use. If None, the full history is used.
+
+        Returns
+        -------
+        :
+            Sum of counts over the window.
+        """
         if window is not None and not 0 <= window <= self._window:
             raise ValueError("Window size must be less than the history size.")
         if window is None or window == self._window:
