@@ -144,7 +144,9 @@ def _compute_mean_tof_in_distance_range(
     return mean_tof
 
 
-def _fold_table_to_pulse_period(table: sc.DataArray, pulse_stride: int) -> sc.DataArray:
+def _fold_table_to_pulse_period(
+    table: sc.DataArray, pulse_period: sc.Variable, pulse_stride: int
+) -> sc.DataArray:
     """
     Fold the lookup table to the pulse period. We make sure the left and right edges of
     the table wrap around the ``event_time_offset`` dimension.
@@ -153,6 +155,8 @@ def _fold_table_to_pulse_period(table: sc.DataArray, pulse_stride: int) -> sc.Da
     ----------
     table:
         Lookup table with time-of-flight as a function of distance and time-of-arrival.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
     pulse_stride:
         Stride of used pulses. Usually 1, but may be a small integer when
         pulse-skipping.
@@ -175,9 +179,13 @@ def _fold_table_to_pulse_period(table: sc.DataArray, pulse_stride: int) -> sc.Da
         dim='pulse',
     )
     return out.assign_coords(
-        event_time_offset=table.coords['event_time_offset'][
-            'event_time_offset', : size + 1
-        ]
+        event_time_offset=sc.concat(
+            [
+                table.coords['event_time_offset']['event_time_offset', :size],
+                pulse_period,
+            ],
+            'event_time_offset',
+        )
     )
 
 
