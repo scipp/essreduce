@@ -381,11 +381,15 @@ def test_ROIFilter_from_RollingDetectorView_with_xy_projection() -> None:
 
 
 def test_Histogrammer_intersection_weights_given_empty_bins_returns_nans() -> None:
-    x = sc.array(dims=['replica', 'point'], values=[[0.0, 1.0]], unit='m')
+    x = sc.array(dims=['replica', 'pixel'], values=[[0.0, 1.0]], unit='m')
     coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
     resolution = {'y': 1, 'x': 4}
-    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
-    weights = histogrammer.intersection_weights()
+    view = raw.RollingDetectorView(
+        detector_number=sc.array(dims=['pixel'], values=[1, 2], unit=None),
+        window=1,
+        projection=raw.Histogrammer.from_coords(coords=coords, resolution=resolution),
+    )
+    weights = view.transform_weights()
     assert_identical(
         weights.data,
         sc.array(dims=['y', 'x'], values=[[1.0, np.nan, np.nan, 1.0]], dtype='float32'),
@@ -393,11 +397,15 @@ def test_Histogrammer_intersection_weights_given_empty_bins_returns_nans() -> No
 
 
 def test_Histogrammer_intersection_weights_threshold_based_on_non_empty_bins() -> None:
-    x = sc.array(dims=['replica', 'point'], values=[[0.0, 0.0, 1.0]], unit='m')
+    x = sc.array(dims=['replica', 'pixel'], values=[[0.0, 0.0, 1.0]], unit='m')
     coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
     resolution = {'y': 1, 'x': 4}
-    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
-    weights = histogrammer.intersection_weights(threshold=0.9)
+    view = raw.RollingDetectorView(
+        detector_number=sc.array(dims=['pixel'], values=[1, 2, 3], unit=None),
+        window=1,
+        projection=raw.Histogrammer.from_coords(coords=coords, resolution=resolution),
+    )
+    weights = view.transform_weights(threshold=0.9)
     assert_identical(
         weights.data,
         sc.array(
@@ -408,15 +416,24 @@ def test_Histogrammer_intersection_weights_threshold_based_on_non_empty_bins() -
 
 def test_Histogrammer_intersection_weights_replicas_do_not_affect_weights() -> None:
     resolution = {'y': 1, 'x': 4}
-    x = sc.array(dims=['replica', 'point'], values=[[0.0, 0.0, 0.5, 1.0]], unit='m')
+    x = sc.array(dims=['replica', 'pixel'], values=[[0.0, 0.0, 0.5, 1.0]], unit='m')
     coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
-    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
-    reference = histogrammer.intersection_weights()
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3, 4], unit=None)
+    view = raw.RollingDetectorView(
+        detector_number=detector_number,
+        window=1,
+        projection=raw.Histogrammer.from_coords(coords=coords, resolution=resolution),
+    )
+    reference = view.transform_weights()
 
     x = sc.concat([x, x], 'replica')
     coords = sc.DataGroup(x=x, y=x, z=sc.zeros_like(x))
-    histogrammer = raw.Histogrammer.from_coords(coords=coords, resolution=resolution)
-    result = histogrammer.intersection_weights()
+    view = raw.RollingDetectorView(
+        detector_number=detector_number,
+        window=1,
+        projection=raw.Histogrammer.from_coords(coords=coords, resolution=resolution),
+    )
+    result = view.transform_weights()
 
     assert_identical(reference, result)
 
@@ -430,28 +447,29 @@ def test_RollingDetectorView_normalization() -> None:
     view = raw.RollingDetectorView(
         detector_number=detector_number, window=1, projection=histogrammer
     )
+    weights = view.transform_weights().data
     expected = sc.array(
         dims=['y', 'x'],
         values=[[0.0, 0.0, np.nan, 0.0]],
         unit='counts',
         dtype='float32',
     )
-    assert_identical(view.get().data, expected)
-    assert_identical(view.get(normalize=True).data, expected)
+    assert_identical(view.get().data / weights, expected)
+    assert_identical(view.get().data / weights, expected)
     expected.values = [[0.0, 0.0, 0.0, 0.0]]
-    assert_identical(view.get(normalize=False).data, expected.to(dtype='int32'))
+    assert_identical(view.get().data, expected.to(dtype='int32'))
 
     # detector_number 1 and 2 are in the same bin, so their counts are summed,
     view.add_counts([1, 2, 3, 4])
     expected.values = [[1.0, 1.0, np.nan, 1.0]]
-    assert_identical(view.get().data, expected)
-    assert_identical(view.get(normalize=True).data, expected)
+    assert_identical(view.get().data / weights, expected)
+    assert_identical(view.get().data / weights, expected)
     expected.values = [[2.0, 1.0, 0.0, 1.0]]
-    assert_identical(view.get(normalize=False).data, expected.to(dtype='int32'))
+    assert_identical(view.get().data, expected.to(dtype='int32'))
 
     view.add_counts([2, 4])
     expected.values = [[0.5, 0.0, np.nan, 1.0]]
-    assert_identical(view.get().data, expected)
-    assert_identical(view.get(normalize=True).data, expected)
+    assert_identical(view.get().data / weights, expected)
+    assert_identical(view.get().data / weights, expected)
     expected.values = [[1.0, 0.0, 0.0, 1.0]]
-    assert_identical(view.get(normalize=False).data, expected.to(dtype='int32'))
+    assert_identical(view.get().data, expected.to(dtype='int32'))

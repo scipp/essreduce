@@ -46,7 +46,6 @@ CalibratedPositionWithNoisyReplicas = NewType(
     'CalibratedPositionWithNoisyReplicas', sc.Variable
 )
 DetectorViewResolution = NewType('DetectorViewResolution', dict[str, int])
-IntersectionWeightThreshold = NewType('IntersectionWeightThreshold', float)
 PixelCylinderAxis = NewType('PixelCylinderAxis', sc.Variable)
 PixelCylinderRadius = NewType('PixelCylinderRadius', sc.Variable)
 PixelShape = NewType('PixelShape', sc.DataGroup)
@@ -129,32 +128,16 @@ class Histogrammer:
         )
         return sc.DataArray(da.bin(self._edges).bins.data, coords=self._edges)
 
-    def intersection_weights(self, threshold: float = 0.25) -> sc.DataArray:
+    def apply_full(self, var: sc.Variable) -> sc.DataArray:
         """
-        Compute weights as the number of points projected to each bin.
+        Apply the histogrammer to a variable using all replicas.
 
-        This is useful for removing projection effects from projected data.
-
-        Parameters
-        ----------
-        threshold:
-            Threshold for identifying bins with a low number of contributing points. If
-            the number of points is below the threshold times the median number of
-            points, the bin is marked as invalid. This is relevant to avoid issues with
-            color scales in plots, where noise in bins with very few points may dominate
-            the color scale if auto-scaling is used.
-
-        Returns
-        -------
-        :
-            DataArray with the intersection weights.
+        This is used for one-off operations where the full data is needed, e.g., for
+        transforming pixel weights. Compare to :py:meth:`__call__`, which applies the
+        histogrammer to a single replica for efficiency.
         """
-        var = sc.ones(sizes=self._coords.sizes, dtype='float32', unit='')
-        xs = self._hist(var, coords=self._coords)
-        nonempty = xs.values[xs.values > 0]
-        mask = xs.values < threshold * np.median(nonempty)
-        xs.values[mask] = np.nan
-        return xs / self.replicas
+        replicated = sc.concat([var] * self.replicas, dim=self._replica_dim)
+        return self._hist(replicated, coords=self._coords) / self.replicas
 
 
 @dataclass
@@ -252,7 +235,6 @@ class RollingDetectorView(Detector):
         detector_number: sc.Variable,
         window: int,
         projection: Callable[[sc.DataArray], sc.DataArray] | None = None,
-        intersection_weight_threshold: float = 0.25,
     ):
         """
         Create a rolling detector view.
@@ -268,9 +250,6 @@ class RollingDetectorView(Detector):
             Optional projection function to apply to the counts before storing them in
             the history. This can be used to project the data onto a different
             coordinate system or to reduce the dimensionality of the data.
-        intersection_weight_threshold:
-            Threshold for identifying bins with a low number of intersections, forwarded
-            to :py:class:`Histogrammer` in case such a projection is used.
         """
         super().__init__(detector_number=detector_number)
         self._projection = projection
@@ -279,13 +258,6 @@ class RollingDetectorView(Detector):
         self._history: sc.DataArray | None = None
         self._cache: sc.DataArray | None = None
         self.clear_counts()
-        self._norm = (
-            self._projection.intersection_weights(
-                threshold=intersection_weight_threshold
-            )
-            if hasattr(self._projection, 'intersection_weights')
-            else None
-        )
 
     def clear_counts(self) -> None:
         """
@@ -317,19 +289,58 @@ class RollingDetectorView(Detector):
                 indices = self._projection(indices)
         return roi.ROIFilter(indices=indices, norm=norm)
 
+    def transform_weights(
+        self,
+        weights: sc.Variable | sc.DataArray | None = None,
+        *,
+        threshold: float = 0.25,
+    ) -> sc.DataArray:
+        """
+        Transform raw pixel weights to the projection plane.
+
+        Parameters
+        ----------
+        weights:
+            Raw pixel weights to transform. If None, default weights of 1 are used.
+        threshold:
+            Threshold for identifying bins with a low weight. If the weight is below the
+            threshold times the median weight, the bin is marked as invalid. This is
+            relevant to avoid issues with color scales in plots, where noise in bins
+            with low weight may dominate the color scale if auto-scaling is used.
+        """
+        if weights is None:
+            weights = sc.ones(
+                sizes=self.detector_number.sizes, dtype='float32', unit=''
+            )
+        elif isinstance(weights, sc.DataArray):
+            if weights.dims != self.data.dims:
+                raise ValueError("Norm must have the same dimensions as the data.")
+            if (detector_number := weights.coords.get('detector_number')) is not None:
+                if detector_number != self.detector_number:
+                    raise ValueError("Detector numbers in norm and data do not match.")
+            weights = weights.data
+        if isinstance(self._projection, Histogrammer):
+            xs = self._projection.apply_full(weights)  # Use all replicas
+        elif self._projection is not None:
+            xs = self._projection(weights)
+        else:
+            xs = weights.copy()
+        nonempty = xs.values[xs.values > 0]
+        mask = xs.values < threshold * np.median(nonempty)
+        xs.values[mask] = np.nan
+        return xs
+
     @staticmethod
     def from_detector_and_histogrammer(
         detector: CalibratedDetector[SampleRun],
         window: RollingDetectorViewWindow,
         projection: Histogrammer,
-        intersection_weight_threshold: IntersectionWeightThreshold,
     ) -> RollingDetectorView:
         """Helper for constructing via a Sciline workflow."""
         return RollingDetectorView(
             detector_number=detector.coords['detector_number'],
             window=window,
             projection=projection,
-            intersection_weight_threshold=intersection_weight_threshold,
         )
 
     @staticmethod
@@ -354,7 +365,6 @@ class RollingDetectorView(Detector):
         projection: Literal['xy_plane', 'cylinder_mantle_z'] | LogicalView,
         resolution: dict[str, int] | None = None,
         pixel_noise: Literal['cylindrical'] | sc.Variable | None = None,
-        intersection_weight_threshold: float = 0.25,
     ) -> RollingDetectorView:
         """
         Create a rolling detector view from a NeXus file using GenericNeXusWorkflow.
@@ -382,9 +392,6 @@ class RollingDetectorView(Detector):
             Gaussian noise to the pixel positions or the string 'cylindrical' to add
             noise to the pixel positions of a cylindrical detector. Adding noise can be
             useful to avoid artifacts when projecting the data.
-        intersection_weight_threshold:
-            Threshold for identifying bins with a low number of intersections. This is
-            forwarded to the Histogrammer in case non-logical projection is used.
         """
         if pixel_noise is None:
             pixel_noise = sc.scalar(0.0, unit='m')
@@ -392,7 +399,6 @@ class RollingDetectorView(Detector):
         else:
             noise_replica_count = 16
         wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
-        wf[IntersectionWeightThreshold] = intersection_weight_threshold
         wf[RollingDetectorViewWindow] = window
         if isinstance(projection, LogicalView):
             wf[LogicalView] = projection
@@ -427,7 +433,7 @@ class RollingDetectorView(Detector):
         wf[NeXusDetectorName] = detector_name
         return wf.compute(RollingDetectorView)
 
-    def get(self, *, window: int | None = None, normalize: bool = True) -> sc.DataArray:
+    def get(self, *, window: int | None = None) -> sc.DataArray:
         """
         Get the sum of counts over a window of the most recent counts.
 
@@ -435,12 +441,6 @@ class RollingDetectorView(Detector):
         ----------
         window:
             Size of the window to use. If None, the full history is used.
-        normalize:
-            If True, normalize the data by the number of (fractional) points
-            contributing to each bin. This option is relevant only when the view
-            performs and actual projection. If the projection is modelling a non-point
-            like voxel via the pixel-noise-based replica mechanism, the normalization
-            also takes into account fractional contributions of each point to a pixel.
 
         Returns
         -------
@@ -458,7 +458,7 @@ class RollingDetectorView(Detector):
             else:
                 data = self._history['window', start % self._window :].sum('window')
                 data += self._history['window', 0 : self._current].sum('window')
-        return data / self._norm if normalize and self._norm is not None else data
+        return data
 
     def add_events(self, data: sc.DataArray) -> None:
         """
