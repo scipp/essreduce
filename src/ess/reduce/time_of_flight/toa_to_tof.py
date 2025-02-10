@@ -144,48 +144,41 @@ def _compute_mean_tof_in_distance_range(
     return mean_tof
 
 
-def _fold_table_to_pulse_period(
-    table: sc.DataArray, pulse_period: sc.Variable, pulse_stride: int
-) -> sc.DataArray:
+def _fold_table_to_pulse_period(table: sc.DataArray, pulse_stride: int) -> sc.DataArray:
     """
-    Fold the lookup table to the pulse period.
+    Fold the lookup table to the pulse period. We make sure the left and right edges of
+    the table wrap around the ``event_time_offset`` dimension.
 
     Parameters
     ----------
     table:
         Lookup table with time-of-flight as a function of distance and time-of-arrival.
-    pulse_period:
-        Period of the source pulses, i.e., time between consecutive pulse starts.
     pulse_stride:
         Stride of used pulses. Usually 1, but may be a small integer when
         pulse-skipping.
     """
-    # Now fold the pulses
-    table = table.fold(
-        dim='event_time_offset', sizes={'pulse': pulse_stride, 'event_time_offset': -1}
+    size = table.sizes['event_time_offset']
+    if (size % pulse_stride) != 0:
+        raise ValueError(
+            "TimeOfFlightLookupTable: the number of time bins must be a multiple of "
+            f"the pulse stride, but got {size} time bins and a pulse stride of "
+            f"{pulse_stride}."
+        )
+
+    size = size // pulse_stride
+    out = sc.concat([table, table['event_time_offset', 0]], dim='event_time_offset')
+    out = sc.concat(
+        [
+            out['event_time_offset', (i * size) : (i + 1) * size + 1]
+            for i in range(pulse_stride)
+        ],
+        dim='pulse',
     )
-    # The event_time_offset does not need to be 2d, it's the same for all pulses.
-    table.coords['event_time_offset'] = table.coords['event_time_offset']['pulse', 0]
-
-    # We are still missing the upper edge of the table in the event_time_offset axis
-    # (at pulse_period). Because the event_time_offset is periodic, we can simply copy
-    # the left edge over to the right edge.
-    # Note that this needs to be done pulse by pulse, as the left edge of the second
-    # pulse is the same as the right edge of the first pulse, and so on (in the case
-    # of pulse_stride > 1).
-
-    # First, extend the table to the right by 1, and set the coordinate to pulse_period.
-    left = table['event_time_offset', 0]
-    slab = sc.empty_like(left)
-    slab.coords['event_time_offset'] = pulse_period
-    table = sc.concat([table, slab], dim='event_time_offset')
-    # Copy the values. We roll the values along the pulse dimension so that the left
-    # edge of the second pulse is the same as the right edge of the first pulse, and so
-    # on (in the case of pulse_stride > 1).
-    right = table['event_time_offset', -1]
-    right.values = np.roll(left.values, -1, axis=1)
-    right.variances = np.roll(left.variances, -1, axis=1)
-    return table
+    return out.assign_coords(
+        event_time_offset=table.coords['event_time_offset'][
+            'event_time_offset', : size + 1
+        ]
+    )
 
 
 def compute_tof_lookup_table(
