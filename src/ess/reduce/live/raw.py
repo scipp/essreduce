@@ -317,13 +317,10 @@ class RollingDetectorView(Detector):
                 raise sc.DimensionError(
                     f'Invalid {weights.sizes=} for {self.detector_number.sizes=}.'
                 )
-            if (
-                isinstance(weights, sc.DataArray)
-                and (detector_number := weights.coords.get('detector_number'))
-                is not None
-            ):
-                if not sc.identical(detector_number, self.detector_number):
-                    raise sc.CoordError("Mismatching detector numbers in weights.")
+            if isinstance(weights, sc.DataArray):
+                if (det_num := weights.coords.get('detector_number')) is not None:
+                    if not sc.identical(det_num, self.detector_number):
+                        raise sc.CoordError("Mismatching detector numbers in weights.")
                 weights = weights.data
         if isinstance(self._projection, Histogrammer):
             xs = self._projection.apply_full(weights)  # Use all replicas
@@ -334,7 +331,7 @@ class RollingDetectorView(Detector):
         nonempty = xs.values[xs.values > 0]
         mask = xs.values < threshold * np.median(nonempty)
         xs.values[mask] = np.nan
-        return xs
+        return xs if isinstance(xs, sc.DataArray) else sc.DataArray(xs)
 
     @staticmethod
     def from_detector_and_histogrammer(
