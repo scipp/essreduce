@@ -34,15 +34,20 @@ def to_events(
     rng = np.random.default_rng()
     event_coords = {}
     edge_dims = []
-    midp_dims = []
+    midp_dims = set()
+    midp_coord_names = []
     # Separate bin-edge and midpoints coords
-    for dim in da.dims:
-        if da.coords.is_edges(dim):
-            edge_dims.append(dim)
+    for name in da.coords:
+        dims = da.coords[name].dims
+        is_edges = False if not dims else da.coords.is_edges(name)
+        if is_edges:
+            if name in dims:
+                edge_dims.append(name)
         else:
-            midp_dims.append(dim)
+            midp_coord_names.append(name)
+            midp_dims.update(set(dims))
 
-    edge_sizes = {dim: da.sizes[dim] for dim in edge_dims}
+    edge_sizes = {dim: da.sizes[da.coords[dim].dim] for dim in edge_dims}
     for dim in edge_dims:
         coord = da.coords[dim]
         left = sc.broadcast(coord[dim, :-1], sizes=edge_sizes).values
@@ -102,5 +107,5 @@ def to_events(
         dims=[*edge_dims, event_dim], to=event_dim
     )
     return new.assign_coords(
-        {dim: da.coords[dim].copy() for dim in midp_dims}
+        {dim: da.coords[dim].copy() for dim in midp_coord_names}
     ).assign_masks({key: mask.copy() for key, mask in other_masks.items()})

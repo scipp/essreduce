@@ -17,6 +17,29 @@ def test_to_events_1d():
     assert sc.allclose(hist.data, result.data)
 
 
+def test_to_events_1d_with_non_dim_coord():
+    table = sc.data.table_xyz(1000)
+    hist = table.hist(x=20)
+    hist.coords["y"] = hist.coords["x"] * 2
+    events = to_events(hist, "event")
+    assert "x" not in events.dims
+    assert "y" not in events.dims
+    assert "x" in events.coords
+    assert "y" not in events.coords
+    result = events.hist(x=hist.coords["x"])
+    assert sc.identical(hist.coords["x"], result.coords["x"])
+    assert sc.allclose(hist.data, result.data)
+
+
+def test_to_events_1d_scalar_coord_is_preserved():
+    table = sc.data.table_xyz(1000)
+    hist = table.hist(x=20)
+    hist.coords["y"] = sc.scalar(1.0, unit="m")
+    events = to_events(hist, "event")
+    assert "x" not in events.dims
+    assert "y" in events.coords
+
+
 def test_to_events_1d_with_group_coord():
     table = sc.data.table_xyz(1000, coord_max=10)
     table.coords["l"] = table.coords["x"].to(dtype=int)
@@ -36,6 +59,23 @@ def test_to_events_2d():
     events = to_events(hist, "event")
     assert "x" not in events.dims
     assert "y" not in events.dims
+    result = events.hist(y=hist.coords["y"], x=hist.coords["x"])
+    assert sc.identical(hist.coords["x"], result.coords["x"])
+    assert sc.identical(hist.coords["y"], result.coords["y"])
+    assert sc.allclose(hist.data, result.data)
+
+
+def test_to_events_2d_with_non_dim_coord():
+    table = sc.data.table_xyz(1000)
+    hist = table.hist(y=20, x=10)
+    hist.coords["z"] = hist.coords["x"] * 2
+    events = to_events(hist, "event")
+    assert "x" not in events.dims
+    assert "y" not in events.dims
+    assert "z" not in events.dims
+    assert "x" in events.coords
+    assert "y" in events.coords
+    assert "z" not in events.coords
     result = events.hist(y=hist.coords["y"], x=hist.coords["x"])
     assert sc.identical(hist.coords["x"], result.coords["x"])
     assert sc.identical(hist.coords["y"], result.coords["y"])
