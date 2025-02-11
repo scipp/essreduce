@@ -11,6 +11,7 @@ from .types import SimulationResults
 def simulate_beamline(
     choppers: Mapping[str, DiskChopper],
     neutrons: int = 1_000_000,
+    pulses: int = 1,
     seed: int | None = None,
     facility: str = 'ess',
 ) -> SimulationResults:
@@ -26,6 +27,8 @@ def simulate_beamline(
         for more information.
     neutrons:
         Number of neutrons to simulate.
+    pulses:
+        Number of pulses to simulate.
     seed:
         Seed for the random number generator used in the simulation.
     facility:
@@ -47,9 +50,9 @@ def simulate_beamline(
         )
         for name, ch in choppers.items()
     ]
-    source = tof.Source(facility=facility, neutrons=neutrons, seed=seed)
+    source = tof.Source(facility=facility, neutrons=neutrons, pulses=pulses, seed=seed)
     if not tof_choppers:
-        events = source.data.squeeze()
+        events = source.data.squeeze().flatten(to='event')
         return SimulationResults(
             time_of_arrival=events.coords["time"],
             speed=events.coords["speed"],
@@ -61,7 +64,7 @@ def simulate_beamline(
     results = model.run()
     # Find name of the furthest chopper in tof_choppers
     furthest_chopper = max(tof_choppers, key=lambda c: c.distance)
-    events = results[furthest_chopper.name].data.squeeze()
+    events = results[furthest_chopper.name].data.squeeze().flatten(to='event')
     events = events[
         ~(events.masks["blocked_by_others"] | events.masks["blocked_by_me"])
     ]
