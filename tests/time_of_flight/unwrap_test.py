@@ -3,7 +3,6 @@
 import numpy as np
 import pytest
 import scipp as sc
-from scipp.testing import assert_identical
 from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
@@ -11,23 +10,6 @@ from ess.reduce import time_of_flight
 from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
-
-
-def test_frame_period_is_pulse_period_if_not_pulse_skipping() -> None:
-    pl = sl.Pipeline(time_of_flight.providers())
-    period = sc.scalar(123.0, unit="ms")
-    pl[time_of_flight.PulsePeriod] = period
-    pl[time_of_flight.PulseStride] = 1
-    assert_identical(pl.compute(time_of_flight.FramePeriod), period)
-
-
-@pytest.mark.parametrize("stride", [1, 2, 3, 4])
-def test_frame_period_is_multiple_pulse_period_if_pulse_skipping(stride) -> None:
-    pl = sl.Pipeline(time_of_flight.providers())
-    period = sc.scalar(123.0, unit="ms")
-    pl[time_of_flight.PulsePeriod] = period
-    pl[time_of_flight.PulseStride] = stride
-    assert_identical(pl.compute(time_of_flight.FramePeriod), stride * period)
 
 
 def test_unwrap_with_no_choppers() -> None:
@@ -40,6 +22,7 @@ def test_unwrap_with_no_choppers() -> None:
         monitors={"detector": distance},
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=100_000,
+        seed=1,
     )
 
     mon, ref = beamline.get_monitor("detector")
@@ -60,7 +43,6 @@ def test_unwrap_with_no_choppers() -> None:
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -68,6 +50,9 @@ def test_unwrap_with_no_choppers() -> None:
     )
     # Most errors should be small
     assert np.nanpercentile(diff.values, 96) < 1.0
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 # At 80m, event_time_offset does not wrap around (all events are within the same pulse).
@@ -81,6 +66,7 @@ def test_standard_unwrap(dist) -> None:
         monitors={"detector": distance},
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=100_000,
+        seed=2,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -101,7 +87,6 @@ def test_standard_unwrap(dist) -> None:
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -109,6 +94,9 @@ def test_standard_unwrap(dist) -> None:
     )
     # All errors should be small
     assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 # At 80m, event_time_offset does not wrap around (all events are within the same pulse).
@@ -123,17 +111,14 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
         monitors={"detector": distance},
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=100_000,
+        seed=3,
     )
     mon, ref = beamline.get_monitor("detector")
-    mon = (
-        mon.hist(
-            event_time_offset=sc.linspace(
-                "event_time_offset", 0.0, 1000.0 / 14, num=1001, unit="ms"
-            ).to(unit="s")
-        )
-        .sum("pulse")
-        .rename(event_time_offset=dim)
-    )
+    mon = mon.hist(
+        event_time_offset=sc.linspace(
+            "event_time_offset", 0.0, 1000.0 / 14, num=1001, unit="ms"
+        ).to(unit=mon.bins.coords["event_time_offset"].bins.unit)
+    ).rename(event_time_offset=dim)
 
     sim = time_of_flight.simulate_beamline(
         choppers=choppers, neutrons=300_000, seed=1234
@@ -150,23 +135,27 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
     tofs = pl.compute(time_of_flight.ResampledTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
-    ref = ref.bins.concat().value.hist(wavelength=wavs.coords["wavelength"])
+    ref = ref.hist(wavelength=wavs.coords["wavelength"])
     # We divide by the maximum to avoid large relative differences at the edges of the
     # frames where the counts are low.
     diff = (wavs - ref) / ref.max()
     assert np.nanpercentile(diff.values, 96.0) < 0.3
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 def test_pulse_skipping_unwrap() -> None:
     distance = sc.scalar(100.0, unit="m")
     choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
+        seed=4,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -188,7 +177,6 @@ def test_pulse_skipping_unwrap() -> None:
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -196,18 +184,68 @@ def test_pulse_skipping_unwrap() -> None:
     )
     # All errors should be small
     assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
+
+
+def test_pulse_skipping_unwrap_180_phase_shift() -> None:
+    distance = sc.scalar(100.0, unit="m")
+    choppers = fakes.psc_choppers()
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
+    choppers["pulse_skipping"].phase.value += 180.0
+
+    beamline = fakes.FakeBeamline(
+        choppers=choppers,
+        monitors={"detector": distance},
+        run_length=sc.scalar(1.0, unit="s"),
+        events_per_pulse=100_000,
+        seed=4,
+    )
+    mon, ref = beamline.get_monitor("detector")
+
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, pulses=2, seed=1234
+    )
+
+    pl = sl.Pipeline(
+        time_of_flight.providers(), params=time_of_flight.default_parameters()
+    )
+
+    pl[time_of_flight.RawData] = mon
+    pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.LtotalRange] = distance, distance
+    pl[time_of_flight.PulseStride] = 2
+    pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    # Convert to wavelength
+    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
+
+    diff = abs(
+        (wavs.coords["wavelength"] - ref.coords["wavelength"])
+        / ref.coords["wavelength"]
+    )
+    # All errors should be small
+    assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> None:
     distance = sc.scalar(150.0, unit="m")
     choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
+        seed=5,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -230,7 +268,6 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref.bins.concat().value
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -238,18 +275,22 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
     )
     # All errors should be small
     assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
 def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> None:
     distance = sc.scalar(100.0, unit="m")
     choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
+        seed=6,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -261,9 +302,10 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
         time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
 
-    pl[time_of_flight.RawData] = mon[
-        1:
-    ].copy()  # Skip first pulse = half of the first frame
+    # Skip first pulse = half of the first frame
+    a = mon.group('event_time_zero')['event_time_zero', 1:]
+    a.bins.coords['event_time_zero'] = sc.bins_like(a, a.coords['event_time_zero'])
+    pl[time_of_flight.RawData] = a.bins.concat('event_time_zero')
     pl[time_of_flight.SimulationResults] = sim
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
@@ -274,7 +316,24 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
-    ref = ref[1:].copy().bins.concat().value
+    # Bin the events in toa starting from the pulse period to skip the first pulse.
+    ref = (
+        ref.bin(
+            toa=sc.concat(
+                [
+                    sc.scalar(1 / 14, unit='s').to(unit=ref.coords['toa'].unit),
+                    ref.coords['toa'].max() * 1.01,
+                ],
+                dim='toa',
+            )
+        )
+        .bins.concat()
+        .value
+    )
+
+    # Sort the events according id to make sure we are comparing the same values.
+    wavs = sc.sort(wavs, key=wavs.coords['id'])
+    ref = sc.sort(ref, key=ref.coords['id'])
 
     diff = abs(
         (wavs.coords["wavelength"] - ref.coords["wavelength"])
@@ -282,29 +341,33 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     )
     # All errors should be small
     assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(
+        pl.compute(time_of_flight.RawData).data.nansum(),
+        tofs.data.nansum(),
+        rtol=sc.scalar(1.0e-3),
+    )
 
 
 def test_pulse_skipping_unwrap_histogram_mode() -> None:
     distance = sc.scalar(100.0, unit="m")
     choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
+        seed=7,
     )
     mon, ref = beamline.get_monitor("detector")
-    mon = (
-        mon.hist(
-            event_time_offset=sc.linspace(
-                "event_time_offset", 0.0, 1000.0 / 14, num=1001, unit="ms"
-            ).to(unit="s")
-        )
-        .sum("pulse")
-        .rename(event_time_offset="time_of_flight")
-    )
+    mon = mon.hist(
+        event_time_offset=sc.linspace(
+            "event_time_offset", 0.0, 1000.0 / 14, num=1001, unit="ms"
+        ).to(unit=mon.bins.coords["event_time_offset"].bins.unit)
+    ).rename(event_time_offset="time_of_flight")
 
     sim = time_of_flight.simulate_beamline(
         choppers=choppers, neutrons=300_000, seed=1234
@@ -322,8 +385,11 @@ def test_pulse_skipping_unwrap_histogram_mode() -> None:
     tofs = pl.compute(time_of_flight.ResampledTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
-    ref = ref.bins.concat().value.hist(wavelength=wavs.coords["wavelength"])
+    ref = ref.hist(wavelength=wavs.coords["wavelength"])
     # We divide by the maximum to avoid large relative differences at the edges of the
     # frames where the counts are low.
     diff = (wavs - ref) / ref.max()
     assert np.nanpercentile(diff.values, 96.0) < 0.3
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))

@@ -5,9 +5,11 @@
 #
 #    pip-compile-multi
 #
+annotated-types==0.7.0
+    # via pydantic
 asttokens==3.0.0
     # via stack-data
-certifi==2024.12.14
+certifi==2025.1.31
     # via requests
 charset-normalizer==3.4.1
     # via requests
@@ -23,25 +25,31 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
+dnspython==2.7.0
+    # via email-validator
+email-validator==2.2.0
+    # via scippneutron
 exceptiongroup==1.2.2
     # via
     #   ipython
     #   pytest
 executing==2.2.0
     # via stack-data
-fonttools==4.55.4
+fonttools==4.56.0
     # via matplotlib
 h5py==3.12.1
     # via
     #   scippneutron
     #   scippnexus
 idna==3.10
-    # via requests
+    # via
+    #   email-validator
+    #   requests
 importlib-resources==6.5.2
     # via tof
 iniconfig==2.0.0
     # via pytest
-ipython==8.31.0
+ipython==8.32.0
     # via ipywidgets
 ipywidgets==8.1.5
     # via -r nightly.in
@@ -51,6 +59,8 @@ jupyterlab-widgets==3.0.13
     # via ipywidgets
 kiwisolver==1.4.8
     # via matplotlib
+lazy-loader==0.4
+    # via scippneutron
 matplotlib==3.10.0
     # via
     #   mpltoolbox
@@ -72,6 +82,7 @@ numpy==2.2.2
     #   scipy
 packaging==24.2
     # via
+    #   lazy-loader
     #   matplotlib
     #   pooch
     #   pytest
@@ -97,6 +108,10 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
+pydantic==2.10.6
+    # via scippneutron
+pydantic-core==2.27.2
+    # via pydantic
 pygments==2.19.1
     # via ipython
 pyparsing==3.2.1
@@ -106,6 +121,7 @@ pytest==8.3.4
 python-dateutil==2.9.0.post0
     # via
     #   matplotlib
+    #   scippneutron
     #   scippnexus
 requests==2.32.3
     # via pooch
@@ -144,7 +160,10 @@ traitlets==5.14.3
     #   ipywidgets
     #   matplotlib-inline
 typing-extensions==4.12.2
-    # via ipython
+    # via
+    #   ipython
+    #   pydantic
+    #   pydantic-core
 urllib3==2.3.0
     # via requests
 wcwidth==0.2.13

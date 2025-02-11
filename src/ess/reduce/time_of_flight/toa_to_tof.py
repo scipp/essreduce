@@ -17,43 +17,19 @@ from scippneutron._utils import elem_unit
 from .to_events import to_events
 from .types import (
     DistanceResolution,
-    FastestNeutron,
-    FrameFoldedTimeOfArrival,
-    FramePeriod,
     LookupTableRelativeErrorThreshold,
     Ltotal,
     LtotalRange,
-    MaskedTimeOfFlightLookupTable,
-    PivotTimeAtDetector,
     PulsePeriod,
     PulseStride,
     PulseStrideOffset,
     RawData,
     ResampledTofData,
     SimulationResults,
-    TimeOfArrivalMinusPivotTimeModuloPeriod,
-    TimeOfArrivalResolution,
     TimeOfFlightLookupTable,
+    TimeResolution,
     TofData,
-    UnwrappedTimeOfArrival,
-    UnwrappedTimeOfArrivalMinusPivotTime,
 )
-
-
-def frame_period(pulse_period: PulsePeriod, pulse_stride: PulseStride) -> FramePeriod:
-    """
-    Return the period of a frame, which is defined by the pulse period times the pulse
-    stride.
-
-    Parameters
-    ----------
-    pulse_period:
-        Period of the source pulses, i.e., time between consecutive pulse starts.
-    pulse_stride:
-        Stride of used pulses. Usually 1, but may be a small integer when
-        pulse-skipping.
-    """
-    return FramePeriod(pulse_period * pulse_stride)
 
 
 def extract_ltotal(da: RawData) -> Ltotal:
@@ -70,11 +46,157 @@ def extract_ltotal(da: RawData) -> Ltotal:
     return Ltotal(da.coords["Ltotal"])
 
 
+def _mask_large_uncertainty(table: sc.DataArray, error_threshold: float):
+    """
+    Mask regions with large uncertainty with NaNs.
+    The values are modified in place in the input table.
+
+    Parameters
+    ----------
+    table:
+        Lookup table with time-of-flight as a function of distance and time-of-arrival.
+    error_threshold:
+        Threshold for the relative standard deviation (coefficient of variation) of the
+        projected time-of-flight above which values are masked.
+    """
+    # Finally, mask regions with large uncertainty with NaNs.
+    relative_error = sc.stddevs(table.data) / sc.values(table.data)
+    mask = relative_error > sc.scalar(error_threshold)
+    # Use numpy for indexing as table is 2D
+    table.values[mask.values] = np.nan
+
+
+def _compute_mean_tof_in_distance_range(
+    simulation: SimulationResults,
+    distance_bins: sc.Variable,
+    time_bins: sc.Variable,
+    distance_unit: str,
+    time_unit: str,
+    frame_period: sc.Variable,
+    time_bins_half_width: sc.Variable,
+) -> sc.DataArray:
+    """
+    Compute the mean time-of-flight inside event_time_offset bins for a given range of
+    distances.
+
+    Parameters
+    ----------
+    simulation:
+        Results of a time-of-flight simulation used to create a lookup table.
+    distance_bins:
+        Bin edges for the distance axis in the lookup table.
+    time_bins:
+        Bin edges for the event_time_offset axis in the lookup table.
+    distance_unit:
+        Unit of the distance axis.
+    time_unit:
+        Unit of the event_time_offset axis.
+    frame_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
+    time_bins_half_width:
+        Half the width of the time bins.
+    """
+    simulation_distance = simulation.distance.to(unit=distance_unit)
+    distances = sc.midpoints(distance_bins)
+    # Compute arrival and flight times for all neutrons
+    toas = simulation.time_of_arrival + (distances / simulation.speed).to(
+        unit=time_unit, copy=False
+    )
+    dist = distances + simulation_distance
+    tofs = dist * (sc.constants.m_n / sc.constants.h) * simulation.wavelength
+
+    data = sc.DataArray(
+        data=sc.broadcast(simulation.weight, sizes=toas.sizes),
+        coords={
+            "toa": toas,
+            "tof": tofs.to(unit=time_unit, copy=False),
+            "distance": dist,
+        },
+    ).flatten(to="event")
+
+    # Add the event_time_offset coordinate to the data. We first operate on the
+    # frame period. The table will later be folded to the pulse period.
+    data.coords['event_time_offset'] = data.coords['toa'] % frame_period
+
+    # Because we staggered the mesh by half a bin width, we want the values above
+    # the last bin edge to wrap around to the first bin.
+    # Technically, those values should end up between -0.5*bin_width and 0, but
+    # a simple modulo also works here because even if they end up between 0 and
+    # 0.5*bin_width, we are (below) computing the mean between -0.5*bin_width and
+    # 0.5*bin_width and it yields the same result.
+    # data.coords['event_time_offset'] %= pulse_period - time_bins_half_width
+    data.coords['event_time_offset'] %= frame_period - time_bins_half_width
+
+    binned = data.bin(
+        distance=distance_bins + simulation_distance, event_time_offset=time_bins
+    )
+
+    # Weighted mean of tof inside each bin
+    mean_tof = (
+        binned.bins.data * binned.bins.coords["tof"]
+    ).bins.sum() / binned.bins.sum()
+    # Compute the variance of the tofs to track regions with large uncertainty
+    variance = (
+        binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
+    ).bins.sum() / binned.bins.sum()
+
+    mean_tof.variances = variance.values
+    return mean_tof
+
+
+def _fold_table_to_pulse_period(
+    table: sc.DataArray, pulse_period: sc.Variable, pulse_stride: int
+) -> sc.DataArray:
+    """
+    Fold the lookup table to the pulse period. We make sure the left and right edges of
+    the table wrap around the ``event_time_offset`` dimension.
+
+    Parameters
+    ----------
+    table:
+        Lookup table with time-of-flight as a function of distance and time-of-arrival.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
+    pulse_stride:
+        Stride of used pulses. Usually 1, but may be a small integer when
+        pulse-skipping.
+    """
+    size = table.sizes['event_time_offset']
+    if (size % pulse_stride) != 0:
+        raise ValueError(
+            "TimeOfFlightLookupTable: the number of time bins must be a multiple of "
+            f"the pulse stride, but got {size} time bins and a pulse stride of "
+            f"{pulse_stride}."
+        )
+
+    size = size // pulse_stride
+    out = sc.concat([table, table['event_time_offset', 0]], dim='event_time_offset')
+    out = sc.concat(
+        [
+            out['event_time_offset', (i * size) : (i + 1) * size + 1]
+            for i in range(pulse_stride)
+        ],
+        dim='pulse',
+    )
+    return out.assign_coords(
+        event_time_offset=sc.concat(
+            [
+                table.coords['event_time_offset']['event_time_offset', :size],
+                pulse_period,
+            ],
+            'event_time_offset',
+        )
+    )
+
+
 def compute_tof_lookup_table(
     simulation: SimulationResults,
     ltotal_range: LtotalRange,
     distance_resolution: DistanceResolution,
-    toa_resolution: TimeOfArrivalResolution,
+    time_resolution: TimeResolution,
+    pulse_period: PulsePeriod,
+    pulse_stride: PulseStride,
+    error_threshold: LookupTableRelativeErrorThreshold,
 ) -> TimeOfFlightLookupTable:
     """
     Compute a lookup table for time-of-flight as a function of distance and
@@ -90,15 +212,26 @@ def compute_tof_lookup_table(
         Range of total flight path lengths from the source to the detector.
     distance_resolution:
         Resolution of the distance axis in the lookup table.
-    toa_resolution:
-        Resolution of the time-of-arrival axis in the lookup table.
+    time_resolution:
+        Resolution of the time-of-arrival axis in the lookup table. Must be an integer.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
+    pulse_stride:
+        Stride of used pulses. Usually 1, but may be a small integer when
+        pulse-skipping.
+    error_threshold:
+        Threshold for the relative standard deviation (coefficient of variation) of the
+        projected time-of-flight above which values are masked.
     """
     distance_unit = "m"
+    time_unit = simulation.time_of_arrival.unit
     res = distance_resolution.to(unit=distance_unit)
-    simulation_distance = simulation.distance.to(unit=distance_unit)
+    pulse_period = pulse_period.to(unit=time_unit)
+    frame_period = pulse_period * pulse_stride
 
     min_dist, max_dist = (
-        x.to(unit=distance_unit) - simulation_distance for x in ltotal_range
+        x.to(unit=distance_unit) - simulation.distance.to(unit=distance_unit)
+        for x in ltotal_range
     )
     # We need to bin the data below, to compute the weighted mean of the wavelength.
     # This results in data with bin edges.
@@ -111,231 +244,213 @@ def compute_tof_lookup_table(
     # ensure that the last bin is not cut off. We want the upper edge to be higher than
     # the maximum distance, hence we pad with an additional 1.5 x resolution.
     pad = 2.0 * res
-    dist_edges = sc.array(
-        dims=["distance"],
-        values=np.arange((min_dist - pad).value, (max_dist + pad).value, res.value),
-        unit=distance_unit,
-    )
-    distances = sc.midpoints(dist_edges)
+    distance_bins = sc.arange('distance', min_dist - pad, max_dist + pad, res)
 
-    time_unit = simulation.time_of_arrival.unit
-    toas = simulation.time_of_arrival + (distances / simulation.speed).to(
-        unit=time_unit, copy=False
+    # Create some time bins for event_time_offset.
+    # We want our final table to strictly cover the range [0, frame_period].
+    # However, binning the data associates mean values inside the bins to the bin
+    # centers. Instead, we stagger the mesh by half a bin width so we are computing
+    # values for the final mesh edges (the bilinear interpolation needs values on the
+    # edges/corners).
+    nbins = int(frame_period / time_resolution.to(unit=time_unit)) + 1
+    time_bins = sc.linspace(
+        'event_time_offset', 0.0, frame_period.value, nbins + 1, unit=pulse_period.unit
+    )
+    time_bins_half_width = 0.5 * (time_bins[1] - time_bins[0])
+    time_bins -= time_bins_half_width
+
+    # To avoid a too large RAM usage, we compute the table in chunks, and piece them
+    # together at the end.
+    ndist = len(distance_bins) - 1
+    max_size = 2e7
+    total_size = ndist * len(simulation.time_of_arrival)
+    nchunks = total_size / max_size
+    chunk_size = int(ndist / nchunks) + 1
+    pieces = []
+    for i in range(int(nchunks) + 1):
+        dist_edges = distance_bins[i * chunk_size : (i + 1) * chunk_size + 1]
+
+        pieces.append(
+            _compute_mean_tof_in_distance_range(
+                simulation=simulation,
+                distance_bins=dist_edges,
+                time_bins=time_bins,
+                distance_unit=distance_unit,
+                time_unit=time_unit,
+                frame_period=frame_period,
+                time_bins_half_width=time_bins_half_width,
+            )
+        )
+
+    table = sc.concat(pieces, 'distance')
+    table.coords["distance"] = sc.midpoints(table.coords["distance"])
+    table.coords["event_time_offset"] = sc.midpoints(table.coords["event_time_offset"])
+
+    table = _fold_table_to_pulse_period(
+        table=table, pulse_period=pulse_period, pulse_stride=pulse_stride
     )
 
-    # Compute time-of-flight for all neutrons
-    wavs = sc.broadcast(simulation.wavelength.to(unit="m"), sizes=toas.sizes).flatten(
-        to="event"
-    )
-    dist = sc.broadcast(distances + simulation_distance, sizes=toas.sizes).flatten(
-        to="event"
-    )
-    tofs = dist * sc.constants.m_n
-    tofs *= wavs
-    tofs /= sc.constants.h
+    # In-place masking for better performance
+    _mask_large_uncertainty(table, error_threshold)
 
-    data = sc.DataArray(
-        data=sc.broadcast(simulation.weight, sizes=toas.sizes).flatten(to="event"),
+    return TimeOfFlightLookupTable(
+        table.transpose(('pulse', 'distance', 'event_time_offset'))
+    )
+
+
+def _make_tof_interpolator(
+    lookup: sc.DataArray, distance_unit: str, time_unit: str
+) -> Callable:
+    from scipy.interpolate import RegularGridInterpolator
+
+    # TODO: to make use of multi-threading, we could write our own interpolator.
+    # This should be simple enough as we are making the bins linspace, so computing
+    # bin indices is fast.
+
+    # In the pulse dimension, it could be that for a given event_time_offset and
+    # distance, a tof value is finite in one pulse and NaN in the other.
+    # When using the bilinear interpolation, even if the value of the requested point is
+    # exactly 0 or 1 (in the case of pulse_stride=2), the interpolator will still
+    # use all 4 corners surrounding the point. This means that if one of the corners
+    # is NaN, the result will be NaN.
+    # Here, we use a trick where we duplicate the lookup values in the 'pulse' dimension
+    # so that the interpolator has values on bin edges for that dimension.
+    # The interpolator raises an error if axes coordinates are not strictly monotonic,
+    # so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of pulse_stride=2.
+    # Instead we use [-0.25, 0.25, 0.75, 1.25].
+    base_grid = np.arange(float(lookup.sizes["pulse"]))
+    return RegularGridInterpolator(
+        (
+            np.sort(np.concatenate([base_grid - 0.25, base_grid + 0.25])),
+            lookup.coords["distance"].to(unit=distance_unit, copy=False).values,
+            lookup.coords["event_time_offset"].to(unit=time_unit, copy=False).values,
+        ),
+        np.repeat(lookup.data.to(unit=time_unit, copy=False).values, 2, axis=0),
+        method="linear",
+        bounds_error=False,
+        fill_value=np.nan,
+    )
+
+
+def _time_of_flight_data_histogram(
+    da: sc.DataArray,
+    lookup: sc.DataArray,
+    ltotal: sc.Variable,
+    pulse_period: sc.Variable,
+) -> sc.DataArray:
+    # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
+    # it may be called 'tof'.
+    key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof"}))
+    eto_unit = da.coords[key].unit
+    pulse_period = pulse_period.to(unit=eto_unit)
+
+    # In histogram mode, because there is a wrap around at the end of the pulse, we
+    # need to insert a bin edge at that exact location to avoid having the last bin
+    # with one finite left edge and a NaN right edge (it becomes NaN as it would be
+    # outside the range of the lookup table).
+    new_bins = sc.sort(
+        sc.concat(
+            [da.coords[key], sc.scalar(0.0, unit=eto_unit), pulse_period], dim=key
+        ),
+        key=key,
+    )
+    rebinned = da.rebin({key: new_bins})
+    etos = rebinned.coords[key]
+
+    # In histogram mode, the lookup table cannot have a pulse dimension because we
+    # cannot know in the histogrammed data which pulse the events belong to.
+    # So we merge the pulse dimension in the lookup table. A quick way to do this
+    # is to take the mean of the data along the pulse dimension (there should
+    # only be regions that are NaN in one pulse and finite in the other).
+    merged = lookup.data.nanmean('pulse')
+    dim = merged.dims[0]
+    lookup = sc.DataArray(
+        data=merged.fold(dim=dim, sizes={'pulse': 1, dim: merged.sizes[dim]}),
         coords={
-            "toa": toas.flatten(to="event"),
-            "tof": tofs.to(unit=time_unit, copy=False),
-            "distance": dist,
+            'pulse': sc.arange('pulse', 1.0),
+            'distance': lookup.coords['distance'],
+            'event_time_offset': lookup.coords['event_time_offset'],
         },
     )
+    pulse_index = sc.zeros(sizes=etos.sizes)
 
-    binned = data.bin(distance=dist_edges + simulation_distance, toa=toa_resolution)
-    # Weighted mean of tof inside each bin
-    mean_tof = (
-        binned.bins.data * binned.bins.coords["tof"]
-    ).bins.sum() / binned.bins.sum()
-    # Compute the variance of the tofs to track regions with large uncertainty
-    variance = (
-        binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
-    ).bins.sum() / binned.bins.sum()
-
-    mean_tof.variances = variance.values
-
-    # Convert coordinates to midpoints
-    mean_tof.coords["toa"] = sc.midpoints(mean_tof.coords["toa"])
-    mean_tof.coords["distance"] = sc.midpoints(mean_tof.coords["distance"])
-
-    return TimeOfFlightLookupTable(mean_tof)
-
-
-def masked_tof_lookup_table(
-    tof_lookup: TimeOfFlightLookupTable,
-    error_threshold: LookupTableRelativeErrorThreshold,
-) -> MaskedTimeOfFlightLookupTable:
-    """
-    Mask regions of the lookup table where the variance of the projected time-of-flight
-    is larger than a given threshold.
-
-    Parameters
-    ----------
-    tof_lookup:
-        Lookup table giving time-of-flight as a function of distance and
-        time-of-arrival.
-    variance_threshold:
-        Threshold for the variance of the projected time-of-flight above which regions
-        are masked.
-    """
-    relative_error = sc.stddevs(tof_lookup.data) / sc.values(tof_lookup.data)
-    mask = relative_error > sc.scalar(error_threshold)
-    out = tof_lookup.copy()
-    # Use numpy for indexing as table is 2D
-    out.values[mask.values] = np.nan
-    return MaskedTimeOfFlightLookupTable(out)
-
-
-def find_fastest_neutron(simulation: SimulationResults) -> FastestNeutron:
-    """
-    Find the fastest neutron in the simulation results.
-    """
-    ind = np.argmax(simulation.speed.values)
-    return FastestNeutron(
-        time_of_arrival=simulation.time_of_arrival[ind],
-        speed=simulation.speed[ind],
-        distance=simulation.distance,
+    # Create 2D interpolator
+    interp = _make_tof_interpolator(
+        lookup, distance_unit=ltotal.unit, time_unit=eto_unit
     )
 
-
-def pivot_time_at_detector(
-    fastest_neutron: FastestNeutron, ltotal: Ltotal
-) -> PivotTimeAtDetector:
-    """
-    Compute the pivot time at the detector, i.e., the time of the start of the frame at
-    the detector.
-    The assumption here is that the fastest neutron in the simulation results is the one
-    that arrives at the detector first.
-    One could have an edge case where a slightly slower neutron which is born earlier
-    could arrive at the detector first, but this edge case is most probably uncommon,
-    and the difference in arrival times is likely to be small.
-
-    Parameters
-    ----------
-    fastest_neutron:
-        Properties of the fastest neutron in the simulation results.
-    ltotal:
-        Total length of the flight path from the source to the detector.
-    """
-    dist = ltotal - fastest_neutron.distance.to(unit=ltotal.unit)
-    toa = fastest_neutron.time_of_arrival + (dist / fastest_neutron.speed).to(
-        unit=fastest_neutron.time_of_arrival.unit, copy=False
+    # Compute time-of-flight of the bin edges using the interpolator
+    tofs = sc.array(
+        dims=etos.dims,
+        values=interp((pulse_index.values, ltotal.values, etos.values)),
+        unit=eto_unit,
     )
-    return PivotTimeAtDetector(toa)
+
+    return rebinned.assign_coords(tof=tofs)
 
 
-def unwrapped_time_of_arrival(
-    da: RawData, offset: PulseStrideOffset, pulse_period: PulsePeriod
-) -> UnwrappedTimeOfArrival:
-    """
-    Compute the unwrapped time of arrival of the neutron at the detector.
-    For event data, this is essentially ``event_time_offset + event_time_zero``.
+def _time_of_flight_data_events(
+    da: sc.DataArray,
+    lookup: sc.DataArray,
+    ltotal: sc.Variable,
+    pulse_period: sc.Variable,
+    pulse_stride: int,
+    pulse_stride_offset: int,
+) -> sc.DataArray:
+    etos = da.bins.coords["event_time_offset"]
+    eto_unit = elem_unit(etos)
+    pulse_period = pulse_period.to(unit=eto_unit)
+    frame_period = pulse_period * pulse_stride
 
-    Parameters
-    ----------
-    da:
-        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
-        NXevent_data.
-    offset:
-        Integer offset of the first pulse in the stride (typically zero unless we are
-        using pulse-skipping and the events do not begin with the first pulse in the
-        stride).
-    pulse_period:
-        Period of the source pulses, i.e., time between consecutive pulse starts.
-    """
-    if da.bins is None:
-        # 'time_of_flight' is the canonical name in NXmonitor, but in some files, it
-        # may be called 'tof'.
-        key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof"}))
-        toa = da.coords[key]
-    else:
-        # To unwrap the time of arrival, we want to add the event_time_zero to the
-        # event_time_offset. However, we do not really care about the exact datetimes,
-        # we just want to know the offsets with respect to the start of the run.
-        # Hence we use the smallest event_time_zero as the time origin.
-        time_zero = da.coords["event_time_zero"] - da.coords["event_time_zero"].min()
-        coord = da.bins.coords["event_time_offset"]
-        unit = elem_unit(coord)
-        toa = (
-            coord
-            + time_zero.to(dtype=float, unit=unit, copy=False)
-            - (offset * pulse_period).to(unit=unit, copy=False)
+    # TODO: Finding the `tmin` below will not work in the case were data is processed
+    # in chunks, as taking the minimum time in each chunk will lead to inconsistent
+    # pulse indices (this will be the case in live data, or when using the
+    # StreamProcessor). We could instead read it from the first chunk and store it?
+
+    # Compute a pulse index for every event: it is the index of the pulse within a
+    # frame period. When there is no pulse skipping, those are all zero. When there is
+    # pulse skipping, the index ranges from zero to pulse_stride - 1.
+    tmin = da.bins.coords['event_time_zero'].min()
+    pulse_index = (
+        (
+            (da.bins.coords['event_time_zero'] - tmin).to(unit=eto_unit)
+            + 0.5 * pulse_period
         )
-    return UnwrappedTimeOfArrival(toa)
+        % frame_period
+    ) // pulse_period
+    # Apply the pulse_stride_offset
+    pulse_index += pulse_stride_offset
+    pulse_index %= pulse_stride
 
-
-def unwrapped_time_of_arrival_minus_frame_pivot_time(
-    toa: UnwrappedTimeOfArrival, pivot_time: PivotTimeAtDetector
-) -> UnwrappedTimeOfArrivalMinusPivotTime:
-    """
-    Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
-    period, minus the start time of the frame.
-    We subtract the start time of the frame so that we can use a modulo operation to
-    wrap the time of arrival at the frame period in the case of pulse-skipping.
-
-    Parameters
-    ----------
-    toa:
-        Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-    pivot_time:
-        Pivot time at the detector, i.e., the time of the start of the frame at the
-        detector.
-    """
-    # Order of operation to preserve dimension order
-    return UnwrappedTimeOfArrivalMinusPivotTime(
-        -pivot_time.to(unit=elem_unit(toa), copy=False) + toa
+    # Create 2D interpolator
+    interp = _make_tof_interpolator(
+        lookup, distance_unit=ltotal.unit, time_unit=eto_unit
     )
 
+    # Operate on events (broadcast distances to all events)
+    ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
+    etos = etos.bins.constituents["data"]
+    pulse_index = pulse_index.bins.constituents["data"]
 
-def time_of_arrival_minus_pivot_time_modulo_period(
-    toa_minus_pivot_time: UnwrappedTimeOfArrivalMinusPivotTime,
-    frame_period: FramePeriod,
-) -> TimeOfArrivalMinusPivotTimeModuloPeriod:
-    """
-    Compute the time of arrival of the neutron at the detector, unwrapped at the pulse
-    period, minus the start time of the frame, modulo the frame period.
-
-    Parameters
-    ----------
-    toa_minus_pivot_time:
-        Time of arrival of the neutron at the detector, unwrapped at the pulse period,
-        minus the start time of the frame.
-    frame_period:
-        Period of the frame, i.e., time between the start of two consecutive frames.
-    """
-    return TimeOfArrivalMinusPivotTimeModuloPeriod(
-        toa_minus_pivot_time
-        % frame_period.to(unit=elem_unit(toa_minus_pivot_time), copy=False)
+    # Compute time-of-flight for all neutrons using the interpolator
+    tofs = sc.array(
+        dims=etos.dims,
+        values=interp((pulse_index.values, ltotal.values, etos.values)),
+        unit=eto_unit,
     )
 
-
-def time_of_arrival_folded_by_frame(
-    toa: TimeOfArrivalMinusPivotTimeModuloPeriod,
-    pivot_time: PivotTimeAtDetector,
-) -> FrameFoldedTimeOfArrival:
-    """
-    The time of arrival of the neutron at the detector, folded by the frame period.
-
-    Parameters
-    ----------
-    toa:
-        Time of arrival of the neutron at the detector, unwrapped at the pulse period,
-        minus the start time of the frame, modulo the frame period.
-    pivot_time:
-        Pivot time at the detector, i.e., the time of the start of the frame at the
-        detector.
-    """
-    return FrameFoldedTimeOfArrival(
-        toa + pivot_time.to(unit=elem_unit(toa), copy=False)
-    )
+    parts = da.bins.constituents
+    parts["data"] = tofs
+    return da.bins.assign_coords(tof=_bins_no_validate(**parts))
 
 
 def time_of_flight_data(
     da: RawData,
-    lookup: MaskedTimeOfFlightLookupTable,
+    lookup: TimeOfFlightLookupTable,
     ltotal: Ltotal,
-    toas: FrameFoldedTimeOfArrival,
+    pulse_period: PulsePeriod,
+    pulse_stride: PulseStride,
+    pulse_stride_offset: PulseStrideOffset,
 ) -> TofData:
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
@@ -351,39 +466,29 @@ def time_of_flight_data(
         arrival.
     ltotal:
         Total length of the flight path from the source to the detector.
-    toas:
-        Time of arrival of the neutron at the detector, folded by the frame period.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
+    pulse_stride:
+        Stride of used pulses. Usually 1, but may be a small integer when
+        pulse-skipping.
+    pulse_stride_offset:
+        When pulse-skipping, the offset of the first pulse in the stride. This is
+        typically zero but can be a small integer < pulse_stride.
     """
-    from scipy.interpolate import RegularGridInterpolator
 
-    # TODO: to make use of multi-threading, we could write our own interpolator.
-    # This should be simple enough as we are making the bins linspace, so computing
-    # bin indices is fast.
-    f = RegularGridInterpolator(
-        (
-            lookup.coords["toa"].to(unit=elem_unit(toas), copy=False).values,
-            lookup.coords["distance"].to(unit=ltotal.unit, copy=False).values,
-        ),
-        lookup.data.to(unit=elem_unit(toas), copy=False).values.T,
-        method="linear",
-        bounds_error=False,
-    )
-
-    if da.bins is not None:
-        ltotal = sc.bins_like(toas, ltotal).bins.constituents["data"]
-        toas = toas.bins.constituents["data"]
-
-    tofs = sc.array(
-        dims=toas.dims, values=f((toas.values, ltotal.values)), unit=elem_unit(toas)
-    )
-
-    if da.bins is not None:
-        parts = da.bins.constituents
-        parts["data"] = tofs
-        out = da.bins.assign_coords(tof=_bins_no_validate(**parts))
+    if da.bins is None:
+        out = _time_of_flight_data_histogram(
+            da=da, lookup=lookup, ltotal=ltotal, pulse_period=pulse_period
+        )
     else:
-        out = da.assign_coords(tof=tofs)
-
+        out = _time_of_flight_data_events(
+            da=da,
+            lookup=lookup,
+            ltotal=ltotal,
+            pulse_period=pulse_period,
+            pulse_stride=pulse_stride,
+            pulse_stride_offset=pulse_stride_offset,
+        )
     return TofData(out)
 
 
@@ -432,7 +537,7 @@ def default_parameters() -> dict:
         PulseStride: 1,
         PulseStrideOffset: 0,
         DistanceResolution: sc.scalar(0.1, unit="m"),
-        TimeOfArrivalResolution: 500,
+        TimeResolution: sc.scalar(250.0, unit='us'),
         LookupTableRelativeErrorThreshold: 0.1,
     }
 
@@ -441,101 +546,4 @@ def providers() -> tuple[Callable]:
     """
     Providers of the time-of-flight workflow.
     """
-    return (
-        compute_tof_lookup_table,
-        extract_ltotal,
-        find_fastest_neutron,
-        frame_period,
-        masked_tof_lookup_table,
-        pivot_time_at_detector,
-        time_of_arrival_folded_by_frame,
-        time_of_arrival_minus_pivot_time_modulo_period,
-        time_of_flight_data,
-        unwrapped_time_of_arrival,
-        unwrapped_time_of_arrival_minus_frame_pivot_time,
-    )
-
-
-class TofWorkflow:
-    """
-    Helper class to build a time-of-flight workflow and cache the expensive part of the
-    computation: running the simulation and building the lookup table.
-
-    Parameters
-    ----------
-    simulated_neutrons:
-        Results of a time-of-flight simulation used to create a lookup table.
-        The results should be a flat table with columns for time-of-arrival, speed,
-        wavelength, and weight.
-    ltotal_range:
-        Range of total flight path lengths from the source to the detector.
-        This is used to create the lookup table to compute the neutron
-        time-of-flight.
-        Note that the resulting table will extend slightly beyond this range, as the
-        supplied range is not necessarily a multiple of the distance resolution.
-    pulse_stride:
-        Stride of used pulses. Usually 1, but may be a small integer when
-        pulse-skipping.
-    pulse_stride_offset:
-        Integer offset of the first pulse in the stride (typically zero unless we
-        are using pulse-skipping and the events do not begin with the first pulse in
-        the stride).
-    distance_resolution:
-        Resolution of the distance axis in the lookup table.
-        Should be a single scalar value with a unit of length.
-        This is typically of the order of 1-10 cm.
-    toa_resolution:
-        Resolution of the time of arrival axis in the lookup table.
-        Can be an integer (number of bins) or a sc.Variable (bin width).
-    error_threshold:
-        Threshold for the variance of the projected time-of-flight above which
-        regions are masked.
-    """
-
-    def __init__(
-        self,
-        simulated_neutrons: SimulationResults,
-        ltotal_range: LtotalRange,
-        pulse_stride: PulseStride | None = None,
-        pulse_stride_offset: PulseStrideOffset | None = None,
-        distance_resolution: DistanceResolution | None = None,
-        toa_resolution: TimeOfArrivalResolution | None = None,
-        error_threshold: LookupTableRelativeErrorThreshold | None = None,
-    ):
-        import sciline as sl
-
-        self.pipeline = sl.Pipeline(providers())
-        self.pipeline[SimulationResults] = simulated_neutrons
-        self.pipeline[LtotalRange] = ltotal_range
-
-        params = default_parameters()
-        self.pipeline[PulsePeriod] = params[PulsePeriod]
-        self.pipeline[PulseStride] = pulse_stride or params[PulseStride]
-        self.pipeline[PulseStrideOffset] = (
-            pulse_stride_offset or params[PulseStrideOffset]
-        )
-        self.pipeline[DistanceResolution] = (
-            distance_resolution or params[DistanceResolution]
-        )
-        self.pipeline[TimeOfArrivalResolution] = (
-            toa_resolution or params[TimeOfArrivalResolution]
-        )
-        self.pipeline[LookupTableRelativeErrorThreshold] = (
-            error_threshold or params[LookupTableRelativeErrorThreshold]
-        )
-
-    def cache_results(
-        self,
-        results=(SimulationResults, MaskedTimeOfFlightLookupTable, FastestNeutron),
-    ) -> None:
-        """
-        Cache a list of (usually expensive to compute) intermediate results of the
-        time-of-flight workflow.
-
-        Parameters
-        ----------
-        results:
-            List of results to cache.
-        """
-        for t in results:
-            self.pipeline[t] = self.pipeline.compute(t)
+    return (compute_tof_lookup_table, extract_ltotal, time_of_flight_data)

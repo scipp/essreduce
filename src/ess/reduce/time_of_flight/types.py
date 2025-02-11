@@ -48,17 +48,6 @@ class SimulationResults:
     distance: sc.Variable
 
 
-@dataclass
-class FastestNeutron:
-    """
-    Properties of the fastest neutron in the simulation results.
-    """
-
-    time_of_arrival: sc.Variable
-    speed: sc.Variable
-    distance: sc.Variable
-
-
 LtotalRange = NewType("LtotalRange", tuple[sc.Variable, sc.Variable])
 """
 Range (min, max) of the total length of the flight path from the source to the detector.
@@ -79,10 +68,16 @@ Should be a single scalar value with a unit of length.
 This is typically of the order of 1-10 cm.
 """
 
-TimeOfArrivalResolution = NewType("TimeOfArrivalResolution", int | sc.Variable)
+TimeResolution = NewType("TimeResolution", sc.Variable)
 """
-Resolution of the time of arrival axis in the lookup table.
-Can be an integer (number of bins) or a sc.Variable (bin width).
+Step size of the event_time_offset axis in the lookup table.
+This is basically the 'time-of-flight' resolution of the detector.
+Should be a single scalar value with a unit of time.
+This is typically of the order of 0.1-0.5 ms.
+
+Since the event_time_offset range needs to span exactly one pulse period, the final
+resolution in the lookup table will be at least the supplied value here, but may be
+smaller if the pulse period is not an integer multiple of the time resolution.
 """
 
 TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataArray)
@@ -90,47 +85,11 @@ TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataArray)
 Lookup table giving time-of-flight as a function of distance and time of arrival.
 """
 
-MaskedTimeOfFlightLookupTable = NewType("MaskedTimeOfFlightLookupTable", sc.DataArray)
-"""
-Lookup table giving time-of-flight as a function of distance and time of arrival, with
-regions of large uncertainty masked out.
-"""
-
 LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
-
-FramePeriod = NewType("FramePeriod", sc.Variable)
 """
-The period of a frame, a (small) integer multiple of the source period.
+Threshold for the relative standard deviation (coefficient of variation) of the
+projected time-of-flight above which values are masked.
 """
-
-UnwrappedTimeOfArrival = NewType("UnwrappedTimeOfArrival", sc.Variable)
-"""
-Time of arrival of the neutron at the detector, unwrapped at the pulse period.
-"""
-
-PivotTimeAtDetector = NewType("PivotTimeAtDetector", sc.Variable)
-"""
-Pivot time at the detector, i.e., the time of the start of the frame at the detector.
-"""
-
-UnwrappedTimeOfArrivalMinusPivotTime = NewType(
-    "UnwrappedTimeOfArrivalMinusPivotTime", sc.Variable
-)
-"""
-Time of arrival of the neutron at the detector, unwrapped at the pulse period, minus
-the start time of the frame.
-"""
-
-TimeOfArrivalMinusPivotTimeModuloPeriod = NewType(
-    "TimeOfArrivalMinusPivotTimeModuloPeriod", sc.Variable
-)
-"""
-Time of arrival of the neutron at the detector minus the start time of the frame,
-modulo the frame period.
-"""
-
-FrameFoldedTimeOfArrival = NewType("FrameFoldedTimeOfArrival", sc.Variable)
-
 
 PulsePeriod = NewType("PulsePeriod", sc.Variable)
 """
@@ -144,7 +103,8 @@ Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping
 
 PulseStrideOffset = NewType("PulseStrideOffset", int)
 """
-When pulse-skipping, the offset of the first pulse in the stride.
+When pulse-skipping, the offset of the first pulse in the stride. This is typically
+zero but can be a small integer < pulse_stride.
 """
 
 RawData = NewType("RawData", sc.DataArray)
