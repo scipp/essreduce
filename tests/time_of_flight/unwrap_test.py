@@ -148,7 +148,7 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
 def test_pulse_skipping_unwrap() -> None:
     distance = sc.scalar(100.0, unit="m")
     choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
@@ -189,10 +189,56 @@ def test_pulse_skipping_unwrap() -> None:
     assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
+def test_pulse_skipping_unwrap_180_phase_shift() -> None:
+    distance = sc.scalar(100.0, unit="m")
+    choppers = fakes.psc_choppers()
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
+    choppers["pulse_skipping"].phase.value += 180.0
+
+    beamline = fakes.FakeBeamline(
+        choppers=choppers,
+        monitors={"detector": distance},
+        run_length=sc.scalar(1.0, unit="s"),
+        events_per_pulse=100_000,
+        seed=4,
+    )
+    mon, ref = beamline.get_monitor("detector")
+
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, pulses=2, seed=1234
+    )
+
+    pl = sl.Pipeline(
+        time_of_flight.providers(), params=time_of_flight.default_parameters()
+    )
+
+    pl[time_of_flight.RawData] = mon
+    pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.LtotalRange] = distance, distance
+    pl[time_of_flight.PulseStride] = 2
+    pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    # Convert to wavelength
+    graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
+    wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
+
+    diff = abs(
+        (wavs.coords["wavelength"] - ref.coords["wavelength"])
+        / ref.coords["wavelength"]
+    )
+    # All errors should be small
+    assert np.nanpercentile(diff.values, 100) < 0.01
+    # Make sure that we have not lost too many events (we lose some because they may be
+    # given a NaN tof from the lookup).
+    assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
+
+
 def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> None:
     distance = sc.scalar(150.0, unit="m")
     choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
@@ -237,7 +283,7 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
 def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> None:
     distance = sc.scalar(100.0, unit="m")
     choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
@@ -307,7 +353,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
 def test_pulse_skipping_unwrap_histogram_mode() -> None:
     distance = sc.scalar(100.0, unit="m")
     choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
