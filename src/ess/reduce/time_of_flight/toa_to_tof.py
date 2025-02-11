@@ -244,11 +244,7 @@ def compute_tof_lookup_table(
     # ensure that the last bin is not cut off. We want the upper edge to be higher than
     # the maximum distance, hence we pad with an additional 1.5 x resolution.
     pad = 2.0 * res
-    distance_bins = sc.array(
-        dims=["distance"],
-        values=np.arange((min_dist - pad).value, (max_dist + pad).value, res.value),
-        unit=distance_unit,
-    )
+    distance_bins = sc.arange('distance', min_dist - pad, max_dist + pad, res)
 
     # Create some time bins for event_time_offset.
     # We want our final table to strictly cover the range [0, frame_period].
