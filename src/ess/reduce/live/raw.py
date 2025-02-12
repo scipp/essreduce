@@ -261,6 +261,10 @@ class RollingDetectorView(Detector):
         self.clear_counts()
 
     @property
+    def max_window(self) -> int:
+        return self._window
+
+    @property
     def cumulative(self) -> sc.DataArray:
         return self._cumulative
 
