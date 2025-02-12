@@ -101,10 +101,10 @@ PulseStride = NewType("PulseStride", int)
 Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
 """
 
-PulseStrideOffset = NewType("PulseStrideOffset", int)
+PulseStrideOffset = NewType("PulseStrideOffset", int | None)
 """
 When pulse-skipping, the offset of the first pulse in the stride. This is typically
-zero but can be a small integer < pulse_stride.
+zero but can be a small integer < pulse_stride. If None, a guess is made.
 """
 
 RawData = NewType("RawData", sc.DataArray)

@@ -389,6 +389,56 @@ def _time_of_flight_data_histogram(
     return rebinned.assign_coords(tof=tofs)
 
 
+def _guess_pulse_stride_offset(
+    pulse_index: sc.Variable,
+    ltotal: sc.Variable,
+    event_time_offset: sc.Variable,
+    pulse_stride: int,
+    interp: Callable,
+) -> int:
+    """
+    Using the minimum ``event_time_zero`` to calculate a reference time when computing
+    the time-of-flight for the neutron events makes the workflow depend on when the
+    first event was recorded. There is no straightforward way to know if we started
+    recording at the beginning of a frame, or half-way through a frame, without looking
+    at the chopper logs. This can be manually corrected using the pulse_stride_offset
+    parameter, but this makes automatic reduction of the data difficult.
+    See https://github.com/scipp/essreduce/issues/184.
+
+    Here, we perform a simple guess for the ``pulse_stride_offset`` if it is not
+    provided.
+    We choose a few random events, compute the time-of-flight for every possible value
+    of pulse_stride_offset, and return the value that yields the least number of NaNs
+    in the computed time-of-flight.
+
+    Parameters
+    ----------
+    pulse_index:
+        Pulse index for every event.
+    ltotal:
+        Total length of the flight path from the source to the detector for each event.
+    event_time_offset:
+        Time of arrival of the neutron at the detector for each event.
+    pulse_stride:
+        Stride of used pulses.
+    interp:
+        2D interpolator for the lookup table.
+    """
+    tofs = {}
+    # Choose a few random events to compute the time-of-flight
+    inds = np.random.choice(
+        len(event_time_offset), min(5000, len(event_time_offset)), replace=False
+    )
+    pulse_index_values = pulse_index.values[inds]
+    ltotal_values = ltotal.values[inds]
+    etos_values = event_time_offset.values[inds]
+    for i in range(pulse_stride):
+        pulse_inds = (pulse_index_values + i) % pulse_stride
+        tofs[i] = interp((pulse_inds, ltotal_values, etos_values))
+    # Find the entry in the list with the least number of nan values
+    return sorted(tofs, key=lambda x: np.isnan(tofs[x]).sum())[0]
+
+
 def _time_of_flight_data_events(
     da: sc.DataArray,
     lookup: sc.DataArray,
@@ -427,7 +477,7 @@ def _time_of_flight_data_events(
         # is aligned with the pulse_period and the frame_period.
         epoch = sc.datetime(0, unit=etz_unit)
         diff_to_epoch = (etz.min() - epoch) % pulse_period
-        # Here we offset the reference by half a pulse period to avoid erros from
+        # Here we offset the reference by half a pulse period to avoid errors from
         # fluctuations in the event_time_zeros in the data. They are triggered by the
         # neutron source, and may not always be exactly separated by the pulse period.
         # While fluctuations will exist, they will be small, and offsetting the times
@@ -437,16 +487,18 @@ def _time_of_flight_data_events(
         pulse_index = etz - reference
         pulse_index %= frame_period
         pulse_index //= pulse_period
+
         # Apply the pulse_stride_offset
+        if pulse_stride_offset is None:
+            pulse_stride_offset = _guess_pulse_stride_offset(
+                pulse_index=pulse_index,
+                ltotal=ltotal,
+                event_time_offset=etos,
+                pulse_stride=pulse_stride,
+                interp=interp,
+            )
         pulse_index += pulse_stride_offset
         pulse_index %= pulse_stride
-
-        # TODO: Using the minimum event_time_zero above to compute a reference time
-        # makes the workflow depend on when the first event was recorded. There is no
-        # straightforward way to know if we started recording at the beginning of a
-        # frame, or half-way through a frame. This can be manually corrected using the
-        # pulse_stride_offset parameter, but this means that automatic reduction of the
-        # data is not possible. See https://github.com/scipp/essreduce/issues/184.
 
     # Compute time-of-flight for all neutrons using the interpolator
     tofs = sc.array(
@@ -551,7 +603,7 @@ def default_parameters() -> dict:
     return {
         PulsePeriod: 1.0 / sc.scalar(14.0, unit="Hz"),
         PulseStride: 1,
-        PulseStrideOffset: 0,
+        PulseStrideOffset: None,
         DistanceResolution: sc.scalar(0.1, unit="m"),
         TimeResolution: sc.scalar(250.0, unit='us'),
         LookupTableRelativeErrorThreshold: 0.1,
