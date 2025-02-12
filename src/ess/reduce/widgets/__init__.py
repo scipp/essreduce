@@ -7,29 +7,28 @@ from typing import Any, Protocol
 import ipywidgets as widgets
 
 from ..parameter import (
+    BinEdgesParameter,
     BooleanParameter,
     FilenameParameter,
     MultiFilenameParameter,
     MultiStringParameter,
-    ParamWithOptions,
-    StringParameter,
     Parameter,
     ParamWithBounds,
-    BinEdgesParameter,
+    ParamWithOptions,
+    StringParameter,
     Vector2dParameter,
     Vector3dParameter,
 )
-from ._config import default_layout, default_style
-
 from ._binedges_widget import BinEdgesWidget
+from ._bounds_widget import BoundsWidget
+from ._config import default_layout, default_style
 from ._filename_widget import FilenameWidget, MultiFilenameWidget
 from ._linspace_widget import LinspaceWidget
-from ._vector_widget import VectorWidget
-from ._bounds_widget import BoundsWidget
-from ._string_widget import MultiStringWidget, StringWidget
-from ._switchable_widget import SwitchWidget
 from ._optional_widget import OptionalWidget
 from ._spinner import Spinner
+from ._string_widget import MultiStringWidget, StringWidget
+from ._switchable_widget import SwitchWidget
+from ._vector_widget import VectorWidget
 
 
 class EssWidget(Protocol):
@@ -189,8 +188,8 @@ __all__ = [
     'LinspaceWidget',
     'MultiFilenameWidget',
     'OptionalWidget',
+    'Spinner',
     'SwitchWidget',
     'VectorWidget',
     'create_parameter_widget',
-    'Spinner',
 ]
