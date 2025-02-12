@@ -255,9 +255,14 @@ class RollingDetectorView(Detector):
         self._projection = projection
         self._window = window
         self._current = 0
-        self._history: sc.DataArray | None = None
-        self._cache: sc.DataArray | None = None
+        self._history: sc.DataArray
+        self._cache: sc.DataArray
+        self._cumulative: sc.DataArray
         self.clear_counts()
+
+    @property
+    def cumulative(self) -> sc.DataArray:
+        return self._cumulative
 
     def clear_counts(self) -> None:
         """
@@ -275,6 +280,7 @@ class RollingDetectorView(Detector):
             .copy()
         )
         self._cache = self._history.sum('window')
+        self._cumulative = sc.zeros_like(self._cache)
 
     def make_roi_filter(self) -> roi.ROIFilter:
         """Return a ROI filter operating via the projection plane of the view."""
@@ -494,6 +500,7 @@ class RollingDetectorView(Detector):
         self._cache -= self._history['window', self._current]
         self._history['window', self._current] = counts
         self._cache += counts
+        self._cumulative += counts
         self._current = (self._current + 1) % self._window
 
 
