@@ -399,28 +399,6 @@ def _time_of_flight_data_events(
 ) -> sc.DataArray:
     etos = da.bins.coords["event_time_offset"]
     eto_unit = elem_unit(etos)
-    pulse_period = pulse_period.to(unit=eto_unit)
-    frame_period = pulse_period * pulse_stride
-
-    # TODO: Finding the `tmin` below will not work in the case were data is processed
-    # in chunks, as taking the minimum time in each chunk will lead to inconsistent
-    # pulse indices (this will be the case in live data, or when using the
-    # StreamProcessor). We could instead read it from the first chunk and store it?
-
-    # Compute a pulse index for every event: it is the index of the pulse within a
-    # frame period. When there is no pulse skipping, those are all zero. When there is
-    # pulse skipping, the index ranges from zero to pulse_stride - 1.
-    tmin = da.bins.coords['event_time_zero'].min()
-    pulse_index = (
-        (
-            (da.bins.coords['event_time_zero'] - tmin).to(unit=eto_unit)
-            + 0.5 * pulse_period
-        )
-        % frame_period
-    ) // pulse_period
-    # Apply the pulse_stride_offset
-    pulse_index += pulse_stride_offset
-    pulse_index %= pulse_stride
 
     # Create 2D interpolator
     interp = _make_tof_interpolator(
@@ -430,7 +408,45 @@ def _time_of_flight_data_events(
     # Operate on events (broadcast distances to all events)
     ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
     etos = etos.bins.constituents["data"]
-    pulse_index = pulse_index.bins.constituents["data"]
+
+    # Compute a pulse index for every event: it is the index of the pulse within a
+    # frame period. When there is no pulse skipping, those are all zero. When there is
+    # pulse skipping, the index ranges from zero to pulse_stride - 1.
+    if pulse_stride == 1:
+        pulse_index = sc.zeros(sizes=etos.sizes)
+    else:
+        etz_unit = 'ns'
+        etz = (
+            da.bins.coords["event_time_zero"]
+            .bins.constituents["data"]
+            .to(unit=etz_unit, copy=False)
+        )
+        pulse_period = pulse_period.to(unit=etz_unit, dtype=int)
+        frame_period = pulse_period * pulse_stride
+        # Define a common reference time using epoch as a base, but making sure that it
+        # is aligned with the pulse_period and the frame_period.
+        epoch = sc.datetime(0, unit=etz_unit)
+        diff_to_epoch = (etz.min() - epoch) % pulse_period
+        # Here we offset the reference by half a pulse period to avoid erros from
+        # fluctuations in the event_time_zeros in the data. They are triggered by the
+        # neutron source, and may not always be exactly separated by the pulse period.
+        # While fluctuations will exist, they will be small, and offsetting the times
+        # by half a pulse period is a simple enough fix.
+        reference = epoch + diff_to_epoch - (pulse_period // 2)
+        # Use in-place operations to avoid large allocations
+        pulse_index = etz - reference
+        pulse_index %= frame_period
+        pulse_index //= pulse_period
+        # Apply the pulse_stride_offset
+        pulse_index += pulse_stride_offset
+        pulse_index %= pulse_stride
+
+        # TODO: Using the minimum event_time_zero above to compute a reference time
+        # makes the workflow depend on when the first event was recorded. There is no
+        # straightforward way to know if we started recording at the beginning of a
+        # frame, or half-way through a frame. This can be manually corrected using the
+        # pulse_stride_offset parameter, but this means that automatic reduction of the
+        # data is not possible. See https://github.com/scipp/essreduce/issues/184.
 
     # Compute time-of-flight for all neutrons using the interpolator
     tofs = sc.array(
