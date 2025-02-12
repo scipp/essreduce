@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-# ruff: noqa: E402, F401
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
+# ruff: noqa: E402, F401, I
 
 import importlib.metadata
 
-from . import nexus, uncertainty, time_of_flight
+from . import nexus, time_of_flight, uncertainty
 
 try:
     __version__ = importlib.metadata.version("essreduce")
@@ -13,4 +13,4 @@ except importlib.metadata.PackageNotFoundError:
 
 del importlib
 
-__all__ = ["nexus", "uncertainty", "time_of_flight"]
+__all__ = ["nexus", "time_of_flight", "uncertainty"]
