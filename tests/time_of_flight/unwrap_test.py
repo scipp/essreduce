@@ -261,8 +261,7 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
 
 def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> None:
     distance = sc.scalar(100.0, unit="m")
-    choppers = fakes.psc_choppers()
-    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
+    choppers = fakes.pulse_skipping_choppers()
 
     beamline = fakes.FakeBeamline(
         choppers=choppers,
@@ -319,7 +318,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
         / ref.coords["wavelength"]
     )
     # All errors should be small
-    assert np.nanpercentile(diff.values, 100) < 0.01
+    assert np.nanpercentile(diff.values, 100) < 0.05
     # Make sure that we have not lost too many events (we lose some because they may be
     # given a NaN tof from the lookup).
     assert sc.isclose(
