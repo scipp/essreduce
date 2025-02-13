@@ -475,6 +475,10 @@ def _time_of_flight_data_events(
         frame_period = pulse_period * pulse_stride
         # Define a common reference time using epoch as a base, but making sure that it
         # is aligned with the pulse_period and the frame_period.
+        # We need to use a global reference time instead of simply taking the minimum
+        # event_time_zero because the events may arrive in chunks, and the first event
+        # may not be the first event of the first pulse for all chunks. This would lead
+        # to inconsistent pulse indices.
         epoch = sc.datetime(0, unit=etz_unit)
         diff_to_epoch = (etz.min() - epoch) % pulse_period
         # Here we offset the reference by half a pulse period to avoid errors from
