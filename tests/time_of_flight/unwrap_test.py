@@ -235,6 +235,49 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
     assert sc.isclose(mon.data.nansum(), tofs.data.nansum(), rtol=sc.scalar(1.0e-3))
 
 
+def test_pulse_skipping_stride_offset_guess_gives_expected_result() -> None:
+    distance = sc.scalar(100.0, unit="m")
+    choppers = fakes.psc_choppers()
+    choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
+    choppers["pulse_skipping"].phase.value += 180.0
+
+    beamline = fakes.FakeBeamline(
+        choppers=choppers,
+        monitors={"detector": distance},
+        run_length=sc.scalar(1.0, unit="s"),
+        events_per_pulse=100_000,
+        seed=4,
+    )
+    mon = beamline.get_monitor("detector")[0]
+
+    sim = time_of_flight.simulate_beamline(
+        choppers=choppers, neutrons=300_000, pulses=2, seed=1234
+    )
+
+    pl = sl.Pipeline(
+        time_of_flight.providers(), params=time_of_flight.default_parameters()
+    )
+
+    pl[time_of_flight.RawData] = mon
+    pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.LtotalRange] = distance, distance
+    pl[time_of_flight.PulseStride] = 2
+
+    # Cache the table to avoid noise from re-computing
+    pl[time_of_flight.TimeOfFlightLookupTable] = pl.compute(
+        time_of_flight.TimeOfFlightLookupTable
+    )
+
+    with_guess = pl.compute(time_of_flight.TofData)
+    pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
+    no_guess = pl.compute(time_of_flight.TofData)
+    assert sc.allclose(
+        with_guess.bins.concat().value.coords['tof'],
+        no_guess.bins.concat().value.coords['tof'],
+        equal_nan=True,
+    )
+
+
 def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> None:
     distance = sc.scalar(150.0, unit="m")
     choppers = fakes.psc_choppers()
