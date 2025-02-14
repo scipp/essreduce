@@ -32,6 +32,7 @@ def select_indices_in_intervals(
     for dim, bounds in intervals.items():
         low, high = sorted(bounds)
         indices = indices[dim, low:high]
+    indices = indices if isinstance(indices, sc.Variable) else indices.data
     indices = indices.flatten(to=out_dim)
     if indices.bins is None:
         return indices
