@@ -639,7 +639,7 @@ def position_with_noisy_replicas(
     # "Paint" the short array of noise on top of the (replicated) position data.
     noise = sc.concat(
         [position_noise] * ceil(size / position_noise.size), dim=noise_dim
-    )[:size].fold(dim=noise_dim, sizes={'replica': replicas, position.dim: -1})
+    )[:size].fold(dim=noise_dim, sizes={'replica': replicas, **position.sizes})
     return sc.concat([position, noise + position], dim='replica')
 
 
