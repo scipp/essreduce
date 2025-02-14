@@ -7,8 +7,8 @@ neutron time-of-arrival at the detectors.
 """
 
 from .simulation import simulate_beamline
-from .toa_to_tof import default_parameters, resample_tof_data, providers
 from .to_events import to_events
+from .toa_to_tof import default_parameters, providers, resample_tof_data
 from .types import (
     DistanceResolution,
     LookupTableRelativeErrorThreshold,
@@ -24,7 +24,6 @@ from .types import (
     TimeResolution,
     TofData,
 )
-
 
 __all__ = [
     "DistanceResolution",
