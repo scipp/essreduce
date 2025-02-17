@@ -147,7 +147,7 @@ class StreamProcessor:
         *,
         dynamic_keys: tuple[sciline.typing.Key, ...],
         target_keys: tuple[sciline.typing.Key, ...],
-        accumulators: dict[sciline.typing.Key, Accumulator, Callable[..., Accumulator]]
+        accumulators: dict[sciline.typing.Key, Accumulator | Callable[..., Accumulator]]
         | tuple[sciline.typing.Key, ...],
         allow_bypass: bool = False,
     ) -> None:
@@ -180,6 +180,8 @@ class StreamProcessor:
         for key in dynamic_keys:
             workflow[key] = None  # hack to prune branches
 
+        self._dynamic_keys = set(dynamic_keys)
+
         # Find and pre-compute static nodes as far down the graph as possible
         # See also https://github.com/scipp/sciline/issues/148.
         nodes = _find_descendants(workflow, dynamic_keys)
@@ -194,12 +196,19 @@ class StreamProcessor:
             if isinstance(accumulators, dict)
             else {key: EternalAccumulator() for key in accumulators}
         )
+
+        # Map each accumulator to its dependent dynamic keys
+        graph = workflow.underlying_graph
+        self._accumulator_dependencies = {
+            acc_key: nx.ancestors(graph, acc_key) & self._dynamic_keys
+            for acc_key in self._accumulators
+            if acc_key in graph
+        }
+
         # Depending on the target_keys, some accumulators can be unused and should not
         # be computed when adding a chunk.
         self._accumulators = {
-            key: value
-            for key, value in self._accumulators.items()
-            if key in self._process_chunk_workflow.underlying_graph
+            key: value for key, value in self._accumulators.items() if key in graph
         }
         # Create accumulators unless instances were passed. This allows for initializing
         # accumulators with arguments that depend on the workflow such as bin edges,
@@ -242,7 +251,30 @@ class StreamProcessor:
         ----------
         chunks:
             Chunks to be processed.
+
+        Raises
+        ------
+        ValueError
+            If non-dynamic keys are provided in chunks.
+            If accumulator computation requires dynamic keys not provided in chunks.
         """
+        non_dynamic = set(chunks) - self._dynamic_keys
+        if non_dynamic:
+            raise ValueError(
+                f"Can only update dynamic keys. Got non-dynamic keys: {non_dynamic}"
+            )
+
+        accumulators_to_update = []
+        for acc_key, deps in self._accumulator_dependencies.items():
+            if deps.isdisjoint(chunks.keys()):
+                continue
+            if not deps.issubset(chunks.keys()):
+                raise ValueError(
+                    f"Accumulator '{acc_key}' requires dynamic keys "
+                    f"{deps - chunks.keys()} not provided in the current chunk."
+                )
+            accumulators_to_update.append(acc_key)
+
         for key, value in chunks.items():
             self._process_chunk_workflow[key] = value
             # There can be dynamic keys that do not "terminate" in any accumulator. In
@@ -250,7 +282,7 @@ class StreamProcessor:
             # the target keys.
             if self._allow_bypass:
                 self._finalize_workflow[key] = value
-        to_accumulate = self._process_chunk_workflow.compute(self._accumulators)
+        to_accumulate = self._process_chunk_workflow.compute(accumulators_to_update)
         for key, processed in to_accumulate.items():
             self._accumulators[key].push(processed)
 
