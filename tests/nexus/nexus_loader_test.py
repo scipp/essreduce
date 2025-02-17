@@ -13,7 +13,8 @@ import scipp.testing
 import scippnexus as snx
 
 from ess.reduce import nexus
-from ess.reduce.nexus.types import NeXusLocationSpec
+from ess.reduce.nexus._nexus_loader import NoLockingIfNeeded
+from ess.reduce.nexus.types import FilePath, NeXusLocationSpec
 
 year_zero = sc.datetime('1970-01-01T00:00:00')
 
@@ -625,3 +626,68 @@ def compute_component_position_returns_input_if_no_depends_on() -> None:
     dg = sc.DataGroup(position=sc.vector([1, 2, 3], unit='m'))
     result = nexus.compute_component_position(dg)
     assert result is dg
+
+
+# Some filesystems (e.g., for raw files at ESS) are read-only and
+# h5py cannot open files on these systems with file locks.
+# We cannot reasonably emulate this within Python tests.
+# So the following tests only check the behaviour on a basic level.
+# The tests use the private `_open_nexus_file` directly to focus on what matters.
+#
+# A file may already be open in this or another process.
+# We should still be able to open it
+@pytest.mark.parametrize(
+    "locks",
+    [
+        (False, False),
+        (True, True),
+        (None, None),
+        (NoLockingIfNeeded, NoLockingIfNeeded),
+        # These are ok because the second user adapts to the first:
+        (False, NoLockingIfNeeded),
+        (None, NoLockingIfNeeded),
+        # This would fail on a read-only filesystem because the second case can't adapt:
+        (NoLockingIfNeeded, None),
+    ],
+)
+def test_open_nexus_file_multiple_times(tmp_path: Path, locks: tuple[Any, Any]) -> None:
+    from ess.reduce.nexus._nexus_loader import _open_nexus_file
+
+    path = FilePath(tmp_path / "file.nxs")
+    with snx.File(path, "w"):
+        pass
+    with _open_nexus_file(path, locking=locks[0]) as f1:
+        with _open_nexus_file(path, locking=locks[1]) as f2:
+            assert f1.name == f2.name
+
+
+@pytest.mark.parametrize(
+    "locks",
+    [
+        (True, False),
+        (True, None),
+        (False, True),
+        (False, None),
+        (None, True),
+        (None, False),
+        # On a read-only filesystem, this would work:
+        (NoLockingIfNeeded, False),
+        # This could be supported, but it could cause problems because the first
+        # user expects the file to be locked.
+        (True, NoLockingIfNeeded),
+        # Same as above but with roles reversed:
+        (NoLockingIfNeeded, True),
+    ],
+)
+def test_open_nexus_file_with_mismatched_locking(
+    tmp_path: Path, locks: tuple[Any, Any]
+) -> None:
+    from ess.reduce.nexus._nexus_loader import _open_nexus_file
+
+    path = FilePath(tmp_path / "file.nxs")
+    with snx.File(path, "w"):
+        pass
+
+    with _open_nexus_file(path, locking=locks[0]):
+        with pytest.raises(OSError, match="flag values don't match"):
+            _ = _open_nexus_file(path, locking=locks[1])

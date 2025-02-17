@@ -4,6 +4,7 @@ from typing import Any
 
 from ipywidgets import Checkbox, HBox, Label, Stack, Widget
 
+from ._base import get_fields, set_fields
 from ._config import default_style
 
 
@@ -49,3 +50,17 @@ class SwitchWidget(HBox):
     @value.setter
     def value(self, value: Any) -> None:
         self.wrapped.value = value
+
+    def set_fields(self, new_values: dict[str, Any]) -> None:
+        # Retrieve and set the enabled flag first
+        new_values = dict(new_values)
+        enabled_flag = new_values.pop('enabled', self.enabled)
+        if not isinstance(enabled_flag, bool):
+            raise ValueError(f"`enabled` must be a boolean, got {enabled_flag}")
+        self.enabled = enabled_flag
+        # Set the rest of the fields
+        set_fields(self.wrapped, new_values)
+
+    def get_fields(self) -> dict[str, Any]:
+        wrapped_fields = get_fields(self.wrapped)
+        return {'enabled': self.enabled, **(wrapped_fields or {})}

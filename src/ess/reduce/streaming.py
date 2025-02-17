@@ -4,6 +4,7 @@
 
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from copy import deepcopy
 from typing import Any, Generic, TypeVar
 
 import networkx as nx
@@ -29,6 +30,8 @@ def maybe_hist(value: T) -> T:
     :
         Histogram.
     """
+    if not isinstance(value, sc.Variable | sc.DataArray):
+        return value
     return value if value.bins is None else value.hist()
 
 
@@ -90,11 +93,11 @@ class EternalAccumulator(Accumulator[T]):
 
     @property
     def value(self) -> T:
-        return self._value.copy()
+        return deepcopy(self._value)
 
     def _do_push(self, value: T) -> None:
         if self._value is None:
-            self._value = value.copy()
+            self._value = deepcopy(value)
         else:
             self._value += value
 
@@ -144,8 +147,9 @@ class StreamProcessor:
         *,
         dynamic_keys: tuple[sciline.typing.Key, ...],
         target_keys: tuple[sciline.typing.Key, ...],
-        accumulators: dict[sciline.typing.Key, Accumulator, Callable[..., Accumulator]]
+        accumulators: dict[sciline.typing.Key, Accumulator | Callable[..., Accumulator]]
         | tuple[sciline.typing.Key, ...],
+        allow_bypass: bool = False,
     ) -> None:
         """
         Create a stream processor.
@@ -163,12 +167,20 @@ class StreamProcessor:
             passed, :py:class:`EternalAccumulator` is used for all keys. Otherwise, a
             dict mapping keys to accumulator instances can be passed. If a dict value is
             a callable, base_workflow.bind_and_call(value) is used to make an instance.
+        allow_bypass:
+            If True, allow bypassing accumulators for keys that are not in the
+            accumulators dict. This is useful for dynamic keys that are not "terminated"
+            in any accumulator. USE WITH CARE! This will lead to incorrect results
+            unless the values for these keys are valid for all chunks comprised in the
+            final accumulators at the point where :py:meth:`finalize` is called.
         """
         workflow = sciline.Pipeline()
         for key in target_keys:
             workflow[key] = base_workflow[key]
         for key in dynamic_keys:
             workflow[key] = None  # hack to prune branches
+
+        self._dynamic_keys = set(dynamic_keys)
 
         # Find and pre-compute static nodes as far down the graph as possible
         # See also https://github.com/scipp/sciline/issues/148.
@@ -184,12 +196,19 @@ class StreamProcessor:
             if isinstance(accumulators, dict)
             else {key: EternalAccumulator() for key in accumulators}
         )
+
+        # Map each accumulator to its dependent dynamic keys
+        graph = workflow.underlying_graph
+        self._accumulator_dependencies = {
+            acc_key: nx.ancestors(graph, acc_key) & self._dynamic_keys
+            for acc_key in self._accumulators
+            if acc_key in graph
+        }
+
         # Depending on the target_keys, some accumulators can be unused and should not
         # be computed when adding a chunk.
         self._accumulators = {
-            key: value
-            for key, value in self._accumulators.items()
-            if key in self._process_chunk_workflow.underlying_graph
+            key: value for key, value in self._accumulators.items() if key in graph
         }
         # Create accumulators unless instances were passed. This allows for initializing
         # accumulators with arguments that depend on the workflow such as bin edges,
@@ -201,19 +220,82 @@ class StreamProcessor:
             for key, value in self._accumulators.items()
         }
         self._target_keys = target_keys
+        self._allow_bypass = allow_bypass
 
     def add_chunk(
         self, chunks: dict[sciline.typing.Key, Any]
     ) -> dict[sciline.typing.Key, Any]:
+        """
+        Legacy interface for accumulating values from chunks and finalizing the result.
+
+        It is recommended to use :py:meth:`accumulate` and :py:meth:`finalize` instead.
+
+        Parameters
+        ----------
+        chunks:
+            Chunks to be processed.
+
+        Returns
+        -------
+        :
+            Finalized result.
+        """
+        self.accumulate(chunks)
+        return self.finalize()
+
+    def accumulate(self, chunks: dict[sciline.typing.Key, Any]) -> None:
+        """
+        Accumulate values from chunks without finalizing the result.
+
+        Parameters
+        ----------
+        chunks:
+            Chunks to be processed.
+
+        Raises
+        ------
+        ValueError
+            If non-dynamic keys are provided in chunks.
+            If accumulator computation requires dynamic keys not provided in chunks.
+        """
+        non_dynamic = set(chunks) - self._dynamic_keys
+        if non_dynamic:
+            raise ValueError(
+                f"Can only update dynamic keys. Got non-dynamic keys: {non_dynamic}"
+            )
+
+        accumulators_to_update = []
+        for acc_key, deps in self._accumulator_dependencies.items():
+            if deps.isdisjoint(chunks.keys()):
+                continue
+            if not deps.issubset(chunks.keys()):
+                raise ValueError(
+                    f"Accumulator '{acc_key}' requires dynamic keys "
+                    f"{deps - chunks.keys()} not provided in the current chunk."
+                )
+            accumulators_to_update.append(acc_key)
+
         for key, value in chunks.items():
             self._process_chunk_workflow[key] = value
             # There can be dynamic keys that do not "terminate" in any accumulator. In
             # that case, we need to make sure they can be and are used when computing
             # the target keys.
-            self._finalize_workflow[key] = value
-        to_accumulate = self._process_chunk_workflow.compute(self._accumulators)
+            if self._allow_bypass:
+                self._finalize_workflow[key] = value
+        to_accumulate = self._process_chunk_workflow.compute(accumulators_to_update)
         for key, processed in to_accumulate.items():
             self._accumulators[key].push(processed)
+
+    def finalize(self) -> dict[sciline.typing.Key, Any]:
+        """
+        Get the final result by computing the target keys based on accumulated values.
+
+        Returns
+        -------
+        :
+            Finalized result.
+        """
+        for key in self._accumulators:
             self._finalize_workflow[key] = self._accumulators[key].value
         return self._finalize_workflow.compute(self._target_keys)
 

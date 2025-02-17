@@ -1,13 +1,13 @@
 # Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
-_commit: aa5dc5e
+_commit: 5c4fd02
 _src_path: gh:scipp/copier_template
 description: Common data reduction tools for the ESS facility
 max_python: '3.13'
 min_python: '3.10'
 namespace_package: ess
-nightly_deps: scippnexus,scipp,sciline,cyclebane,scippneutron
+nightly_deps: scippnexus,scipp,sciline,cyclebane,scippneutron,tof
 orgname: scipp
 prettyname: ESSreduce
 projectname: essreduce
 related_projects: ESSdiffraction,ESSimaging,ESSnmx,ESSpolarization,ESSreflectometry,ESSsans,ESSspectroscopy
-year: 2024
+year: 2025

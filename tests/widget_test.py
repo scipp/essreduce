@@ -14,10 +14,12 @@ from ess.reduce.parameter import (
     FilenameParameter,
     MultiFilenameParameter,
     Parameter,
+    Vector3dParameter,
     parameter_registry,
 )
 from ess.reduce.ui import ResultBox, WorkflowWidget, workflow_widget
 from ess.reduce.widgets import OptionalWidget, SwitchWidget, create_parameter_widget
+from ess.reduce.widgets._base import WidgetWithFieldsProtocol, get_fields, set_fields
 from ess.reduce.workflow import register_workflow, workflow_registry
 
 SwitchableInt = NewType('SwitchableInt', int)
@@ -171,6 +173,46 @@ def test_switchable_optional_parameter_switchable_first() -> None:
     dummy_widget = create_parameter_widget(dummy_param)
     assert isinstance(dummy_widget, SwitchWidget)
     assert isinstance(dummy_widget.wrapped, OptionalWidget)
+
+
+def test_optional_widget_set_value_get_fields() -> None:
+    optional_param = IntParam('a', 'a', 1, optional=True)
+    optional_widget = create_parameter_widget(optional_param)
+    assert isinstance(optional_widget, WidgetWithFieldsProtocol)
+    assert isinstance(optional_widget, OptionalWidget)
+    # Check initial state
+    assert optional_widget._option_box.value is None
+    assert get_fields(optional_widget) == {'essreduce-opted-out': True, 'value': 1}
+    # Update the value of the wrapped widget and check the fields
+    set_fields(optional_widget, {'value': 2})
+    assert optional_widget.value is None  # Opted-out is not changed
+    assert get_fields(optional_widget) == {'essreduce-opted-out': True, 'value': 2}
+    optional_widget.value = 3
+    assert get_fields(optional_widget) == {'essreduce-opted-out': False, 'value': 3}
+
+
+def test_optional_widget_set_fields_get_fields() -> None:
+    optional_param = Vector3dParameter(
+        'a', 'a', sc.vector([1, 2, 3], unit='m'), optional=True
+    )
+    optional_widget = create_parameter_widget(optional_param)
+    assert isinstance(optional_widget, WidgetWithFieldsProtocol)
+    assert isinstance(optional_widget, OptionalWidget)
+    # Check initial state
+    assert optional_widget._option_box.value is None
+    expected = {'essreduce-opted-out': True, 'x': 1, 'y': 2, 'z': 3, 'unit': 'm'}
+    assert optional_widget.get_fields() == expected
+    # Update the value of the wrapped widget
+    optional_widget.set_fields(
+        {'essreduce-opted-out': True, 'x': 4, 'y': 5, 'z': 6, 'unit': 'm'}
+    )
+    assert optional_widget.value is None  # Opted-out is not changed
+    optional_widget.set_fields({'essreduce-opted-out': False})
+    assert optional_widget.value == sc.vector([4, 5, 6], unit='m')
+    # Check the fields and the option box value
+    expected = {'essreduce-opted-out': False, 'x': 4, 'y': 5, 'z': 6, 'unit': 'm'}
+    assert optional_widget.get_fields() == expected
+    assert optional_widget._option_box.value == optional_param.name
 
 
 def test_optional_widget_dispatch() -> None:
@@ -429,6 +471,76 @@ def test_result_box_can_handle_different_outputs(output):
 
     ResultBox(run_workflow).run_button.click()
     assert was_called
+
+
+def test_switchable_widget_set_values() -> None:
+    param = IntParam('a', 'a', 1, switchable=True)
+    widget = create_parameter_widget(param)
+    assert isinstance(widget, SwitchWidget)
+    assert not widget.enabled
+    widget.set_fields({'enabled': True})
+    assert widget.enabled
+    widget.set_fields({'enabled': False})
+    assert not widget.enabled
+    widget.set_fields({'enabled': True, 'value': 2})
+    assert widget.enabled
+    assert widget.value == 2
+    widget.set_fields({'enabled': False, 'value': 3})
+    assert not widget.enabled
+    assert widget.value == 3
+    widget.set_fields({'value': 4})
+    assert not widget.enabled
+    assert widget.value == 4
+
+
+def test_switchable_widget_get_fields_only_value() -> None:
+    param = IntParam('a', 'a', 1, switchable=True)
+    widget = create_parameter_widget(param)
+    assert isinstance(widget, SwitchWidget)
+    assert widget.get_fields() == {'enabled': False, 'value': 1}
+    widget.enabled = True
+    assert widget.get_fields() == {'enabled': True, 'value': 1}
+    widget.value = 2
+    assert widget.get_fields() == {'enabled': True, 'value': 2}
+    widget.enabled = False
+    assert widget.get_fields() == {'enabled': False, 'value': 2}
+
+
+def test_switchable_widget_set_fields() -> None:
+    param = Vector3dParameter('a', 'a', sc.vector([1, 2, 3], unit='m'), switchable=True)
+    widget = create_parameter_widget(param)
+    assert isinstance(widget, SwitchWidget)
+    assert not widget.enabled
+    assert widget.value == sc.vector([1, 2, 3], unit='m')
+    widget.set_fields({'enabled': True, 'x': 4, 'y': 5, 'z': 6, 'unit': 'm'})
+    assert widget.enabled
+    assert widget.value == sc.vector([4, 5, 6], unit='m')
+    widget.set_fields({'x': 7, 'y': 8})
+    assert widget.enabled
+    assert widget.value == sc.vector([7, 8, 6], unit='m')
+
+
+def test_switchable_widget_get_fields_sub_fields() -> None:
+    param = Vector3dParameter('a', 'a', sc.vector([1, 2, 3], unit='m'), switchable=True)
+    widget = create_parameter_widget(param)
+    assert isinstance(widget, SwitchWidget)
+    assert widget.get_fields() == {
+        'enabled': False,
+        'x': 1,
+        'y': 2,
+        'z': 3,
+        'unit': 'm',
+    }
+    widget.enabled = True
+    assert widget.get_fields() == {'enabled': True, 'x': 1, 'y': 2, 'z': 3, 'unit': 'm'}
+    widget.set_fields({'enabled': False, 'x': 4, 'y': 5, 'unit': 'mm'})
+    assert widget.get_fields() == {
+        'enabled': False,
+        'x': 4,
+        'y': 5,
+        'z': 3,
+        'unit': 'mm',
+    }
 
 
 FilenameSampleRun = NewType('FilenameSampleRun', str)

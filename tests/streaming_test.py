@@ -3,6 +3,7 @@
 
 from typing import NewType
 
+import pytest
 import sciline
 import scipp as sc
 
@@ -95,9 +96,11 @@ def test_rolling_accumulator_does_not_modify_pushed_values() -> None:
 
 DynamicA = NewType('DynamicA', float)
 DynamicB = NewType('DynamicB', float)
+DynamicC = NewType('DynamicC', float)
 StaticA = NewType('StaticA', float)
 AccumA = NewType('AccumA', float)
 AccumB = NewType('AccumB', float)
+AccumC = NewType('AccumC', float)
 Target = NewType('Target', float)
 
 
@@ -115,6 +118,10 @@ def make_accum_a(value: DynamicA, static: StaticA) -> AccumA:
 
 def make_accum_b(value: DynamicB) -> AccumB:
     return AccumB(value)
+
+
+def make_accum_c(value: DynamicC) -> AccumC:
+    return AccumC(value)
 
 
 def make_target(accum_a: AccumA, accum_b: AccumB) -> Target:
@@ -214,6 +221,7 @@ def test_StreamProcess_with_zero_accumulators_for_buffered_workflow_calls() -> N
         dynamic_keys=(DynamicA, DynamicB),
         target_keys=(Target,),
         accumulators=(),
+        allow_bypass=True,
     )
     result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
     assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
@@ -222,3 +230,201 @@ def test_StreamProcess_with_zero_accumulators_for_buffered_workflow_calls() -> N
     result = streaming_wf.add_chunk({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
     assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 6.0))
     assert make_static_a.call_count == 1
+
+
+def test_StreamProcessor_with_bypass() -> None:
+    def _make_static_a() -> StaticA:
+        _make_static_a.call_count += 1
+        return StaticA(2.0)
+
+    _make_static_a.call_count = 0
+
+    base_workflow = sciline.Pipeline(
+        (_make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+    orig_workflow = base_workflow.copy()
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA,),  # Note: No AccumB
+        allow_bypass=True,
+    )
+    streaming_wf.accumulate({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+    streaming_wf.accumulate({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    result = streaming_wf.finalize()
+    # Note denominator is 5, not 9
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 5.0))
+    streaming_wf.accumulate({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    result = streaming_wf.finalize()
+    # Note denominator is 6, not 15
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 6.0))
+    assert _make_static_a.call_count == 1
+
+    # Consistency check: Run the original workflow with the same inputs, all at once
+    orig_workflow[DynamicA] = sc.scalar(1 + 2 + 3)
+    orig_workflow[DynamicB] = sc.scalar(6)
+    expected = orig_workflow.compute(Target)
+    assert sc.identical(expected, result[Target])
+
+
+def test_StreamProcessor_without_bypass_raises() -> None:
+    def _make_static_a() -> StaticA:
+        _make_static_a.call_count += 1
+        return StaticA(2.0)
+
+    _make_static_a.call_count = 0
+
+    base_workflow = sciline.Pipeline(
+        (_make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA,),  # Note: No AccumB
+    )
+    streaming_wf.accumulate({DynamicA: 1, DynamicB: 4})
+    # Sciline passes `None` to the provider that needs AccumB.
+    with pytest.raises(TypeError, match='unsupported operand type'):
+        _ = streaming_wf.finalize()
+
+
+def test_StreamProcessor_calls_providers_after_accumulators_only_when_finalizing() -> (
+    None
+):
+    def _make_target(accum_a: AccumA, accum_b: AccumB) -> Target:
+        _make_target.call_count += 1
+        return Target(accum_a / accum_b)
+
+    _make_target.call_count = 0
+
+    base_workflow = sciline.Pipeline(
+        (make_accum_a, make_accum_b, _make_target), params={StaticA: 2.0}
+    )
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA, AccumB),
+    )
+    streaming_wf.accumulate({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    streaming_wf.accumulate({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    assert _make_target.call_count == 0
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 9.0))
+    assert _make_target.call_count == 1
+    streaming_wf.accumulate({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    assert _make_target.call_count == 1
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 15.0))
+    assert _make_target.call_count == 2
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 15.0))
+    # Outputs are not cached.
+    assert _make_target.call_count == 3
+
+
+def test_StreamProcessor_does_not_reuse_dynamic_keys() -> None:
+    base_workflow = sciline.Pipeline(
+        (make_accum_a, make_accum_b, make_target), params={StaticA: 2.0}
+    )
+    orig_workflow = base_workflow.copy()
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA, AccumB),
+    )
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(2)})  # Only A
+    assert not sc.identical(result[Target], sc.scalar(2 * 3.0 / 8.0))
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 4.0))
+    result = streaming_wf.add_chunk({DynamicB: sc.scalar(5)})  # Only B
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 9.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    assert sc.identical(result[Target], sc.scalar(2 * 6.0 / 15.0))
+
+    # Consistency check: Run the original workflow with the same inputs, all at once
+    orig_workflow[DynamicA] = sc.scalar(1 + 2 + 3)
+    orig_workflow[DynamicB] = sc.scalar(4 + 5 + 6)
+    expected = orig_workflow.compute(Target)
+    assert sc.identical(expected, result[Target])
+
+
+def test_StreamProcessor_raises_given_partial_update_for_accumulator() -> None:
+    base_workflow = sciline.Pipeline(
+        (make_accum_a, make_accum_b, make_accum_c, make_target), params={StaticA: 2.0}
+    )
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB, DynamicC),
+        target_keys=(Target, AccumC),
+        accumulators=(Target, AccumC),  # Target depends on both A and B
+    )
+    # We can update either (A, B) and/or C...
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+    assert result[AccumC] is None
+    result = streaming_wf.add_chunk({DynamicC: sc.scalar(11)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+    assert sc.identical(result[AccumC], sc.scalar(11))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    assert sc.identical(result[Target], sc.scalar(2 * (1.0 / 4.0 + 2.0 / 5.0)))
+    assert sc.identical(result[AccumC], sc.scalar(11))
+    result = streaming_wf.add_chunk({DynamicC: sc.scalar(12)})
+    assert sc.identical(result[Target], sc.scalar(2 * (1.0 / 4.0 + 2.0 / 5.0)))
+    assert sc.identical(result[AccumC], sc.scalar(23))
+    # ... but not just A or B
+    with pytest.raises(
+        ValueError,
+        match=r'{tests.streaming_test.DynamicB} not provided in the current chunk',
+    ):
+        result = streaming_wf.add_chunk({DynamicA: sc.scalar(2)})  # Only A
+    with pytest.raises(
+        ValueError,
+        match=r'{tests.streaming_test.DynamicA} not provided in the current chunk',
+    ):
+        result = streaming_wf.add_chunk({DynamicB: sc.scalar(5)})  # Only B
+
+
+def test_StreamProcessor_raises_when_trying_to_update_non_dynamic_key() -> None:
+    base_workflow = sciline.Pipeline(
+        (make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA, AccumB),
+    )
+
+    # Regular update ok
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+
+    # Non-dynamic input key
+    with pytest.raises(
+        ValueError,
+        match=r'Got non-dynamic keys: {tests.streaming_test.StaticA}',
+    ):
+        result = streaming_wf.add_chunk({StaticA: sc.scalar(2)})
+    # Intermediate key depending on dynamic key
+    with pytest.raises(
+        ValueError,
+        match=r'Got non-dynamic keys: {tests.streaming_test.AccumA}',
+    ):
+        result = streaming_wf.add_chunk({AccumA: sc.scalar(2)})
+    # Target key depending on dynamic key
+    with pytest.raises(
+        ValueError,
+        match=r'Got non-dynamic keys: {tests.streaming_test.Target}',
+    ):
+        result = streaming_wf.add_chunk({Target: sc.scalar(2)})
