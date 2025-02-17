@@ -35,6 +35,7 @@ def test_unwrap_with_no_choppers() -> None:
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.LookupTableRelativeErrorThreshold] = 1.0
 
@@ -80,6 +81,7 @@ def test_standard_unwrap(dist) -> None:
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
 
     tofs = pl.compute(time_of_flight.TofData)
@@ -131,6 +133,7 @@ def test_standard_unwrap_histogram_mode(dist, dim) -> None:
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     tofs = pl.compute(time_of_flight.ResampledTofData)
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -169,6 +172,7 @@ def test_pulse_skipping_unwrap() -> None:
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
 
@@ -214,6 +218,7 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
@@ -260,6 +265,7 @@ def test_pulse_skipping_stride_offset_guess_gives_expected_result() -> None:
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
 
@@ -302,6 +308,7 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
@@ -350,6 +357,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     a.bins.coords['event_time_zero'] = sc.bins_like(a, a.coords['event_time_zero'])
     pl[time_of_flight.RawData] = a.bins.concat('event_time_zero')
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
@@ -423,6 +431,7 @@ def test_pulse_skipping_unwrap_histogram_mode() -> None:
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     tofs = pl.compute(time_of_flight.ResampledTofData)

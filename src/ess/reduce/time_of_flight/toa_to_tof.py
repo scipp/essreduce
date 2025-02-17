@@ -32,20 +32,6 @@ from .types import (
 )
 
 
-def extract_ltotal(da: RawData) -> Ltotal:
-    """
-    Extract the total length of the flight path from the source to the detector from the
-    detector data.
-
-    Parameters
-    ----------
-    da:
-        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
-        NXevent_data.
-    """
-    return Ltotal(da.coords["Ltotal"])
-
-
 def _mask_large_uncertainty(table: sc.DataArray, error_threshold: float):
     """
     Mask regions with large uncertainty with NaNs.
@@ -618,4 +604,4 @@ def providers() -> tuple[Callable]:
     """
     Providers of the time-of-flight workflow.
     """
-    return (compute_tof_lookup_table, extract_ltotal, time_of_flight_data)
+    return (compute_tof_lookup_table, time_of_flight_data)
