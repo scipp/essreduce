@@ -265,10 +265,108 @@ def test_dream_wfm_with_subframe_time_overlap(
         assert sum_wfm > sum_ref * 0.9
 
 
+def v20_choppers():
+    wfm1 = DiskChopper(
+        frequency=sc.scalar(-70.0, unit="Hz"),
+        beam_position=sc.scalar(0.0, unit="deg"),
+        phase=sc.scalar(-47.10, unit="deg"),
+        axle_position=sc.vector(value=[0, 0, 6.6], unit="m"),
+        slit_begin=sc.array(
+            dims=["cutout"],
+            values=np.array([83.71, 140.49, 193.26, 242.32, 287.91, 330.3]) + 15.0,
+            unit="deg",
+        ),
+        slit_end=sc.array(
+            dims=["cutout"],
+            values=np.array([94.7, 155.79, 212.56, 265.33, 314.37, 360.0]) + 15.0,
+            unit="deg",
+        ),
+        slit_height=sc.scalar(10.0, unit="cm"),
+        radius=sc.scalar(30.0, unit="cm"),
+    )
+
+    wfm2 = DiskChopper(
+        frequency=sc.scalar(-70.0, unit="Hz"),
+        beam_position=sc.scalar(0.0, unit="deg"),
+        phase=sc.scalar(-76.76, unit="deg"),
+        axle_position=sc.vector(value=[0, 0, 7.1], unit="m"),
+        slit_begin=sc.array(
+            dims=["cutout"],
+            values=np.array([65.04, 126.1, 182.88, 235.67, 284.73, 330.32]) + 15.0,
+            unit="deg",
+        ),
+        slit_end=sc.array(
+            dims=["cutout"],
+            values=np.array([76.03, 141.4, 202.18, 254.97, 307.74, 360.0]) + 15.0,
+            unit="deg",
+        ),
+        slit_height=sc.scalar(10.0, unit="cm"),
+        radius=sc.scalar(30.0, unit="cm"),
+    )
+
+    foc1 = DiskChopper(
+        frequency=sc.scalar(-56.0, unit="Hz"),
+        beam_position=sc.scalar(0.0, unit="deg"),
+        phase=sc.scalar(-62.40, unit="deg"),
+        axle_position=sc.vector(value=[0, 0, 8.8], unit="m"),
+        slit_begin=sc.array(
+            dims=["cutout"],
+            values=np.array([74.6, 139.6, 194.3, 245.3, 294.8, 347.2]),
+            unit="deg",
+        ),
+        slit_end=sc.array(
+            dims=["cutout"],
+            values=np.array([95.2, 162.8, 216.1, 263.1, 310.5, 371.6]),
+            unit="deg",
+        ),
+        slit_height=sc.scalar(10.0, unit="cm"),
+        radius=sc.scalar(30.0, unit="cm"),
+    )
+
+    foc2 = DiskChopper(
+        frequency=sc.scalar(-28.0, unit="Hz"),
+        beam_position=sc.scalar(0.0, unit="deg"),
+        phase=sc.scalar(-12.27, unit="deg"),
+        axle_position=sc.vector(value=[0, 0, 15.9], unit="m"),
+        slit_begin=sc.array(
+            dims=["cutout"],
+            values=np.array([98.0, 154.0, 206.8, 255.0, 299.0, 344.65]),
+            unit="deg",
+        ),
+        slit_end=sc.array(
+            dims=["cutout"],
+            values=np.array([134.6, 190.06, 237.01, 280.88, 323.56, 373.76]),
+            unit="deg",
+        ),
+        slit_height=sc.scalar(10.0, unit="cm"),
+        radius=sc.scalar(30.0, unit="cm"),
+    )
+
+    pol = DiskChopper(
+        frequency=sc.scalar(-14.0, unit="Hz"),
+        beam_position=sc.scalar(0.0, unit="deg"),
+        phase=sc.scalar(0.0, unit="deg"),
+        axle_position=sc.vector(value=[0, 0, 17.0], unit="m"),
+        slit_begin=sc.array(
+            dims=["cutout"],
+            values=np.array([40.0]),
+            unit="deg",
+        ),
+        slit_end=sc.array(
+            dims=["cutout"],
+            values=np.array([240.0]),
+            unit="deg",
+        ),
+        slit_height=sc.scalar(10.0, unit="cm"),
+        radius=sc.scalar(30.0, unit="cm"),
+    )
+    return {"wfm1": wfm1, "wfm2": wfm2, "foc1": foc1, "foc2": foc2, "pol": pol}
+
+
 @pytest.fixture(scope="module")
 def simulation_v20_choppers():
     return time_of_flight.simulate_beamline(
-        choppers=fakes.wfm_choppers(), neutrons=300_000, seed=432
+        choppers=v20_choppers(), neutrons=300_000, seed=432
     )
 
 
@@ -293,7 +391,7 @@ def test_v20_compute_wavelengths_from_wfm(
 
     # Create some neutron events
     beamline = fakes.FakeBeamline(
-        choppers=fakes.wfm_choppers(),
+        choppers=v20_choppers(),
         monitors=monitors,
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=10_000,
