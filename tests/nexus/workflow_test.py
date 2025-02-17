@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+from datetime import datetime, timezone
+
 import pytest
 import scipp as sc
 import scippnexus as snx
@@ -10,10 +12,12 @@ from ess.reduce.nexus import compute_component_position, workflow
 from ess.reduce.nexus.types import (
     Analyzers,
     BackgroundRun,
+    Beamline,
     Choppers,
     DetectorData,
     EmptyBeamRun,
     Filename,
+    Measurement,
     Monitor1,
     Monitor2,
     Monitor3,
@@ -576,6 +580,32 @@ def test_generic_nexus_workflow_load_analyzers() -> None:
     assert 'position' in analyzer
     assert analyzer['d_spacing'].ndim == 0
     assert analyzer['usage'] == 'Bragg'
+
+
+def test_generic_nexus_workflow_load_beamline_metadata() -> None:
+    wf = GenericNeXusWorkflow()
+    wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
+    beamline = wf.compute(Beamline)
+
+    assert beamline.name == 'BIFROST'
+    assert beamline.facility == 'ESS'
+    assert beamline.site == 'ESS'
+
+
+def test_generic_nexus_workflow_load_measurement_metadata() -> None:
+    wf = GenericNeXusWorkflow()
+    wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[Filename[BackgroundRun]] = data.loki_tutorial_background_run_60248()
+    measurement = wf.compute(Measurement)
+
+    assert measurement.title == 'My experiment'
+    assert measurement.experiment_id == 'p1234'
+    assert measurement.start_time == datetime(
+        2022, 2, 28, 21, 15, 0, tzinfo=timezone.utc
+    )
+    assert measurement.end_time == datetime(2032, 2, 29, 9, 15, 0, tzinfo=timezone.utc)
+    assert measurement.run_number is None
+    assert measurement.experiment_doi is None
 
 
 def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> None:
