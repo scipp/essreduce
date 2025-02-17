@@ -32,10 +32,6 @@ dnspython==2.7.0
     # via email-validator
 email-validator==2.2.0
     # via scippneutron
-exceptiongroup==1.2.2
-    # via
-    #   ipython
-    #   pytest
 executing==2.2.0
     # via stack-data
 fonttools==4.56.0
@@ -74,7 +70,7 @@ mpltoolbox==24.5.1
     # via scippneutron
 networkx==3.4.2
     # via cyclebane
-numpy==2.2.2
+numpy==2.2.3
     # via
     #   contourpy
     #   h5py
@@ -142,7 +138,7 @@ scippnexus @ git+https://github.com/scipp/scippnexus@main
     # via
     #   -r nightly.in
     #   scippneutron
-scipy==1.15.1
+scipy==1.15.2
     # via
     #   -r nightly.in
     #   scippneutron
@@ -154,8 +150,6 @@ stack-data==0.6.3
     # via ipython
 tof @ git+https://github.com/scipp/tof@main
     # via -r nightly.in
-tomli==2.2.1
-    # via pytest
 traitlets==5.14.3
     # via
     #   comm
@@ -164,7 +158,6 @@ traitlets==5.14.3
     #   matplotlib-inline
 typing-extensions==4.12.2
     # via
-    #   ipython
     #   pydantic
     #   pydantic-core
 urllib3==2.3.0

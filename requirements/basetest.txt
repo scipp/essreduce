@@ -19,10 +19,6 @@ cycler==0.12.1
     # via matplotlib
 decorator==5.1.1
     # via ipython
-exceptiongroup==1.2.2
-    # via
-    #   ipython
-    #   pytest
 executing==2.2.0
     # via stack-data
 fonttools==4.56.0
@@ -47,7 +43,7 @@ matplotlib==3.10.0
     # via plopp
 matplotlib-inline==0.1.7
     # via ipython
-numpy==2.2.2
+numpy==2.2.3
     # via
     #   contourpy
     #   matplotlib
@@ -90,7 +86,7 @@ requests==2.32.3
     # via pooch
 scipp==25.2.0
     # via tof
-scipy==1.15.1
+scipy==1.15.2
     # via
     #   -r basetest.in
     #   tof
@@ -100,16 +96,12 @@ stack-data==0.6.3
     # via ipython
 tof==25.2.0
     # via -r basetest.in
-tomli==2.2.1
-    # via pytest
 traitlets==5.14.3
     # via
     #   comm
     #   ipython
     #   ipywidgets
     #   matplotlib-inline
-typing-extensions==4.12.2
-    # via ipython
 urllib3==2.3.0
     # via requests
 wcwidth==0.2.13
