@@ -64,6 +64,14 @@ def test_select_indices_fails_without_required_coords():
         )
 
 
+def test_select_indices_works_with_empty_selection(binned_indices):
+    selected = roi.select_indices_in_intervals(
+        intervals=sc.DataGroup(x=(1, 1)), indices=binned_indices
+    )
+    assert selected.dim == 'index'
+    assert selected.sizes[selected.dim] == 0
+
+
 def test_apply_selection_empty_yields_empty_result():
     selection = sc.array(dims=['index'], values=[], unit=None, dtype='int32')
     data = sc.arange('detector_number', 12, dtype='int32')

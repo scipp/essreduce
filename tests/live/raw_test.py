@@ -53,6 +53,15 @@ def test_Detector_bincount_raises_if_detector_number_not_consecutive() -> None:
         det.bincount([1])
 
 
+@pytest.mark.parametrize('window', [1, 2, 33])
+def test_RollingDetectorView_max_window_property_returns_configured(
+    window: int,
+) -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    det = raw.RollingDetectorView(detector_number=detector_number, window=window)
+    assert det.max_window == window
+
+
 def test_RollingDetectorView_full_window() -> None:
     detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
     det = raw.RollingDetectorView(detector_number=detector_number, window=2)
@@ -67,6 +76,38 @@ def test_RollingDetectorView_full_window() -> None:
     assert det.get().sum().value == 5
     det.add_counts([])
     assert det.get().sum().value == 2
+
+
+def test_RollingDetectorView_cumulative_returns_everything_since_clear() -> None:
+    detector_number = sc.array(dims=['pixel'], values=[1, 2, 3], unit=None)
+    det = raw.RollingDetectorView(detector_number=detector_number, window=2)
+    expected = sc.zeros_like(det.get())
+    assert sc.identical(det.cumulative, expected)
+    det.add_counts([1, 2, 3, 2])
+    delta1 = det.get(window=1)
+    expected += delta1
+    assert sc.identical(det.cumulative, expected)
+    det.add_counts([1, 3, 2])
+    delta2 = det.get(window=1)
+    expected += delta2
+    assert sc.identical(det.cumulative, expected)
+    assert sc.identical(det.cumulative, det.get())  # everything still in window
+    det.add_counts([1, 2])
+    delta3 = det.get(window=1)
+    expected += delta3
+    assert sc.identical(det.cumulative, expected)
+    assert not sc.identical(det.cumulative, det.get())  # delta1 fell out of window
+    det.add_counts([])
+    assert sc.identical(det.cumulative, expected)
+    # Reset
+    det.clear_counts()
+    expected = sc.zeros_like(expected)
+    assert sc.identical(det.cumulative, expected)
+    assert sc.identical(det.cumulative, expected)
+    det.add_counts([1, 2, 3, 2])
+    delta1 = det.get(window=1)
+    expected += delta1
+    assert sc.identical(det.cumulative, expected)
 
 
 def test_RollingDetectorView_add_events_accepts_unsorted_detector_number() -> None:

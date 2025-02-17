@@ -32,20 +32,6 @@ from .types import (
 )
 
 
-def extract_ltotal(da: RawData) -> Ltotal:
-    """
-    Extract the total length of the flight path from the source to the detector from the
-    detector data.
-
-    Parameters
-    ----------
-    da:
-        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
-        NXevent_data.
-    """
-    return Ltotal(da.coords["Ltotal"])
-
-
 def _mask_large_uncertainty(table: sc.DataArray, error_threshold: float):
     """
     Mask regions with large uncertainty with NaNs.
@@ -389,6 +375,56 @@ def _time_of_flight_data_histogram(
     return rebinned.assign_coords(tof=tofs)
 
 
+def _guess_pulse_stride_offset(
+    pulse_index: sc.Variable,
+    ltotal: sc.Variable,
+    event_time_offset: sc.Variable,
+    pulse_stride: int,
+    interp: Callable,
+) -> int:
+    """
+    Using the minimum ``event_time_zero`` to calculate a reference time when computing
+    the time-of-flight for the neutron events makes the workflow depend on when the
+    first event was recorded. There is no straightforward way to know if we started
+    recording at the beginning of a frame, or half-way through a frame, without looking
+    at the chopper logs. This can be manually corrected using the pulse_stride_offset
+    parameter, but this makes automatic reduction of the data difficult.
+    See https://github.com/scipp/essreduce/issues/184.
+
+    Here, we perform a simple guess for the ``pulse_stride_offset`` if it is not
+    provided.
+    We choose a few random events, compute the time-of-flight for every possible value
+    of pulse_stride_offset, and return the value that yields the least number of NaNs
+    in the computed time-of-flight.
+
+    Parameters
+    ----------
+    pulse_index:
+        Pulse index for every event.
+    ltotal:
+        Total length of the flight path from the source to the detector for each event.
+    event_time_offset:
+        Time of arrival of the neutron at the detector for each event.
+    pulse_stride:
+        Stride of used pulses.
+    interp:
+        2D interpolator for the lookup table.
+    """
+    tofs = {}
+    # Choose a few random events to compute the time-of-flight
+    inds = np.random.choice(
+        len(event_time_offset), min(5000, len(event_time_offset)), replace=False
+    )
+    pulse_index_values = pulse_index.values[inds]
+    ltotal_values = ltotal.values[inds]
+    etos_values = event_time_offset.values[inds]
+    for i in range(pulse_stride):
+        pulse_inds = (pulse_index_values + i) % pulse_stride
+        tofs[i] = interp((pulse_inds, ltotal_values, etos_values))
+    # Find the entry in the list with the least number of nan values
+    return sorted(tofs, key=lambda x: np.isnan(tofs[x]).sum())[0]
+
+
 def _time_of_flight_data_events(
     da: sc.DataArray,
     lookup: sc.DataArray,
@@ -399,28 +435,6 @@ def _time_of_flight_data_events(
 ) -> sc.DataArray:
     etos = da.bins.coords["event_time_offset"]
     eto_unit = elem_unit(etos)
-    pulse_period = pulse_period.to(unit=eto_unit)
-    frame_period = pulse_period * pulse_stride
-
-    # TODO: Finding the `tmin` below will not work in the case were data is processed
-    # in chunks, as taking the minimum time in each chunk will lead to inconsistent
-    # pulse indices (this will be the case in live data, or when using the
-    # StreamProcessor). We could instead read it from the first chunk and store it?
-
-    # Compute a pulse index for every event: it is the index of the pulse within a
-    # frame period. When there is no pulse skipping, those are all zero. When there is
-    # pulse skipping, the index ranges from zero to pulse_stride - 1.
-    tmin = da.bins.coords['event_time_zero'].min()
-    pulse_index = (
-        (
-            (da.bins.coords['event_time_zero'] - tmin).to(unit=eto_unit)
-            + 0.5 * pulse_period
-        )
-        % frame_period
-    ) // pulse_period
-    # Apply the pulse_stride_offset
-    pulse_index += pulse_stride_offset
-    pulse_index %= pulse_stride
 
     # Create 2D interpolator
     interp = _make_tof_interpolator(
@@ -430,7 +444,51 @@ def _time_of_flight_data_events(
     # Operate on events (broadcast distances to all events)
     ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
     etos = etos.bins.constituents["data"]
-    pulse_index = pulse_index.bins.constituents["data"]
+
+    # Compute a pulse index for every event: it is the index of the pulse within a
+    # frame period. When there is no pulse skipping, those are all zero. When there is
+    # pulse skipping, the index ranges from zero to pulse_stride - 1.
+    if pulse_stride == 1:
+        pulse_index = sc.zeros(sizes=etos.sizes)
+    else:
+        etz_unit = 'ns'
+        etz = (
+            da.bins.coords["event_time_zero"]
+            .bins.constituents["data"]
+            .to(unit=etz_unit, copy=False)
+        )
+        pulse_period = pulse_period.to(unit=etz_unit, dtype=int)
+        frame_period = pulse_period * pulse_stride
+        # Define a common reference time using epoch as a base, but making sure that it
+        # is aligned with the pulse_period and the frame_period.
+        # We need to use a global reference time instead of simply taking the minimum
+        # event_time_zero because the events may arrive in chunks, and the first event
+        # may not be the first event of the first pulse for all chunks. This would lead
+        # to inconsistent pulse indices.
+        epoch = sc.datetime(0, unit=etz_unit)
+        diff_to_epoch = (etz.min() - epoch) % pulse_period
+        # Here we offset the reference by half a pulse period to avoid errors from
+        # fluctuations in the event_time_zeros in the data. They are triggered by the
+        # neutron source, and may not always be exactly separated by the pulse period.
+        # While fluctuations will exist, they will be small, and offsetting the times
+        # by half a pulse period is a simple enough fix.
+        reference = epoch + diff_to_epoch - (pulse_period // 2)
+        # Use in-place operations to avoid large allocations
+        pulse_index = etz - reference
+        pulse_index %= frame_period
+        pulse_index //= pulse_period
+
+        # Apply the pulse_stride_offset
+        if pulse_stride_offset is None:
+            pulse_stride_offset = _guess_pulse_stride_offset(
+                pulse_index=pulse_index,
+                ltotal=ltotal,
+                event_time_offset=etos,
+                pulse_stride=pulse_stride,
+                interp=interp,
+            )
+        pulse_index += pulse_stride_offset
+        pulse_index %= pulse_stride
 
     # Compute time-of-flight for all neutrons using the interpolator
     tofs = sc.array(
@@ -535,7 +593,7 @@ def default_parameters() -> dict:
     return {
         PulsePeriod: 1.0 / sc.scalar(14.0, unit="Hz"),
         PulseStride: 1,
-        PulseStrideOffset: 0,
+        PulseStrideOffset: None,
         DistanceResolution: sc.scalar(0.1, unit="m"),
         TimeResolution: sc.scalar(250.0, unit='us'),
         LookupTableRelativeErrorThreshold: 0.1,
@@ -546,4 +604,4 @@ def providers() -> tuple[Callable]:
     """
     Providers of the time-of-flight workflow.
     """
-    return (compute_tof_lookup_table, extract_ltotal, time_of_flight_data)
+    return (compute_tof_lookup_table, time_of_flight_data)

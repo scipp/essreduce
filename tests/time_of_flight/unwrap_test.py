@@ -57,6 +57,7 @@ def _do_unwrap_test_events(
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = simulation
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = pulse_stride
     pl[time_of_flight.PulseStrideOffset] = pulse_stride_offset
@@ -113,6 +114,7 @@ def _do_unwrap_test_histogram_mode(
 
     pl[time_of_flight.RawData] = mon
     pl[time_of_flight.SimulationResults] = simulation
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = pulse_stride
     tofs = pl.compute(time_of_flight.ResampledTofData)
@@ -198,7 +200,7 @@ def test_pulse_skipping_unwrap(dist, simulation_pulse_skipping) -> None:
         simulation=simulation_pulse_skipping,
         seed=4,
         pulse_stride=2,
-        pulse_stride_offset=0,
+        pulse_stride_offset=1,
         error_threshold=0.1,
         percentile=100,
         diff_threshold=0.1,
@@ -226,6 +228,66 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
         diff_threshold=0.1,
         rtol=0.05,
     )
+
+
+@pytest.mark.parametrize("dist", [60.0, 100.0])
+def test_pulse_skipping_stride_offset_guess_gives_expected_result(
+    dist, simulation_pulse_skipping
+) -> None:
+    _do_unwrap_test_events(
+        distance=sc.scalar(dist, unit="m"),
+        choppers=fakes.pulse_skipping_choppers(),
+        simulation=simulation_pulse_skipping,
+        seed=4,
+        pulse_stride=2,
+        pulse_stride_offset=None,
+        error_threshold=0.1,
+        percentile=100,
+        diff_threshold=0.1,
+        rtol=0.05,
+    )
+
+    # distance = sc.scalar(100.0, unit="m")
+    # choppers = fakes.psc_choppers()
+    # choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
+    # choppers["pulse_skipping"].phase.value += 180.0
+
+    # beamline = fakes.FakeBeamline(
+    #     choppers=choppers,
+    #     monitors={"detector": distance},
+    #     run_length=sc.scalar(1.0, unit="s"),
+    #     events_per_pulse=100_000,
+    #     seed=4,
+    # )
+    # mon = beamline.get_monitor("detector")[0]
+
+    # sim = time_of_flight.simulate_beamline(
+    #     choppers=choppers, neutrons=300_000, pulses=2, seed=1234
+    # )
+
+    # pl = sl.Pipeline(
+    #     time_of_flight.providers(), params=time_of_flight.default_parameters()
+    # )
+
+    # pl[time_of_flight.RawData] = mon
+    # pl[time_of_flight.SimulationResults] = sim
+    # pl[time_of_flight.Ltotal] = distance
+    # pl[time_of_flight.LtotalRange] = distance, distance
+    # pl[time_of_flight.PulseStride] = 2
+
+    # # Cache the table to avoid noise from re-computing
+    # pl[time_of_flight.TimeOfFlightLookupTable] = pl.compute(
+    #     time_of_flight.TimeOfFlightLookupTable
+    # )
+
+    # with_guess = pl.compute(time_of_flight.TofData)
+    # pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
+    # no_guess = pl.compute(time_of_flight.TofData)
+    # assert sc.allclose(
+    #     with_guess.bins.concat().value.coords['tof'],
+    #     no_guess.bins.concat().value.coords['tof'],
+    #     equal_nan=True,
+    # )
 
 
 def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> None:
@@ -285,6 +347,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     a.bins.coords['event_time_zero'] = sc.bins_like(a, a.coords['event_time_zero'])
     pl[time_of_flight.RawData] = a.bins.concat('event_time_zero')
     pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.Ltotal] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
@@ -342,7 +405,7 @@ def test_pulse_skipping_stride_3() -> None:
         simulation=sim,
         seed=8,
         pulse_stride=3,
-        pulse_stride_offset=0,
+        pulse_stride_offset=None,
         error_threshold=0.1,
         percentile=100,
         diff_threshold=0.1,
