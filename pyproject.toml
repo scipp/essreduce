@@ -33,7 +33,7 @@ requires-python = ">=3.10"
 dependencies = [
     "sciline>=24.06.2",
     "scipp>=25.01.0",
-    "scippneutron>=24.11.0",
+    "scippneutron>=25.02.0",
     "scippnexus>=24.11.0",
 ]
 
