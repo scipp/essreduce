@@ -79,144 +79,41 @@ class FakeBeamline:
         return nx_event_data, raw_data
 
 
-wfm1_chopper = DiskChopper(
-    frequency=sc.scalar(-70.0, unit="Hz"),
-    beam_position=sc.scalar(0.0, unit="deg"),
-    phase=sc.scalar(-47.10, unit="deg"),
-    axle_position=sc.vector(value=[0, 0, 6.6], unit="m"),
-    slit_begin=sc.array(
-        dims=["cutout"],
-        values=np.array([83.71, 140.49, 193.26, 242.32, 287.91, 330.3]) + 15.0,
-        unit="deg",
-    ),
-    slit_end=sc.array(
-        dims=["cutout"],
-        values=np.array([94.7, 155.79, 212.56, 265.33, 314.37, 360.0]) + 15.0,
-        unit="deg",
-    ),
-    slit_height=sc.scalar(10.0, unit="cm"),
-    radius=sc.scalar(30.0, unit="cm"),
-)
-
-wfm2_chopper = DiskChopper(
-    frequency=sc.scalar(-70.0, unit="Hz"),
-    beam_position=sc.scalar(0.0, unit="deg"),
-    phase=sc.scalar(-76.76, unit="deg"),
-    axle_position=sc.vector(value=[0, 0, 7.1], unit="m"),
-    slit_begin=sc.array(
-        dims=["cutout"],
-        values=np.array([65.04, 126.1, 182.88, 235.67, 284.73, 330.32]) + 15.0,
-        unit="deg",
-    ),
-    slit_end=sc.array(
-        dims=["cutout"],
-        values=np.array([76.03, 141.4, 202.18, 254.97, 307.74, 360.0]) + 15.0,
-        unit="deg",
-    ),
-    slit_height=sc.scalar(10.0, unit="cm"),
-    radius=sc.scalar(30.0, unit="cm"),
-)
-
-foc1_chopper = DiskChopper(
-    frequency=sc.scalar(-56.0, unit="Hz"),
-    beam_position=sc.scalar(0.0, unit="deg"),
-    phase=sc.scalar(-62.40, unit="deg"),
-    axle_position=sc.vector(value=[0, 0, 8.8], unit="m"),
-    slit_begin=sc.array(
-        dims=["cutout"],
-        values=np.array([74.6, 139.6, 194.3, 245.3, 294.8, 347.2]),
-        unit="deg",
-    ),
-    slit_end=sc.array(
-        dims=["cutout"],
-        values=np.array([95.2, 162.8, 216.1, 263.1, 310.5, 371.6]),
-        unit="deg",
-    ),
-    slit_height=sc.scalar(10.0, unit="cm"),
-    radius=sc.scalar(30.0, unit="cm"),
-)
-
-foc2_chopper = DiskChopper(
-    frequency=sc.scalar(-28.0, unit="Hz"),
-    beam_position=sc.scalar(0.0, unit="deg"),
-    phase=sc.scalar(-12.27, unit="deg"),
-    axle_position=sc.vector(value=[0, 0, 15.9], unit="m"),
-    slit_begin=sc.array(
-        dims=["cutout"],
-        values=np.array([98.0, 154.0, 206.8, 255.0, 299.0, 344.65]),
-        unit="deg",
-    ),
-    slit_end=sc.array(
-        dims=["cutout"],
-        values=np.array([134.6, 190.06, 237.01, 280.88, 323.56, 373.76]),
-        unit="deg",
-    ),
-    slit_height=sc.scalar(10.0, unit="cm"),
-    radius=sc.scalar(30.0, unit="cm"),
-)
-
-pol_chopper = DiskChopper(
-    frequency=sc.scalar(-14.0, unit="Hz"),
-    beam_position=sc.scalar(0.0, unit="deg"),
-    phase=sc.scalar(0.0, unit="deg"),
-    axle_position=sc.vector(value=[0, 0, 17.0], unit="m"),
-    slit_begin=sc.array(
-        dims=["cutout"],
-        values=np.array([40.0]),
-        unit="deg",
-    ),
-    slit_end=sc.array(
-        dims=["cutout"],
-        values=np.array([240.0]),
-        unit="deg",
-    ),
-    slit_height=sc.scalar(10.0, unit="cm"),
-    radius=sc.scalar(30.0, unit="cm"),
-)
-
-
-def wfm_choppers():
-    return {
-        "wfm1": wfm1_chopper,
-        "wfm2": wfm2_chopper,
-        "foc1": foc1_chopper,
-        "foc2": foc2_chopper,
-        "pol": pol_chopper,
-    }
-
-
 def psc_choppers():
     return {
-        name: DiskChopper(
-            frequency=ch.frequency,
-            beam_position=ch.beam_position,
-            phase=ch.phase,
-            axle_position=ch.axle_position,
-            slit_begin=ch.slit_begin[0:1],
-            slit_end=ch.slit_end[0:1],
-            slit_height=ch.slit_height[0:1],
-            radius=ch.radius,
+        "chopper": DiskChopper(
+            frequency=sc.scalar(-14.0, unit="Hz"),
+            beam_position=sc.scalar(0.0, unit="deg"),
+            phase=sc.scalar(-85.0, unit="deg"),
+            axle_position=sc.vector(value=[0, 0, 8.0], unit="m"),
+            slit_begin=sc.array(dims=["cutout"], values=[0.0], unit="deg"),
+            slit_end=sc.array(dims=["cutout"], values=[3.0], unit="deg"),
+            slit_height=sc.scalar(10.0, unit="cm"),
+            radius=sc.scalar(30.0, unit="cm"),
         )
-        for name, ch in wfm_choppers().items()
     }
 
 
-def pulse_skipping_chopper():
-    return DiskChopper(
-        frequency=sc.scalar(-7.0, unit="Hz"),
-        beam_position=sc.scalar(0.0, unit="deg"),
-        phase=sc.scalar(0.0, unit="deg"),
-        axle_position=sc.vector(value=[0, 0, 30.0], unit="m"),
-        slit_begin=sc.array(
-            dims=["cutout"],
-            values=np.array([40.0]),
-            unit="deg",
+def pulse_skipping_choppers():
+    return {
+        "chopper": DiskChopper(
+            frequency=sc.scalar(-14.0, unit="Hz"),
+            beam_position=sc.scalar(0.0, unit="deg"),
+            phase=sc.scalar(-35.0, unit="deg"),
+            axle_position=sc.vector(value=[0, 0, 8.0], unit="m"),
+            slit_begin=sc.array(dims=["cutout"], values=np.array([0.0]), unit="deg"),
+            slit_end=sc.array(dims=["cutout"], values=np.array([33.0]), unit="deg"),
+            slit_height=sc.scalar(10.0, unit="cm"),
+            radius=sc.scalar(30.0, unit="cm"),
         ),
-        slit_end=sc.array(
-            dims=["cutout"],
-            values=np.array([140.0]),
-            unit="deg",
+        "pulse_skipping": DiskChopper(
+            frequency=sc.scalar(-7.0, unit="Hz"),
+            beam_position=sc.scalar(0.0, unit="deg"),
+            phase=sc.scalar(-10.0, unit="deg"),
+            axle_position=sc.vector(value=[0, 0, 15.0], unit="m"),
+            slit_begin=sc.array(dims=["cutout"], values=np.array([0.0]), unit="deg"),
+            slit_end=sc.array(dims=["cutout"], values=np.array([120.0]), unit="deg"),
+            slit_height=sc.scalar(10.0, unit="cm"),
+            radius=sc.scalar(30.0, unit="cm"),
         ),
-        slit_height=sc.scalar(10.0, unit="cm"),
-        radius=sc.scalar(30.0, unit="cm"),
-    )
+    }
