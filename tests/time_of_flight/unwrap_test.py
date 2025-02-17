@@ -142,7 +142,7 @@ def test_unwrap_with_no_choppers() -> None:
         simulation=time_of_flight.simulate_beamline(
             choppers=choppers, neutrons=300_000, seed=1234
         ),
-        seed=1,
+        seed=144,
         pulse_stride=1,
         pulse_stride_offset=0,
         error_threshold=1.0,
@@ -184,7 +184,7 @@ def test_standard_unwrap_histogram_mode(dist, dim, simulation_psc_choppers) -> N
         distance=sc.scalar(dist, unit="m"),
         choppers=fakes.psc_choppers(),
         simulation=simulation_psc_choppers,
-        seed=3,
+        seed=37,
         pulse_stride=1,
         percentile=96,
         diff_threshold=0.3,
@@ -198,7 +198,7 @@ def test_pulse_skipping_unwrap(dist, simulation_pulse_skipping) -> None:
         distance=sc.scalar(dist, unit="m"),
         choppers=fakes.pulse_skipping_choppers(),
         simulation=simulation_pulse_skipping,
-        seed=4,
+        seed=432,
         pulse_stride=2,
         pulse_stride_offset=1,
         error_threshold=0.1,
@@ -220,7 +220,7 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
         distance=sc.scalar(100.0, unit="m"),
         choppers=choppers,
         simulation=sim,
-        seed=5,
+        seed=55,
         pulse_stride=2,
         pulse_stride_offset=1,
         error_threshold=0.1,
@@ -238,7 +238,7 @@ def test_pulse_skipping_stride_offset_guess_gives_expected_result(
         distance=sc.scalar(dist, unit="m"),
         choppers=fakes.pulse_skipping_choppers(),
         simulation=simulation_pulse_skipping,
-        seed=4,
+        seed=97,
         pulse_stride=2,
         pulse_stride_offset=None,
         error_threshold=0.1,
@@ -246,48 +246,6 @@ def test_pulse_skipping_stride_offset_guess_gives_expected_result(
         diff_threshold=0.1,
         rtol=0.05,
     )
-
-    # distance = sc.scalar(100.0, unit="m")
-    # choppers = fakes.psc_choppers()
-    # choppers["pulse_skipping"] = fakes.pulse_skipping_chopper()
-    # choppers["pulse_skipping"].phase.value += 180.0
-
-    # beamline = fakes.FakeBeamline(
-    #     choppers=choppers,
-    #     monitors={"detector": distance},
-    #     run_length=sc.scalar(1.0, unit="s"),
-    #     events_per_pulse=100_000,
-    #     seed=4,
-    # )
-    # mon = beamline.get_monitor("detector")[0]
-
-    # sim = time_of_flight.simulate_beamline(
-    #     choppers=choppers, neutrons=300_000, pulses=2, seed=1234
-    # )
-
-    # pl = sl.Pipeline(
-    #     time_of_flight.providers(), params=time_of_flight.default_parameters()
-    # )
-
-    # pl[time_of_flight.RawData] = mon
-    # pl[time_of_flight.SimulationResults] = sim
-    # pl[time_of_flight.Ltotal] = distance
-    # pl[time_of_flight.LtotalRange] = distance, distance
-    # pl[time_of_flight.PulseStride] = 2
-
-    # # Cache the table to avoid noise from re-computing
-    # pl[time_of_flight.TimeOfFlightLookupTable] = pl.compute(
-    #     time_of_flight.TimeOfFlightLookupTable
-    # )
-
-    # with_guess = pl.compute(time_of_flight.TofData)
-    # pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
-    # no_guess = pl.compute(time_of_flight.TofData)
-    # assert sc.allclose(
-    #     with_guess.bins.concat().value.coords['tof'],
-    #     no_guess.bins.concat().value.coords['tof'],
-    #     equal_nan=True,
-    # )
 
 
 def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> None:
@@ -330,7 +288,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
         monitors={"detector": distance},
         run_length=sc.scalar(1.0, unit="s"),
         events_per_pulse=100_000,
-        seed=7,
+        seed=21,
     )
     mon, ref = beamline.get_monitor("detector")
 
@@ -403,7 +361,7 @@ def test_pulse_skipping_stride_3() -> None:
         distance=sc.scalar(150.0, unit="m"),
         choppers=choppers,
         simulation=sim,
-        seed=8,
+        seed=68,
         pulse_stride=3,
         pulse_stride_offset=None,
         error_threshold=0.1,
