@@ -180,10 +180,15 @@ def _attempt_to_open_without_locking(
     # HDF5 tracks file locking flags internally within a single process.
     # If the same file is opened multiple times, we can get a flag mismatch.
     # We can try opening without locking, maybe this matches the original flags.
-    if "file locking flag values don't match" in err.args[0]:
-        return True
-    if "file locking 'ignore disabled locks' flag values don't match" in err.args[0]:
-        return True
+    error_message = err.args[0]
+    if isinstance(error_message, str):
+        if "file locking flag values don't match" in error_message:
+            return True
+        if (
+            "file locking 'ignore disabled locks' flag values don't match"
+            in error_message
+        ):
+            return True
     return False
 
 
