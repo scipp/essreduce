@@ -691,3 +691,10 @@ def test_open_nexus_file_with_mismatched_locking(
     with _open_nexus_file(path, locking=locks[0]):
         with pytest.raises(OSError, match="flag values don't match"):
             _ = _open_nexus_file(path, locking=locks[1])
+
+
+def test_open_nonexisting_file_raises_filenotfounderror():
+    from ess.reduce.nexus._nexus_loader import _open_nexus_file
+
+    with pytest.raises(FileNotFoundError):
+        _open_nexus_file(nexus.types.FilePath(Path("doesnotexist.hdf")))
