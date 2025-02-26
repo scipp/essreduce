@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-
+import sys
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
@@ -665,18 +665,42 @@ def test_open_nexus_file_multiple_times(tmp_path: Path, locks: tuple[Any, Any]) 
     "locks",
     [
         (True, False),
-        (True, None),
+        pytest.param(
+            (True, None),
+            marks=pytest.mark.skipif(
+                sys.platform in ("darwin", "win32"),
+                reason="MacOS and Windows file locking behaves differently",
+            ),
+        ),
         (False, True),
         (False, None),
-        (None, True),
         (None, False),
+        pytest.param(
+            (None, True),
+            marks=pytest.mark.skipif(
+                sys.platform in ("darwin", "win32"),
+                reason="MacOS and Windows file locking behaves differently",
+            ),
+        ),
         # On a read-only filesystem, this would work:
         (NoLockingIfNeeded, False),
         # This could be supported, but it could cause problems because the first
         # user expects the file to be locked.
-        (True, NoLockingIfNeeded),
+        pytest.param(
+            (True, NoLockingIfNeeded),
+            marks=pytest.mark.skipif(
+                sys.platform in ("darwin", "win32"),
+                reason="MacOS and Windows file locking behaves differently",
+            ),
+        ),
         # Same as above but with roles reversed:
-        (NoLockingIfNeeded, True),
+        pytest.param(
+            (NoLockingIfNeeded, True),
+            marks=pytest.mark.skipif(
+                sys.platform in ("darwin", "win32"),
+                reason="MacOS and Windows file locking behaves differently",
+            ),
+        ),
     ],
 )
 def test_open_nexus_file_with_mismatched_locking(
