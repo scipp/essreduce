@@ -68,7 +68,18 @@ class Accumulator(ABC, Generic[T]):
     def _do_push(self, value: T) -> None: ...
 
     @property
-    @abstractmethod
+    def is_empty(self) -> bool:
+        """
+        Check if the accumulator is empty.
+
+        Returns
+        -------
+        :
+            True if the accumulator is empty, False otherwise.
+        """
+        return False
+
+    @property
     def value(self) -> T:
         """
         Get the accumulated value.
@@ -77,6 +88,24 @@ class Accumulator(ABC, Generic[T]):
         -------
         :
             Accumulated value.
+
+        Raises
+        ------
+        ValueError
+            If the accumulator is empty.
+        """
+        if self.is_empty:
+            raise ValueError("Cannot get value from empty accumulator")
+        return self._get_value()
+
+    @abstractmethod
+    def _get_value(self) -> T:
+        """Return the accumulated value, assuming it exists."""
+
+    @abstractmethod
+    def clear(self) -> None:
+        """
+        Clear the accumulator, resetting it to its initial state.
         """
 
 
@@ -92,7 +121,10 @@ class EternalAccumulator(Accumulator[T]):
         self._value: T | None = None
 
     @property
-    def value(self) -> T:
+    def is_empty(self) -> bool:
+        return self._value is None
+
+    def _get_value(self) -> T:
         return deepcopy(self._value)
 
     def _do_push(self, value: T) -> None:
@@ -100,6 +132,10 @@ class EternalAccumulator(Accumulator[T]):
             self._value = deepcopy(value)
         else:
             self._value += value
+
+    def clear(self) -> None:
+        """Clear the accumulated value."""
+        self._value = None
 
 
 class RollingAccumulator(Accumulator[T]):
@@ -121,7 +157,10 @@ class RollingAccumulator(Accumulator[T]):
         self._values: list[T] = []
 
     @property
-    def value(self) -> T:
+    def is_empty(self) -> bool:
+        return len(self._values) == 0
+
+    def _get_value(self) -> T:
         # Naive and potentially slow implementation if values and/or window are large!
         return sc.reduce(self._values).sum()
 
@@ -129,6 +168,10 @@ class RollingAccumulator(Accumulator[T]):
         self._values.append(value)
         if len(self._values) > self._window:
             self._values.pop(0)
+
+    def clear(self) -> None:
+        """Clear the accumulated values."""
+        self._values = []
 
 
 class StreamProcessor:
@@ -298,6 +341,16 @@ class StreamProcessor:
         for key in self._accumulators:
             self._finalize_workflow[key] = self._accumulators[key].value
         return self._finalize_workflow.compute(self._target_keys)
+
+    def clear(self) -> None:
+        """
+        Clear all accumulators, resetting them to their initial state.
+
+        This is useful for restarting a streaming computation without
+        creating a new StreamProcessor instance.
+        """
+        for accumulator in self._accumulators.values():
+            accumulator.clear()
 
 
 def _find_descendants(

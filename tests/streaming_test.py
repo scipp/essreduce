@@ -45,6 +45,18 @@ def test_eternal_accumulator_does_not_modify_pushed_values() -> None:
     assert sc.identical(var, original)
 
 
+def test_eternal_accumulator_clear() -> None:
+    accum = streaming.EternalAccumulator()
+    var = sc.linspace(dim='x', start=0, stop=1, num=10)
+    for i in range(10):
+        accum.push(var[i].copy())
+    assert sc.identical(accum.value, sc.sum(var))
+    accum.clear()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+
 def test_rolling_accumulator_sums_over_window() -> None:
     accum = streaming.RollingAccumulator(window=3)
     var = sc.linspace(dim='x', start=0, stop=1, num=10)
@@ -92,6 +104,52 @@ def test_rolling_accumulator_does_not_modify_pushed_values() -> None:
     for i in range(10):
         accum.push(var[i])
     assert sc.identical(var, original)
+
+
+def test_rolling_accumulator_clear() -> None:
+    accum = streaming.RollingAccumulator(window=3)
+    var = sc.linspace(dim='x', start=0, stop=1, num=10)
+    for i in range(5):
+        accum.push(var[i].copy())
+    assert sc.identical(accum.value, var[2:5].sum())
+    accum.clear()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+
+def test_eternal_accumulator_is_empty() -> None:
+    accum = streaming.EternalAccumulator()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+    var = sc.linspace(dim='x', start=0, stop=1, num=10)
+    accum.push(var[0].copy())
+    assert not accum.is_empty
+    assert sc.identical(accum.value, var[0])
+
+    accum.clear()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+
+def test_rolling_accumulator_is_empty() -> None:
+    accum = streaming.RollingAccumulator(window=3)
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+    var = sc.linspace(dim='x', start=0, stop=1, num=10)
+    accum.push(var[0].copy())
+    assert not accum.is_empty
+    assert sc.identical(accum.value, var[0])
+
+    accum.clear()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
 
 
 DynamicA = NewType('DynamicA', float)
@@ -161,8 +219,15 @@ def test_StreamProcessor_uses_custom_accumulator() -> None:
             pass
 
         @property
-        def value(self) -> sc.Variable:
+        def is_empty(self) -> bool:
+            return False
+
+        def _get_value(self) -> sc.Variable:
             return sc.scalar(42)
+
+        def clear(self) -> None:
+            # Nothing to clear
+            pass
 
     base_workflow = sciline.Pipeline(
         (make_static_a, make_accum_a, make_accum_b, make_target)
@@ -370,10 +435,9 @@ def test_StreamProcessor_raises_given_partial_update_for_accumulator() -> None:
         accumulators=(Target, AccumC),  # Target depends on both A and B
     )
     # We can update either (A, B) and/or C...
-    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
-    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
-    assert result[AccumC] is None
-    result = streaming_wf.add_chunk({DynamicC: sc.scalar(11)})
+    streaming_wf.accumulate({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    streaming_wf.accumulate({DynamicC: sc.scalar(11)})
+    result = streaming_wf.finalize()
     assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
     assert sc.identical(result[AccumC], sc.scalar(11))
     result = streaming_wf.add_chunk({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
@@ -428,3 +492,35 @@ def test_StreamProcessor_raises_when_trying_to_update_non_dynamic_key() -> None:
         match=r'Got non-dynamic keys: {tests.streaming_test.Target}',
     ):
         result = streaming_wf.add_chunk({Target: sc.scalar(2)})
+
+
+def test_StreamProcessor_clear() -> None:
+    base_workflow = sciline.Pipeline(
+        (make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+
+    # Reset call counter to ensure we can track it properly
+    make_static_a.call_count = 0
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators=(AccumA, AccumB),
+    )
+    # Add some data
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 9.0))
+
+    # Make sure static_a was called exactly once
+    assert make_static_a.call_count == 1
+
+    # Clear and verify we get back to initial state
+    streaming_wf.clear()
+    result = streaming_wf.add_chunk({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+
+    # Static values should be preserved after clear, so call_count remains 1
+    assert make_static_a.call_count == 1
