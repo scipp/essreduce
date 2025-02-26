@@ -668,8 +668,8 @@ def test_open_nexus_file_multiple_times(tmp_path: Path, locks: tuple[Any, Any]) 
         pytest.param(
             (True, None),
             marks=pytest.mark.skipif(
-                sys.platform == "darwin",
-                reason="MacOS file locking behaves differently",
+                sys.platform in ("darwin", "win32"),
+                reason="MacOS and Windows file locking behaves differently",
             ),
         ),
         (False, True),
@@ -678,8 +678,8 @@ def test_open_nexus_file_multiple_times(tmp_path: Path, locks: tuple[Any, Any]) 
         pytest.param(
             (None, True),
             marks=pytest.mark.skipif(
-                sys.platform == "darwin",
-                reason="MacOS file locking behaves differently",
+                sys.platform in ("darwin", "win32"),
+                reason="MacOS and Windows file locking behaves differently",
             ),
         ),
         # On a read-only filesystem, this would work:
@@ -689,16 +689,16 @@ def test_open_nexus_file_multiple_times(tmp_path: Path, locks: tuple[Any, Any]) 
         pytest.param(
             (True, NoLockingIfNeeded),
             marks=pytest.mark.skipif(
-                sys.platform == "darwin",
-                reason="MacOS file locking behaves differently",
+                sys.platform in ("darwin", "win32"),
+                reason="MacOS and Windows file locking behaves differently",
             ),
         ),
         # Same as above but with roles reversed:
         pytest.param(
             (NoLockingIfNeeded, True),
             marks=pytest.mark.skipif(
-                sys.platform == "darwin",
-                reason="MacOS file locking behaves differently",
+                sys.platform in ("darwin", "win32"),
+                reason="MacOS and Windows file locking behaves differently",
             ),
         ),
     ],
