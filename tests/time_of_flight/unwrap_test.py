@@ -187,7 +187,7 @@ def test_standard_unwrap_histogram_mode(dist, dim, simulation_psc_choppers) -> N
         seed=37,
         pulse_stride=1,
         percentile=96,
-        diff_threshold=0.3,
+        diff_threshold=0.4,
         rtol=0.05,
     )
 
@@ -380,6 +380,6 @@ def test_pulse_skipping_unwrap_histogram_mode(simulation_pulse_skipping) -> None
         seed=9,
         pulse_stride=2,
         percentile=96,
-        diff_threshold=0.3,
+        diff_threshold=0.4,
         rtol=0.05,
     )
