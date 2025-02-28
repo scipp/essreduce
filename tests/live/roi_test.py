@@ -3,7 +3,7 @@
 import pytest
 import scipp as sc
 
-from ess.reduce.live import raw, roi
+from ess.reduce.live import roi
 
 
 @pytest.fixture
@@ -146,13 +146,12 @@ def test_apply_selection_fails_with_out_of_bounds_index():
         roi.apply_selection(data, selection=selection)
 
 
-@pytest.fixture
-def logical_view():
-    return raw.LogicalView(fold={'x': 3, 'y': 4, 'z': 2}, select={'z': 0})
+def logical_view(da: sc.DataArray) -> sc.DataArray:
+    return da.fold(da.dim, sizes={'x': 3, 'y': 4, 'z': 2})['z', 0]
 
 
 @pytest.fixture
-def roi_filter(logical_view: raw.LogicalView):
+def roi_filter() -> roi.ROIFilter:
     indices = sc.ones(sizes={'detector_number': 24}, dtype='int32', unit=None)
     indices = sc.cumsum(indices, mode='exclusive')
     return roi.ROIFilter(logical_view(indices))

@@ -354,13 +354,12 @@ def test_ROIFilter_from_trivial_RollingDetectorView() -> None:
     assert sc.identical(scale, sc.ones(dims=['detector_number'], shape=[2]))
 
 
-def test_ROIFilter_from_RollingDetectorView_with_LogicalView() -> None:
-    logical_view = raw.LogicalView(select={'z': 0})
+def test_ROIFilter_from_RollingDetectorView_with_custom_projection() -> None:
     detector_number = sc.array(
         dims=['x', 'y', 'z'], values=[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], unit=None
     )
     view = raw.RollingDetectorView(
-        detector_number=detector_number, window=2, projection=logical_view
+        detector_number=detector_number, window=2, projection=lambda da: da['z', 0]
     )
     roi_filter = view.make_roi_filter()
     data = detector_number.copy()
