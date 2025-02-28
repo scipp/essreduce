@@ -154,25 +154,32 @@ class LogicalView:
         corresponds to multiple dimensions in the logical view.
     transpose:
         Dimensions to transpose. This is useful for reordering dimensions.
+        Applied after sum but before flatten operations.
     select:
         Dimensions with associated index to select from the data. This extracts a slice
         of the data for each given dimension.
+    sum:
+        Dimensions to sum over after folding and selecting, but before transposing and
+        flattening. If None, sum over all dimensions.
     flatten:
         Dimensions to flatten.
     """
 
     fold: dict[str, int] | None = None
     transpose: tuple[str, ...] | None = None
-    select: dict[str, int] = field(default_factory=dict)
+    select: dict[str, int | slice] = field(default_factory=dict)
+    sum: str | Sequence[str] | None = ()
     flatten: dict[str, list[str]] = field(default_factory=dict)
 
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         if self.fold is not None:
             da = da.fold(da.dim, sizes=self.fold)
-        if self.transpose is not None:
-            da = da.transpose(self.transpose)
         for dim, index in self.select.items():
             da = da[dim, index]
+        if self.sum != ():
+            da = da.sum(self.sum)
+        if self.transpose is not None:
+            da = da.transpose(self.transpose)
         for to, dims in self.flatten.items():
             da = da.flatten(dims, to=to)
         return da.copy()
