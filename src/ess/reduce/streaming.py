@@ -185,11 +185,10 @@ class MinAccumulator(Accumulator):
         self._cur_min: sc.Variable | None = None
 
     def _do_push(self, value: sc.Variable) -> None:
-        new_min = value.min()
         if self._cur_min is None:
-            self._cur_min = new_min
+            self._cur_min = value
         else:
-            self._cur_min = min(self._cur_min, new_min)
+            self._cur_min = min(self._cur_min, value)
 
     @property
     def is_empty(self) -> bool:
@@ -220,11 +219,10 @@ class MaxAccumulator(Accumulator):
         return self._cur_max is None
 
     def _do_push(self, value: sc.Variable) -> None:
-        new_max = value.max()
         if self._cur_max is None:
-            self._cur_max = new_max
+            self._cur_max = value
         else:
-            self._cur_max = max(self._cur_max, new_max)
+            self._cur_max = max(self._cur_max, value)
 
     def _get_value(self) -> sc.Variable | None:
         return self._cur_max
