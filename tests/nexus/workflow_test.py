@@ -26,6 +26,7 @@ from ess.reduce.nexus.types import (
     NeXusComponentLocationSpec,
     NeXusName,
     NeXusTransformation,
+    PreopenNeXusFile,
     RunType,
     SampleRun,
     TimeInterval,
@@ -533,11 +534,13 @@ def test_load_detector_workflow() -> None:
     assert da.dims == ('detector_number',)
 
 
-def test_generic_nexus_workflow() -> None:
+@pytest.mark.parametrize('preopen', [True, False])
+def test_generic_nexus_workflow(preopen: bool) -> None:
     wf = GenericNeXusWorkflow()
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[NeXusName[Monitor1]] = 'monitor_1'
     wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
+    wf[PreopenNeXusFile] = preopen
     da = wf.compute(DetectorData[SampleRun])
     assert 'position' in da.coords
     assert 'sample_position' in da.coords

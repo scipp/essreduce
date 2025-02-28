@@ -85,7 +85,7 @@ def load_metadata(
     entry_name: NeXusEntryName | None = None,
     definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
 ) -> _Model:
-    with _open_nexus_file(file_path, definitions=definitions) as f:
+    with open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         return model.from_nexus_entry(entry)
 
@@ -113,7 +113,7 @@ def compute_component_position(dg: sc.DataGroup) -> sc.DataGroup:
     )
 
 
-def _open_nexus_file(
+def open_nexus_file(
     file_path: FilePath | NeXusFile | NeXusGroup,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
     *,
@@ -212,7 +212,7 @@ def _open_component_parent(
     """Locate the parent group of a NeXus component."""
     file_path = location.filename
     entry_name = location.entry_name
-    with _open_nexus_file(file_path, definitions=definitions) as f:
+    with open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         if nx_class is snx.NXsample:
             yield entry
@@ -357,7 +357,7 @@ def load_data(
     :
         Data array with events or a histogram.
     """
-    with _open_nexus_file(file_path, definitions=definitions) as f:
+    with open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
         instrument = _unique_child_group(entry, snx.NXinstrument, None)
         component = instrument[component_name]
@@ -554,7 +554,7 @@ def _parse_monitor(group: snx.Group) -> NeXusMonitorInfo:
 
 def read_nexus_file_info(file_path: FilePath | NeXusFile | NeXusGroup) -> NeXusFileInfo:
     """Opens and inspects a NeXus file, returning a summary of its contents."""
-    with _open_nexus_file(file_path) as f:
+    with open_nexus_file(file_path) as f:
         entry = _unique_child_group(f, snx.NXentry, None)
         instrument = _unique_child_group(entry, snx.NXinstrument, None)
         detectors = {}

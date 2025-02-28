@@ -633,7 +633,7 @@ def compute_component_position_returns_input_if_no_depends_on() -> None:
 # h5py cannot open files on these systems with file locks.
 # We cannot reasonably emulate this within Python tests.
 # So the following tests only check the behaviour on a basic level.
-# The tests use the private `_open_nexus_file` directly to focus on what matters.
+# The tests use the private `open_nexus_file` directly to focus on what matters.
 #
 # A file may already be open in this or another process.
 # We should still be able to open it
@@ -652,13 +652,13 @@ def compute_component_position_returns_input_if_no_depends_on() -> None:
     ],
 )
 def test_open_nexus_file_multiple_times(tmp_path: Path, locks: tuple[Any, Any]) -> None:
-    from ess.reduce.nexus._nexus_loader import _open_nexus_file
+    from ess.reduce.nexus._nexus_loader import open_nexus_file
 
     path = FilePath(tmp_path / "file.nxs")
     with snx.File(path, "w"):
         pass
-    with _open_nexus_file(path, locking=locks[0]) as f1:
-        with _open_nexus_file(path, locking=locks[1]) as f2:
+    with open_nexus_file(path, locking=locks[0]) as f1:
+        with open_nexus_file(path, locking=locks[1]) as f2:
             assert f1.name == f2.name
 
 
@@ -669,15 +669,15 @@ def _in_conda_env():
 def _test_open_nexus_file_with_mismatched_locking(
     tmp_path: Path, locks: tuple[Any, Any]
 ) -> None:
-    from ess.reduce.nexus._nexus_loader import _open_nexus_file
+    from ess.reduce.nexus._nexus_loader import open_nexus_file
 
     path = FilePath(tmp_path / "file.nxs")
     with snx.File(path, "w"):
         pass
 
-    with _open_nexus_file(path, locking=locks[0]):
+    with open_nexus_file(path, locking=locks[0]):
         with pytest.raises(OSError, match="flag values don't match"):
-            _ = _open_nexus_file(path, locking=locks[1])
+            _ = open_nexus_file(path, locking=locks[1])
 
 
 @pytest.mark.skipif(
@@ -721,7 +721,7 @@ def test_open_nexus_file_with_mismatched_locking_all(
 
 
 def test_open_nonexisting_file_raises_filenotfounderror():
-    from ess.reduce.nexus._nexus_loader import _open_nexus_file
+    from ess.reduce.nexus._nexus_loader import open_nexus_file
 
     with pytest.raises(FileNotFoundError):
-        _open_nexus_file(nexus.types.FilePath(Path("doesnotexist.hdf")))
+        open_nexus_file(nexus.types.FilePath(Path("doesnotexist.hdf")))

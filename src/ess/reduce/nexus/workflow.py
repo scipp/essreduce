@@ -62,7 +62,9 @@ def file_path_to_file_spec(
     filename: Filename[RunType], preopen: PreopenNeXusFile
 ) -> NeXusFileSpec[RunType]:
     return NeXusFileSpec[RunType](
-        snx.File(filename, definitions=definitions) if preopen else filename
+        nexus.open_nexus_file(filename, definitions=definitions)
+        if preopen
+        else filename
     )
 
 
