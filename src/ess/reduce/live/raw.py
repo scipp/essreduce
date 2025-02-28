@@ -154,12 +154,13 @@ class LogicalView:
         corresponds to multiple dimensions in the logical view.
     transpose:
         Dimensions to transpose. This is useful for reordering dimensions.
+        Applied after sum but before flatten operations.
     select:
         Dimensions with associated index to select from the data. This extracts a slice
         of the data for each given dimension.
     sum:
-        Dimensions to sum over after folding and selecting, but before flattening.
-        If None, sum over all dimensions.
+        Dimensions to sum over after folding and selecting, but before transposing and
+        flattening. If None, sum over all dimensions.
     flatten:
         Dimensions to flatten.
     """
@@ -175,10 +176,10 @@ class LogicalView:
             da = da.fold(da.dim, sizes=self.fold)
         for dim, index in self.select.items():
             da = da[dim, index]
-        if self.transpose is not None:
-            da = da.transpose(self.transpose)
         if self.sum != ():
             da = da.sum(self.sum)
+        if self.transpose is not None:
+            da = da.transpose(self.transpose)
         for to, dims in self.flatten.items():
             da = da.flatten(dims, to=to)
         return da.copy()

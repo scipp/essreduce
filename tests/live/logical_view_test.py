@@ -41,6 +41,21 @@ def foldable_data_24():
     )
 
 
+@pytest.fixture
+def four_d_data():
+    """Create a 4D data array for testing."""
+    values = np.reshape(np.arange(120), (2, 3, 4, 5))
+    return sc.DataArray(
+        sc.array(dims=['a', 'b', 'c', 'd'], values=values, unit='counts'),
+        coords={
+            'a': sc.arange('a', 2, unit='m'),
+            'b': sc.arange('b', 3, unit='m'),
+            'c': sc.arange('c', 4, unit='m'),
+            'd': sc.arange('d', 5, unit='m'),
+        },
+    )
+
+
 def test_logical_view_default_settings():
     """Test that LogicalView with default settings returns a copy of the input."""
     da = sc.DataArray(
@@ -156,15 +171,19 @@ def test_flatten_multiple_groups():
     assert_identical(result, expected)
 
 
-def test_combination_of_operations(multi_d_data):
+def test_combination_of_operations(four_d_data):
     """Test a combination of multiple operations."""
     view = LogicalView(
-        select={'z': 0}, transpose=('y', 'x'), sum='y', flatten={'flat': ['x']}
+        select={'a': 0}, sum='c', transpose=('d', 'b'), flatten={'flat': ['d', 'b']}
     )
-    result = view(multi_d_data)
+    result = view(four_d_data)
 
+    # The operations happen in this order: select, sum, transpose, flatten
     expected = (
-        multi_d_data['z', 0].transpose(['y', 'x']).sum('y').flatten(['x'], to='flat')
+        four_d_data['a', 0]
+        .sum('c')
+        .transpose(['d', 'b'])
+        .flatten(['d', 'b'], to='flat')
     )
     assert_identical(result, expected)
 
@@ -197,10 +216,11 @@ def test_fold_and_transpose(foldable_data_24):
 
 def test_transpose_and_sum(multi_d_data):
     """Test transposing and then summing."""
-    view = LogicalView(transpose=('z', 'y', 'x'), sum='z')
+    view = LogicalView(sum='z', transpose=('y', 'x'))
     result = view(multi_d_data)
 
-    expected = multi_d_data.transpose(['z', 'y', 'x']).sum('z')
+    # Note the changed order: sum first, then transpose
+    expected = multi_d_data.sum('z').transpose(['y', 'x'])
     assert_identical(result, expected)
 
 
@@ -208,16 +228,18 @@ def test_fold_transpose_select_sum_flatten(foldable_data_24):
     """Test a complex combination of all operations."""
     view = LogicalView(
         fold={'x': 2, 'y': 3, 'z': 4},
-        transpose=('z', 'y', 'x'),
         select={'z': slice(1, 3)},
         sum='y',
+        transpose=('z', 'x'),
         flatten={'xz': ['z', 'x']},
     )
     result = view(foldable_data_24)
 
-    # Manually apply all operations
-    values = foldable_data_24.values.reshape(2, 3, 4).transpose(2, 1, 0)[1:3, :, :]
+    # Manually apply all operations: fold, select, sum, transpose, and flatten
+    values = foldable_data_24.values.reshape(2, 3, 4)
+    values = values[:, :, 1:3]
     values = values.sum(axis=1)
+    values = values.transpose(1, 0)
     values = values.reshape(-1)
 
     expected = sc.DataArray(
@@ -287,8 +309,8 @@ def test_select_out_of_bounds(multi_d_data):
 
 
 def test_select_after_transpose(multi_d_data):
-    """Test the actual operation order (select before transpose)."""
-    # In LogicalView, select happens before transpose
+    """Test the actual operation order (select before sum and transpose)."""
+    # In LogicalView, select happens before sum and transpose
     view1 = LogicalView(select={'z': 0}, transpose=('y', 'x'))
     result1 = view1(multi_d_data)
 
@@ -297,11 +319,11 @@ def test_select_after_transpose(multi_d_data):
     assert_identical(result1, expected1)
 
     # Test a different case
-    view2 = LogicalView(select={'y': 1}, transpose=('x', 'z'))
+    view2 = LogicalView(select={'y': 1}, sum='z', transpose=('x',))
     result2 = view2(multi_d_data)
 
-    # Operations happen in this order: select, then transpose
-    expected2 = multi_d_data['y', 1].transpose(['x', 'z'])
+    # Operations happen in this order: select, sum, then transpose
+    expected2 = multi_d_data['y', 1].sum('z').transpose(['x'])
     assert_identical(result2, expected2)
 
 
