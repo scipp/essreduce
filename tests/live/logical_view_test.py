@@ -331,3 +331,12 @@ def test_empty_operations(multi_d_data):
     view = LogicalView(fold=None, transpose=None, select={}, sum=(), flatten={})
     result = view(multi_d_data)
     assert_identical(result, multi_d_data)
+
+
+def test_select_slice_and_sum(multi_d_data):
+    """Test selecting a slice and then summing over a dimension."""
+    view = LogicalView(select={'y': slice(1, 3)}, sum='z')
+    result = view(multi_d_data)
+
+    expected = multi_d_data['y', 1:3].sum('z')
+    assert_identical(result, expected)
