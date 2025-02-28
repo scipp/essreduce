@@ -152,6 +152,30 @@ def test_rolling_accumulator_is_empty() -> None:
         _ = accum.value
 
 
+def test_min_accumulator() -> None:
+    accum = streaming.MinAccumulator()
+    var = sc.array(dims=['x'], values=[1.0, 2.0, 3.0, 2.0, 1.0])
+    for scalar_var in var:
+        accum.push(scalar_var)
+    assert sc.identical(accum.value, sc.min(var))
+    accum.clear()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+
+def test_max_accumulator() -> None:
+    accum = streaming.MaxAccumulator()
+    var = sc.array(dims=['x'], values=[1.0, 2.0, 3.0, 2.0, 1.0])
+    for scalar_var in var:
+        accum.push(scalar_var)
+    assert sc.identical(accum.value, sc.max(var))
+    accum.clear()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+
 DynamicA = NewType('DynamicA', float)
 DynamicB = NewType('DynamicB', float)
 DynamicC = NewType('DynamicC', float)

@@ -174,6 +174,66 @@ class RollingAccumulator(Accumulator[T]):
         self._values = []
 
 
+class MinAccumulator(Accumulator):
+    """Keeps the minimum value seen so far.
+
+    Only support scalar values.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._cur_min: sc.Variable | None = None
+
+    def _do_push(self, value: sc.Variable) -> None:
+        new_min = value.min()
+        if self._cur_min is None:
+            self._cur_min = new_min
+        else:
+            self._cur_min = min(self._cur_min, new_min)
+
+    @property
+    def is_empty(self) -> bool:
+        """Check if the accumulator has collected a minimum value."""
+        return self._cur_min is None
+
+    def _get_value(self) -> Any:
+        return self._cur_min
+
+    def clear(self) -> None:
+        """Clear the accumulated minimum value."""
+        self._cur_min = None
+
+
+class MaxAccumulator(Accumulator):
+    """Keeps the maximum value seen so far.
+
+    Only support scalar values.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._cur_max: sc.Variable | None = None
+
+    @property
+    def is_empty(self) -> bool:
+        """Check if the accumulator has collected a maximum value."""
+        return self._cur_max is None
+
+    def _do_push(self, value: sc.Variable) -> None:
+        new_max = value.max()
+        if self._cur_max is None:
+            self._cur_max = new_max
+        else:
+            self._cur_max = max(self._cur_max, new_max)
+
+    def _get_value(self) -> sc.Variable | None:
+        return self._cur_max
+
+    def clear(self) -> None:
+        """Clear the accumulated maximum value."""
+        self._cur_max = None
+
+
 class StreamProcessor:
     """
     Wrap a base workflow for streaming processing of chunks.
