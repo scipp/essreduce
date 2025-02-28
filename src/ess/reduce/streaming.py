@@ -177,7 +177,7 @@ class RollingAccumulator(Accumulator[T]):
 class MinAccumulator(Accumulator):
     """Keeps the minimum value seen so far.
 
-    Only support scalar values.
+    Only supports scalar values.
     """
 
     def __init__(self, **kwargs: Any) -> None:
@@ -207,7 +207,7 @@ class MinAccumulator(Accumulator):
 class MaxAccumulator(Accumulator):
     """Keeps the maximum value seen so far.
 
-    Only support scalar values.
+    Only supports scalar values.
     """
 
     def __init__(self, **kwargs: Any) -> None:
