@@ -548,3 +548,61 @@ def test_StreamProcessor_clear() -> None:
 
     # Static values should be preserved after clear, so call_count remains 1
     assert make_static_a.call_count == 1
+
+
+def test_StreamProcessor_with_context() -> None:
+    Streamed = NewType('Streamed', int)
+    Context = NewType('Context', int)
+    Static = NewType('Static', int)
+    ProcessedContext = NewType('ProcessedContext', int)
+    ProcessedStreamed = NewType('ProcessedStreamed', int)
+    Output = NewType('Output', int)
+
+    def make_static() -> Static:
+        make_static.call_count += 1
+        return Static(2)
+
+    make_static.call_count = 0
+
+    def process_context(context: Context, static: Static) -> ProcessedContext:
+        process_context.call_count += 1
+        return ProcessedContext(context * static)
+
+    process_context.call_count = 0
+
+    def process_streamed(
+        streamed: Streamed, context: ProcessedContext
+    ) -> ProcessedStreamed:
+        return ProcessedStreamed(streamed + context)
+
+    def finalize(streamed: ProcessedStreamed) -> Output:
+        return Output(streamed)
+
+    wf = sciline.Pipeline((make_static, process_context, process_streamed, finalize))
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=wf,
+        dynamic_keys=(Streamed,),
+        context_keys=(Context,),
+        target_keys=(Output,),
+        accumulators=(ProcessedStreamed,),
+    )
+    assert make_static.call_count == 1
+    assert process_context.call_count == 0
+    streaming_wf.set_context({Context: sc.scalar(3)})
+    assert process_context.call_count == 1
+    streaming_wf.accumulate({Streamed: sc.scalar(4)})
+    assert sc.identical(streaming_wf.finalize()[Output], sc.scalar(2 * 3 + 4))
+    assert make_static.call_count == 1
+    assert process_context.call_count == 1
+    streaming_wf.accumulate({Streamed: sc.scalar(4)})
+    assert process_context.call_count == 1
+    streaming_wf.set_context({Context: sc.scalar(1)})
+    # Context changed but no chunk added, so new context is not visible in the result
+    assert sc.identical(streaming_wf.finalize()[Output], sc.scalar(2 * (2 * 3 + 4)))
+    # The third chunk sees the context value of "1" (instead of "3")
+    streaming_wf.accumulate({Streamed: sc.scalar(4)})
+    assert sc.identical(
+        streaming_wf.finalize()[Output], sc.scalar(2 * (2 * 3 + 4) + 2 * 1 + 4)
+    )
+    assert make_static.call_count == 1
+    assert process_context.call_count == 2
