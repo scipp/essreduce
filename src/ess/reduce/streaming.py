@@ -280,6 +280,7 @@ class StreamProcessor:
             Keys that are expected to be updated with each chunk.
         context_keys:
             Keys that define context for processing chunks and may change occasionally.
+            These keys cannot overlap with dynamic_keys.
         target_keys:
             Keys to be computed and returned.
         accumulators:
@@ -294,6 +295,14 @@ class StreamProcessor:
             unless the values for these keys are valid for all chunks comprised in the
             final accumulators at the point where :py:meth:`finalize` is called.
         """
+        self._dynamic_keys = set(dynamic_keys)
+        self._context_keys = set(context_keys)
+
+        # Validate that dynamic and context keys do not overlap
+        overlap = self._dynamic_keys & self._context_keys
+        if overlap:
+            raise ValueError(f"Keys cannot be both dynamic and context: {overlap}")
+
         workflow = sciline.Pipeline()
         for key in target_keys:
             workflow[key] = base_workflow[key]
@@ -301,9 +310,6 @@ class StreamProcessor:
             workflow[key] = None  # hack to prune branches
         for key in context_keys:
             workflow[key] = None
-
-        self._dynamic_keys = set(dynamic_keys)
-        self._context_keys = set(context_keys)
 
         # Find and pre-compute static nodes as far down the graph as possible
         nodes = _find_descendants(workflow, dynamic_keys + context_keys)
@@ -320,7 +326,8 @@ class StreamProcessor:
         ) & _find_descendants(workflow, context_keys)
         graph = workflow.underlying_graph
         self._context_key_to_cached_context_nodes_map = {
-            context_key: nx.descendants(graph, context_key) & context_to_cache
+            context_key: ({context_key} | nx.descendants(graph, context_key))
+            & context_to_cache
             for context_key in self._context_keys
             if context_key in graph
         }
