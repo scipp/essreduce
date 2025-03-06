@@ -313,13 +313,14 @@ class StreamProcessor:
 
         # Nodes that may need updating on context change but should be cached otherwise.
         dynamic_nodes = _find_descendants(workflow, dynamic_keys)
-        parents_of_dynamic = _find_parents(workflow, dynamic_nodes) - dynamic_nodes
-        context_dependent_parents = parents_of_dynamic & _find_descendants(
-            workflow, context_keys
-        )
+        # Nodes as far "down" in the graph as possible, right before the dynamic nodes.
+        # This also includes target keys that are not dynamic but context-dependent.
+        context_to_cache = (
+            (_find_parents(workflow, dynamic_nodes) | set(target_keys)) - dynamic_nodes
+        ) & _find_descendants(workflow, context_keys)
         graph = workflow.underlying_graph
         self._context_dependencies = {
-            context_key: nx.descendants(graph, context_key) & context_dependent_parents
+            context_key: nx.descendants(graph, context_key) & context_to_cache
             for context_key in self._context_keys
             if context_key in graph
         }
@@ -375,7 +376,11 @@ class StreamProcessor:
             self._context_workflow[key] = value
         results = self._context_workflow.compute(needs_recompute)
         for key, value in results.items():
-            self._process_chunk_workflow[key] = value
+            if key in self._target_keys:
+                # Context-dependent key is direct target, independent of dynamic nodes.§
+                self._finalize_workflow[key] = value
+            else:
+                self._process_chunk_workflow[key] = value
 
     def add_chunk(
         self, chunks: dict[sciline.typing.Key, Any]

@@ -606,3 +606,63 @@ def test_StreamProcessor_with_context() -> None:
     )
     assert make_static.call_count == 1
     assert process_context.call_count == 2
+
+
+def test_StreamProcessor_with_context_updates_non_dynamic_targets() -> None:
+    Streamed = NewType('Streamed', int)
+    Context = NewType('Context', int)
+    Static = NewType('Static', int)
+    ProcessedContext = NewType('ProcessedContext', int)
+    ProcessedStreamed = NewType('ProcessedStreamed', int)
+    Output = NewType('Output', int)
+
+    def make_static() -> Static:
+        make_static.call_count += 1
+        return Static(2)
+
+    make_static.call_count = 0
+
+    def process_context(context: Context, static: Static) -> ProcessedContext:
+        process_context.call_count += 1
+        return ProcessedContext(context * static)
+
+    process_context.call_count = 0
+
+    def process_streamed(streamed: Streamed) -> ProcessedStreamed:
+        return ProcessedStreamed(streamed)
+
+    def finalize(streamed: ProcessedStreamed) -> Output:
+        return Output(streamed)
+
+    wf = sciline.Pipeline((make_static, process_context, process_streamed, finalize))
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=wf,
+        dynamic_keys=(Streamed,),
+        context_keys=(Context,),
+        target_keys=(ProcessedContext, Output),
+        accumulators=(ProcessedStreamed,),
+    )
+    assert make_static.call_count == 1
+    assert process_context.call_count == 0
+
+    streaming_wf.set_context({Context: sc.scalar(3)})
+    assert process_context.call_count == 1
+    streaming_wf.accumulate({Streamed: sc.scalar(4)})
+
+    results = streaming_wf.finalize()
+    assert sc.identical(results[Output], sc.scalar(4))
+    assert sc.identical(results[ProcessedContext], sc.scalar(2 * 3))
+    assert make_static.call_count == 1
+    assert process_context.call_count == 1
+
+    streaming_wf.accumulate({Streamed: sc.scalar(4)})
+    assert process_context.call_count == 1
+
+    results = streaming_wf.finalize()
+    assert process_context.call_count == 1
+
+    streaming_wf.set_context({Context: sc.scalar(5)})
+    results = streaming_wf.finalize()
+    assert sc.identical(results[Output], sc.scalar(8))
+    assert sc.identical(results[ProcessedContext], sc.scalar(2 * 5))
+    assert process_context.call_count == 2
