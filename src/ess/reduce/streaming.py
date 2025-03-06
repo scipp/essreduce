@@ -319,7 +319,7 @@ class StreamProcessor:
             (_find_parents(workflow, dynamic_nodes) | set(target_keys)) - dynamic_nodes
         ) & _find_descendants(workflow, context_keys)
         graph = workflow.underlying_graph
-        self._context_dependencies = {
+        self._context_key_to_cached_context_nodes_map = {
             context_key: nx.descendants(graph, context_key) & context_to_cache
             for context_key in self._context_keys
             if context_key in graph
@@ -371,7 +371,7 @@ class StreamProcessor:
         for key in context:
             if key not in self._context_keys:
                 raise ValueError(f"Key '{key}' is not a context key")
-            needs_recompute |= self._context_dependencies[key]
+            needs_recompute |= self._context_key_to_cached_context_nodes_map[key]
         for key, value in context.items():
             self._context_workflow[key] = value
         results = self._context_workflow.compute(needs_recompute)
