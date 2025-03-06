@@ -694,19 +694,19 @@ def test_StreamProcessor_raises_when_invalid_context_key_provided() -> None:
 
 def test_StreamProcessor_context_only_recomputes_descendants() -> None:
     Streamed = NewType('Streamed', int)
-    ContextA = NewType('ContextA', int)
-    ContextB = NewType('ContextB', int)
+    ContextInputA = NewType('ContextInputA', int)
+    ContextInputB = NewType('ContextInputB', int)
     ProcessedA = NewType('ProcessedA', int)
     ProcessedB = NewType('ProcessedB', int)
     Output = NewType('Output', int)
 
-    def process_a(context: ContextA) -> ProcessedA:
+    def process_a(context: ContextInputA) -> ProcessedA:
         process_a.call_count += 1
         return ProcessedA(context * 2)
 
     process_a.call_count = 0
 
-    def process_b(context: ContextB) -> ProcessedB:
+    def process_b(context: ContextInputB) -> ProcessedB:
         process_b.call_count += 1
         return ProcessedB(context * 3)
 
@@ -719,7 +719,7 @@ def test_StreamProcessor_context_only_recomputes_descendants() -> None:
     streaming_wf = streaming.StreamProcessor(
         base_workflow=wf,
         dynamic_keys=(Streamed,),
-        context_keys=(ContextA, ContextB),
+        context_keys=(ContextInputA, ContextInputB),
         target_keys=(Output,),
         accumulators=(Output,),
     )
@@ -728,17 +728,17 @@ def test_StreamProcessor_context_only_recomputes_descendants() -> None:
     assert process_b.call_count == 0
 
     # Set both contexts initially
-    streaming_wf.set_context({ContextA: sc.scalar(1), ContextB: sc.scalar(2)})
+    streaming_wf.set_context({ContextInputA: sc.scalar(1), ContextInputB: sc.scalar(2)})
     assert process_a.call_count == 1
     assert process_b.call_count == 1
 
-    # Update only ContextA
-    streaming_wf.set_context({ContextA: sc.scalar(3)})
+    # Update only ContextInputA
+    streaming_wf.set_context({ContextInputA: sc.scalar(3)})
     assert process_a.call_count == 2
     assert process_b.call_count == 1  # Not called again
 
-    # Update only ContextB
-    streaming_wf.set_context({ContextB: sc.scalar(4)})
+    # Update only ContextInputB
+    streaming_wf.set_context({ContextInputB: sc.scalar(4)})
     assert process_a.call_count == 2  # Not called again
     assert process_b.call_count == 2
 
@@ -809,7 +809,7 @@ def test_StreamProcessor_empty_context_update() -> None:
     assert sc.identical(result[Output], sc.scalar(7))
 
 
-def test_StreamProcessor_with_overlapping_context_and_dynamic_keys() -> None:
+def test_StreamProcessor_with_overlapping_context_and_dynamic_keys_raises() -> None:
     Key = NewType('Key', int)  # Used as both context and dynamic
     Output = NewType('Output', int)
 
