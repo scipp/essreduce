@@ -827,3 +827,238 @@ def test_StreamProcessor_with_overlapping_context_and_dynamic_keys_raises() -> N
             target_keys=(Output,),
             accumulators=(Output,),
         )
+
+
+def test_StreamProcessor_with_unused_context_key() -> None:
+    Streamed = NewType('Streamed', int)
+    UsedContext = NewType('UsedContext', int)
+    UnusedContext = NewType('UnusedContext', int)
+    Output = NewType('Output', int)
+
+    def process(streamed: Streamed, context: UsedContext) -> Output:
+        return Output(streamed + context)
+
+    wf = sciline.Pipeline((process,))
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=wf,
+        dynamic_keys=(Streamed,),
+        context_keys=(UsedContext, UnusedContext),  # UnusedContext is never used
+        target_keys=(Output,),
+        accumulators=(Output,),
+    )
+
+    # Setting only the used context should work fine
+    streaming_wf.set_context({UsedContext: sc.scalar(3)})
+    streaming_wf.accumulate({Streamed: sc.scalar(4)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Output], sc.scalar(7))
+
+    # Setting the unused context should also work without errors
+    streaming_wf.set_context({UnusedContext: sc.scalar(99)})
+    streaming_wf.accumulate({Streamed: sc.scalar(5)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Output], sc.scalar(7 + 8))
+
+
+def test_StreamProcessor_with_separate_context_nodes() -> None:
+    """Test that non-interdependent context keys work fine."""
+    Streamed = NewType('Streamed', int)
+    ContextInputA = NewType('ContextInputA', int)
+    ContextInputB = NewType('ContextInputB', int)
+    Output = NewType('Output', int)
+
+    def process(streamed: Streamed, a: ContextInputA, b: ContextInputB) -> Output:
+        return Output(streamed + a + b)
+
+    wf = sciline.Pipeline((process,))
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=wf,
+        dynamic_keys=(Streamed,),
+        context_keys=(ContextInputA, ContextInputB),  # Independent contexts
+        target_keys=(Output,),
+        accumulators=(Output,),
+    )
+
+    # Setting both contexts should work fine
+    streaming_wf.set_context({ContextInputA: sc.scalar(3), ContextInputB: sc.scalar(5)})
+    streaming_wf.accumulate({Streamed: sc.scalar(4)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Output], sc.scalar(4 + 3 + 5))
+
+    # Updating only one context should also work
+    streaming_wf.set_context({ContextInputA: sc.scalar(7)})
+    streaming_wf.accumulate({Streamed: sc.scalar(2)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Output], sc.scalar(4 + 3 + 5 + 2 + 7 + 5))
+
+
+def test_StreamProcessor_with_non_scalar_context() -> None:
+    Streamed = NewType('Streamed', float)
+    VectorContext = NewType('VectorContext', sc.Variable)
+    Output = NewType('Output', float)
+
+    def process(streamed: Streamed, context: VectorContext) -> Output:
+        # Use the sum of the context vector
+        return Output(streamed + sc.sum(context).value)
+
+    wf = sciline.Pipeline((process,))
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=wf,
+        dynamic_keys=(Streamed,),
+        context_keys=(VectorContext,),
+        target_keys=(Output,),
+        accumulators=(Output,),
+    )
+
+    # Set a vector context
+    vector_data = sc.array(dims=['x'], values=[1.0, 2.0, 3.0])
+    streaming_wf.set_context({VectorContext: vector_data})
+    streaming_wf.accumulate({Streamed: sc.scalar(4.0)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Output], sc.scalar(4.0 + 6.0))  # 6.0 is sum of vector
+
+    # Update vector context
+    new_vector = sc.array(dims=['x'], values=[2.0, 3.0, 4.0])
+    streaming_wf.set_context({VectorContext: new_vector})
+    streaming_wf.accumulate({Streamed: sc.scalar(5.0)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Output], sc.scalar(4.0 + 6.0 + 5.0 + 9.0))
+
+
+def test_StreamProcessor_with_invalid_context_value() -> None:
+    Streamed = NewType('Streamed', int)
+    Context = NewType('Context', int)
+    Output = NewType('Output', int)
+
+    def process(streamed: Streamed, context: Context) -> Output:
+        # This will fail if context is not an integer
+        return Output(streamed + context)
+
+    wf = sciline.Pipeline((process,))
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=wf,
+        dynamic_keys=(Streamed,),
+        context_keys=(Context,),
+        target_keys=(Output,),
+        accumulators=(Output,),
+    )
+
+    # Setting an invalid context type should trigger error when using it.
+    streaming_wf.set_context({Context: "not_an_integer"})
+    with pytest.raises(TypeError):
+        streaming_wf.accumulate({Streamed: sc.scalar(4)})
+
+
+def test_StreamProcessor_rejects_interdependent_dynamic_keys() -> None:
+    Streamed1 = NewType('Streamed1', int)
+    Streamed2 = NewType('Streamed2', int)
+    Output = NewType('Output', int)
+
+    def process_derived_dynamic(primary: Streamed1) -> Streamed2:
+        return Streamed2(primary * 10)
+
+    def process(value1: Streamed1, value2: Streamed2) -> Output:
+        return Output(value1 + value2)
+
+    wf = sciline.Pipeline((process_derived_dynamic, process))
+
+    # Using interdependent dynamic keys should raise a clear error
+    with pytest.raises(
+        ValueError,
+        match=r"Dynamic key .* depends on other dynamic/context keys: .*. "
+        "This is not supported.",
+    ):
+        streaming.StreamProcessor(
+            base_workflow=wf,
+            dynamic_keys=(Streamed1, Streamed2),  # Streamed2 depends on Streamed1
+            target_keys=(Output,),
+            accumulators=(Output,),
+        )
+
+
+def test_StreamProcessor_rejects_interdependent_context_keys() -> None:
+    Streamed = NewType('Streamed', int)
+    PrimaryContext = NewType('PrimaryContext', int)
+    DerivedContext = NewType('DerivedContext', int)
+    Output = NewType('Output', int)
+
+    def process_derived_context(primary: PrimaryContext) -> DerivedContext:
+        return DerivedContext(primary * 10)
+
+    def process(streamed: Streamed, derived: DerivedContext) -> Output:
+        return Output(streamed + derived)
+
+    wf = sciline.Pipeline((process_derived_context, process))
+
+    # Context key depending on another context key should raise
+    with pytest.raises(
+        ValueError,
+        match=r"Context key .* depends on other dynamic/context keys: .*. "
+        "This is not supported.",
+    ):
+        streaming.StreamProcessor(
+            base_workflow=wf,
+            dynamic_keys=(Streamed,),
+            context_keys=(
+                PrimaryContext,
+                DerivedContext,
+            ),  # DerivedContext depends on PrimaryContext
+            target_keys=(Output,),
+            accumulators=(Output,),
+        )
+
+
+def test_StreamProcessor_rejects_dynamic_keys_depending_on_context_keys() -> None:
+    Context = NewType('Context', int)
+    Streamed = NewType('Streamed', int)
+    Output = NewType('Output', int)
+
+    def derive_dynamic(context: Context) -> Streamed:
+        return Streamed(context * 2)
+
+    def process(value: Streamed) -> Output:
+        return Output(value * 10)
+
+    wf = sciline.Pipeline((derive_dynamic, process))
+
+    # Dynamic key depending on context key should raise
+    with pytest.raises(
+        ValueError,
+        match=r"Dynamic key .* depends on other dynamic/context keys: .*. "
+        "This is not supported.",
+    ):
+        streaming.StreamProcessor(
+            base_workflow=wf,
+            dynamic_keys=(Streamed,),
+            context_keys=(Context,),
+            target_keys=(Output,),
+            accumulators=(Output,),
+        )
+
+
+def test_StreamProcessor_rejects_context_keys_depending_on_dynamic_keys() -> None:
+    Streamed = NewType('Streamed', int)
+    Context = NewType('Context', int)
+    Output = NewType('Output', int)
+
+    def derive_context(value: Streamed) -> Context:
+        return Context(value * 2)
+
+    def process(value: Streamed, context: Context) -> Output:
+        return Output(value + context)
+
+    wf = sciline.Pipeline((derive_context, process))
+
+    # Context key depending on dynamic key should raise
+    with pytest.raises(
+        ValueError,
+        match=r"Context key .* depends on other dynamic/context keys: .*. "
+        "This is not supported.",
+    ):
+        streaming.StreamProcessor(
+            base_workflow=wf,
+            dynamic_keys=(Streamed,),
+            context_keys=(Context,),
+            target_keys=(Output,),
+            accumulators=(Output,),
+        )

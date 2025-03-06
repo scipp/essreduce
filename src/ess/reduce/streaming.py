@@ -277,10 +277,12 @@ class StreamProcessor:
         base_workflow:
             Workflow to be used for processing chunks.
         dynamic_keys:
-            Keys that are expected to be updated with each chunk.
+            Keys that are expected to be updated with each chunk. These keys cannot
+            depend on each other or on context_keys.
         context_keys:
             Keys that define context for processing chunks and may change occasionally.
-            These keys cannot overlap with dynamic_keys.
+            These keys cannot overlap with dynamic_keys or depend on each other or on
+            dynamic_keys.
         target_keys:
             Keys to be computed and returned.
         accumulators:
@@ -302,6 +304,21 @@ class StreamProcessor:
         overlap = self._dynamic_keys & self._context_keys
         if overlap:
             raise ValueError(f"Keys cannot be both dynamic and context: {overlap}")
+
+        # Check dynamic/context keys don't depend on other dynamic/context keys
+        graph = base_workflow.underlying_graph
+        special_keys = self._dynamic_keys | self._context_keys
+        for key in special_keys:
+            if key not in graph:
+                continue
+            ancestors = nx.ancestors(graph, key)
+            special_ancestors = ancestors & special_keys
+            downstream = 'Dynamic' if key in self._dynamic_keys else 'Context'
+            if special_ancestors:
+                raise ValueError(
+                    f"{downstream} key '{key}' depends on other dynamic/context keys: "
+                    f"{special_ancestors}. This is not supported."
+                )
 
         workflow = sciline.Pipeline()
         for key in target_keys:
