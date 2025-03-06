@@ -377,7 +377,7 @@ class StreamProcessor:
         results = self._context_workflow.compute(needs_recompute)
         for key, value in results.items():
             if key in self._target_keys:
-                # Context-dependent key is direct target, independent of dynamic nodes.§
+                # Context-dependent key is direct target, independent of dynamic nodes.
                 self._finalize_workflow[key] = value
             else:
                 self._process_chunk_workflow[key] = value
