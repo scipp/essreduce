@@ -5,6 +5,7 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
+from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
 
 import networkx as nx
@@ -232,6 +233,22 @@ class MaxAccumulator(Accumulator):
         self._cur_max = None
 
 
+@dataclass
+class Setter:
+    value: Any
+
+
+def _dynamic_setter(wf: sciline.Pipeline, key: sciline.typing.Key) -> Setter:
+    setter = Setter(value=None)
+    provider = sciline._provider.Provider(
+        func=lambda: setter.value,
+        arg_spec=sciline._provider.ArgSpec(args={}, kwargs={}, return_=key),
+        kind='function',
+    )
+    wf.insert(provider)
+    return setter
+
+
 class StreamProcessor:
     """
     Wrap a base workflow for streaming processing of chunks.
@@ -323,10 +340,16 @@ class StreamProcessor:
         workflow = sciline.Pipeline()
         for key in target_keys:
             workflow[key] = base_workflow[key]
-        for key in dynamic_keys:
-            workflow[key] = None  # hack to prune branches
-        for key in context_keys:
-            workflow[key] = None
+        self._dynamic_setters = {
+            key: _dynamic_setter(workflow, key) for key in dynamic_keys
+        }
+        self._context_setters = {
+            key: _dynamic_setter(workflow, key) for key in context_keys
+        }
+        # for key in dynamic_keys:
+        #    workflow[key] = None  # hack to prune branches
+        # for key in context_keys:
+        #    workflow[key] = None
 
         # Find and pre-compute static nodes as far down the graph as possible
         nodes = _find_descendants(workflow, dynamic_keys + context_keys)
@@ -350,7 +373,7 @@ class StreamProcessor:
         }
 
         self._context_workflow = workflow.copy()
-        self._process_chunk_workflow = workflow.copy()
+        self._process_chunk_workflow = workflow.get(tuple(accumulators))
         self._finalize_workflow = workflow.copy()
         self._accumulators = (
             accumulators
@@ -404,7 +427,8 @@ class StreamProcessor:
                 # Context-dependent key is direct target, independent of dynamic nodes.
                 self._finalize_workflow[key] = value
             else:
-                self._process_chunk_workflow[key] = value
+                # self._process_chunk_workflow[key] = value
+                self._context_setters[key].value = value
 
     def add_chunk(
         self, chunks: dict[sciline.typing.Key, Any]
@@ -460,13 +484,16 @@ class StreamProcessor:
             accumulators_to_update.append(acc_key)
 
         for key, value in chunks.items():
-            self._process_chunk_workflow[key] = value
+            # self._process_chunk_workflow[key] = value
+            self._dynamic_setters[key].value = value
             # There can be dynamic keys that do not "terminate" in any accumulator. In
             # that case, we need to make sure they can be and are used when computing
             # the target keys.
             if self._allow_bypass:
                 self._finalize_workflow[key] = value
-        to_accumulate = self._process_chunk_workflow.compute(accumulators_to_update)
+        to_accumulate = self._process_chunk_workflow.compute(
+            tuple(accumulators_to_update)
+        )
         for key, processed in to_accumulate.items():
             self._accumulators[key].push(processed)
 
