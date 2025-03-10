@@ -335,12 +335,12 @@ class TofInterpolator:
             )
         if ltotal.unit != self._distance_unit:
             raise ValueError(
-                f"ltotal must be in unit: {self._distance_unit}, "
+                f"ltotal must have unit: {self._distance_unit}, "
                 f"but got unit: {ltotal.unit}."
             )
         if event_time_offset.unit != self._time_unit:
             raise ValueError(
-                f"event_time_offset must be in unit: {self._time_unit}, "
+                f"event_time_offset must have unit: {self._time_unit}, "
                 f"but got unit: {event_time_offset.unit}."
             )
         out_dims = event_time_offset.dims
