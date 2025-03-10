@@ -240,6 +240,22 @@ class StreamProcessor:
     processing based on the input keys. In particular, it is the responsibility of the
     user to ensure that the workflow is "linear" with respect to the dynamic keys up to
     the accumulation keys.
+
+    Similarly, the stream processor cannot determine from the workflow structure whether
+    context updates are compatible with the accumulated data. Accumulators are not
+    cleared automatically. This is best illustrated with an example:
+
+    - If the context is the detector rotation angle, and we accumulate I(Q) (or a
+      prerequisite of I(Q)), then updating the detector angle context is compatible with
+      previous data, assuming Q for each new chunk is computed based on the angle.
+    - If the context is the sample temperature, and we accumulate I(Q), then updating
+      the temperature context is not compatible with previous data. Accumulating I(Q, T)
+      could be compatible in this case.
+
+    Since the correctness cannot be determined from the workflow structure, we recommend
+    implementing processing steps in a way to catch such problems. For example, adding
+    the temperature as a coordinate to the I(Q) data array should allow for
+    automatically raising in the accumulator if the temperature changes.
     """
 
     def __init__(
@@ -247,6 +263,7 @@ class StreamProcessor:
         base_workflow: sciline.Pipeline,
         *,
         dynamic_keys: tuple[sciline.typing.Key, ...],
+        context_keys: tuple[sciline.typing.Key, ...] = (),
         target_keys: tuple[sciline.typing.Key, ...],
         accumulators: dict[sciline.typing.Key, Accumulator | Callable[..., Accumulator]]
         | tuple[sciline.typing.Key, ...],
@@ -260,7 +277,12 @@ class StreamProcessor:
         base_workflow:
             Workflow to be used for processing chunks.
         dynamic_keys:
-            Keys that are expected to be updated with each chunk.
+            Keys that are expected to be updated with each chunk. These keys cannot
+            depend on each other or on context_keys.
+        context_keys:
+            Keys that define context for processing chunks and may change occasionally.
+            These keys cannot overlap with dynamic_keys or depend on each other or on
+            dynamic_keys.
         target_keys:
             Keys to be computed and returned.
         accumulators:
@@ -275,21 +297,59 @@ class StreamProcessor:
             unless the values for these keys are valid for all chunks comprised in the
             final accumulators at the point where :py:meth:`finalize` is called.
         """
+        self._dynamic_keys = set(dynamic_keys)
+        self._context_keys = set(context_keys)
+
+        # Validate that dynamic and context keys do not overlap
+        overlap = self._dynamic_keys & self._context_keys
+        if overlap:
+            raise ValueError(f"Keys cannot be both dynamic and context: {overlap}")
+
+        # Check dynamic/context keys don't depend on other dynamic/context keys
+        graph = base_workflow.underlying_graph
+        special_keys = self._dynamic_keys | self._context_keys
+        for key in special_keys:
+            if key not in graph:
+                continue
+            ancestors = nx.ancestors(graph, key)
+            special_ancestors = ancestors & special_keys
+            downstream = 'Dynamic' if key in self._dynamic_keys else 'Context'
+            if special_ancestors:
+                raise ValueError(
+                    f"{downstream} key '{key}' depends on other dynamic/context keys: "
+                    f"{special_ancestors}. This is not supported."
+                )
+
         workflow = sciline.Pipeline()
         for key in target_keys:
             workflow[key] = base_workflow[key]
         for key in dynamic_keys:
             workflow[key] = None  # hack to prune branches
-
-        self._dynamic_keys = set(dynamic_keys)
+        for key in context_keys:
+            workflow[key] = None
 
         # Find and pre-compute static nodes as far down the graph as possible
-        # See also https://github.com/scipp/sciline/issues/148.
-        nodes = _find_descendants(workflow, dynamic_keys)
-        parents = _find_parents(workflow, nodes) - nodes
-        for key, value in base_workflow.compute(parents).items():
+        nodes = _find_descendants(workflow, dynamic_keys + context_keys)
+        last_static = _find_parents(workflow, nodes) - nodes
+        for key, value in base_workflow.compute(last_static).items():
             workflow[key] = value
 
+        # Nodes that may need updating on context change but should be cached otherwise.
+        dynamic_nodes = _find_descendants(workflow, dynamic_keys)
+        # Nodes as far "down" in the graph as possible, right before the dynamic nodes.
+        # This also includes target keys that are not dynamic but context-dependent.
+        context_to_cache = (
+            (_find_parents(workflow, dynamic_nodes) | set(target_keys)) - dynamic_nodes
+        ) & _find_descendants(workflow, context_keys)
+        graph = workflow.underlying_graph
+        self._context_key_to_cached_context_nodes_map = {
+            context_key: ({context_key} | nx.descendants(graph, context_key))
+            & context_to_cache
+            for context_key in self._context_keys
+            if context_key in graph
+        }
+
+        self._context_workflow = workflow.copy()
         self._process_chunk_workflow = workflow.copy()
         self._finalize_workflow = workflow.copy()
         self._accumulators = (
@@ -299,7 +359,6 @@ class StreamProcessor:
         )
 
         # Map each accumulator to its dependent dynamic keys
-        graph = workflow.underlying_graph
         self._accumulator_dependencies = {
             acc_key: nx.ancestors(graph, acc_key) & self._dynamic_keys
             for acc_key in self._accumulators
@@ -322,6 +381,30 @@ class StreamProcessor:
         }
         self._target_keys = target_keys
         self._allow_bypass = allow_bypass
+
+    def set_context(self, context: dict[sciline.typing.Key, Any]) -> None:
+        """
+        Set the context for processing chunks.
+
+        Parameters
+        ----------
+        context:
+            Context to be set.
+        """
+        needs_recompute = set()
+        for key in context:
+            if key not in self._context_keys:
+                raise ValueError(f"Key '{key}' is not a context key")
+            needs_recompute |= self._context_key_to_cached_context_nodes_map[key]
+        for key, value in context.items():
+            self._context_workflow[key] = value
+        results = self._context_workflow.compute(needs_recompute)
+        for key, value in results.items():
+            if key in self._target_keys:
+                # Context-dependent key is direct target, independent of dynamic nodes.
+                self._finalize_workflow[key] = value
+            else:
+                self._process_chunk_workflow[key] = value
 
     def add_chunk(
         self, chunks: dict[sciline.typing.Key, Any]
