@@ -330,16 +330,16 @@ class TofInterpolator:
         event_time_offset: sc.Variable,
     ) -> sc.Variable:
         if pulse_index.unit != sc.units.dimensionless:
-            raise ValueError(
+            raise sc.UnitError(
                 f"pulse_index must be dimensionless, but got unit: {pulse_index.unit}."
             )
         if ltotal.unit != self._distance_unit:
-            raise ValueError(
+            raise sc.UnitError(
                 f"ltotal must have unit: {self._distance_unit}, "
                 f"but got unit: {ltotal.unit}."
             )
         if event_time_offset.unit != self._time_unit:
-            raise ValueError(
+            raise sc.UnitError(
                 f"event_time_offset must have unit: {self._time_unit}, "
                 f"but got unit: {event_time_offset.unit}."
             )
