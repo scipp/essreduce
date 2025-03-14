@@ -4,7 +4,7 @@ import numpy as np
 from numba import njit, prange
 
 
-@njit(boundscheck=True, cache=True, fastmath=True, parallel=True)
+@njit(boundscheck=False, cache=True, fastmath=True, parallel=True)
 def interpolate(
     x: np.ndarray,
     y: np.ndarray,
@@ -39,7 +39,6 @@ def interpolate(
         Value to use for points outside of the grid.
     out:
         1D array where the interpolated values will be stored (size N).
-
     """
     npoints = len(xp)
     xmin = x[0]
