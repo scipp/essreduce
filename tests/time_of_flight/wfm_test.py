@@ -19,7 +19,7 @@ def dream_choppers():
         frequency=sc.scalar(14.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(286 - 180, unit="deg"),
-        axle_position=sc.vector(value=[0, 0, 6.145], unit="m"),
+        axle_position=sc.vector(value=[0, 0, -70.405], unit="m"),
         slit_begin=sc.array(
             dims=["cutout"],
             values=[-1.23, 70.49, 84.765, 113.565, 170.29, 271.635, 286.035, 301.17],
@@ -38,7 +38,7 @@ def dream_choppers():
         frequency=sc.scalar(-14.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(-236, unit="deg"),
-        axle_position=sc.vector(value=[0, 0, 6.155], unit="m"),
+        axle_position=sc.vector(value=[0, 0, -70.395], unit="m"),
         slit_begin=sc.array(
             dims=["cutout"],
             values=[-1.23, 27.0, 55.8, 142.385, 156.765, 214.115, 257.23, 315.49],
@@ -57,7 +57,7 @@ def dream_choppers():
         frequency=sc.scalar(14.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(297 - 180 - 90, unit="deg"),
-        axle_position=sc.vector(value=[0, 0, 6.174], unit="m"),
+        axle_position=sc.vector(value=[0, 0, -70.376], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-27.6 * 0.5], unit="deg"),
         slit_end=sc.array(dims=["cutout"], values=[27.6 * 0.5], unit="deg"),
         slit_height=sc.scalar(10.0, unit="cm"),
@@ -68,7 +68,7 @@ def dream_choppers():
         frequency=sc.scalar(112.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(240 - 180, unit="deg"),
-        axle_position=sc.vector(value=[0, 0, 9.78], unit="m"),
+        axle_position=sc.vector(value=[0, 0, -66.77], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-36.875, 143.125], unit="deg"),
         slit_end=sc.array(dims=["cutout"], values=[36.875, 216.875], unit="deg"),
         slit_height=sc.scalar(10.0, unit="cm"),
@@ -79,7 +79,7 @@ def dream_choppers():
         frequency=sc.scalar(28.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(280 - 180, unit="deg"),
-        axle_position=sc.vector(value=[0, 0, 13.05], unit="m"),
+        axle_position=sc.vector(value=[0, 0, -63.5], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-314.9 * 0.5], unit="deg"),
         slit_end=sc.array(dims=["cutout"], values=[314.9 * 0.5], unit="deg"),
         slit_height=sc.scalar(10.0, unit="cm"),
@@ -95,7 +95,7 @@ def dream_choppers_with_frame_overlap():
         frequency=sc.scalar(112.0, unit="Hz"),
         beam_position=sc.scalar(0.0, unit="deg"),
         phase=sc.scalar(240 - 180, unit="deg"),
-        axle_position=sc.vector(value=[0, 0, 9.78], unit="m"),
+        axle_position=sc.vector(value=[0, 0, -66.77], unit="m"),
         slit_begin=sc.array(dims=["cutout"], values=[-36.875, 143.125], unit="deg"),
         slit_end=sc.array(dims=["cutout"], values=[56.875, 216.875], unit="deg"),
         slit_height=sc.scalar(10.0, unit="cm"),
@@ -104,10 +104,17 @@ def dream_choppers_with_frame_overlap():
     return out
 
 
+def dream_source_position():
+    return sc.vector(value=[0, 0, -76.55], unit="m")
+
+
 @pytest.fixture(scope="module")
 def simulation_dream_choppers():
     return time_of_flight.simulate_beamline(
-        choppers=dream_choppers(), neutrons=100_000, seed=432
+        choppers=dream_choppers(),
+        source_position=dream_source_position(),
+        neutrons=100_000,
+        seed=432,
     )
 
 
@@ -137,6 +144,7 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=10_000,
         seed=77,
+        source_position=dream_source_position(),
     )
 
     raw = sc.concat(
@@ -183,7 +191,10 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
 @pytest.fixture(scope="module")
 def simulation_dream_choppers_time_overlap():
     return time_of_flight.simulate_beamline(
-        choppers=dream_choppers_with_frame_overlap(), neutrons=100_000, seed=432
+        choppers=dream_choppers_with_frame_overlap(),
+        source_position=dream_source_position(),
+        neutrons=100_000,
+        seed=432,
     )
 
 
@@ -218,6 +229,7 @@ def test_dream_wfm_with_subframe_time_overlap(
         run_length=sc.scalar(1 / 14, unit="s") * 4,
         events_per_pulse=10_000,
         seed=88,
+        source_position=dream_source_position(),
     )
 
     raw = sc.concat(
@@ -363,10 +375,17 @@ def v20_choppers():
     return {"wfm1": wfm1, "wfm2": wfm2, "foc1": foc1, "foc2": foc2, "pol": pol}
 
 
+def v20_source_position():
+    return sc.vector([0, 0, 0], unit='m')
+
+
 @pytest.fixture(scope="module")
 def simulation_v20_choppers():
     return time_of_flight.simulate_beamline(
-        choppers=v20_choppers(), neutrons=300_000, seed=432
+        choppers=v20_choppers(),
+        source_position=v20_source_position(),
+        neutrons=300_000,
+        seed=432,
     )
 
 
