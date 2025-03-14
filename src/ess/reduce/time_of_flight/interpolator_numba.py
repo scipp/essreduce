@@ -116,6 +116,22 @@ class Interpolator:
         values: np.ndarray,
         fill_value: float = np.nan,
     ):
+        """
+        Interpolator for 3D regular grid data.
+
+        Parameters
+        ----------
+        time_edges:
+            1D array of time edges.
+        distance_edges:
+            1D array of distance edges.
+        pulse_edges:
+            1D array of pulse edges.
+        values:
+            3D array of values on the grid. The shape must be (nz, ny, nx).
+        fill_value:
+            Value to use for points outside of the grid.
+        """
         self.time_edges = time_edges
         self.distance_edges = distance_edges
         self.pulse_edges = pulse_edges
