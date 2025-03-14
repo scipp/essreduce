@@ -23,6 +23,7 @@ class FakeBeamline:
         events_per_pulse: int = 200000,
         seed: int | None = None,
         source: Callable | None = None,
+        source_position: sc.Variable | None = None,
     ):
         import math
 
@@ -32,6 +33,8 @@ class FakeBeamline:
         self.frequency = pulse.frequency
         self.npulses = math.ceil((run_length * self.frequency).to(unit="").value)
         self.events_per_pulse = events_per_pulse
+        if source_position is None:
+            source_position = sc.vector([0, 0, 0], unit='m')
 
         # Create a source
         if source is None:
@@ -54,7 +57,7 @@ class FakeBeamline:
                 open=ch.slit_begin,
                 close=ch.slit_end,
                 phase=abs(ch.phase),
-                distance=ch.axle_position.fields.z,
+                distance=sc.norm(ch.axle_position - source_position),
                 name=name,
             )
             for name, ch in choppers.items()
@@ -117,3 +120,7 @@ def pulse_skipping_choppers():
             radius=sc.scalar(30.0, unit="cm"),
         ),
     }
+
+
+def source_position():
+    return sc.vector([0, 0, 0], unit='m')
