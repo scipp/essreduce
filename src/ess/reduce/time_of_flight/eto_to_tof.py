@@ -14,6 +14,10 @@ import scipp as sc
 from scipp._scipp.core import _bins_no_validate
 from scippneutron._utils import elem_unit
 
+try:
+    from .interpolator_numba import Interpolator as InterpolatorImpl
+except ImportError:
+    from .interpolator_scipy import Interpolator as InterpolatorImpl
 from .to_events import to_events
 from .types import (
     DistanceResolution,
@@ -286,12 +290,6 @@ def compute_tof_lookup_table(
 
 class TofInterpolator:
     def __init__(self, lookup: sc.DataArray, distance_unit: str, time_unit: str):
-        from scipy.interpolate import RegularGridInterpolator
-
-        # TODO: to make use of multi-threading, we could write our own interpolator.
-        # This should be simple enough as we are making the bins linspace, so computing
-        # bin indices is fast.
-
         self._distance_unit = distance_unit
         self._time_unit = time_unit
 
@@ -307,20 +305,26 @@ class TofInterpolator:
         # monotonic, so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of
         # pulse_stride=2. Instead we use [-0.25, 0.25, 0.75, 1.25].
         base_grid = np.arange(float(lookup.sizes["pulse"]))
-        self._interpolator = RegularGridInterpolator(
-            (
-                np.sort(np.concatenate([base_grid - 0.25, base_grid + 0.25])),
-                lookup.coords["distance"].to(unit=distance_unit, copy=False).values,
-                lookup.coords["event_time_offset"]
-                .to(unit=self._time_unit, copy=False)
-                .values,
-            ),
-            np.repeat(
+        self._pulse_edges = np.sort(
+            np.concatenate([base_grid - 0.25, base_grid + 0.25])
+        )
+
+        self._time_edges = (
+            lookup.coords["event_time_offset"]
+            .to(unit=self._time_unit, copy=False)
+            .values
+        )
+        self._distance_edges = (
+            lookup.coords["distance"].to(unit=distance_unit, copy=False).values
+        )
+
+        self._interpolator = InterpolatorImpl(
+            time_edges=self._time_edges,
+            distance_edges=self._distance_edges,
+            pulse_edges=self._pulse_edges,
+            values=np.repeat(
                 lookup.data.to(unit=self._time_unit, copy=False).values, 2, axis=0
             ),
-            method="linear",
-            bounds_error=False,
-            fill_value=np.nan,
         )
 
     def __call__(
@@ -353,19 +357,26 @@ class TofInterpolator:
         # often have binning which can be anything (does not necessarily stop at 71ms).
         # Raising an error here would be too restrictive, and warnings would add noise
         # to the workflows.
-        for i, (name, values) in enumerate(
-            {'pulse_index': pulse_index, 'ltotal': ltotal}.items()
+        if np.any(pulse_index < self._pulse_edges[0]) or np.any(
+            pulse_index > self._pulse_edges[-1]
         ):
-            vmin = self._interpolator.grid[i][0]
-            vmax = self._interpolator.grid[i][-1]
-            if np.any(values < vmin) or np.any(values > vmax):
-                raise ValueError(
-                    "Some requested values are outside of lookup table bounds for "
-                    f"axis {i}: {name}, min: {vmin}, max: {vmax}."
-                )
+            raise ValueError(
+                "Some requested pulse_index values are outside of lookup table bounds: "
+                f"min: {self._pulse_edges[0]}, max: {self._pulse_edges[-1]}."
+            )
+        if np.any(ltotal < self._distance_edges[0]) or np.any(
+            ltotal > self._distance_edges[-1]
+        ):
+            raise ValueError(
+                "Some requested ltotal values are outside of lookup table bounds: "
+                f"min: {self._distance_edges[0]}, max: {self._distance_edges[-1]}."
+            )
+
         return sc.array(
             dims=out_dims,
-            values=self._interpolator((pulse_index, ltotal, event_time_offset)),
+            values=self._interpolator(
+                times=event_time_offset, distances=ltotal, pulse_indices=pulse_index
+            ),
             unit=self._time_unit,
         )
 
