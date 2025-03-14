@@ -10,6 +10,8 @@ from .types import SimulationResults
 
 def simulate_beamline(
     choppers: Mapping[str, DiskChopper],
+    source_position: sc.Variable,
+    *,
     neutrons: int = 1_000_000,
     pulses: int = 1,
     seed: int | None = None,
@@ -25,6 +27,9 @@ def simulate_beamline(
         A dict of DiskChopper objects representing the choppers in the beamline. See
         https://scipp.github.io/scippneutron/user-guide/chopper/processing-nexus-choppers.html#Build-DiskChopper
         for more information.
+    source_position:
+        A scalar variable with ``dtype=vector3`` that defines the source position.
+        Must be in the same coordinate system as the choppers' axle positions.
     neutrons:
         Number of neutrons to simulate.
     pulses:
@@ -45,7 +50,9 @@ def simulate_beamline(
             open=ch.slit_begin,
             close=ch.slit_end,
             phase=abs(ch.phase),
-            distance=ch.axle_position.fields.z,
+            distance=sc.norm(
+                ch.axle_position - source_position.to(unit=ch.axle_position.unit)
+            ),
             name=name,
         )
         for name, ch in choppers.items()
