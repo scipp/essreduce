@@ -117,7 +117,7 @@ class Interpolator:
         fill_value: float = np.nan,
     ):
         """
-        Interpolator for 3D regular grid data.
+        Interpolator for 3D regular grid data (Numba implementation).
 
         Parameters
         ----------

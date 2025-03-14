@@ -17,7 +17,7 @@ class Interpolator:
         **kwargs,
     ):
         """
-        Interpolator for 3D regular grid data.
+        Interpolator for 3D regular grid data (SciPy implementation).
 
         Parameters
         ----------
