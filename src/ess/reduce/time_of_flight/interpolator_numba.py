@@ -70,9 +70,9 @@ def interpolate(
             out[i] = fill_value
 
         else:
-            ix = int((xx - xmin) / dx)
-            iy = int((yy - ymin) / dy)
-            iz = int((zz - zmin) / dz)
+            ix = (xx - xmin) // dx
+            iy = (yy - ymin) // dy
+            iz = (zz - zmin) // dz
 
             y2 = y[iy + 1]
             y1 = y[iy]
