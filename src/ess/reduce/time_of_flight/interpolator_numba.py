@@ -54,6 +54,10 @@ def interpolate(
     dy = y[1] - ymin
     dz = z[1] - zmin
 
+    one_over_dx = 1.0 / dx
+    one_over_dy = 1.0 / dy
+    one_over_dz = 1.0 / dz
+
     for i in prange(npoints):
         xx = xp[i]
         yy = yp[i]
@@ -70,9 +74,9 @@ def interpolate(
             out[i] = fill_value
 
         else:
-            ix = int((xx - xmin) / dx)
-            iy = int((yy - ymin) / dy)
-            iz = int((zz - zmin) / dz)
+            ix = int((xx - xmin) * one_over_dx)
+            iy = int((yy - ymin) * one_over_dy)
+            iz = int((zz - zmin) * one_over_dz)
 
             y2 = y[iy + 1]
             y1 = y[iy]
@@ -90,16 +94,12 @@ def interpolate(
             a122 = values[iz + 1, iy + 1, ix]
             a222 = values[iz + 1, iy + 1, ix + 1]
 
-            x2mx1 = x2 - x1
-            y2my1 = y2 - y1
-            z2mz1 = z2 - z1
-
-            x2mxox2mx1 = (x2 - xx) / x2mx1
-            xmx1ox2mx1 = (xx - x1) / x2mx1
-            y2myoy2my1 = (y2 - yy) / y2my1
-            ymy1oy2my1 = (yy - y1) / y2my1
-            z2mzoz2mz1 = (z2 - zz) / z2mz1
-            zmz1oz2mz1 = (zz - z1) / z2mz1
+            x2mxox2mx1 = (x2 - xx) * one_over_dx
+            xmx1ox2mx1 = (xx - x1) * one_over_dx
+            y2myoy2my1 = (y2 - yy) * one_over_dy
+            ymy1oy2my1 = (yy - y1) * one_over_dy
+            z2mzoz2mz1 = (z2 - zz) * one_over_dz
+            zmz1oz2mz1 = (zz - z1) * one_over_dz
 
             out[i] = z2mzoz2mz1 * (
                 y2myoy2my1 * (x2mxox2mx1 * a111 + xmx1ox2mx1 * a211)
