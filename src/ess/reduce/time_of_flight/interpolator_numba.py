@@ -4,7 +4,7 @@ import numpy as np
 from numba import njit, prange
 
 
-@njit(boundscheck=False, cache=True, fastmath=True, parallel=True)
+@njit(boundscheck=False, cache=True, fastmath=False, parallel=True)
 def interpolate(
     x: np.ndarray,
     y: np.ndarray,
@@ -40,6 +40,9 @@ def interpolate(
     out:
         1D array where the interpolated values will be stored (size N).
     """
+    if not (len(xp) == len(yp) == len(zp) == len(out)):
+        raise ValueError("Inteprolator: all input arrays must have the same size.")
+
     npoints = len(xp)
     xmin = x[0]
     xmax = x[-1]

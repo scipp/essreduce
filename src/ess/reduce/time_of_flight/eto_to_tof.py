@@ -352,25 +352,6 @@ class TofInterpolator:
         pulse_index = pulse_index.values
         ltotal = ltotal.values
         event_time_offset = event_time_offset.values
-        # Check bounds for pulse_index and ltotal.
-        # We do not check the event_time_offset dimension because histogrammed monitors
-        # often have binning which can be anything (does not necessarily stop at 71ms).
-        # Raising an error here would be too restrictive, and warnings would add noise
-        # to the workflows.
-        if np.any(pulse_index < self._pulse_edges[0]) or np.any(
-            pulse_index > self._pulse_edges[-1]
-        ):
-            raise ValueError(
-                "Some requested pulse_index values are outside of lookup table bounds: "
-                f"min: {self._pulse_edges[0]}, max: {self._pulse_edges[-1]}."
-            )
-        if np.any(ltotal < self._distance_edges[0]) or np.any(
-            ltotal > self._distance_edges[-1]
-        ):
-            raise ValueError(
-                "Some requested ltotal values are outside of lookup table bounds: "
-                f"min: {self._distance_edges[0]}, max: {self._distance_edges[-1]}."
-            )
 
         return sc.array(
             dims=out_dims,
