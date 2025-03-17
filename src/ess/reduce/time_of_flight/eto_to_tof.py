@@ -408,7 +408,11 @@ def _time_of_flight_data_histogram(
     interp = TofInterpolator(lookup, distance_unit=ltotal.unit, time_unit=eto_unit)
 
     # Compute time-of-flight of the bin edges using the interpolator
-    tofs = interp(pulse_index=pulse_index, ltotal=ltotal, event_time_offset=etos)
+    tofs = interp(
+        pulse_index=pulse_index,
+        ltotal=ltotal.broadcast(sizes=etos.sizes),
+        event_time_offset=etos,
+    )
 
     return rebinned.assign_coords(tof=tofs)
 
