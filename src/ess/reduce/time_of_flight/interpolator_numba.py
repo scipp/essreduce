@@ -57,6 +57,7 @@ def interpolate(
     one_over_dx = 1.0 / dx
     one_over_dy = 1.0 / dy
     one_over_dz = 1.0 / dz
+    norm = one_over_dx * one_over_dy * one_over_dz
 
     for i in prange(npoints):
         xx = xp[i]
@@ -94,20 +95,22 @@ def interpolate(
             a122 = values[iz + 1, iy + 1, ix]
             a222 = values[iz + 1, iy + 1, ix + 1]
 
-            x2mxox2mx1 = (x2 - xx) * one_over_dx
-            xmx1ox2mx1 = (xx - x1) * one_over_dx
-            y2myoy2my1 = (y2 - yy) * one_over_dy
-            ymy1oy2my1 = (yy - y1) * one_over_dy
-            z2mzoz2mz1 = (z2 - zz) * one_over_dz
-            zmz1oz2mz1 = (zz - z1) * one_over_dz
-
-            out[i] = z2mzoz2mz1 * (
-                y2myoy2my1 * (x2mxox2mx1 * a111 + xmx1ox2mx1 * a211)
-                + ymy1oy2my1 * (x2mxox2mx1 * a121 + xmx1ox2mx1 * a221)
-            ) + zmz1oz2mz1 * (
-                y2myoy2my1 * (x2mxox2mx1 * a112 + xmx1ox2mx1 * a212)
-                + ymy1oy2my1 * (x2mxox2mx1 * a122 + xmx1ox2mx1 * a222)
-            )
+            x2mxx = x2 - xx
+            xxmx1 = xx - x1
+            y2myy = y2 - yy
+            yymy1 = yy - y1
+            out[i] = (
+                (z2 - zz)
+                * (
+                    y2myy * (x2mxx * a111 + xxmx1 * a211)
+                    + yymy1 * (x2mxx * a121 + xxmx1 * a221)
+                )
+                + (zz - z1)
+                * (
+                    y2myy * (x2mxx * a112 + xxmx1 * a212)
+                    + yymy1 * (x2mxx * a122 + xxmx1 * a222)
+                )
+            ) * norm
 
 
 class Interpolator:
