@@ -12,7 +12,7 @@ alabaster==1.0.0
     # via sphinx
 asttokens==3.0.0
     # via stack-data
-attrs==25.1.0
+attrs==25.3.0
     # via
     #   jsonschema
     #   referencing
@@ -34,9 +34,9 @@ comm==0.2.2
     # via
     #   ipykernel
     #   ipywidgets
-debugpy==1.8.12
+debugpy==1.8.13
     # via ipykernel
-decorator==5.1.1
+decorator==5.2.1
     # via ipython
 defusedxml==0.7.1
     # via nbconvert
@@ -46,6 +46,8 @@ docutils==0.21.2
     #   nbsphinx
     #   pydata-sphinx-theme
     #   sphinx
+exceptiongroup==1.2.2
+    # via ipython
 executing==2.2.0
     # via stack-data
 fastjsonschema==2.21.1
@@ -58,7 +60,7 @@ importlib-resources==6.5.2
     # via tof
 ipykernel==6.29.5
     # via -r docs.in
-ipython==8.32.0
+ipython==8.34.0
     # via
     #   -r docs.in
     #   ipykernel
@@ -67,7 +69,7 @@ ipywidgets==8.1.5
     # via -r docs.in
 jedi==0.19.2
     # via ipython
-jinja2==3.1.5
+jinja2==3.1.6
     # via
     #   myst-parser
     #   nbconvert
@@ -108,7 +110,7 @@ mdit-py-plugins==0.4.2
     # via myst-parser
 mdurl==0.1.2
     # via markdown-it-py
-mistune==3.1.1
+mistune==3.1.2
     # via nbconvert
 myst-parser==4.0.1
     # via -r docs.in
@@ -121,7 +123,7 @@ nbformat==5.10.4
     #   nbclient
     #   nbconvert
     #   nbsphinx
-nbsphinx==0.9.6
+nbsphinx==0.9.7
     # via -r docs.in
 nest-asyncio==1.6.0
     # via ipykernel
@@ -152,7 +154,7 @@ pygments==2.19.1
     #   sphinx
 pyyaml==6.0.2
     # via myst-parser
-pyzmq==26.2.1
+pyzmq==26.3.0
     # via
     #   ipykernel
     #   jupyter-client
@@ -162,7 +164,7 @@ referencing==0.36.2
     #   jsonschema-specifications
 requests==2.32.3
     # via sphinx
-rpds-py==0.22.3
+rpds-py==0.23.1
     # via
     #   jsonschema
     #   referencing
@@ -203,6 +205,8 @@ tinycss2==1.4.0
     # via bleach
 tof==25.2.0
     # via -r docs.in
+tomli==2.2.1
+    # via sphinx
 tornado==6.4.2
     # via
     #   ipykernel
