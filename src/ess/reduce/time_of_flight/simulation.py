@@ -9,9 +9,9 @@ from .types import SimulationResults
 
 
 def simulate_beamline(
+    *,
     choppers: Mapping[str, DiskChopper],
     source_position: sc.Variable,
-    *,
     neutrons: int = 1_000_000,
     pulses: int = 1,
     seed: int | None = None,
