@@ -16,7 +16,10 @@ sl = pytest.importorskip("sciline")
 @pytest.fixture(scope="module")
 def simulation_psc_choppers():
     return time_of_flight.simulate_beamline(
-        choppers=fakes.psc_choppers(), neutrons=500_000, seed=111
+        choppers=fakes.psc_choppers(),
+        source_position=fakes.source_position(),
+        neutrons=500_000,
+        seed=111,
     )
 
 
@@ -24,6 +27,7 @@ def simulation_psc_choppers():
 def simulation_pulse_skipping():
     return time_of_flight.simulate_beamline(
         choppers=fakes.pulse_skipping_choppers(),
+        source_position=fakes.source_position(),
         neutrons=500_000,
         seed=111,
         pulses=1,
@@ -178,7 +182,10 @@ def test_unwrap_with_no_choppers() -> None:
         distance=distance,
         choppers=choppers,
         simulation=time_of_flight.simulate_beamline(
-            choppers=choppers, neutrons=300_000, seed=1234
+            choppers=choppers,
+            source_position=fakes.source_position(),
+            neutrons=300_000,
+            seed=1234,
         ),
         seed=144,
         pulse_stride=1,
@@ -251,7 +258,11 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
     choppers["pulse_skipping"].phase.value += 180.0
 
     sim = time_of_flight.simulate_beamline(
-        choppers=choppers, neutrons=500_000, seed=111, pulses=2
+        choppers=choppers,
+        source_position=fakes.source_position(),
+        neutrons=500_000,
+        seed=111,
+        pulses=2,
     )
 
     _do_unwrap_test_events(
@@ -300,7 +311,11 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
     )
 
     sim = time_of_flight.simulate_beamline(
-        choppers=choppers, neutrons=500_000, seed=222, pulses=2
+        choppers=choppers,
+        source_position=fakes.source_position(),
+        neutrons=500_000,
+        seed=222,
+        pulses=2,
     )
 
     _do_unwrap_test_events(
@@ -331,7 +346,11 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     mon, ref = beamline.get_monitor("detector")
 
     sim = time_of_flight.simulate_beamline(
-        choppers=choppers, neutrons=300_000, seed=1234, pulses=2
+        choppers=choppers,
+        source_position=fakes.source_position(),
+        neutrons=300_000,
+        seed=1234,
+        pulses=2,
     )
 
     pl = sl.Pipeline(
@@ -392,7 +411,11 @@ def test_pulse_skipping_stride_3() -> None:
     choppers["pulse_skipping"].frequency.value = -14.0 / 3.0
 
     sim = time_of_flight.simulate_beamline(
-        choppers=choppers, neutrons=500_000, seed=111, pulses=1
+        choppers=choppers,
+        source_position=fakes.source_position(),
+        neutrons=500_000,
+        seed=111,
+        pulses=1,
     )
 
     _do_unwrap_test_events(
