@@ -183,7 +183,7 @@ def test_unwrap_with_no_choppers() -> None:
         choppers=choppers,
         simulation=time_of_flight.simulate_beamline(
             choppers=choppers,
-            source_position=sc.vector([0, 0, 0], unit='m'),
+            source_position=fakes.source_position(),
             neutrons=300_000,
             seed=1234,
         ),
