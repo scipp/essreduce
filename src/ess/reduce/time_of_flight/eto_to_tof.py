@@ -617,7 +617,14 @@ def resample_tof_data(da: TofData) -> ResampledTofData:
         Histogrammed data with the time-of-flight coordinate.
     """
     dim = next(iter(set(da.dims) & {"time_of_flight", "tof"}))
-    events = to_events(da.rename_dims({dim: "tof"}), "event")
+    data = da.rename_dims({dim: "tof"}).drop_coords(
+        [
+            name
+            for name in da.coords
+            if (da.coords[name].dims) and (da.coords.is_edges(name)) and (name != "tof")
+        ]
+    )
+    events = to_events(data, "event")
 
     # Define a new bin width, close to the original bin width.
     # TODO: this could be a workflow parameter
