@@ -210,6 +210,19 @@ def make_target(accum_a: AccumA, accum_b: AccumB) -> Target:
     return Target(accum_a / accum_b)
 
 
+def test_StreamProcessor_with_empty_workflow_and_targets() -> None:
+    workflow = sciline.Pipeline()
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=workflow,
+        dynamic_keys=(int,),
+        target_keys=(),
+        accumulators=(),
+    )
+    streaming_wf.accumulate({int: 1})
+    result = streaming_wf.finalize()
+    assert result == {}
+
+
 def test_StreamProcessor_overall_behavior() -> None:
     base_workflow = sciline.Pipeline(
         (make_static_a, make_accum_a, make_accum_b, make_target)
