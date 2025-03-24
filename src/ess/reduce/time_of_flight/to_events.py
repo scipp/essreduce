@@ -34,7 +34,7 @@ def to_events(
     rng = np.random.default_rng()
     event_coords = {}
     edge_dims = []
-    midp_dims = set()
+    midp_dims = set(da.dims)
     midp_coord_names = []
     # Separate bin-edge and midpoints coords
     for name in da.coords:
@@ -43,9 +43,9 @@ def to_events(
         if is_edges:
             if name in dims:
                 edge_dims.append(name)
+                midp_dims -= {name}
         else:
             midp_coord_names.append(name)
-            midp_dims.update(set(dims))
 
     edge_sizes = {dim: da.sizes[da.coords[dim].dim] for dim in edge_dims}
     for dim in edge_dims:
