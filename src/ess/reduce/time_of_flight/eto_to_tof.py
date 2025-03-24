@@ -618,11 +618,7 @@ def resample_tof_data(da: TofData) -> ResampledTofData:
     """
     dim = next(iter(set(da.dims) & {"time_of_flight", "tof"}))
     data = da.rename_dims({dim: "tof"}).drop_coords(
-        [
-            name
-            for name in da.coords
-            if (da.coords[name].dims) and (da.coords.is_edges(name)) and (name != "tof")
-        ]
+        [name for name in da.coords if name != "tof"]
     )
     events = to_events(data, "event")
 
@@ -631,10 +627,11 @@ def resample_tof_data(da: TofData) -> ResampledTofData:
     coord = da.coords["tof"]
     bin_width = (coord[dim, 1:] - coord[dim, :-1]).nanmedian()
     rehist = events.hist(tof=bin_width)
-    for key, var in da.coords.items():
-        if dim not in var.dims:
-            rehist.coords[key] = var
-    return ResampledTofData(rehist)
+    return ResampledTofData(
+        rehist.assign_coords(
+            {key: var for key, var in da.coords.items() if dim not in var.dims}
+        )
+    )
 
 
 def default_parameters() -> dict:
