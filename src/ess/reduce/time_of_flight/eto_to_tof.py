@@ -617,17 +617,21 @@ def resample_tof_data(da: TofData) -> ResampledTofData:
         Histogrammed data with the time-of-flight coordinate.
     """
     dim = next(iter(set(da.dims) & {"time_of_flight", "tof"}))
-    events = to_events(da.rename_dims({dim: "tof"}), "event")
+    data = da.rename_dims({dim: "tof"}).drop_coords(
+        [name for name in da.coords if name != "tof"]
+    )
+    events = to_events(data, "event")
 
     # Define a new bin width, close to the original bin width.
     # TODO: this could be a workflow parameter
     coord = da.coords["tof"]
     bin_width = (coord[dim, 1:] - coord[dim, :-1]).nanmedian()
     rehist = events.hist(tof=bin_width)
-    for key, var in da.coords.items():
-        if dim not in var.dims:
-            rehist.coords[key] = var
-    return ResampledTofData(rehist)
+    return ResampledTofData(
+        rehist.assign_coords(
+            {key: var for key, var in da.coords.items() if dim not in var.dims}
+        )
+    )
 
 
 def default_parameters() -> dict:
