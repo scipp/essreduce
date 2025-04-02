@@ -15,14 +15,12 @@ options:
 - `'xy_plane'`: Project the data onto the x-y plane, i.e., perpendicular to the beam.
 - `'cylinder_mantle_z'`: Project the data onto the mantle of a cylinder aligned with the
    z-axis.
-- `LogicalView`: Not a projection in the traditional sense, but a way to select and
-  flatten dimensions of the data.
+- A callable, e.g., to select and flatten dimensions of the data.
 """
 
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
 from math import ceil
 from typing import Literal, NewType
 
@@ -138,44 +136,6 @@ class Histogrammer:
         """
         replicated = sc.concat([var] * self.replicas, dim=self._replica_dim)
         return self._hist(replicated, coords=self._coords) / self.replicas
-
-
-@dataclass
-class LogicalView:
-    """
-    Logical view of a multi-dimensional detector.
-
-    Instances can be used as a "projection" function for a detector view.
-
-    Parameters
-    ----------
-    fold:
-        Dimensions to fold. This is useful is the raw data has a single dimension that
-        corresponds to multiple dimensions in the logical view.
-    transpose:
-        Dimensions to transpose. This is useful for reordering dimensions.
-    select:
-        Dimensions with associated index to select from the data. This extracts a slice
-        of the data for each given dimension.
-    flatten:
-        Dimensions to flatten.
-    """
-
-    fold: dict[str, int] | None = None
-    transpose: tuple[str, ...] | None = None
-    select: dict[str, int] = field(default_factory=dict)
-    flatten: dict[str, list[str]] = field(default_factory=dict)
-
-    def __call__(self, da: sc.DataArray) -> sc.DataArray:
-        if self.fold is not None:
-            da = da.fold(da.dim, sizes=self.fold)
-        if self.transpose is not None:
-            da = da.transpose(self.transpose)
-        for dim, index in self.select.items():
-            da = da[dim, index]
-        for to, dims in self.flatten.items():
-            da = da.flatten(dims, to=to)
-        return da.copy()
 
 
 class Detector:
@@ -295,7 +255,7 @@ class RollingDetectorView(Detector):
         else:
             indices = sc.ones(sizes=self.data.sizes, dtype='int32', unit=None)
             indices = sc.cumsum(indices, mode='exclusive')
-            if isinstance(self._projection, LogicalView):
+            if self._projection is not None:
                 indices = self._projection(indices)
         return roi.ROIFilter(indices=indices, norm=norm)
 
@@ -357,17 +317,23 @@ class RollingDetectorView(Detector):
         )
 
     @staticmethod
-    def from_detector_and_logical_view(
-        detector: CalibratedDetector[SampleRun],
-        window: RollingDetectorViewWindow,
-        projection: LogicalView,
-    ) -> RollingDetectorView:
-        """Helper for constructing via a Sciline workflow."""
-        return RollingDetectorView(
-            detector_number=detector.coords['detector_number'],
-            window=window,
-            projection=projection,
-        )
+    def from_detector_with_projection(
+        projection: Callable[[sc.DataArray], sc.DataArray] | None,
+    ) -> Callable[
+        [CalibratedDetector[SampleRun], RollingDetectorViewWindow], RollingDetectorView
+    ]:
+        def factory(
+            detector: CalibratedDetector[SampleRun],
+            window: RollingDetectorViewWindow,
+        ) -> RollingDetectorView:
+            """Helper for constructing via a Sciline workflow."""
+            return RollingDetectorView(
+                detector_number=detector.coords['detector_number'],
+                window=window,
+                projection=projection,
+            )
+
+        return factory
 
     @staticmethod
     def from_nexus(
@@ -375,7 +341,9 @@ class RollingDetectorView(Detector):
         *,
         detector_name: str,
         window: int,
-        projection: Literal['xy_plane', 'cylinder_mantle_z'] | LogicalView,
+        projection: Literal['xy_plane', 'cylinder_mantle_z']
+        | Callable[[sc.DataArray], sc.DataArray]
+        | None = None,
         resolution: dict[str, int] | None = None,
         pixel_noise: Literal['cylindrical'] | sc.Variable | None = None,
     ) -> RollingDetectorView:
@@ -396,10 +364,12 @@ class RollingDetectorView(Detector):
             Size of the rolling window.
         projection:
             Projection to use for the detector data. This can be a string selecting a
-            predefined projection or a LogicalView instance.
+            predefined projection or a function that takes a DataArray and returns a
+            DataArray. The predefined projections are 'xy_plane' and
+            'cylinder_mantle_z'.
         resolution:
-            Resolution to use for histogramming the detector data. Not required when the
-            projection is a LogicalView.
+            Resolution to use for histogramming the detector data. Only required for
+            'xy_plane' and 'cylinder_mantle_z' projections.
         pixel_noise:
             Noise to add to the pixel positions. This can be a scalar value to add
             Gaussian noise to the pixel positions or the string 'cylindrical' to add
@@ -413,13 +383,7 @@ class RollingDetectorView(Detector):
             noise_replica_count = 16
         wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
         wf[RollingDetectorViewWindow] = window
-        if isinstance(projection, LogicalView):
-            wf[LogicalView] = projection
-            wf[NeXusTransformation[snx.NXdetector, SampleRun]] = NeXusTransformation[
-                snx.NXdetector, SampleRun
-            ](sc.scalar(1))
-            wf.insert(RollingDetectorView.from_detector_and_logical_view)
-        elif projection == 'cylinder_mantle_z':
+        if projection == 'cylinder_mantle_z':
             wf.insert(make_cylinder_mantle_coords)
             wf.insert(RollingDetectorView.from_detector_and_histogrammer)
             wf[DetectorViewResolution] = resolution
@@ -428,7 +392,12 @@ class RollingDetectorView(Detector):
             wf.insert(RollingDetectorView.from_detector_and_histogrammer)
             wf[DetectorViewResolution] = resolution
         else:
-            raise ValueError(f"Invalid {projection=}.")
+            wf[NeXusTransformation[snx.NXdetector, SampleRun]] = NeXusTransformation[
+                snx.NXdetector, SampleRun
+            ](sc.scalar(1))
+            wf.insert(
+                RollingDetectorView.from_detector_with_projection(projection=projection)
+            )
         if isinstance(pixel_noise, sc.Variable):
             wf.insert(gaussian_position_noise)
             wf[PositionNoiseSigma] = pixel_noise

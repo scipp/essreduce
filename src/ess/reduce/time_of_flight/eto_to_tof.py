@@ -14,6 +14,10 @@ import scipp as sc
 from scipp._scipp.core import _bins_no_validate
 from scippneutron._utils import elem_unit
 
+try:
+    from .interpolator_numba import Interpolator as InterpolatorImpl
+except ImportError:
+    from .interpolator_scipy import Interpolator as InterpolatorImpl
 from .to_events import to_events
 from .types import (
     DistanceResolution,
@@ -284,38 +288,78 @@ def compute_tof_lookup_table(
     )
 
 
-def _make_tof_interpolator(
-    lookup: sc.DataArray, distance_unit: str, time_unit: str
-) -> Callable:
-    from scipy.interpolate import RegularGridInterpolator
+class TofInterpolator:
+    def __init__(self, lookup: sc.DataArray, distance_unit: str, time_unit: str):
+        self._distance_unit = distance_unit
+        self._time_unit = time_unit
 
-    # TODO: to make use of multi-threading, we could write our own interpolator.
-    # This should be simple enough as we are making the bins linspace, so computing
-    # bin indices is fast.
+        # In the pulse dimension, it could be that for a given event_time_offset and
+        # distance, a tof value is finite in one pulse and NaN in the other.
+        # When using the bilinear interpolation, even if the value of the requested
+        # point is exactly 0 or 1 (in the case of pulse_stride=2), the interpolator
+        # will still use all 4 corners surrounding the point. This means that if one of
+        # the corners is NaN, the result will be NaN.
+        # Here, we use a trick where we duplicate the lookup values in the 'pulse'
+        # dimension so that the interpolator has values on bin edges for that dimension.
+        # The interpolator raises an error if axes coordinates are not strictly
+        # monotonic, so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of
+        # pulse_stride=2. Instead we use [-0.25, 0.25, 0.75, 1.25].
+        base_grid = np.arange(float(lookup.sizes["pulse"]))
+        self._pulse_edges = np.sort(
+            np.concatenate([base_grid - 0.25, base_grid + 0.25])
+        )
 
-    # In the pulse dimension, it could be that for a given event_time_offset and
-    # distance, a tof value is finite in one pulse and NaN in the other.
-    # When using the bilinear interpolation, even if the value of the requested point is
-    # exactly 0 or 1 (in the case of pulse_stride=2), the interpolator will still
-    # use all 4 corners surrounding the point. This means that if one of the corners
-    # is NaN, the result will be NaN.
-    # Here, we use a trick where we duplicate the lookup values in the 'pulse' dimension
-    # so that the interpolator has values on bin edges for that dimension.
-    # The interpolator raises an error if axes coordinates are not strictly monotonic,
-    # so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of pulse_stride=2.
-    # Instead we use [-0.25, 0.25, 0.75, 1.25].
-    base_grid = np.arange(float(lookup.sizes["pulse"]))
-    return RegularGridInterpolator(
-        (
-            np.sort(np.concatenate([base_grid - 0.25, base_grid + 0.25])),
-            lookup.coords["distance"].to(unit=distance_unit, copy=False).values,
-            lookup.coords["event_time_offset"].to(unit=time_unit, copy=False).values,
-        ),
-        np.repeat(lookup.data.to(unit=time_unit, copy=False).values, 2, axis=0),
-        method="linear",
-        bounds_error=False,
-        fill_value=np.nan,
-    )
+        self._time_edges = (
+            lookup.coords["event_time_offset"]
+            .to(unit=self._time_unit, copy=False)
+            .values
+        )
+        self._distance_edges = (
+            lookup.coords["distance"].to(unit=distance_unit, copy=False).values
+        )
+
+        self._interpolator = InterpolatorImpl(
+            time_edges=self._time_edges,
+            distance_edges=self._distance_edges,
+            pulse_edges=self._pulse_edges,
+            values=np.repeat(
+                lookup.data.to(unit=self._time_unit, copy=False).values, 2, axis=0
+            ),
+        )
+
+    def __call__(
+        self,
+        pulse_index: sc.Variable,
+        ltotal: sc.Variable,
+        event_time_offset: sc.Variable,
+    ) -> sc.Variable:
+        if pulse_index.unit not in ("", None):
+            raise sc.UnitError(
+                "pulse_index must have unit dimensionless or None, "
+                f"but got unit: {pulse_index.unit}."
+            )
+        if ltotal.unit != self._distance_unit:
+            raise sc.UnitError(
+                f"ltotal must have unit: {self._distance_unit}, "
+                f"but got unit: {ltotal.unit}."
+            )
+        if event_time_offset.unit != self._time_unit:
+            raise sc.UnitError(
+                f"event_time_offset must have unit: {self._time_unit}, "
+                f"but got unit: {event_time_offset.unit}."
+            )
+        out_dims = event_time_offset.dims
+        pulse_index = pulse_index.values
+        ltotal = ltotal.values
+        event_time_offset = event_time_offset.values
+
+        return sc.array(
+            dims=out_dims,
+            values=self._interpolator(
+                times=event_time_offset, distances=ltotal, pulse_indices=pulse_index
+            ),
+            unit=self._time_unit,
+        )
 
 
 def _time_of_flight_data_histogram(
@@ -327,7 +371,8 @@ def _time_of_flight_data_histogram(
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
     # it may be called 'tof'.
     key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof"}))
-    eto_unit = da.coords[key].unit
+    raw_eto = da.coords[key].to(dtype=float, copy=False)
+    eto_unit = raw_eto.unit
     pulse_period = pulse_period.to(unit=eto_unit)
 
     # In histogram mode, because there is a wrap around at the end of the pulse, we
@@ -335,9 +380,7 @@ def _time_of_flight_data_histogram(
     # with one finite left edge and a NaN right edge (it becomes NaN as it would be
     # outside the range of the lookup table).
     new_bins = sc.sort(
-        sc.concat(
-            [da.coords[key], sc.scalar(0.0, unit=eto_unit), pulse_period], dim=key
-        ),
+        sc.concat([raw_eto, sc.scalar(0.0, unit=eto_unit), pulse_period], dim=key),
         key=key,
     )
     rebinned = da.rebin({key: new_bins})
@@ -360,16 +403,14 @@ def _time_of_flight_data_histogram(
     )
     pulse_index = sc.zeros(sizes=etos.sizes)
 
-    # Create 2D interpolator
-    interp = _make_tof_interpolator(
-        lookup, distance_unit=ltotal.unit, time_unit=eto_unit
-    )
+    # Create linear interpolator
+    interp = TofInterpolator(lookup, distance_unit=ltotal.unit, time_unit=eto_unit)
 
     # Compute time-of-flight of the bin edges using the interpolator
-    tofs = sc.array(
-        dims=etos.dims,
-        values=interp((pulse_index.values, ltotal.values, etos.values)),
-        unit=eto_unit,
+    tofs = interp(
+        pulse_index=pulse_index,
+        ltotal=ltotal.broadcast(sizes=etos.sizes),
+        event_time_offset=etos,
     )
 
     return rebinned.assign_coords(tof=tofs)
@@ -380,7 +421,7 @@ def _guess_pulse_stride_offset(
     ltotal: sc.Variable,
     event_time_offset: sc.Variable,
     pulse_stride: int,
-    interp: Callable,
+    interp: TofInterpolator,
 ) -> int:
     """
     Using the minimum ``event_time_zero`` to calculate a reference time when computing
@@ -408,21 +449,29 @@ def _guess_pulse_stride_offset(
     pulse_stride:
         Stride of used pulses.
     interp:
-        2D interpolator for the lookup table.
+        Interpolator for the lookup table.
     """
     tofs = {}
     # Choose a few random events to compute the time-of-flight
     inds = np.random.choice(
         len(event_time_offset), min(5000, len(event_time_offset)), replace=False
     )
-    pulse_index_values = pulse_index.values[inds]
-    ltotal_values = ltotal.values[inds]
-    etos_values = event_time_offset.values[inds]
+    pulse_index = sc.array(
+        dims=pulse_index.dims,
+        values=pulse_index.values[inds],
+        unit=pulse_index.unit,
+    )
+    ltotal = sc.array(dims=ltotal.dims, values=ltotal.values[inds], unit=ltotal.unit)
+    etos = sc.array(
+        dims=event_time_offset.dims,
+        values=event_time_offset.values[inds],
+        unit=event_time_offset.unit,
+    )
     for i in range(pulse_stride):
-        pulse_inds = (pulse_index_values + i) % pulse_stride
-        tofs[i] = interp((pulse_inds, ltotal_values, etos_values))
+        pulse_inds = (pulse_index + i) % pulse_stride
+        tofs[i] = interp(pulse_index=pulse_inds, ltotal=ltotal, event_time_offset=etos)
     # Find the entry in the list with the least number of nan values
-    return sorted(tofs, key=lambda x: np.isnan(tofs[x]).sum())[0]
+    return sorted(tofs, key=lambda x: sc.isnan(tofs[x]).sum())[0]
 
 
 def _time_of_flight_data_events(
@@ -433,13 +482,11 @@ def _time_of_flight_data_events(
     pulse_stride: int,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
-    etos = da.bins.coords["event_time_offset"]
+    etos = da.bins.coords["event_time_offset"].to(dtype=float, copy=False)
     eto_unit = elem_unit(etos)
 
-    # Create 2D interpolator
-    interp = _make_tof_interpolator(
-        lookup, distance_unit=ltotal.unit, time_unit=eto_unit
-    )
+    # Create linear interpolator
+    interp = TofInterpolator(lookup, distance_unit=ltotal.unit, time_unit=eto_unit)
 
     # Operate on events (broadcast distances to all events)
     ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
@@ -491,11 +538,7 @@ def _time_of_flight_data_events(
         pulse_index %= pulse_stride
 
     # Compute time-of-flight for all neutrons using the interpolator
-    tofs = sc.array(
-        dims=etos.dims,
-        values=interp((pulse_index.values, ltotal.values, etos.values)),
-        unit=eto_unit,
-    )
+    tofs = interp(pulse_index=pulse_index, ltotal=ltotal, event_time_offset=etos)
 
     parts = da.bins.constituents
     parts["data"] = tofs
@@ -573,17 +616,21 @@ def resample_tof_data(da: TofData) -> ResampledTofData:
         Histogrammed data with the time-of-flight coordinate.
     """
     dim = next(iter(set(da.dims) & {"time_of_flight", "tof"}))
-    events = to_events(da.rename_dims({dim: "tof"}), "event")
+    data = da.rename_dims({dim: "tof"}).drop_coords(
+        [name for name in da.coords if name != "tof"]
+    )
+    events = to_events(data, "event")
 
     # Define a new bin width, close to the original bin width.
     # TODO: this could be a workflow parameter
     coord = da.coords["tof"]
     bin_width = (coord[dim, 1:] - coord[dim, :-1]).nanmedian()
     rehist = events.hist(tof=bin_width)
-    for key, var in da.coords.items():
-        if dim not in var.dims:
-            rehist.coords[key] = var
-    return ResampledTofData(rehist)
+    return ResampledTofData(
+        rehist.assign_coords(
+            {key: var for key, var in da.coords.items() if dim not in var.dims}
+        )
+    )
 
 
 def default_parameters() -> dict:

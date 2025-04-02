@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+import os
 import sys
 from contextlib import contextmanager
 from io import BytesIO
@@ -632,7 +633,7 @@ def compute_component_position_returns_input_if_no_depends_on() -> None:
 # h5py cannot open files on these systems with file locks.
 # We cannot reasonably emulate this within Python tests.
 # So the following tests only check the behaviour on a basic level.
-# The tests use the private `_open_nexus_file` directly to focus on what matters.
+# The tests use the private `open_nexus_file` directly to focus on what matters.
 #
 # A file may already be open in this or another process.
 # We should still be able to open it
@@ -651,74 +652,76 @@ def compute_component_position_returns_input_if_no_depends_on() -> None:
     ],
 )
 def test_open_nexus_file_multiple_times(tmp_path: Path, locks: tuple[Any, Any]) -> None:
-    from ess.reduce.nexus._nexus_loader import _open_nexus_file
+    from ess.reduce.nexus._nexus_loader import open_nexus_file
 
     path = FilePath(tmp_path / "file.nxs")
     with snx.File(path, "w"):
         pass
-    with _open_nexus_file(path, locking=locks[0]) as f1:
-        with _open_nexus_file(path, locking=locks[1]) as f2:
+    with open_nexus_file(path, locking=locks[0]) as f1:
+        with open_nexus_file(path, locking=locks[1]) as f2:
             assert f1.name == f2.name
+
+
+def _in_conda_env():
+    return 'CONDA_PREFIX' in os.environ
+
+
+def _test_open_nexus_file_with_mismatched_locking(
+    tmp_path: Path, locks: tuple[Any, Any]
+) -> None:
+    from ess.reduce.nexus._nexus_loader import open_nexus_file
+
+    path = FilePath(tmp_path / "file.nxs")
+    with snx.File(path, "w"):
+        pass
+
+    with open_nexus_file(path, locking=locks[0]):
+        with pytest.raises(OSError, match="flag values don't match"):
+            _ = open_nexus_file(path, locking=locks[1])
+
+
+@pytest.mark.skipif(
+    sys.platform in ("darwin", "win32")
+    or (sys.platform == "linux" and _in_conda_env()),
+    reason="HDF5 has different file locking flags on MacOS, Windows and Linux(conda)",
+)
+@pytest.mark.parametrize(
+    "locks",
+    [
+        (True, None),
+        (None, True),
+        # This could be supported, but it could cause problems because the first
+        # user expects the file to be locked.
+        (True, NoLockingIfNeeded),
+        # Same as above but with roles reversed:
+        (NoLockingIfNeeded, True),
+    ],
+)
+def test_open_nexus_file_with_mismatched_locking_pypi_linux(
+    tmp_path: Path, locks: tuple[Any, Any]
+) -> None:
+    _test_open_nexus_file_with_mismatched_locking(tmp_path, locks)
 
 
 @pytest.mark.parametrize(
     "locks",
     [
         (True, False),
-        pytest.param(
-            (True, None),
-            marks=pytest.mark.skipif(
-                sys.platform in ("darwin", "win32"),
-                reason="MacOS and Windows file locking behaves differently",
-            ),
-        ),
         (False, True),
         (False, None),
         (None, False),
-        pytest.param(
-            (None, True),
-            marks=pytest.mark.skipif(
-                sys.platform in ("darwin", "win32"),
-                reason="MacOS and Windows file locking behaves differently",
-            ),
-        ),
         # On a read-only filesystem, this would work:
         (NoLockingIfNeeded, False),
-        # This could be supported, but it could cause problems because the first
-        # user expects the file to be locked.
-        pytest.param(
-            (True, NoLockingIfNeeded),
-            marks=pytest.mark.skipif(
-                sys.platform in ("darwin", "win32"),
-                reason="MacOS and Windows file locking behaves differently",
-            ),
-        ),
-        # Same as above but with roles reversed:
-        pytest.param(
-            (NoLockingIfNeeded, True),
-            marks=pytest.mark.skipif(
-                sys.platform in ("darwin", "win32"),
-                reason="MacOS and Windows file locking behaves differently",
-            ),
-        ),
     ],
 )
-def test_open_nexus_file_with_mismatched_locking(
+def test_open_nexus_file_with_mismatched_locking_all(
     tmp_path: Path, locks: tuple[Any, Any]
 ) -> None:
-    from ess.reduce.nexus._nexus_loader import _open_nexus_file
-
-    path = FilePath(tmp_path / "file.nxs")
-    with snx.File(path, "w"):
-        pass
-
-    with _open_nexus_file(path, locking=locks[0]):
-        with pytest.raises(OSError, match="flag values don't match"):
-            _ = _open_nexus_file(path, locking=locks[1])
+    _test_open_nexus_file_with_mismatched_locking(tmp_path, locks)
 
 
 def test_open_nonexisting_file_raises_filenotfounderror():
-    from ess.reduce.nexus._nexus_loader import _open_nexus_file
+    from ess.reduce.nexus._nexus_loader import open_nexus_file
 
     with pytest.raises(FileNotFoundError):
-        _open_nexus_file(nexus.types.FilePath(Path("doesnotexist.hdf")))
+        open_nexus_file(nexus.types.FilePath(Path("doesnotexist.hdf")))
