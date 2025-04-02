@@ -430,7 +430,8 @@ def test_pulse_skipping_unwrap_histogram_mode(simulation_pulse_skipping) -> None
     )
 
 
-def test_unwrap_int32(simulation_psc_choppers) -> None:
+@pytest.mark.parametrize("dtype", ["int32", "int64"])
+def test_unwrap_int(dtype, simulation_psc_choppers) -> None:
     pl, ref = _make_workflow_event_mode(
         distance=sc.scalar(80.0, unit="m"),
         choppers=fakes.psc_choppers(),
@@ -443,7 +444,7 @@ def test_unwrap_int32(simulation_psc_choppers) -> None:
 
     mon = pl.compute(time_of_flight.RawData).copy()
     mon.bins.coords["event_time_offset"] = mon.bins.coords["event_time_offset"].to(
-        dtype="int32", unit="ns"
+        dtype=dtype, unit="ns"
     )
     pl[time_of_flight.RawData] = mon
 
