@@ -98,30 +98,7 @@ def _make_workflow_histogram_mode(
     return pl, ref
 
 
-def _do_unwrap_test_events(
-    distance,
-    choppers,
-    simulation,
-    seed,
-    pulse_stride,
-    pulse_stride_offset,
-    error_threshold,
-    percentile,
-    diff_threshold,
-    rtol,
-):
-    pl, ref = _make_workflow_event_mode(
-        distance=distance,
-        choppers=choppers,
-        simulation=simulation,
-        seed=seed,
-        pulse_stride=pulse_stride,
-        pulse_stride_offset=pulse_stride_offset,
-        error_threshold=error_threshold,
-    )
-
-    tofs = pl.compute(time_of_flight.TofData)
-
+def _validate_result_events(tofs, ref, percentile, diff_threshold, rtol):
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
@@ -139,27 +116,7 @@ def _do_unwrap_test_events(
     assert sc.isclose(ref.data.sum(), nevents, rtol=sc.scalar(rtol))
 
 
-def _do_unwrap_test_histogram_mode(
-    dim,
-    distance,
-    choppers,
-    simulation,
-    seed,
-    pulse_stride,
-    percentile,
-    diff_threshold,
-    rtol,
-):
-    pl, ref = _make_workflow_histogram_mode(
-        dim=dim,
-        distance=distance,
-        choppers=choppers,
-        simulation=simulation,
-        seed=seed,
-        pulse_stride=pulse_stride,
-    )
-
-    tofs = pl.compute(time_of_flight.ResampledTofData)
+def _validate_result_histogram_mode(tofs, ref, percentile, diff_threshold, rtol):
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
     ref = ref.hist(wavelength=wavs.coords["wavelength"])
@@ -178,7 +135,7 @@ def test_unwrap_with_no_choppers() -> None:
     distance = sc.scalar(10.0, unit="m")
     choppers = {}
 
-    _do_unwrap_test_events(
+    pl, ref = _make_workflow_event_mode(
         distance=distance,
         choppers=choppers,
         simulation=time_of_flight.simulate_beamline(
@@ -191,9 +148,12 @@ def test_unwrap_with_no_choppers() -> None:
         pulse_stride=1,
         pulse_stride_offset=0,
         error_threshold=1.0,
-        percentile=96,
-        diff_threshold=1.0,
-        rtol=0.02,
+    )
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    _validate_result_events(
+        tofs=tofs, ref=ref, percentile=96, diff_threshold=1.0, rtol=0.02
     )
 
 
@@ -203,7 +163,7 @@ def test_unwrap_with_no_choppers() -> None:
 # At 108m, events are split between the third and fourth pulse.
 @pytest.mark.parametrize("dist", [30.0, 60.0, 80.0, 108.0])
 def test_standard_unwrap(dist, simulation_psc_choppers) -> None:
-    _do_unwrap_test_events(
+    pl, ref = _make_workflow_event_mode(
         distance=sc.scalar(dist, unit="m"),
         choppers=fakes.psc_choppers(),
         simulation=simulation_psc_choppers,
@@ -211,9 +171,12 @@ def test_standard_unwrap(dist, simulation_psc_choppers) -> None:
         pulse_stride=1,
         pulse_stride_offset=0,
         error_threshold=0.1,
-        percentile=100,
-        diff_threshold=0.02,
-        rtol=0.05,
+    )
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    _validate_result_events(
+        tofs=tofs, ref=ref, percentile=100, diff_threshold=0.02, rtol=0.05
     )
 
 
@@ -224,22 +187,25 @@ def test_standard_unwrap(dist, simulation_psc_choppers) -> None:
 @pytest.mark.parametrize("dist", [30.0, 60.0, 80.0, 108.0])
 @pytest.mark.parametrize("dim", ["time_of_flight", "tof"])
 def test_standard_unwrap_histogram_mode(dist, dim, simulation_psc_choppers) -> None:
-    _do_unwrap_test_histogram_mode(
+    pl, ref = _make_workflow_histogram_mode(
         dim=dim,
         distance=sc.scalar(dist, unit="m"),
         choppers=fakes.psc_choppers(),
         simulation=simulation_psc_choppers,
         seed=37,
         pulse_stride=1,
-        percentile=96,
-        diff_threshold=0.3,
-        rtol=0.05,
+    )
+
+    tofs = pl.compute(time_of_flight.ResampledTofData)
+
+    _validate_result_histogram_mode(
+        tofs=tofs, ref=ref, percentile=96, diff_threshold=0.3, rtol=0.05
     )
 
 
 @pytest.mark.parametrize("dist", [60.0, 100.0])
 def test_pulse_skipping_unwrap(dist, simulation_pulse_skipping) -> None:
-    _do_unwrap_test_events(
+    pl, ref = _make_workflow_event_mode(
         distance=sc.scalar(dist, unit="m"),
         choppers=fakes.pulse_skipping_choppers(),
         simulation=simulation_pulse_skipping,
@@ -247,9 +213,12 @@ def test_pulse_skipping_unwrap(dist, simulation_pulse_skipping) -> None:
         pulse_stride=2,
         pulse_stride_offset=1,
         error_threshold=0.1,
-        percentile=100,
-        diff_threshold=0.1,
-        rtol=0.05,
+    )
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    _validate_result_events(
+        tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
     )
 
 
@@ -265,7 +234,7 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
         pulses=2,
     )
 
-    _do_unwrap_test_events(
+    pl, ref = _make_workflow_event_mode(
         distance=sc.scalar(100.0, unit="m"),
         choppers=choppers,
         simulation=sim,
@@ -273,9 +242,12 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
         pulse_stride=2,
         pulse_stride_offset=1,
         error_threshold=0.1,
-        percentile=100,
-        diff_threshold=0.1,
-        rtol=0.05,
+    )
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    _validate_result_events(
+        tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
     )
 
 
@@ -283,7 +255,7 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
 def test_pulse_skipping_stride_offset_guess_gives_expected_result(
     dist, simulation_pulse_skipping
 ) -> None:
-    _do_unwrap_test_events(
+    pl, ref = _make_workflow_event_mode(
         distance=sc.scalar(dist, unit="m"),
         choppers=fakes.pulse_skipping_choppers(),
         simulation=simulation_pulse_skipping,
@@ -291,9 +263,12 @@ def test_pulse_skipping_stride_offset_guess_gives_expected_result(
         pulse_stride=2,
         pulse_stride_offset=None,
         error_threshold=0.1,
-        percentile=100,
-        diff_threshold=0.1,
-        rtol=0.05,
+    )
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    _validate_result_events(
+        tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
     )
 
 
@@ -318,7 +293,7 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
         pulses=2,
     )
 
-    _do_unwrap_test_events(
+    pl, ref = _make_workflow_event_mode(
         distance=sc.scalar(150.0, unit="m"),
         choppers=choppers,
         simulation=sim,
@@ -326,9 +301,12 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
         pulse_stride=2,
         pulse_stride_offset=1,
         error_threshold=0.1,
-        percentile=100,
-        diff_threshold=0.1,
-        rtol=0.05,
+    )
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    _validate_result_events(
+        tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
     )
 
 
@@ -418,7 +396,7 @@ def test_pulse_skipping_stride_3() -> None:
         pulses=1,
     )
 
-    _do_unwrap_test_events(
+    pl, ref = _make_workflow_event_mode(
         distance=sc.scalar(150.0, unit="m"),
         choppers=choppers,
         simulation=sim,
@@ -426,21 +404,51 @@ def test_pulse_skipping_stride_3() -> None:
         pulse_stride=3,
         pulse_stride_offset=None,
         error_threshold=0.1,
-        percentile=100,
-        diff_threshold=0.1,
-        rtol=0.05,
+    )
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    _validate_result_events(
+        tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
     )
 
 
 def test_pulse_skipping_unwrap_histogram_mode(simulation_pulse_skipping) -> None:
-    _do_unwrap_test_histogram_mode(
+    pl, ref = _make_workflow_histogram_mode(
         dim='time_of_flight',
         distance=sc.scalar(50.0, unit="m"),
         choppers=fakes.pulse_skipping_choppers(),
         simulation=simulation_pulse_skipping,
         seed=9,
         pulse_stride=2,
-        percentile=96,
-        diff_threshold=0.3,
-        rtol=0.05,
+    )
+
+    tofs = pl.compute(time_of_flight.ResampledTofData)
+
+    _validate_result_histogram_mode(
+        tofs=tofs, ref=ref, percentile=96, diff_threshold=0.3, rtol=0.05
+    )
+
+
+def test_unwrap_int32(simulation_psc_choppers) -> None:
+    pl, ref = _make_workflow_event_mode(
+        distance=sc.scalar(80.0, unit="m"),
+        choppers=fakes.psc_choppers(),
+        simulation=simulation_psc_choppers,
+        seed=2,
+        pulse_stride=1,
+        pulse_stride_offset=0,
+        error_threshold=0.1,
+    )
+
+    mon = pl.compute(time_of_flight.RawData).copy()
+    mon.bins.coords["event_time_offset"] = mon.bins.coords["event_time_offset"].to(
+        dtype="int32", unit="ns"
+    )
+    pl[time_of_flight.RawData] = mon
+
+    tofs = pl.compute(time_of_flight.TofData)
+
+    _validate_result_events(
+        tofs=tofs, ref=ref, percentile=100, diff_threshold=0.02, rtol=0.05
     )
