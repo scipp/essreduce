@@ -57,11 +57,11 @@ pillow==11.1.0
     # via matplotlib
 plopp==25.3.0
     # via scippneutron
-pydantic==2.10.6
+pydantic==2.11.1
     # via scippneutron
-pydantic-core==2.27.2
+pydantic-core==2.33.0
     # via pydantic
-pyparsing==3.2.1
+pyparsing==3.2.3
     # via matplotlib
 python-dateutil==2.9.0.post0
     # via
@@ -77,7 +77,7 @@ scipp==25.3.0
     #   scippnexus
 scippneutron==25.2.1
     # via -r base.in
-scippnexus==24.11.1
+scippnexus==25.4.0
     # via
     #   -r base.in
     #   scippneutron
@@ -87,7 +87,10 @@ scipy==1.15.2
     #   scippnexus
 six==1.17.0
     # via python-dateutil
-typing-extensions==4.12.2
+typing-extensions==4.13.0
     # via
     #   pydantic
     #   pydantic-core
+    #   typing-inspection
+typing-inspection==0.4.0
+    # via pydantic
