@@ -61,7 +61,7 @@ def simulate_beamline(
     if not tof_choppers:
         events = source.data.squeeze().flatten(to='event')
         return SimulationResults(
-            time_of_arrival=events.coords["time"],
+            time_of_arrival=events.coords["birth_time"],
             speed=events.coords["speed"],
             wavelength=events.coords["wavelength"],
             weight=events.data,
