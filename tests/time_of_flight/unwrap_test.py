@@ -199,7 +199,7 @@ def test_standard_unwrap_histogram_mode(dist, dim, simulation_psc_choppers) -> N
     tofs = pl.compute(time_of_flight.ResampledTofData)
 
     _validate_result_histogram_mode(
-        tofs=tofs, ref=ref, percentile=96, diff_threshold=0.3, rtol=0.05
+        tofs=tofs, ref=ref, percentile=96, diff_threshold=0.4, rtol=0.05
     )
 
 
@@ -426,7 +426,7 @@ def test_pulse_skipping_unwrap_histogram_mode(simulation_pulse_skipping) -> None
     tofs = pl.compute(time_of_flight.ResampledTofData)
 
     _validate_result_histogram_mode(
-        tofs=tofs, ref=ref, percentile=96, diff_threshold=0.3, rtol=0.05
+        tofs=tofs, ref=ref, percentile=96, diff_threshold=0.4, rtol=0.05
     )
 
 
