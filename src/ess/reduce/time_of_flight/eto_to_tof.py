@@ -371,7 +371,8 @@ def _time_of_flight_data_histogram(
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
     # it may be called 'tof'.
     key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof"}))
-    eto_unit = da.coords[key].unit
+    raw_eto = da.coords[key].to(dtype=float, copy=False)
+    eto_unit = raw_eto.unit
     pulse_period = pulse_period.to(unit=eto_unit)
 
     # In histogram mode, because there is a wrap around at the end of the pulse, we
@@ -379,9 +380,7 @@ def _time_of_flight_data_histogram(
     # with one finite left edge and a NaN right edge (it becomes NaN as it would be
     # outside the range of the lookup table).
     new_bins = sc.sort(
-        sc.concat(
-            [da.coords[key], sc.scalar(0.0, unit=eto_unit), pulse_period], dim=key
-        ),
+        sc.concat([raw_eto, sc.scalar(0.0, unit=eto_unit), pulse_period], dim=key),
         key=key,
     )
     rebinned = da.rebin({key: new_bins})
@@ -483,7 +482,7 @@ def _time_of_flight_data_events(
     pulse_stride: int,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
-    etos = da.bins.coords["event_time_offset"]
+    etos = da.bins.coords["event_time_offset"].to(dtype=float, copy=False)
     eto_unit = elem_unit(etos)
 
     # Create linear interpolator
