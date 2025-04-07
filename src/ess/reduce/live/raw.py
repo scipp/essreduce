@@ -380,7 +380,8 @@ class RollingDetectorView(Detector):
             pixel_noise = sc.scalar(0.0, unit='m')
             noise_replica_count = 0
         else:
-            noise_replica_count = 16
+            # Unclear what a good number is, could be made configurable.
+            noise_replica_count = 4
         wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
         wf[RollingDetectorViewWindow] = window
         if projection == 'cylinder_mantle_z':
