@@ -380,7 +380,8 @@ class RollingDetectorView(Detector):
             pixel_noise = sc.scalar(0.0, unit='m')
             noise_replica_count = 0
         else:
-            noise_replica_count = 16
+            # Unclear what a good number is, could be made configurable.
+            noise_replica_count = 4
         wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
         wf[RollingDetectorViewWindow] = window
         if projection == 'cylinder_mantle_z':
@@ -606,9 +607,14 @@ def position_with_noisy_replicas(
     noise_dim = position_noise.dim
     size = position.size * replicas
     # "Paint" the short array of noise on top of the (replicated) position data.
-    noise = sc.concat(
-        [position_noise] * ceil(size / position_noise.size), dim=noise_dim
-    )[:size].fold(dim=noise_dim, sizes={'replica': replicas, **position.sizes})
+    noise = (
+        sc.broadcast(
+            position_noise,
+            sizes={'dummy': ceil(size / position_noise.size), **position_noise.sizes},
+        )
+        .flatten(to=noise_dim)[:size]
+        .fold(dim=noise_dim, sizes={'replica': replicas, **position.sizes})
+    )
     return sc.concat([position, noise + position], dim='replica')
 
 
