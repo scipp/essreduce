@@ -43,13 +43,16 @@ def interpolate(
     if not (len(xp) == len(yp) == len(zp) == len(out)):
         raise ValueError("Interpolator: all input arrays must have the same size.")
 
+    nx = len(x)
+    ny = len(y)
+    nz = len(z)
     npoints = len(xp)
     xmin = x[0]
-    xmax = x[-1]
+    xmax = x[nx - 1]
     ymin = y[0]
-    ymax = y[-1]
+    ymax = y[ny - 1]
     zmin = z[0]
-    zmax = z[-1]
+    zmax = z[nz - 1]
     dx = x[1] - xmin
     dy = y[1] - ymin
     dz = z[1] - zmin
@@ -75,14 +78,14 @@ def interpolate(
             out[i] = fill_value
 
         else:
-            ix = int((xx - xmin) * one_over_dx)
-            iy = int((yy - ymin) * one_over_dy)
-            iz = int((zz - zmin) * one_over_dz)
+            ix = nx - 2 if xx == xmax else int((xx - xmin) * one_over_dx)
+            iy = ny - 2 if yy == ymax else int((yy - ymin) * one_over_dy)
+            iz = nz - 2 if zz == zmax else int((zz - zmin) * one_over_dz)
 
-            y2 = y[iy + 1]
-            y1 = y[iy]
-            x2 = x[ix + 1]
             x1 = x[ix]
+            x2 = x[ix + 1]
+            y1 = y[iy]
+            y2 = y[iy + 1]
             z1 = z[iz]
             z2 = z[iz + 1]
 
