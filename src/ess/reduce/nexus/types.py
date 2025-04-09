@@ -198,15 +198,11 @@ NeXusDetectorName = NeXusName[snx.NXdetector]
 """Name of a detector (bank) in a NeXus file."""
 
 
-class NeXusComponent(
-    sciline.Scope[Component, RunType, sc.DataGroup], sc.DataGroup
-):
+class NeXusComponent(sciline.Scope[Component, RunType, sc.DataGroup], sc.DataGroup):
     """Raw data from a NeXus component."""
 
 
-class AllNeXusComponents(
-    sciline.Scope[Component, RunType, sc.DataGroup], sc.DataGroup
-):
+class AllNeXusComponents(sciline.Scope[Component, RunType, sc.DataGroup], sc.DataGroup):
     """Raw data from all NeXus components of one class."""
 
 
@@ -250,9 +246,7 @@ class DetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
     """Calibrated detector merged with neutron event or histogram data."""
 
 
-class MonitorData(
-    sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray
-):
+class MonitorData(sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
     """Calibrated monitor merged with neutron event or histogram data."""
 
 
