@@ -38,7 +38,7 @@ exceptiongroup==1.2.2
     #   pytest
 executing==2.2.0
     # via stack-data
-fonttools==4.56.0
+fonttools==4.57.0
     # via matplotlib
 h5py==3.13.0
     # via
@@ -52,7 +52,7 @@ importlib-resources==6.5.2
     # via tof
 iniconfig==2.1.0
     # via pytest
-ipython==8.34.0
+ipython==8.35.0
     # via ipywidgets
 ipywidgets==8.1.5
     # via -r nightly.in
@@ -78,7 +78,7 @@ mpltoolbox==24.5.1
     # via scippneutron
 networkx==3.4.2
     # via cyclebane
-numba==0.61.1rc1
+numba==0.61.2
     # via -r nightly.in
 numpy==2.2.4
     # via
@@ -118,9 +118,9 @@ ptyprocess==0.7.0
     # via pexpect
 pure-eval==0.2.3
     # via stack-data
-pydantic==2.11.1
+pydantic==2.11.3
     # via scippneutron
-pydantic-core==2.33.0
+pydantic-core==2.33.1
     # via pydantic
 pygments==2.19.1
     # via ipython
@@ -169,11 +169,12 @@ traitlets==5.14.3
     #   ipython
     #   ipywidgets
     #   matplotlib-inline
-typing-extensions==4.13.0
+typing-extensions==4.13.1
     # via
     #   ipython
     #   pydantic
     #   pydantic-core
+    #   sciline
     #   typing-inspection
 typing-inspection==0.4.0
     # via pydantic

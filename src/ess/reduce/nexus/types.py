@@ -198,19 +198,15 @@ NeXusDetectorName = NeXusName[snx.NXdetector]
 """Name of a detector (bank) in a NeXus file."""
 
 
-class NeXusComponent(
-    sciline.ScopeTwoParams[Component, RunType, sc.DataGroup], sc.DataGroup
-):
+class NeXusComponent(sciline.Scope[Component, RunType, sc.DataGroup], sc.DataGroup):
     """Raw data from a NeXus component."""
 
 
-class AllNeXusComponents(
-    sciline.ScopeTwoParams[Component, RunType, sc.DataGroup], sc.DataGroup
-):
+class AllNeXusComponents(sciline.Scope[Component, RunType, sc.DataGroup], sc.DataGroup):
     """Raw data from all NeXus components of one class."""
 
 
-class NeXusData(sciline.ScopeTwoParams[Component, RunType, sc.DataArray], sc.DataArray):
+class NeXusData(sciline.Scope[Component, RunType, sc.DataArray], sc.DataArray):
     """
     Data array loaded from an NXevent_data or NXdata group.
 
@@ -218,7 +214,7 @@ class NeXusData(sciline.ScopeTwoParams[Component, RunType, sc.DataArray], sc.Dat
     """
 
 
-class Position(sciline.ScopeTwoParams[Component, RunType, sc.Variable], sc.Variable):
+class Position(sciline.Scope[Component, RunType, sc.Variable], sc.Variable):
     """Position of a component such as source, sample, monitor, or detector."""
 
 
@@ -227,7 +223,7 @@ class DetectorPositionOffset(sciline.Scope[RunType, sc.Variable], sc.Variable):
 
 
 class MonitorPositionOffset(
-    sciline.ScopeTwoParams[RunType, MonitorType, sc.Variable], sc.Variable
+    sciline.Scope[RunType, MonitorType, sc.Variable], sc.Variable
 ):
     """Offset for the monitor position, added to base position."""
 
@@ -241,7 +237,7 @@ class CalibratedBeamline(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
 
 
 class CalibratedMonitor(
-    sciline.ScopeTwoParams[RunType, MonitorType, sc.DataArray], sc.DataArray
+    sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray
 ):
     """Calibrated data from a monitor."""
 
@@ -250,9 +246,7 @@ class DetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
     """Calibrated detector merged with neutron event or histogram data."""
 
 
-class MonitorData(
-    sciline.ScopeTwoParams[RunType, MonitorType, sc.DataArray], sc.DataArray
-):
+class MonitorData(sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
     """Calibrated monitor merged with neutron event or histogram data."""
 
 
@@ -314,7 +308,7 @@ class NeXusDataLocationSpec(NeXusLocationSpec, Generic[Component, RunType]):
 
 
 class NeXusTransformationChain(
-    sciline.ScopeTwoParams[Component, RunType, snx.TransformationChain],
+    sciline.Scope[Component, RunType, snx.TransformationChain],
     snx.TransformationChain,
 ): ...
 
