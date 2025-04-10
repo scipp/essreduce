@@ -9,7 +9,6 @@ class Interpolator:
         self,
         time_edges: np.ndarray,
         distance_edges: np.ndarray,
-        pulse_edges: np.ndarray,
         values: np.ndarray,
         method: str = "linear",
         bounds_error: bool = False,
@@ -17,18 +16,16 @@ class Interpolator:
         **kwargs,
     ):
         """
-        Interpolator for 3D regular grid data (SciPy implementation).
+        Interpolator for 2D regular grid data (SciPy implementation).
 
         Parameters
         ----------
         time_edges:
-            1D array of time edges.
+            1D array of time edges (length N_time).
         distance_edges:
-            1D array of distance edges.
-        pulse_edges:
-            1D array of pulse edges.
+            1D array of distance edges (length N_dist).
         values:
-            3D array of values on the grid. The shape must be (nz, ny, nx).
+            2D array of values on the grid. The shape must be (N_dist, N_time).
         method:
             Method of interpolation. Default is "linear".
         bounds_error:
@@ -43,7 +40,6 @@ class Interpolator:
 
         self._interp = RegularGridInterpolator(
             (
-                pulse_edges,
                 distance_edges,
                 time_edges,
             ),
@@ -54,7 +50,5 @@ class Interpolator:
             **kwargs,
         )
 
-    def __call__(
-        self, times: np.ndarray, distances: np.ndarray, pulse_indices: np.ndarray
-    ) -> np.ndarray:
-        return self._interp((pulse_indices, distances, times))
+    def __call__(self, times: np.ndarray, distances: np.ndarray) -> np.ndarray:
+        return self._interp((distances, times))
