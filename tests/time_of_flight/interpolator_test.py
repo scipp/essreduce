@@ -74,3 +74,24 @@ def test_numba_and_scipy_interpolators_yield_same_results_with_out_of_bounds():
     scipy_result = scipy_interp(times, distances, pulse_indices)
 
     assert np.allclose(numba_result, scipy_result, equal_nan=True)
+
+
+def test_numba_and_scipy_interpolators_yield_same_results_with_values_on_edges():
+    numba_interp, scipy_interp = _make_interpolators()
+
+    rng = np.random.default_rng(seed=42)
+    npoints = 2
+
+    times = np.array([0.0, 71.0])
+    distances = rng.uniform(39, 71, npoints)
+    pulse_indices = rng.uniform(-1, 2, npoints)
+    numba_result = numba_interp(times, distances, pulse_indices)
+    scipy_result = scipy_interp(times, distances, pulse_indices)
+    assert np.allclose(numba_result, scipy_result, equal_nan=True)
+
+    times = rng.uniform(0, 71, npoints)
+    distances = np.array([40.0, 70.0])
+    pulse_indices = rng.uniform(-1, 2, npoints)
+    numba_result = numba_interp(times, distances, pulse_indices)
+    scipy_result = scipy_interp(times, distances, pulse_indices)
+    assert np.allclose(numba_result, scipy_result, equal_nan=True)
