@@ -134,49 +134,49 @@ def _compute_mean_tof_in_distance_range(
     return mean_tof
 
 
-def _fold_table_to_pulse_period(
-    table: sc.DataArray, pulse_period: sc.Variable, pulse_stride: int
-) -> sc.DataArray:
-    """
-    Fold the lookup table to the pulse period. We make sure the left and right edges of
-    the table wrap around the ``event_time_offset`` dimension.
+# def _fold_table_to_pulse_period(
+#     table: sc.DataArray, pulse_period: sc.Variable, pulse_stride: int
+# ) -> sc.DataArray:
+#     """
+#     Fold the lookup table to the pulse period. We make sure the left and right edges of
+#     the table wrap around the ``event_time_offset`` dimension.
 
-    Parameters
-    ----------
-    table:
-        Lookup table with time-of-flight as a function of distance and time-of-arrival.
-    pulse_period:
-        Period of the source pulses, i.e., time between consecutive pulse starts.
-    pulse_stride:
-        Stride of used pulses. Usually 1, but may be a small integer when
-        pulse-skipping.
-    """
-    size = table.sizes['event_time_offset']
-    if (size % pulse_stride) != 0:
-        raise ValueError(
-            "TimeOfFlightLookupTable: the number of time bins must be a multiple of "
-            f"the pulse stride, but got {size} time bins and a pulse stride of "
-            f"{pulse_stride}."
-        )
+#     Parameters
+#     ----------
+#     table:
+#         Lookup table with time-of-flight as a function of distance and time-of-arrival.
+#     pulse_period:
+#         Period of the source pulses, i.e., time between consecutive pulse starts.
+#     pulse_stride:
+#         Stride of used pulses. Usually 1, but may be a small integer when
+#         pulse-skipping.
+#     """
+#     size = table.sizes['event_time_offset']
+#     if (size % pulse_stride) != 0:
+#         raise ValueError(
+#             "TimeOfFlightLookupTable: the number of time bins must be a multiple of "
+#             f"the pulse stride, but got {size} time bins and a pulse stride of "
+#             f"{pulse_stride}."
+#         )
 
-    size = size // pulse_stride
-    out = sc.concat([table, table['event_time_offset', 0]], dim='event_time_offset')
-    out = sc.concat(
-        [
-            out['event_time_offset', (i * size) : (i + 1) * size + 1]
-            for i in range(pulse_stride)
-        ],
-        dim='pulse',
-    )
-    return out.assign_coords(
-        event_time_offset=sc.concat(
-            [
-                table.coords['event_time_offset']['event_time_offset', :size],
-                pulse_period,
-            ],
-            'event_time_offset',
-        )
-    )
+#     size = size // pulse_stride
+#     out = sc.concat([table, table['event_time_offset', 0]], dim='event_time_offset')
+#     out = sc.concat(
+#         [
+#             out['event_time_offset', (i * size) : (i + 1) * size + 1]
+#             for i in range(pulse_stride)
+#         ],
+#         dim='pulse',
+#     )
+#     return out.assign_coords(
+#         event_time_offset=sc.concat(
+#             [
+#                 table.coords['event_time_offset']['event_time_offset', :size],
+#                 pulse_period,
+#             ],
+#             'event_time_offset',
+#         )
+#     )
 
 
 def compute_tof_lookup_table(
@@ -276,15 +276,15 @@ def compute_tof_lookup_table(
     table.coords["distance"] = sc.midpoints(table.coords["distance"])
     table.coords["event_time_offset"] = sc.midpoints(table.coords["event_time_offset"])
 
-    table = _fold_table_to_pulse_period(
-        table=table, pulse_period=pulse_period, pulse_stride=pulse_stride
-    )
+    # table = _fold_table_to_pulse_period(
+    #     table=table, pulse_period=pulse_period, pulse_stride=pulse_stride
+    # )
 
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
 
     return TimeOfFlightLookupTable(
-        table.transpose(('pulse', 'distance', 'event_time_offset'))
+        table  # .transpose(('pulse', 'distance', 'event_time_offset'))
     )
 
 
@@ -293,21 +293,21 @@ class TofInterpolator:
         self._distance_unit = distance_unit
         self._time_unit = time_unit
 
-        # In the pulse dimension, it could be that for a given event_time_offset and
-        # distance, a tof value is finite in one pulse and NaN in the other.
-        # When using the bilinear interpolation, even if the value of the requested
-        # point is exactly 0 or 1 (in the case of pulse_stride=2), the interpolator
-        # will still use all 4 corners surrounding the point. This means that if one of
-        # the corners is NaN, the result will be NaN.
-        # Here, we use a trick where we duplicate the lookup values in the 'pulse'
-        # dimension so that the interpolator has values on bin edges for that dimension.
-        # The interpolator raises an error if axes coordinates are not strictly
-        # monotonic, so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of
-        # pulse_stride=2. Instead we use [-0.25, 0.25, 0.75, 1.25].
-        base_grid = np.arange(float(lookup.sizes["pulse"]))
-        self._pulse_edges = np.sort(
-            np.concatenate([base_grid - 0.25, base_grid + 0.25])
-        )
+        # # In the pulse dimension, it could be that for a given event_time_offset and
+        # # distance, a tof value is finite in one pulse and NaN in the other.
+        # # When using the bilinear interpolation, even if the value of the requested
+        # # point is exactly 0 or 1 (in the case of pulse_stride=2), the interpolator
+        # # will still use all 4 corners surrounding the point. This means that if one of
+        # # the corners is NaN, the result will be NaN.
+        # # Here, we use a trick where we duplicate the lookup values in the 'pulse'
+        # # dimension so that the interpolator has values on bin edges for that dimension.
+        # # The interpolator raises an error if axes coordinates are not strictly
+        # # monotonic, so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of
+        # # pulse_stride=2. Instead we use [-0.25, 0.25, 0.75, 1.25].
+        # base_grid = np.arange(float(lookup.sizes["pulse"]))
+        # self._pulse_edges = np.sort(
+        #     np.concatenate([base_grid - 0.25, base_grid + 0.25])
+        # )
 
         self._time_edges = (
             lookup.coords["event_time_offset"]
@@ -321,23 +321,24 @@ class TofInterpolator:
         self._interpolator = InterpolatorImpl(
             time_edges=self._time_edges,
             distance_edges=self._distance_edges,
-            pulse_edges=self._pulse_edges,
-            values=np.repeat(
-                lookup.data.to(unit=self._time_unit, copy=False).values, 2, axis=0
-            ),
+            # pulse_edges=self._pulse_edges,
+            values=lookup.data.to(unit=self._time_unit, copy=False).values,
+            # values=np.repeat(
+            #     lookup.data.to(unit=self._time_unit, copy=False).values, 2, axis=0
+            # ),
         )
 
     def __call__(
         self,
-        pulse_index: sc.Variable,
+        # pulse_index: sc.Variable,
         ltotal: sc.Variable,
         event_time_offset: sc.Variable,
     ) -> sc.Variable:
-        if pulse_index.unit not in ("", None):
-            raise sc.UnitError(
-                "pulse_index must have unit dimensionless or None, "
-                f"but got unit: {pulse_index.unit}."
-            )
+        # if pulse_index.unit not in ("", None):
+        #     raise sc.UnitError(
+        #         "pulse_index must have unit dimensionless or None, "
+        #         f"but got unit: {pulse_index.unit}."
+        #     )
         if ltotal.unit != self._distance_unit:
             raise sc.UnitError(
                 f"ltotal must have unit: {self._distance_unit}, "
@@ -349,14 +350,15 @@ class TofInterpolator:
                 f"but got unit: {event_time_offset.unit}."
             )
         out_dims = event_time_offset.dims
-        pulse_index = pulse_index.values
+        # pulse_index = pulse_index.values
         ltotal = ltotal.values
         event_time_offset = event_time_offset.values
 
         return sc.array(
             dims=out_dims,
             values=self._interpolator(
-                times=event_time_offset, distances=ltotal, pulse_indices=pulse_index
+                times=event_time_offset,
+                distances=ltotal,  # pulse_indices=pulse_index
             ),
             unit=self._time_unit,
         )
@@ -420,6 +422,7 @@ def _guess_pulse_stride_offset(
     pulse_index: sc.Variable,
     ltotal: sc.Variable,
     event_time_offset: sc.Variable,
+    pulse_period: sc.Variable,
     pulse_stride: int,
     interp: TofInterpolator,
 ) -> int:
@@ -446,6 +449,8 @@ def _guess_pulse_stride_offset(
         Total length of the flight path from the source to the detector for each event.
     event_time_offset:
         Time of arrival of the neutron at the detector for each event.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
     pulse_stride:
         Stride of used pulses.
     interp:
@@ -467,9 +472,12 @@ def _guess_pulse_stride_offset(
         values=event_time_offset.values[inds],
         unit=event_time_offset.unit,
     )
+    pulse_period = pulse_period.to(unit=etos.unit)
     for i in range(pulse_stride):
         pulse_inds = (pulse_index + i) % pulse_stride
-        tofs[i] = interp(pulse_index=pulse_inds, ltotal=ltotal, event_time_offset=etos)
+        tofs[i] = interp(
+            ltotal=ltotal, event_time_offset=etos + pulse_inds * pulse_period
+        )
     # Find the entry in the list with the least number of nan values
     return sorted(tofs, key=lambda x: sc.isnan(tofs[x]).sum())[0]
 
@@ -504,8 +512,8 @@ def _time_of_flight_data_events(
             .bins.constituents["data"]
             .to(unit=etz_unit, copy=False)
         )
-        pulse_period = pulse_period.to(unit=etz_unit, dtype=int)
-        frame_period = pulse_period * pulse_stride
+        pulse_period_ns = pulse_period.to(unit=etz_unit, dtype=int)
+        frame_period = pulse_period_ns * pulse_stride
         # Define a common reference time using epoch as a base, but making sure that it
         # is aligned with the pulse_period and the frame_period.
         # We need to use a global reference time instead of simply taking the minimum
@@ -513,17 +521,17 @@ def _time_of_flight_data_events(
         # may not be the first event of the first pulse for all chunks. This would lead
         # to inconsistent pulse indices.
         epoch = sc.datetime(0, unit=etz_unit)
-        diff_to_epoch = (etz.min() - epoch) % pulse_period
+        diff_to_epoch = (etz.min() - epoch) % pulse_period_ns
         # Here we offset the reference by half a pulse period to avoid errors from
         # fluctuations in the event_time_zeros in the data. They are triggered by the
         # neutron source, and may not always be exactly separated by the pulse period.
         # While fluctuations will exist, they will be small, and offsetting the times
         # by half a pulse period is a simple enough fix.
-        reference = epoch + diff_to_epoch - (pulse_period // 2)
+        reference = epoch + diff_to_epoch - (pulse_period_ns // 2)
         # Use in-place operations to avoid large allocations
         pulse_index = etz - reference
         pulse_index %= frame_period
-        pulse_index //= pulse_period
+        pulse_index //= pulse_period_ns
 
         # Apply the pulse_stride_offset
         if pulse_stride_offset is None:
@@ -531,6 +539,7 @@ def _time_of_flight_data_events(
                 pulse_index=pulse_index,
                 ltotal=ltotal,
                 event_time_offset=etos,
+                pulse_period=pulse_period,
                 pulse_stride=pulse_stride,
                 interp=interp,
             )
@@ -538,7 +547,11 @@ def _time_of_flight_data_events(
         pulse_index %= pulse_stride
 
     # Compute time-of-flight for all neutrons using the interpolator
-    tofs = interp(pulse_index=pulse_index, ltotal=ltotal, event_time_offset=etos)
+    # tofs = interp(pulse_index=pulse_index, ltotal=ltotal, event_time_offset=etos)
+    tofs = interp(
+        ltotal=ltotal,
+        event_time_offset=etos + pulse_index * pulse_period.to(unit=eto_unit),
+    )
 
     parts = da.bins.constituents
     parts["data"] = tofs
