@@ -21,11 +21,11 @@ class Interpolator:
         Parameters
         ----------
         time_edges:
-            1D array of time edges (length nt).
+            1D array of time edges (length N_time).
         distance_edges:
-            1D array of distance edges (length nd).
+            1D array of distance edges (length N_dist).
         values:
-            2D array of values on the grid. The shape must be (nd, nt).
+            2D array of values on the grid. The shape must be (N_dist, N_time).
         method:
             Method of interpolation. Default is "linear".
         bounds_error:
