@@ -63,6 +63,7 @@ def _compute_mean_tof_in_distance_range(
     distance_unit: str,
     time_unit: str,
     frame_period: sc.Variable,
+    time_bins_half_width: sc.Variable,
 ) -> sc.DataArray:
     """
     Compute the mean time-of-flight inside event_time_offset bins for a given range of
@@ -82,6 +83,8 @@ def _compute_mean_tof_in_distance_range(
         Unit of the event_time_offset axis.
     frame_period:
         Period of the source pulses, i.e., time between consecutive pulse starts.
+    time_bins_half_width:
+        Half width of the time bins in the event_time_offset axis.
     """
     simulation_distance = simulation.distance.to(unit=distance_unit)
     distances = sc.midpoints(distance_bins)
@@ -103,6 +106,15 @@ def _compute_mean_tof_in_distance_range(
 
     # Add the event_time_offset coordinate, wrapped to the frame_period
     data.coords['event_time_offset'] = data.coords['toa'] % frame_period
+
+    # Because we staggered the mesh by half a bin width, we want the values above
+    # the last bin edge to wrap around to the first bin.
+    # Technically, those values should end up between -0.5*bin_width and 0, but
+    # a simple modulo also works here because even if they end up between 0 and
+    # 0.5*bin_width, we are (below) computing the mean between -0.5*bin_width and
+    # 0.5*bin_width and it yields the same result.
+    # data.coords['event_time_offset'] %= pulse_period - time_bins_half_width
+    data.coords['event_time_offset'] %= frame_period - time_bins_half_width
 
     binned = data.bin(
         distance=distance_bins + simulation_distance, event_time_offset=time_bins
@@ -188,13 +200,8 @@ def compute_tof_lookup_table(
     time_bins = sc.linspace(
         'event_time_offset', 0.0, frame_period.value, nbins + 1, unit=pulse_period.unit
     )
-    time_bins_width = time_bins[1] - time_bins[0]
-    # Add an additional bin edge at the end to cover half a bin width above the
-    # frame_period.
-    time_bins = sc.concat(
-        [time_bins, time_bins[-1] + time_bins_width], dim=time_bins.dim
-    )
-    time_bins -= 0.5 * time_bins_width
+    time_bins_half_width = 0.5 * (time_bins[1] - time_bins[0])
+    time_bins -= time_bins_half_width
 
     # To avoid a too large RAM usage, we compute the table in chunks, and piece them
     # together at the end.
@@ -215,12 +222,27 @@ def compute_tof_lookup_table(
                 distance_unit=distance_unit,
                 time_unit=time_unit,
                 frame_period=frame_period,
+                time_bins_half_width=time_bins_half_width,
             )
         )
 
     table = sc.concat(pieces, 'distance')
     table.coords["distance"] = sc.midpoints(table.coords["distance"])
     table.coords["event_time_offset"] = sc.midpoints(table.coords["event_time_offset"])
+
+    # Copy the left edge to the right to create periodic boundary conditions
+    table = sc.DataArray(
+        data=sc.concat(
+            [table.data, table.data['event_time_offset', 0]], dim='event_time_offset'
+        ),
+        coords={
+            "distance": table.coords["distance"],
+            "event_time_offset": sc.concat(
+                [table.coords["event_time_offset"], frame_period],
+                dim='event_time_offset',
+            ),
+        },
+    )
 
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
