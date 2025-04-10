@@ -166,6 +166,43 @@ def compute_tof_lookup_table(
     error_threshold:
         Threshold for the relative standard deviation (coefficient of variation) of the
         projected time-of-flight above which values are masked.
+
+    Notes
+    -----
+
+    Below are some details about the binning and wrapping around frame period in the
+    time dimension.
+
+    We have some simulated ``toa`` (events) from a Tof/McStas simulation.
+    Those are absolute ``toa``, unwrapped.
+    First we compute the usual ``event_time_offset = toa % frame_period``.
+
+    Now, we want to ensure periodic boundaries. If we make a bin centered around 0,
+    and a bin centered around 71ms: the first bin will use events between 0 and
+    ``0.5 * dt`` (where ``dt`` is the bin width).
+    The last bin will use events between ``frame_period - 0.5*dt`` and
+    ``frame_period + 0.5 * dt``. So when we compute the mean inside those two bins,
+    they will not yield the same results.
+    It is as if the first bin is missing the events it should have between
+    ``-0.5 * dt`` and 0 (because of the modulo we computed above).
+
+    To fix this, we do not make a last bin around 71ms (the bins stop at
+    ``frame_period - 0.5*dt``). Instead, we compute modulo a second time,
+    but this time using ``event_time_offset %= (frame_period - 0.5*dt)``.
+    (we cannot directly do ``event_time_offset = toa % (frame_period - 0.5*dt)`` in a
+    single step because it would introduce a gradual shift,
+    as the pulse number increases).
+
+    This second modulo effectively takes all the events that would have gone in the
+    last bin (between ``frame_period - 0.5*dt`` and ``frame_period``) and puts them in
+    the first bin. Instead of placing them between ``-0.5*dt`` and 0,
+    it places them between 0 and ``0.5*dt``, but this does not really matter,
+    because we then take the mean inside the first bin.
+    Whether the events are on the left or right side of zero does not matter.
+
+    Finally, we make a copy of the left edge, and append it to the right of the table,
+    thus ensuring that the values on the right edge are strictly the same as on the
+    left edge.
     """
     distance_unit = "m"
     time_unit = simulation.time_of_arrival.unit
