@@ -296,32 +296,11 @@ def _time_of_flight_data_histogram(
     rebinned = da.rebin({key: new_bins})
     etos = rebinned.coords[key]
 
-    # In histogram mode, the lookup table cannot have a pulse dimension because we
-    # cannot know in the histogrammed data which pulse the events belong to.
-    # So we merge the pulse dimension in the lookup table. A quick way to do this
-    # is to take the mean of the data along the pulse dimension (there should
-    # only be regions that are NaN in one pulse and finite in the other).
-    merged = lookup.data.nanmean('pulse')
-    dim = merged.dims[0]
-    lookup = sc.DataArray(
-        data=merged.fold(dim=dim, sizes={'pulse': 1, dim: merged.sizes[dim]}),
-        coords={
-            'pulse': sc.arange('pulse', 1.0),
-            'distance': lookup.coords['distance'],
-            'event_time_offset': lookup.coords['event_time_offset'],
-        },
-    )
-    pulse_index = sc.zeros(sizes=etos.sizes)
-
     # Create linear interpolator
     interp = TofInterpolator(lookup, distance_unit=ltotal.unit, time_unit=eto_unit)
 
     # Compute time-of-flight of the bin edges using the interpolator
-    tofs = interp(
-        pulse_index=pulse_index,
-        ltotal=ltotal.broadcast(sizes=etos.sizes),
-        event_time_offset=etos,
-    )
+    tofs = interp(ltotal=ltotal.broadcast(sizes=etos.sizes), event_time_offset=etos)
 
     return rebinned.assign_coords(tof=tofs)
 
