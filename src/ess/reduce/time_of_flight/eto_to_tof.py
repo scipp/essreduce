@@ -63,7 +63,6 @@ def _compute_mean_tof_in_distance_range(
     distance_unit: str,
     time_unit: str,
     frame_period: sc.Variable,
-    time_bins_half_width: sc.Variable,
 ) -> sc.DataArray:
     """
     Compute the mean time-of-flight inside event_time_offset bins for a given range of
@@ -83,8 +82,6 @@ def _compute_mean_tof_in_distance_range(
         Unit of the event_time_offset axis.
     frame_period:
         Period of the source pulses, i.e., time between consecutive pulse starts.
-    time_bins_half_width:
-        Half the width of the time bins.
     """
     simulation_distance = simulation.distance.to(unit=distance_unit)
     distances = sc.midpoints(distance_bins)
@@ -104,18 +101,8 @@ def _compute_mean_tof_in_distance_range(
         },
     ).flatten(to="event")
 
-    # Add the event_time_offset coordinate to the data. We first operate on the
-    # frame period. The table will later be folded to the pulse period.
+    # Add the event_time_offset coordinate, wrapped to the frame_period
     data.coords['event_time_offset'] = data.coords['toa'] % frame_period
-
-    # Because we staggered the mesh by half a bin width, we want the values above
-    # the last bin edge to wrap around to the first bin.
-    # Technically, those values should end up between -0.5*bin_width and 0, but
-    # a simple modulo also works here because even if they end up between 0 and
-    # 0.5*bin_width, we are (below) computing the mean between -0.5*bin_width and
-    # 0.5*bin_width and it yields the same result.
-    # data.coords['event_time_offset'] %= pulse_period - time_bins_half_width
-    data.coords['event_time_offset'] %= frame_period - time_bins_half_width
 
     binned = data.bin(
         distance=distance_bins + simulation_distance, event_time_offset=time_bins
@@ -132,51 +119,6 @@ def _compute_mean_tof_in_distance_range(
 
     mean_tof.variances = variance.values
     return mean_tof
-
-
-# def _fold_table_to_pulse_period(
-#     table: sc.DataArray, pulse_period: sc.Variable, pulse_stride: int
-# ) -> sc.DataArray:
-#     """
-#     Fold the lookup table to the pulse period. We make sure the left and right edges of
-#     the table wrap around the ``event_time_offset`` dimension.
-
-#     Parameters
-#     ----------
-#     table:
-#         Lookup table with time-of-flight as a function of distance and time-of-arrival.
-#     pulse_period:
-#         Period of the source pulses, i.e., time between consecutive pulse starts.
-#     pulse_stride:
-#         Stride of used pulses. Usually 1, but may be a small integer when
-#         pulse-skipping.
-#     """
-#     size = table.sizes['event_time_offset']
-#     if (size % pulse_stride) != 0:
-#         raise ValueError(
-#             "TimeOfFlightLookupTable: the number of time bins must be a multiple of "
-#             f"the pulse stride, but got {size} time bins and a pulse stride of "
-#             f"{pulse_stride}."
-#         )
-
-#     size = size // pulse_stride
-#     out = sc.concat([table, table['event_time_offset', 0]], dim='event_time_offset')
-#     out = sc.concat(
-#         [
-#             out['event_time_offset', (i * size) : (i + 1) * size + 1]
-#             for i in range(pulse_stride)
-#         ],
-#         dim='pulse',
-#     )
-#     return out.assign_coords(
-#         event_time_offset=sc.concat(
-#             [
-#                 table.coords['event_time_offset']['event_time_offset', :size],
-#                 pulse_period,
-#             ],
-#             'event_time_offset',
-#         )
-#     )
 
 
 def compute_tof_lookup_table(
@@ -246,8 +188,13 @@ def compute_tof_lookup_table(
     time_bins = sc.linspace(
         'event_time_offset', 0.0, frame_period.value, nbins + 1, unit=pulse_period.unit
     )
-    time_bins_half_width = 0.5 * (time_bins[1] - time_bins[0])
-    time_bins -= time_bins_half_width
+    time_bins_width = time_bins[1] - time_bins[0]
+    # Add an additional bin edge at the end to cover half a bin width above the
+    # frame_period.
+    time_bins = sc.concat(
+        [time_bins, time_bins[-1] + time_bins_width], dim=time_bins.dim
+    )
+    time_bins -= 0.5 * time_bins_width
 
     # To avoid a too large RAM usage, we compute the table in chunks, and piece them
     # together at the end.
@@ -268,7 +215,6 @@ def compute_tof_lookup_table(
                 distance_unit=distance_unit,
                 time_unit=time_unit,
                 frame_period=frame_period,
-                time_bins_half_width=time_bins_half_width,
             )
         )
 
@@ -276,38 +222,16 @@ def compute_tof_lookup_table(
     table.coords["distance"] = sc.midpoints(table.coords["distance"])
     table.coords["event_time_offset"] = sc.midpoints(table.coords["event_time_offset"])
 
-    # table = _fold_table_to_pulse_period(
-    #     table=table, pulse_period=pulse_period, pulse_stride=pulse_stride
-    # )
-
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
 
-    return TimeOfFlightLookupTable(
-        table  # .transpose(('pulse', 'distance', 'event_time_offset'))
-    )
+    return TimeOfFlightLookupTable(table)
 
 
 class TofInterpolator:
     def __init__(self, lookup: sc.DataArray, distance_unit: str, time_unit: str):
         self._distance_unit = distance_unit
         self._time_unit = time_unit
-
-        # # In the pulse dimension, it could be that for a given event_time_offset and
-        # # distance, a tof value is finite in one pulse and NaN in the other.
-        # # When using the bilinear interpolation, even if the value of the requested
-        # # point is exactly 0 or 1 (in the case of pulse_stride=2), the interpolator
-        # # will still use all 4 corners surrounding the point. This means that if one of
-        # # the corners is NaN, the result will be NaN.
-        # # Here, we use a trick where we duplicate the lookup values in the 'pulse'
-        # # dimension so that the interpolator has values on bin edges for that dimension.
-        # # The interpolator raises an error if axes coordinates are not strictly
-        # # monotonic, so we cannot use e.g. [-0.5, 0.5, 0.5, 1.5] in the case of
-        # # pulse_stride=2. Instead we use [-0.25, 0.25, 0.75, 1.25].
-        # base_grid = np.arange(float(lookup.sizes["pulse"]))
-        # self._pulse_edges = np.sort(
-        #     np.concatenate([base_grid - 0.25, base_grid + 0.25])
-        # )
 
         self._time_edges = (
             lookup.coords["event_time_offset"]
@@ -321,24 +245,12 @@ class TofInterpolator:
         self._interpolator = InterpolatorImpl(
             time_edges=self._time_edges,
             distance_edges=self._distance_edges,
-            # pulse_edges=self._pulse_edges,
             values=lookup.data.to(unit=self._time_unit, copy=False).values,
-            # values=np.repeat(
-            #     lookup.data.to(unit=self._time_unit, copy=False).values, 2, axis=0
-            # ),
         )
 
     def __call__(
-        self,
-        # pulse_index: sc.Variable,
-        ltotal: sc.Variable,
-        event_time_offset: sc.Variable,
+        self, ltotal: sc.Variable, event_time_offset: sc.Variable
     ) -> sc.Variable:
-        # if pulse_index.unit not in ("", None):
-        #     raise sc.UnitError(
-        #         "pulse_index must have unit dimensionless or None, "
-        #         f"but got unit: {pulse_index.unit}."
-        #     )
         if ltotal.unit != self._distance_unit:
             raise sc.UnitError(
                 f"ltotal must have unit: {self._distance_unit}, "
@@ -350,16 +262,12 @@ class TofInterpolator:
                 f"but got unit: {event_time_offset.unit}."
             )
         out_dims = event_time_offset.dims
-        # pulse_index = pulse_index.values
         ltotal = ltotal.values
         event_time_offset = event_time_offset.values
 
         return sc.array(
             dims=out_dims,
-            values=self._interpolator(
-                times=event_time_offset,
-                distances=ltotal,  # pulse_indices=pulse_index
-            ),
+            values=self._interpolator(times=event_time_offset, distances=ltotal),
             unit=self._time_unit,
         )
 
@@ -547,7 +455,6 @@ def _time_of_flight_data_events(
         pulse_index %= pulse_stride
 
     # Compute time-of-flight for all neutrons using the interpolator
-    # tofs = interp(pulse_index=pulse_index, ltotal=ltotal, event_time_offset=etos)
     tofs = interp(
         ltotal=ltotal,
         event_time_offset=etos + pulse_index * pulse_period.to(unit=eto_unit),

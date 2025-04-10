@@ -20,9 +20,9 @@ def interpolate(
     Parameters
     ----------
     x:
-        1D array of grid edges along the x-axis. They must be linspaced.
+        1D array of grid edges along the x-axis (size nx). They must be linspaced.
     y:
-        1D array of grid edges along the y-axis. They must be linspaced.
+        1D array of grid edges along the y-axis (size ny). They must be linspaced.
     values:
         2D array of values on the grid. The shape must be (ny, nx).
     xp:
@@ -79,21 +79,6 @@ def interpolate(
                 (y2 - yy) * (x2mxx * a11 + xxmx1 * a21)
                 + (yy - y1) * (x2mxx * a12 + xxmx1 * a22)
             ) * norm
-
-            # y2myy = y2 - yy
-            # yymy1 = yy - y1
-            # out[i] = (
-            #     (z2 - zz)
-            #     * (
-            #         y2myy * (x2mxx * a111 + xxmx1 * a211)
-            #         + yymy1 * (x2mxx * a121 + xxmx1 * a221)
-            #     )
-            #     + (zz - z1)
-            #     * (
-            #         y2myy * (x2mxx * a112 + xxmx1 * a212)
-            #         + yymy1 * (x2mxx * a122 + xxmx1 * a222)
-            #     )
-            # ) * norm
 
 
 class Interpolator:
