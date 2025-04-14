@@ -453,14 +453,10 @@ def _time_of_flight_data_events(
     ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
     etos = etos.bins.constituents["data"]
 
-    # Compute a pulse index for every event: it is the index of the pulse within a
-    # frame period. When there is no pulse skipping, those are all zero. When there is
-    # pulse skipping, the index ranges from zero to pulse_stride - 1.
-    # if pulse_stride == 1:
-    #     pulse_index = sc.zeros(sizes=etos.sizes)
-    # else:
     pulse_offset = None
     if pulse_stride > 1:
+        # Compute a pulse index for every event: it is the index of the pulse within a
+        # frame period. The index ranges from zero to pulse_stride - 1.
         etz_unit = 'ns'
         etz = (
             da.bins.coords["event_time_zero"]
@@ -503,11 +499,7 @@ def _time_of_flight_data_events(
         pulse_offset = pulse_index * pulse_period.to(unit=eto_unit)
 
     # Compute time-of-flight for all neutrons using the interpolator
-    tofs = interp(
-        ltotal=ltotal,
-        event_time_offset=etos,  # + pulse_index * pulse_period.to(unit=eto_unit),
-        pulse_offset=pulse_offset,
-    )
+    tofs = interp(ltotal=ltotal, event_time_offset=etos, pulse_offset=pulse_offset)
 
     parts = da.bins.constituents
     parts["data"] = tofs
