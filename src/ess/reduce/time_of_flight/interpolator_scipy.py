@@ -51,7 +51,10 @@ class Interpolator:
         )
 
     def __call__(
-        self, times: np.ndarray, distances: np.ndarray, pulse_offset: np.ndarray | None
+        self,
+        times: np.ndarray,
+        distances: np.ndarray,
+        pulse_offset: np.ndarray | None = None,
     ) -> np.ndarray:
         if pulse_offset is not None:
             times = times + pulse_offset

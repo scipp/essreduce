@@ -189,7 +189,10 @@ class Interpolator:
         self.fill_value = fill_value
 
     def __call__(
-        self, times: np.ndarray, distances: np.ndarray, pulse_offset: np.ndarray | None
+        self,
+        times: np.ndarray,
+        distances: np.ndarray,
+        pulse_offset: np.ndarray | None = None,
     ) -> np.ndarray:
         out = np.empty_like(times)
         if pulse_offset is None:
