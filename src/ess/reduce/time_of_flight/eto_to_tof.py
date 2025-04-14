@@ -330,7 +330,9 @@ class TofInterpolator:
         return sc.array(
             dims=out_dims,
             values=self._interpolator(
-                times=event_time_offset, distances=ltotal, pulse_offset=pulse_offset
+                times=event_time_offset,
+                distances=ltotal,
+                pulse_offset=pulse_offset.values if pulse_offset is not None else None,
             ),
             unit=self._time_unit,
         )
