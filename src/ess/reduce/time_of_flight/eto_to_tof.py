@@ -308,7 +308,10 @@ class TofInterpolator:
         )
 
     def __call__(
-        self, ltotal: sc.Variable, event_time_offset: sc.Variable
+        self,
+        ltotal: sc.Variable,
+        event_time_offset: sc.Variable,
+        pulse_offset: sc.Variable | None = None,
     ) -> sc.Variable:
         if ltotal.unit != self._distance_unit:
             raise sc.UnitError(
@@ -326,7 +329,9 @@ class TofInterpolator:
 
         return sc.array(
             dims=out_dims,
-            values=self._interpolator(times=event_time_offset, distances=ltotal),
+            values=self._interpolator(
+                times=event_time_offset, distances=ltotal, pulse_offset=pulse_offset
+            ),
             unit=self._time_unit,
         )
 
@@ -422,7 +427,9 @@ def _guess_pulse_stride_offset(
     for i in range(pulse_stride):
         pulse_inds = (pulse_index + i) % pulse_stride
         tofs[i] = interp(
-            ltotal=ltotal, event_time_offset=etos + pulse_inds * pulse_period
+            ltotal=ltotal,
+            event_time_offset=etos,
+            pulse_offset=pulse_inds * pulse_period,
         )
     # Find the entry in the list with the least number of nan values
     return sorted(tofs, key=lambda x: sc.isnan(tofs[x]).sum())[0]
@@ -449,9 +456,11 @@ def _time_of_flight_data_events(
     # Compute a pulse index for every event: it is the index of the pulse within a
     # frame period. When there is no pulse skipping, those are all zero. When there is
     # pulse skipping, the index ranges from zero to pulse_stride - 1.
-    if pulse_stride == 1:
-        pulse_index = sc.zeros(sizes=etos.sizes)
-    else:
+    # if pulse_stride == 1:
+    #     pulse_index = sc.zeros(sizes=etos.sizes)
+    # else:
+    pulse_offset = None
+    if pulse_stride > 1:
         etz_unit = 'ns'
         etz = (
             da.bins.coords["event_time_zero"]
@@ -491,11 +500,13 @@ def _time_of_flight_data_events(
             )
         pulse_index += pulse_stride_offset
         pulse_index %= pulse_stride
+        pulse_offset = pulse_index * pulse_period.to(unit=eto_unit)
 
     # Compute time-of-flight for all neutrons using the interpolator
     tofs = interp(
         ltotal=ltotal,
-        event_time_offset=etos + pulse_index * pulse_period.to(unit=eto_unit),
+        event_time_offset=etos,  # + pulse_index * pulse_period.to(unit=eto_unit),
+        pulse_offset=pulse_offset,
     )
 
     parts = da.bins.constituents
