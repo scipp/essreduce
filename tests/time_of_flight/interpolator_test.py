@@ -53,6 +53,22 @@ def test_numba_and_scipy_interpolators_yield_same_results():
     assert np.allclose(numba_result, scipy_result)
 
 
+def test_numba_and_scipy_interpolators_yield_same_results_with_pulse_offset():
+    numba_interp, scipy_interp = _make_interpolators()
+
+    rng = np.random.default_rng(seed=42)
+    npoints = 1000
+    times = rng.uniform(0, 71, npoints)
+    distances = rng.uniform(40, 70, npoints)
+    offsets = rng.uniform(0, 2, npoints)
+    period = 1.0
+
+    numba_result = numba_interp(times, distances, period, offsets)
+    scipy_result = scipy_interp(times, distances, period, offsets)
+
+    assert np.allclose(numba_result, scipy_result, equal_nan=True)
+
+
 def test_numba_and_scipy_interpolators_yield_same_results_with_out_of_bounds():
     numba_interp, scipy_interp = _make_interpolators()
 

@@ -308,7 +308,11 @@ class TofInterpolator:
         )
 
     def __call__(
-        self, ltotal: sc.Variable, event_time_offset: sc.Variable
+        self,
+        ltotal: sc.Variable,
+        event_time_offset: sc.Variable,
+        pulse_period: sc.Variable,
+        pulse_index: sc.Variable | None = None,
     ) -> sc.Variable:
         if ltotal.unit != self._distance_unit:
             raise sc.UnitError(
@@ -326,7 +330,12 @@ class TofInterpolator:
 
         return sc.array(
             dims=out_dims,
-            values=self._interpolator(times=event_time_offset, distances=ltotal),
+            values=self._interpolator(
+                times=event_time_offset,
+                distances=ltotal,
+                pulse_index=pulse_index.values if pulse_index is not None else None,
+                pulse_period=pulse_period.value,
+            ),
             unit=self._time_unit,
         )
 
@@ -359,7 +368,11 @@ def _time_of_flight_data_histogram(
     interp = TofInterpolator(lookup, distance_unit=ltotal.unit, time_unit=eto_unit)
 
     # Compute time-of-flight of the bin edges using the interpolator
-    tofs = interp(ltotal=ltotal.broadcast(sizes=etos.sizes), event_time_offset=etos)
+    tofs = interp(
+        ltotal=ltotal.broadcast(sizes=etos.sizes),
+        event_time_offset=etos,
+        pulse_period=pulse_period,
+    )
 
     return rebinned.assign_coords(tof=tofs)
 
@@ -418,11 +431,13 @@ def _guess_pulse_stride_offset(
         values=event_time_offset.values[inds],
         unit=event_time_offset.unit,
     )
-    pulse_period = pulse_period.to(unit=etos.unit)
     for i in range(pulse_stride):
         pulse_inds = (pulse_index + i) % pulse_stride
         tofs[i] = interp(
-            ltotal=ltotal, event_time_offset=etos + pulse_inds * pulse_period
+            ltotal=ltotal,
+            event_time_offset=etos,
+            pulse_index=pulse_inds,
+            pulse_period=pulse_period,
         )
     # Find the entry in the list with the least number of nan values
     return sorted(tofs, key=lambda x: sc.isnan(tofs[x]).sum())[0]
@@ -446,12 +461,12 @@ def _time_of_flight_data_events(
     ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
     etos = etos.bins.constituents["data"]
 
-    # Compute a pulse index for every event: it is the index of the pulse within a
-    # frame period. When there is no pulse skipping, those are all zero. When there is
-    # pulse skipping, the index ranges from zero to pulse_stride - 1.
-    if pulse_stride == 1:
-        pulse_index = sc.zeros(sizes=etos.sizes)
-    else:
+    pulse_index = None
+    pulse_period = pulse_period.to(unit=eto_unit)
+
+    if pulse_stride > 1:
+        # Compute a pulse index for every event: it is the index of the pulse within a
+        # frame period. The index ranges from zero to pulse_stride - 1.
         etz_unit = 'ns'
         etz = (
             da.bins.coords["event_time_zero"]
@@ -495,7 +510,9 @@ def _time_of_flight_data_events(
     # Compute time-of-flight for all neutrons using the interpolator
     tofs = interp(
         ltotal=ltotal,
-        event_time_offset=etos + pulse_index * pulse_period.to(unit=eto_unit),
+        event_time_offset=etos,
+        pulse_index=pulse_index,
+        pulse_period=pulse_period,
     )
 
     parts = da.bins.constituents
