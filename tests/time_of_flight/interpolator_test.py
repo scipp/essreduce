@@ -61,9 +61,10 @@ def test_numba_and_scipy_interpolators_yield_same_results_with_pulse_offset():
     times = rng.uniform(0, 71, npoints)
     distances = rng.uniform(40, 70, npoints)
     offsets = rng.uniform(0, 2, npoints)
+    period = 1.0
 
-    numba_result = numba_interp(times, distances, offsets)
-    scipy_result = scipy_interp(times, distances, offsets)
+    numba_result = numba_interp(times, distances, period, offsets)
+    scipy_result = scipy_interp(times, distances, period, offsets)
 
     assert np.allclose(numba_result, scipy_result, equal_nan=True)
 

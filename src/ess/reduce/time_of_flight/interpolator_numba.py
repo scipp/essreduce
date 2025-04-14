@@ -11,7 +11,8 @@ def interpolate(
     values: np.ndarray,
     xp: np.ndarray,
     yp: np.ndarray,
-    offset: np.ndarray | None,
+    xoffset: np.ndarray | None,
+    deltax: float,
     fill_value: float,
     out: np.ndarray,
 ):
@@ -30,8 +31,10 @@ def interpolate(
         1D array of x-coordinates where to interpolate (size N).
     yp:
         1D array of y-coordinates where to interpolate (size N).
-    offset:
-        1D array of offsets to apply to the x-coordinates (size N).
+    xoffset:
+        1D array of integer offsets to apply to the x-coordinates (size N).
+    deltax:
+        Multiplier to apply to the integer offsets (i.e. the step size).
     fill_value:
         Value to use for points outside of the grid.
     out:
@@ -55,7 +58,7 @@ def interpolate(
     norm = one_over_dx * one_over_dy
 
     for i in prange(npoints):
-        xx = xp[i] + (offset[i] if offset is not None else 0.0)
+        xx = xp[i] + (xoffset[i] * deltax if xoffset is not None else 0.0)
         yy = yp[i]
 
         if (xx < xmin) or (xx > xmax) or (yy < ymin) or (yy > ymax):
@@ -115,7 +118,8 @@ class Interpolator:
         self,
         times: np.ndarray,
         distances: np.ndarray,
-        pulse_offset: np.ndarray | None = None,
+        pulse_period: float = 0.0,
+        pulse_index: np.ndarray | None = None,
     ) -> np.ndarray:
         out = np.empty_like(times)
         interpolate(
@@ -124,7 +128,8 @@ class Interpolator:
             values=self.values,
             xp=times,
             yp=distances,
-            offset=pulse_offset,
+            xoffset=pulse_index,
+            deltax=pulse_period,
             fill_value=self.fill_value,
             out=out,
         )

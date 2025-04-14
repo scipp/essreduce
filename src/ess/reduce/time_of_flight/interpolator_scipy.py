@@ -39,10 +39,7 @@ class Interpolator:
         from scipy.interpolate import RegularGridInterpolator
 
         self._interp = RegularGridInterpolator(
-            (
-                distance_edges,
-                time_edges,
-            ),
+            (distance_edges, time_edges),
             values,
             method=method,
             bounds_error=bounds_error,
@@ -54,8 +51,9 @@ class Interpolator:
         self,
         times: np.ndarray,
         distances: np.ndarray,
-        pulse_offset: np.ndarray | None = None,
+        pulse_period: float = 0.0,
+        pulse_index: np.ndarray | None = None,
     ) -> np.ndarray:
-        if pulse_offset is not None:
-            times = times + pulse_offset
+        if pulse_index is not None:
+            times = times + (pulse_index * pulse_period)
         return self._interp((distances, times))
