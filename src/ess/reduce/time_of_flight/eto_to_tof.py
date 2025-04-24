@@ -15,6 +15,11 @@ import scippneutron as scn
 from scipp._scipp.core import _bins_no_validate
 from scippneutron._utils import elem_unit
 
+try:
+    from .interpolator_numba import Interpolator as InterpolatorImpl
+except ImportError:
+    from .interpolator_scipy import Interpolator as InterpolatorImpl
+
 from ..nexus.types import (
     CalibratedDetectorBeamline,
     CalibratedMonitorBeamline,
@@ -23,12 +28,6 @@ from ..nexus.types import (
     MonitorType,
     RunType,
 )
-
-# try:
-#     from .interpolator_numba import Interpolator as InterpolatorImpl
-# except ImportError:
-#     from .interpolator_scipy import Interpolator as InterpolatorImpl
-from .interpolator_scipy import Interpolator as InterpolatorImpl
 from .to_events import to_events
 from .types import (
     DetectorLtotal,
