@@ -20,9 +20,10 @@ from .types import (
     AllNeXusComponents,
     Analyzers,
     Beamline,
-    CalibratedBeamline,
     CalibratedDetector,
+    CalibratedDetectorBeamline,
     CalibratedMonitor,
+    CalibratedMonitorBeamline,
     Choppers,
     Component,
     DetectorBankSizes,
@@ -401,12 +402,12 @@ def get_calibrated_detector(
     )
 
 
-def assemble_beamline(
+def assemble_detector_beamline(
     detector: CalibratedDetector[RunType],
     source_position: Position[snx.NXsource, RunType],
     sample_position: Position[snx.NXsample, RunType],
     gravity: GravityVector,
-) -> CalibratedBeamline[RunType]:
+) -> CalibratedDetectorBeamline[RunType]:
     """
     Add beamline information (gravity vector, source- and sample-position) to detector.
 
@@ -427,7 +428,7 @@ def assemble_beamline(
     gravity:
         Gravity vector.
     """
-    return CalibratedBeamline[RunType](
+    return CalibratedDetectorBeamline[RunType](
         detector.assign_coords(
             source_position=source_position,
             sample_position=sample_position,
@@ -437,7 +438,7 @@ def assemble_beamline(
 
 
 def assemble_detector_data(
-    detector: CalibratedBeamline[RunType],
+    detector: CalibratedDetectorBeamline[RunType],
     event_data: NeXusData[snx.NXdetector, RunType],
 ) -> DetectorData[RunType]:
     """
@@ -488,6 +489,34 @@ def get_calibrated_monitor(
             position=monitor['position'] + offset.to(unit=monitor['position'].unit),
             source_position=source_position,
         )
+    )
+
+
+def assemble_monitor_beamline(
+    monitor: CalibratedMonitor[RunType, MonitorType],
+    source_position: Position[snx.NXsource, RunType],
+    gravity: GravityVector,
+) -> CalibratedMonitorBeamline[RunType, MonitorType]:
+    """
+    Add beamline information (gravity vector, source- and sample-position) to monitor.
+
+    This is performed separately and after :py:func:`get_calibrated_monitor` to avoid
+    as false dependency of, e.g., the reshaped detector numbers on the sample position.
+    The latter can change during a run, e.g., for a rotating sample. The detector
+    numbers might be used, e.g., to mask certain detector pixels, and should not depend
+    on the sample position.
+
+    Parameters
+    ----------
+    monitor:
+        NeXus monitor group.
+    source_position:
+        Position of the neutron source.
+    gravity:
+        Gravity vector.
+    """
+    return CalibratedMonitorBeamline[RunType, MonitorType](
+        monitor.assign_coords(source_position=source_position, gravity=gravity)
     )
 
 
@@ -633,6 +662,7 @@ _common_providers = (
 _monitor_providers = (
     no_monitor_position_offset,
     get_calibrated_monitor,
+    assemble_monitor_beamline,
     assemble_monitor_data,
 )
 
@@ -640,7 +670,7 @@ _detector_providers = (
     no_detector_position_offset,
     load_nexus_sample,
     get_calibrated_detector,
-    assemble_beamline,
+    assemble_detector_beamline,
     assemble_detector_data,
 )
 
@@ -718,33 +748,35 @@ def GenericNeXusWorkflow(
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
 
     if run_types is not None or monitor_types is not None:
-        _prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
+        from ..utils import prune_type_vars
+
+        prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
 
     return wf
 
 
-def _prune_type_vars(
-    workflow: sciline.Pipeline,
-    *,
-    run_types: Iterable[sciline.typing.Key] | None,
-    monitor_types: Iterable[sciline.typing.Key] | None,
-) -> None:
-    # Remove all nodes that use a run type or monitor types that is
-    # not listed in the function arguments.
-    excluded_run_types = _excluded_type_args(RunType, run_types)
-    excluded_monitor_types = _excluded_type_args(MonitorType, monitor_types)
-    excluded_types = excluded_run_types | excluded_monitor_types
+# def _prune_type_vars(
+#     workflow: sciline.Pipeline,
+#     *,
+#     run_types: Iterable[sciline.typing.Key] | None,
+#     monitor_types: Iterable[sciline.typing.Key] | None,
+# ) -> None:
+#     # Remove all nodes that use a run type or monitor types that is
+#     # not listed in the function arguments.
+#     excluded_run_types = _excluded_type_args(RunType, run_types)
+#     excluded_monitor_types = _excluded_type_args(MonitorType, monitor_types)
+#     excluded_types = excluded_run_types | excluded_monitor_types
 
-    graph = workflow.underlying_graph
-    to_remove = [
-        node for node in graph if excluded_types & set(getattr(node, "__args__", set()))
-    ]
-    graph.remove_nodes_from(to_remove)
+#     graph = workflow.underlying_graph
+#     to_remove = [
+#         node for node in graph if excluded_types & set(getattr(node, "__args__", set()))
+#     ]
+#     graph.remove_nodes_from(to_remove)
 
 
-def _excluded_type_args(
-    type_var: Any, keep: Iterable[sciline.typing.Key] | None
-) -> set[sciline.typing.Key]:
-    if keep is None:
-        return set()
-    return set(type_var.__constraints__) - set(keep)
+# def _excluded_type_args(
+#     type_var: Any, keep: Iterable[sciline.typing.Key] | None
+# ) -> set[sciline.typing.Key]:
+#     if keep is None:
+#         return set()
+#     return set(type_var.__constraints__) - set(keep)

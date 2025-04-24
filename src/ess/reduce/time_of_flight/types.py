@@ -4,12 +4,15 @@
 from dataclasses import dataclass
 from typing import NewType
 
+import sciline as sl
 import scipp as sc
 
-Ltotal = NewType("Ltotal", sc.Variable)
-"""
-Total length of the flight path from the source to the detector.
-"""
+from ..nexus.types import MonitorType, RunType
+
+# Ltotal = NewType("Ltotal", sc.Variable)
+# """
+# Total length of the flight path from the source to the detector.
+# """
 
 
 @dataclass
@@ -107,30 +110,63 @@ When pulse-skipping, the offset of the first pulse in the stride. This is typica
 zero but can be a small integer < pulse_stride. If None, a guess is made.
 """
 
-RawData = NewType("RawData", sc.DataArray)
-"""
-Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
-"""
+# RawData = NewType("RawData", sc.DataArray)
+# """
+# Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
+# """
 
-TofData = NewType("TofData", sc.DataArray)
-"""
-Detector data with time-of-flight coordinate.
-"""
 
-ResampledTofData = NewType("ResampledTofData", sc.DataArray)
-"""
-Histogrammed detector data with time-of-flight coordinate, that has been resampled.
+class DetectorLtotal(sl.Scope[RunType, sc.Variable], sc.Variable):
+    """Total path length of neutrons from source to detector (L1 + L2)."""
 
-Histogrammed data that has been converted to `tof` will typically have
-unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
-overlap between subframes).
-We thus resample the data to ensure that the bin edges are sorted.
-It makes use of the ``to_events`` helper which generates a number of events in each
-bin with a uniform distribution. The new events are then histogrammed using a set of
-sorted bin edges to yield a new histogram with sorted bin edges.
 
-WARNING:
-This function is highly experimental, has limitations and should be used with
-caution. It is a workaround to the issue that rebinning data with unsorted bin
-edges is not supported in scipp.
-"""
+class MonitorLtotal(sl.Scope[RunType, MonitorType, sc.Variable], sc.Variable):
+    """Total path length of neutrons from source to monitor."""
+
+
+class DetectorTofData(sl.Scope[RunType, sc.DataArray], sc.DataArray):
+    """Detector data with time-of-flight coordinate."""
+
+
+class MonitorTofData(sl.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
+    """Monitor data with time-of-flight coordinate."""
+
+
+class ResampledDetectorTofData(sl.Scope[RunType, sc.DataArray], sc.DataArray):
+    """
+    Histogrammed detector data with time-of-flight coordinate, that has been resampled.
+
+    Histogrammed data that has been converted to `tof` will typically have
+    unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
+    overlap between subframes).
+    We thus resample the data to ensure that the bin edges are sorted.
+    It makes use of the ``to_events`` helper which generates a number of events in each
+    bin with a uniform distribution. The new events are then histogrammed using a set of
+    sorted bin edges to yield a new histogram with sorted bin edges.
+
+    WARNING:
+    This function is highly experimental, has limitations and should be used with
+    caution. It is a workaround to the issue that rebinning data with unsorted bin
+    edges is not supported in scipp.
+    """
+
+
+class ResampledMonitorTofData(
+    sl.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray
+):
+    """
+    Histogrammed monitor data with time-of-flight coordinate, that has been resampled.
+
+    Histogrammed data that has been converted to `tof` will typically have
+    unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
+    overlap between subframes).
+    We thus resample the data to ensure that the bin edges are sorted.
+    It makes use of the ``to_events`` helper which generates a number of events in each
+    bin with a uniform distribution. The new events are then histogrammed using a set of
+    sorted bin edges to yield a new histogram with sorted bin edges.
+
+    WARNING:
+    This function is highly experimental, has limitations and should be used with
+    caution. It is a workaround to the issue that rebinning data with unsorted bin
+    edges is not supported in scipp.
+    """

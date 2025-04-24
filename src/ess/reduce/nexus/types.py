@@ -232,7 +232,7 @@ class CalibratedDetector(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
     """Calibrated data from a detector."""
 
 
-class CalibratedBeamline(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
+class CalibratedDetectorBeamline(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
     """Calibrated beamline with detector and other components."""
 
 
@@ -240,6 +240,12 @@ class CalibratedMonitor(
     sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray
 ):
     """Calibrated data from a monitor."""
+
+
+class CalibratedMonitorBeamline(
+    sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray
+):
+    """Calibrated beamline with monitor and other components."""
 
 
 class DetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
