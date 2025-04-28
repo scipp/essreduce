@@ -31,11 +31,13 @@ from .types import (
     TimeOfFlightLookupTable,
     TimeResolution,
 )
+from .workflow import GenericTofWorkflow
 
 __all__ = [
     "DetectorLtotal",
     "DetectorTofData",
     "DistanceResolution",
+    "GenericTofWorkflow",
     "LookupTableRelativeErrorThreshold",
     "LtotalRange",
     "MonitorLtotal",
