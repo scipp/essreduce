@@ -34,20 +34,17 @@ from .types import (
     DetectorTofData,
     DistanceResolution,
     LookupTableRelativeErrorThreshold,
-    # Ltotal,
     LtotalRange,
     MonitorLtotal,
     MonitorTofData,
     PulsePeriod,
     PulseStride,
     PulseStrideOffset,
-    # RawData,
     ResampledDetectorTofData,
     ResampledMonitorTofData,
     SimulationResults,
     TimeOfFlightLookupTable,
     TimeResolution,
-    # TofData,
 )
 
 

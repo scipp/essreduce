@@ -9,11 +9,6 @@ import scipp as sc
 
 from ..nexus.types import MonitorType, RunType
 
-# Ltotal = NewType("Ltotal", sc.Variable)
-# """
-# Total length of the flight path from the source to the detector.
-# """
-
 
 @dataclass
 class SimulationResults:
@@ -109,11 +104,6 @@ PulseStrideOffset = NewType("PulseStrideOffset", int | None)
 When pulse-skipping, the offset of the first pulse in the stride. This is typically
 zero but can be a small integer < pulse_stride. If None, a guess is made.
 """
-
-# RawData = NewType("RawData", sc.DataArray)
-# """
-# Raw detector data loaded from a NeXus file, e.g., NXdetector containing NXevent_data.
-# """
 
 
 class DetectorLtotal(sl.Scope[RunType, sc.Variable], sc.Variable):
