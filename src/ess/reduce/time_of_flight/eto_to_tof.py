@@ -290,6 +290,13 @@ def compute_tof_lookup_table(
                 [table.coords["event_time_offset"], frame_period],
                 dim='event_time_offset',
             ),
+            "pulse_period": pulse_period,
+            "pulse_stride": sc.scalar(pulse_stride, unit=None),
+            "distance_resolution": table.coords["distance"][1]
+            - table.coords["distance"][0],
+            "time_resolution": table.coords["event_time_offset"][1]
+            - table.coords["event_time_offset"][0],
+            "error_threshold": sc.scalar(error_threshold),
         },
     )
 
@@ -353,17 +360,14 @@ class TofInterpolator:
 
 
 def _time_of_flight_data_histogram(
-    da: sc.DataArray,
-    lookup: sc.DataArray,
-    ltotal: sc.Variable,
-    pulse_period: sc.Variable,
+    da: sc.DataArray, lookup: sc.DataArray, ltotal: sc.Variable
 ) -> sc.DataArray:
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
     # it may be called 'tof'.
     key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof"}))
     raw_eto = da.coords[key].to(dtype=float, copy=False)
     eto_unit = raw_eto.unit
-    pulse_period = pulse_period.to(unit=eto_unit)
+    pulse_period = lookup.coords["pulse_period"].to(unit=eto_unit)
 
     # In histogram mode, because there is a wrap around at the end of the pulse, we
     # need to insert a bin edge at that exact location to avoid having the last bin
@@ -459,8 +463,6 @@ def _time_of_flight_data_events(
     da: sc.DataArray,
     lookup: sc.DataArray,
     ltotal: sc.Variable,
-    pulse_period: sc.Variable,
-    pulse_stride: int,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
     etos = da.bins.coords["event_time_offset"].to(dtype=float, copy=False)
@@ -474,7 +476,8 @@ def _time_of_flight_data_events(
     etos = etos.bins.constituents["data"]
 
     pulse_index = None
-    pulse_period = pulse_period.to(unit=eto_unit)
+    pulse_period = lookup.coords["pulse_period"].to(unit=eto_unit)
+    pulse_stride = lookup.coords["pulse_stride"].value
 
     if pulse_stride > 1:
         # Compute a pulse index for every event: it is the index of the pulse within a
@@ -564,21 +567,15 @@ def _compute_tof_data(
     da: sc.DataArray,
     lookup: sc.DataArray,
     ltotal: sc.Variable,
-    pulse_period: sc.Variable,
-    pulse_stride: int,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
     if da.bins is None:
-        return _time_of_flight_data_histogram(
-            da=da, lookup=lookup, ltotal=ltotal, pulse_period=pulse_period
-        )
+        return _time_of_flight_data_histogram(da=da, lookup=lookup, ltotal=ltotal)
     else:
         return _time_of_flight_data_events(
             da=da,
             lookup=lookup,
             ltotal=ltotal,
-            pulse_period=pulse_period,
-            pulse_stride=pulse_stride,
             pulse_stride_offset=pulse_stride_offset,
         )
 
@@ -587,8 +584,6 @@ def detector_time_of_flight_data(
     detector_data: DetectorData[RunType],
     lookup: TimeOfFlightLookupTable,
     ltotal: DetectorLtotal[RunType],
-    pulse_period: PulsePeriod,
-    pulse_stride: PulseStride,
     pulse_stride_offset: PulseStrideOffset,
 ) -> DetectorTofData[RunType]:
     """
@@ -605,11 +600,6 @@ def detector_time_of_flight_data(
         arrival.
     ltotal:
         Total length of the flight path from the source to the detector.
-    pulse_period:
-        Period of the source pulses, i.e., time between consecutive pulse starts.
-    pulse_stride:
-        Stride of used pulses. Usually 1, but may be a small integer when
-        pulse-skipping.
     pulse_stride_offset:
         When pulse-skipping, the offset of the first pulse in the stride. This is
         typically zero but can be a small integer < pulse_stride.
@@ -619,8 +609,6 @@ def detector_time_of_flight_data(
             da=detector_data,
             lookup=lookup,
             ltotal=ltotal,
-            pulse_period=pulse_period,
-            pulse_stride=pulse_stride,
             pulse_stride_offset=pulse_stride_offset,
         )
     )
@@ -630,8 +618,6 @@ def monitor_time_of_flight_data(
     monitor_data: MonitorData[RunType, MonitorType],
     lookup: TimeOfFlightLookupTable,
     ltotal: MonitorLtotal[RunType, MonitorType],
-    pulse_period: PulsePeriod,
-    pulse_stride: PulseStride,
     pulse_stride_offset: PulseStrideOffset,
 ) -> MonitorTofData[RunType, MonitorType]:
     """
@@ -648,11 +634,6 @@ def monitor_time_of_flight_data(
         arrival.
     ltotal:
         Total length of the flight path from the source to the monitor.
-    pulse_period:
-        Period of the source pulses, i.e., time between consecutive pulse starts.
-    pulse_stride:
-        Stride of used pulses. Usually 1, but may be a small integer when
-        pulse-skipping.
     pulse_stride_offset:
         When pulse-skipping, the offset of the first pulse in the stride. This is
         typically zero but can be a small integer < pulse_stride.
@@ -662,8 +643,6 @@ def monitor_time_of_flight_data(
             da=monitor_data,
             lookup=lookup,
             ltotal=ltotal,
-            pulse_period=pulse_period,
-            pulse_stride=pulse_stride,
             pulse_stride_offset=pulse_stride_offset,
         )
     )
