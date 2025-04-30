@@ -21,8 +21,8 @@ except ImportError:
     from .interpolator_scipy import Interpolator as InterpolatorImpl
 
 from ..nexus.types import (
-    CalibratedDetectorBeamline,
-    CalibratedMonitorBeamline,
+    CalibratedBeamline,
+    CalibratedMonitor,
     DetectorData,
     MonitorData,
     MonitorType,
@@ -533,7 +533,7 @@ def _time_of_flight_data_events(
 
 
 def extract_detector_ltotal(
-    detector_beamline: CalibratedDetectorBeamline[RunType],
+    detector_beamline: CalibratedBeamline[RunType],
 ) -> DetectorLtotal[RunType]:
     """
     Extract Ltotal from the detector data.
@@ -547,7 +547,7 @@ def extract_detector_ltotal(
 
 
 def extract_monitor_ltotal(
-    monitor_beamline: CalibratedMonitorBeamline[RunType, MonitorType],
+    monitor_beamline: CalibratedMonitor[RunType, MonitorType],
 ) -> MonitorLtotal[RunType, MonitorType]:
     """
     Extract Ltotal from the monitor data.

@@ -20,8 +20,8 @@ from .types import (
     AllNeXusComponents,
     Analyzers,
     Beamline,
+    CalibratedBeamline,
     CalibratedDetector,
-    CalibratedDetectorBeamline,
     CalibratedMonitor,
     CalibratedMonitorBeamline,
     Choppers,
@@ -407,7 +407,7 @@ def assemble_detector_beamline(
     source_position: Position[snx.NXsource, RunType],
     sample_position: Position[snx.NXsample, RunType],
     gravity: GravityVector,
-) -> CalibratedDetectorBeamline[RunType]:
+) -> CalibratedBeamline[RunType]:
     """
     Add beamline information (gravity vector, source- and sample-position) to detector.
 
@@ -428,7 +428,7 @@ def assemble_detector_beamline(
     gravity:
         Gravity vector.
     """
-    return CalibratedDetectorBeamline[RunType](
+    return CalibratedBeamline[RunType](
         detector.assign_coords(
             source_position=source_position,
             sample_position=sample_position,
@@ -438,7 +438,7 @@ def assemble_detector_beamline(
 
 
 def assemble_detector_data(
-    detector: CalibratedDetectorBeamline[RunType],
+    detector: CalibratedBeamline[RunType],
     event_data: NeXusData[snx.NXdetector, RunType],
 ) -> DetectorData[RunType]:
     """
@@ -489,34 +489,6 @@ def get_calibrated_monitor(
             position=monitor['position'] + offset.to(unit=monitor['position'].unit),
             source_position=source_position,
         )
-    )
-
-
-def assemble_monitor_beamline(
-    monitor: CalibratedMonitor[RunType, MonitorType],
-    source_position: Position[snx.NXsource, RunType],
-    gravity: GravityVector,
-) -> CalibratedMonitorBeamline[RunType, MonitorType]:
-    """
-    Add beamline information (gravity vector, source- and sample-position) to monitor.
-
-    This is performed separately and after :py:func:`get_calibrated_monitor` to avoid
-    as false dependency of, e.g., the reshaped detector numbers on the sample position.
-    The latter can change during a run, e.g., for a rotating sample. The detector
-    numbers might be used, e.g., to mask certain detector pixels, and should not depend
-    on the sample position.
-
-    Parameters
-    ----------
-    monitor:
-        NeXus monitor group.
-    source_position:
-        Position of the neutron source.
-    gravity:
-        Gravity vector.
-    """
-    return CalibratedMonitorBeamline[RunType, MonitorType](
-        monitor.assign_coords(source_position=source_position, gravity=gravity)
     )
 
 
@@ -662,7 +634,6 @@ _common_providers = (
 _monitor_providers = (
     no_monitor_position_offset,
     get_calibrated_monitor,
-    assemble_monitor_beamline,
     assemble_monitor_data,
 )
 
