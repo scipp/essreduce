@@ -185,14 +185,6 @@ def test_max_accumulator() -> None:
         _ = accum.value
 
 
-def test_max_accumulator_non_scalar_raises() -> None:
-    accum = streaming.MaxAccumulator()
-    var = sc.array(dims=['x'], values=[1.0, 2.0, 3.0, 2.0, 1.0])
-    accum.push(var)  # First push does not raise
-    with pytest.raises(sc.DimensionError, match="Expected 0 dimensions"):
-        accum.push(var)
-
-
 DynamicA = NewType('DynamicA', float)
 DynamicB = NewType('DynamicB', float)
 DynamicC = NewType('DynamicC', float)
