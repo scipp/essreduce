@@ -15,6 +15,7 @@ from scipp.constants import g
 from scipp.core import label_based_index_to_positional_index
 from scippneutron.chopper import extract_chopper_from_nexus
 
+from ..utils import prune_type_vars
 from . import _nexus_loader as nexus
 from .types import (
     AllNeXusComponents,
@@ -719,8 +720,6 @@ def GenericNeXusWorkflow(
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
 
     if run_types is not None or monitor_types is not None:
-        from ..utils import prune_type_vars
-
         prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
 
     return wf
