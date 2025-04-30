@@ -7,7 +7,7 @@
 #
 annotated-types==0.7.0
     # via pydantic
-contourpy==1.3.1
+contourpy==1.3.2
     # via matplotlib
 cyclebane==24.10.0
     # via sciline
@@ -35,30 +35,29 @@ matplotlib==3.10.1
     # via
     #   mpltoolbox
     #   plopp
-mpltoolbox==24.5.1
+mpltoolbox==25.4.0
     # via scippneutron
 networkx==3.4.2
     # via cyclebane
-numpy==2.2.4
+numpy==2.2.5
     # via
     #   contourpy
     #   h5py
     #   matplotlib
-    #   mpltoolbox
     #   scipp
     #   scippneutron
     #   scipy
-packaging==24.2
+packaging==25.0
     # via
     #   lazy-loader
     #   matplotlib
-pillow==11.1.0
+pillow==11.2.1
     # via matplotlib
-plopp==25.3.0
+plopp==25.4.1
     # via scippneutron
-pydantic==2.11.3
+pydantic==2.11.4
     # via scippneutron
-pydantic-core==2.33.1
+pydantic-core==2.33.2
     # via pydantic
 pyparsing==3.2.3
     # via matplotlib
@@ -86,7 +85,7 @@ scipy==1.15.2
     #   scippnexus
 six==1.17.0
     # via python-dateutil
-typing-extensions==4.13.1
+typing-extensions==4.13.2
     # via
     #   pydantic
     #   pydantic-core
