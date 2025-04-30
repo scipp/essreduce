@@ -24,7 +24,6 @@ from .types import (
     CalibratedBeamline,
     CalibratedDetector,
     CalibratedMonitor,
-    CalibratedMonitorBeamline,
     Choppers,
     Component,
     DetectorBankSizes,
