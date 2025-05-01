@@ -535,11 +535,20 @@ def _time_of_flight_data_events(
     return da.bins.assign_coords(tof=_bins_no_validate(**parts))
 
 
-def extract_detector_ltotal(
+def detector_ltotal_from_straight_line_approximation(
     detector_beamline: CalibratedBeamline[RunType],
 ) -> DetectorLtotal[RunType]:
     """
-    Extract Ltotal from the detector data.
+    Compute Ltotal for the detector pixels.
+    This is a naive straight-line approximation to Ltotal based on basic component
+    positions.
+
+    Parameters
+    ----------
+    detector_beamline:
+        Beamline data for the detector that contains the positions necessary to compute
+        the straight-line approximation to Ltotal (source, sample, and detector
+        positions).
     """
     graph = scn.conversion.graph.beamline.beamline(scatter=True)
     return DetectorLtotal[RunType](
@@ -549,11 +558,19 @@ def extract_detector_ltotal(
     )
 
 
-def extract_monitor_ltotal(
+def monitor_ltotal_from_straight_line_approximation(
     monitor_beamline: CalibratedMonitor[RunType, MonitorType],
 ) -> MonitorLtotal[RunType, MonitorType]:
     """
-    Extract Ltotal from the monitor data.
+    Compute Ltotal for the monitor.
+    This is a naive straight-line approximation to Ltotal based on basic component
+    positions.
+
+    Parameters
+    ----------
+    monitor_beamline:
+        Beamline data for the monitor that contains the positions necessary to compute
+        the straight-line approximation to Ltotal (source and monitor positions).
     """
     graph = scn.conversion.graph.beamline.beamline(scatter=False)
     return MonitorLtotal[RunType, MonitorType](
@@ -726,6 +743,6 @@ def providers() -> tuple[Callable]:
         compute_tof_lookup_table,
         detector_time_of_flight_data,
         monitor_time_of_flight_data,
-        extract_detector_ltotal,
-        extract_monitor_ltotal,
+        detector_ltotal_from_straight_line_approximation,
+        monitor_ltotal_from_straight_line_approximation,
     )
