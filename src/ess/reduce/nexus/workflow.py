@@ -402,7 +402,7 @@ def get_calibrated_detector(
     )
 
 
-def assemble_detector_beamline(
+def assemble_beamline(
     detector: CalibratedDetector[RunType],
     source_position: Position[snx.NXsource, RunType],
     sample_position: Position[snx.NXsample, RunType],
@@ -641,7 +641,7 @@ _detector_providers = (
     no_detector_position_offset,
     load_nexus_sample,
     get_calibrated_detector,
-    assemble_detector_beamline,
+    assemble_beamline,
     assemble_detector_data,
 )
 
