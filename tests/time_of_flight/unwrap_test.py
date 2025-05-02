@@ -8,6 +8,7 @@ from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
+from ess.reduce.nexus.types import DetectorData, SampleRun
 from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
@@ -56,9 +57,9 @@ def _make_workflow_event_mode(
         time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
 
-    pl[time_of_flight.RawData] = mon
+    pl[DetectorData[SampleRun]] = mon
     pl[time_of_flight.SimulationResults] = simulation
-    pl[time_of_flight.Ltotal] = distance
+    pl[time_of_flight.DetectorLtotal[SampleRun]] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = pulse_stride
     pl[time_of_flight.PulseStrideOffset] = pulse_stride_offset
@@ -85,13 +86,16 @@ def _make_workflow_histogram_mode(
     ).rename(event_time_offset=dim)
 
     pl = sl.Pipeline(
-        (*time_of_flight.providers(), time_of_flight.resample_tof_data),
+        (
+            *time_of_flight.providers(),
+            time_of_flight.resample_detector_time_of_flight_data,
+        ),
         params=time_of_flight.default_parameters(),
     )
 
-    pl[time_of_flight.RawData] = mon
+    pl[DetectorData[SampleRun]] = mon
     pl[time_of_flight.SimulationResults] = simulation
-    pl[time_of_flight.Ltotal] = distance
+    pl[time_of_flight.DetectorLtotal[SampleRun]] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = pulse_stride
 
@@ -150,7 +154,7 @@ def test_unwrap_with_no_choppers() -> None:
         error_threshold=1.0,
     )
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=96, diff_threshold=1.0, rtol=0.02
@@ -173,7 +177,7 @@ def test_standard_unwrap(dist, simulation_psc_choppers) -> None:
         error_threshold=0.1,
     )
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=100, diff_threshold=0.02, rtol=0.05
@@ -196,7 +200,7 @@ def test_standard_unwrap_histogram_mode(dist, dim, simulation_psc_choppers) -> N
         pulse_stride=1,
     )
 
-    tofs = pl.compute(time_of_flight.ResampledTofData)
+    tofs = pl.compute(time_of_flight.ResampledDetectorTofData[SampleRun])
 
     _validate_result_histogram_mode(
         tofs=tofs, ref=ref, percentile=96, diff_threshold=0.4, rtol=0.05
@@ -215,7 +219,7 @@ def test_pulse_skipping_unwrap(dist, simulation_pulse_skipping) -> None:
         error_threshold=0.1,
     )
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
@@ -244,7 +248,7 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
         error_threshold=0.1,
     )
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
@@ -265,7 +269,7 @@ def test_pulse_skipping_stride_offset_guess_gives_expected_result(
         error_threshold=0.1,
     )
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
@@ -303,7 +307,7 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
         error_threshold=0.1,
     )
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
@@ -338,14 +342,14 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     # Skip first pulse = half of the first frame
     a = mon.group('event_time_zero')['event_time_zero', 1:]
     a.bins.coords['event_time_zero'] = sc.bins_like(a, a.coords['event_time_zero'])
-    pl[time_of_flight.RawData] = a.bins.concat('event_time_zero')
+    pl[DetectorData[SampleRun]] = a.bins.concat('event_time_zero')
     pl[time_of_flight.SimulationResults] = sim
-    pl[time_of_flight.Ltotal] = distance
+    pl[time_of_flight.DetectorLtotal[SampleRun]] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -378,7 +382,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     # Make sure that we have not lost too many events (we lose some because they may be
     # given a NaN tof from the lookup).
     assert sc.isclose(
-        pl.compute(time_of_flight.RawData).data.nansum(),
+        pl.compute(DetectorData[SampleRun]).data.nansum(),
         tofs.data.nansum(),
         rtol=sc.scalar(1.0e-3),
     )
@@ -406,7 +410,7 @@ def test_pulse_skipping_stride_3() -> None:
         error_threshold=0.1,
     )
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=100, diff_threshold=0.1, rtol=0.05
@@ -423,7 +427,7 @@ def test_pulse_skipping_unwrap_histogram_mode(simulation_pulse_skipping) -> None
         pulse_stride=2,
     )
 
-    tofs = pl.compute(time_of_flight.ResampledTofData)
+    tofs = pl.compute(time_of_flight.ResampledDetectorTofData[SampleRun])
 
     _validate_result_histogram_mode(
         tofs=tofs, ref=ref, percentile=96, diff_threshold=0.4, rtol=0.05
@@ -442,13 +446,13 @@ def test_unwrap_int(dtype, simulation_psc_choppers) -> None:
         error_threshold=0.1,
     )
 
-    mon = pl.compute(time_of_flight.RawData).copy()
+    mon = pl.compute(DetectorData[SampleRun]).copy()
     mon.bins.coords["event_time_offset"] = mon.bins.coords["event_time_offset"].to(
         dtype=dtype, unit="ns"
     )
-    pl[time_of_flight.RawData] = mon
+    pl[DetectorData[SampleRun]] = mon
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=100, diff_threshold=0.02, rtol=0.05

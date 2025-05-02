@@ -11,6 +11,7 @@ from collections.abc import Callable
 
 import numpy as np
 import scipp as sc
+import scippneutron as scn
 from scipp._scipp.core import _bins_no_validate
 from scippneutron._utils import elem_unit
 
@@ -18,21 +19,32 @@ try:
     from .interpolator_numba import Interpolator as InterpolatorImpl
 except ImportError:
     from .interpolator_scipy import Interpolator as InterpolatorImpl
+
+from ..nexus.types import (
+    CalibratedBeamline,
+    CalibratedMonitor,
+    DetectorData,
+    MonitorData,
+    MonitorType,
+    RunType,
+)
 from .to_events import to_events
 from .types import (
+    DetectorLtotal,
+    DetectorTofData,
     DistanceResolution,
     LookupTableRelativeErrorThreshold,
-    Ltotal,
     LtotalRange,
+    MonitorLtotal,
+    MonitorTofData,
     PulsePeriod,
     PulseStride,
     PulseStrideOffset,
-    RawData,
-    ResampledTofData,
+    ResampledDetectorTofData,
+    ResampledMonitorTofData,
     SimulationResults,
     TimeOfFlightLookupTable,
     TimeResolution,
-    TofData,
 )
 
 
@@ -278,6 +290,13 @@ def compute_tof_lookup_table(
                 [table.coords["event_time_offset"], frame_period],
                 dim='event_time_offset',
             ),
+            "pulse_period": pulse_period,
+            "pulse_stride": sc.scalar(pulse_stride, unit=None),
+            "distance_resolution": table.coords["distance"][1]
+            - table.coords["distance"][0],
+            "time_resolution": table.coords["event_time_offset"][1]
+            - table.coords["event_time_offset"][0],
+            "error_threshold": sc.scalar(error_threshold),
         },
     )
 
@@ -341,17 +360,14 @@ class TofInterpolator:
 
 
 def _time_of_flight_data_histogram(
-    da: sc.DataArray,
-    lookup: sc.DataArray,
-    ltotal: sc.Variable,
-    pulse_period: sc.Variable,
+    da: sc.DataArray, lookup: sc.DataArray, ltotal: sc.Variable
 ) -> sc.DataArray:
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
     # it may be called 'tof'.
     key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof"}))
     raw_eto = da.coords[key].to(dtype=float, copy=False)
     eto_unit = raw_eto.unit
-    pulse_period = pulse_period.to(unit=eto_unit)
+    pulse_period = lookup.coords["pulse_period"].to(unit=eto_unit)
 
     # In histogram mode, because there is a wrap around at the end of the pulse, we
     # need to insert a bin edge at that exact location to avoid having the last bin
@@ -447,8 +463,6 @@ def _time_of_flight_data_events(
     da: sc.DataArray,
     lookup: sc.DataArray,
     ltotal: sc.Variable,
-    pulse_period: sc.Variable,
-    pulse_stride: int,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
     etos = da.bins.coords["event_time_offset"].to(dtype=float, copy=False)
@@ -462,7 +476,8 @@ def _time_of_flight_data_events(
     etos = etos.bins.constituents["data"]
 
     pulse_index = None
-    pulse_period = pulse_period.to(unit=eto_unit)
+    pulse_period = lookup.coords["pulse_period"].to(unit=eto_unit)
+    pulse_stride = lookup.coords["pulse_stride"].value
 
     if pulse_stride > 1:
         # Compute a pulse index for every event: it is the index of the pulse within a
@@ -520,14 +535,74 @@ def _time_of_flight_data_events(
     return da.bins.assign_coords(tof=_bins_no_validate(**parts))
 
 
-def time_of_flight_data(
-    da: RawData,
+def detector_ltotal_from_straight_line_approximation(
+    detector_beamline: CalibratedBeamline[RunType],
+) -> DetectorLtotal[RunType]:
+    """
+    Compute Ltotal for the detector pixels.
+    This is a naive straight-line approximation to Ltotal based on basic component
+    positions.
+
+    Parameters
+    ----------
+    detector_beamline:
+        Beamline data for the detector that contains the positions necessary to compute
+        the straight-line approximation to Ltotal (source, sample, and detector
+        positions).
+    """
+    graph = scn.conversion.graph.beamline.beamline(scatter=True)
+    return DetectorLtotal[RunType](
+        detector_beamline.transform_coords(
+            "Ltotal", graph=graph, keep_intermediate=False
+        ).coords["Ltotal"]
+    )
+
+
+def monitor_ltotal_from_straight_line_approximation(
+    monitor_beamline: CalibratedMonitor[RunType, MonitorType],
+) -> MonitorLtotal[RunType, MonitorType]:
+    """
+    Compute Ltotal for the monitor.
+    This is a naive straight-line approximation to Ltotal based on basic component
+    positions.
+
+    Parameters
+    ----------
+    monitor_beamline:
+        Beamline data for the monitor that contains the positions necessary to compute
+        the straight-line approximation to Ltotal (source and monitor positions).
+    """
+    graph = scn.conversion.graph.beamline.beamline(scatter=False)
+    return MonitorLtotal[RunType, MonitorType](
+        monitor_beamline.transform_coords(
+            "Ltotal", graph=graph, keep_intermediate=False
+        ).coords["Ltotal"]
+    )
+
+
+def _compute_tof_data(
+    da: sc.DataArray,
+    lookup: sc.DataArray,
+    ltotal: sc.Variable,
+    pulse_stride_offset: int,
+) -> sc.DataArray:
+    if da.bins is None:
+        return _time_of_flight_data_histogram(da=da, lookup=lookup, ltotal=ltotal)
+    else:
+        return _time_of_flight_data_events(
+            da=da,
+            lookup=lookup,
+            ltotal=ltotal,
+            pulse_stride_offset=pulse_stride_offset,
+        )
+
+
+def detector_time_of_flight_data(
+    detector_data: DetectorData[RunType],
     lookup: TimeOfFlightLookupTable,
-    ltotal: Ltotal,
-    pulse_period: PulsePeriod,
-    pulse_stride: PulseStride,
+    ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
-) -> TofData:
+) -> DetectorTofData[RunType]:
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
     The output data will have a time-of-flight coordinate.
@@ -542,33 +617,55 @@ def time_of_flight_data(
         arrival.
     ltotal:
         Total length of the flight path from the source to the detector.
-    pulse_period:
-        Period of the source pulses, i.e., time between consecutive pulse starts.
-    pulse_stride:
-        Stride of used pulses. Usually 1, but may be a small integer when
-        pulse-skipping.
     pulse_stride_offset:
         When pulse-skipping, the offset of the first pulse in the stride. This is
         typically zero but can be a small integer < pulse_stride.
     """
-
-    if da.bins is None:
-        out = _time_of_flight_data_histogram(
-            da=da, lookup=lookup, ltotal=ltotal, pulse_period=pulse_period
-        )
-    else:
-        out = _time_of_flight_data_events(
-            da=da,
+    return DetectorTofData[RunType](
+        _compute_tof_data(
+            da=detector_data,
             lookup=lookup,
             ltotal=ltotal,
-            pulse_period=pulse_period,
-            pulse_stride=pulse_stride,
             pulse_stride_offset=pulse_stride_offset,
         )
-    return TofData(out)
+    )
 
 
-def resample_tof_data(da: TofData) -> ResampledTofData:
+def monitor_time_of_flight_data(
+    monitor_data: MonitorData[RunType, MonitorType],
+    lookup: TimeOfFlightLookupTable,
+    ltotal: MonitorLtotal[RunType, MonitorType],
+    pulse_stride_offset: PulseStrideOffset,
+) -> MonitorTofData[RunType, MonitorType]:
+    """
+    Convert the time-of-arrival data to time-of-flight data using a lookup table.
+    The output data will have a time-of-flight coordinate.
+
+    Parameters
+    ----------
+    da:
+        Raw monitor data loaded from a NeXus file, e.g., NXmonitor containing
+        NXevent_data.
+    lookup:
+        Lookup table giving time-of-flight as a function of distance and time of
+        arrival.
+    ltotal:
+        Total length of the flight path from the source to the monitor.
+    pulse_stride_offset:
+        When pulse-skipping, the offset of the first pulse in the stride. This is
+        typically zero but can be a small integer < pulse_stride.
+    """
+    return MonitorTofData[RunType, MonitorType](
+        _compute_tof_data(
+            da=monitor_data,
+            lookup=lookup,
+            ltotal=ltotal,
+            pulse_stride_offset=pulse_stride_offset,
+        )
+    )
+
+
+def _resample_tof_data(da: sc.DataArray) -> sc.DataArray:
     """
     Histogrammed data that has been converted to `tof` will typically have
     unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
@@ -601,11 +698,27 @@ def resample_tof_data(da: TofData) -> ResampledTofData:
     coord = da.coords["tof"]
     bin_width = (coord[dim, 1:] - coord[dim, :-1]).nanmedian()
     rehist = events.hist(tof=bin_width)
-    return ResampledTofData(
-        rehist.assign_coords(
-            {key: var for key, var in da.coords.items() if dim not in var.dims}
-        )
+    return rehist.assign_coords(
+        {key: var for key, var in da.coords.items() if dim not in var.dims}
     )
+
+
+def resample_detector_time_of_flight_data(
+    da: DetectorTofData[RunType],
+) -> ResampledDetectorTofData[RunType]:
+    """
+    Resample the detector time-of-flight data to ensure that the bin edges are sorted.
+    """
+    return ResampledDetectorTofData(_resample_tof_data(da))
+
+
+def resample_monitor_time_of_flight_data(
+    da: MonitorTofData[RunType, MonitorType],
+) -> ResampledMonitorTofData[RunType, MonitorType]:
+    """
+    Resample the monitor time-of-flight data to ensure that the bin edges are sorted.
+    """
+    return ResampledMonitorTofData(_resample_tof_data(da))
 
 
 def default_parameters() -> dict:
@@ -626,4 +739,10 @@ def providers() -> tuple[Callable]:
     """
     Providers of the time-of-flight workflow.
     """
-    return (compute_tof_lookup_table, time_of_flight_data)
+    return (
+        compute_tof_lookup_table,
+        detector_time_of_flight_data,
+        monitor_time_of_flight_data,
+        detector_ltotal_from_straight_line_approximation,
+        monitor_ltotal_from_straight_line_approximation,
+    )

@@ -164,6 +164,15 @@ def test_min_accumulator() -> None:
         _ = accum.value
 
 
+@pytest.mark.parametrize("Accum", [streaming.MinAccumulator, streaming.MaxAccumulator])
+def test_accumulator_non_scalar_raises(Accum) -> None:
+    accum = Accum()
+    var = sc.array(dims=['x'], values=[1.0, 2.0, 3.0, 2.0, 1.0])
+    accum.push(var)  # First push does not raise
+    with pytest.raises(sc.DimensionError, match="Expected 0 dimensions"):
+        accum.push(var)
+
+
 def test_max_accumulator() -> None:
     accum = streaming.MaxAccumulator()
     var = sc.array(dims=['x'], values=[1.0, 2.0, 3.0, 2.0, 1.0])

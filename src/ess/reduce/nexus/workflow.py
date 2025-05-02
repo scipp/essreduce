@@ -15,6 +15,7 @@ from scipp.constants import g
 from scipp.core import label_based_index_to_positional_index
 from scippneutron.chopper import extract_chopper_from_nexus
 
+from ..utils import prune_type_vars
 from . import _nexus_loader as nexus
 from .types import (
     AllNeXusComponents,
@@ -718,33 +719,6 @@ def GenericNeXusWorkflow(
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
 
     if run_types is not None or monitor_types is not None:
-        _prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
+        prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
 
     return wf
-
-
-def _prune_type_vars(
-    workflow: sciline.Pipeline,
-    *,
-    run_types: Iterable[sciline.typing.Key] | None,
-    monitor_types: Iterable[sciline.typing.Key] | None,
-) -> None:
-    # Remove all nodes that use a run type or monitor types that is
-    # not listed in the function arguments.
-    excluded_run_types = _excluded_type_args(RunType, run_types)
-    excluded_monitor_types = _excluded_type_args(MonitorType, monitor_types)
-    excluded_types = excluded_run_types | excluded_monitor_types
-
-    graph = workflow.underlying_graph
-    to_remove = [
-        node for node in graph if excluded_types & set(getattr(node, "__args__", set()))
-    ]
-    graph.remove_nodes_from(to_remove)
-
-
-def _excluded_type_args(
-    type_var: Any, keep: Iterable[sciline.typing.Key] | None
-) -> set[sciline.typing.Key]:
-    if keep is None:
-        return set()
-    return set(type_var.__constraints__) - set(keep)

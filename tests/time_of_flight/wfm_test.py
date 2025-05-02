@@ -9,6 +9,7 @@ from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
+from ess.reduce.nexus.types import DetectorData, SampleRun
 from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
@@ -167,12 +168,12 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
         time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
 
-    pl[time_of_flight.RawData] = raw
-    pl[time_of_flight.Ltotal] = ltotal
+    pl[DetectorData[SampleRun]] = raw
+    pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
     pl[time_of_flight.SimulationResults] = simulation_dream_choppers
     pl[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -252,13 +253,13 @@ def test_dream_wfm_with_subframe_time_overlap(
         time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
 
-    pl[time_of_flight.RawData] = raw
+    pl[DetectorData[SampleRun]] = raw
     pl[time_of_flight.SimulationResults] = simulation_dream_choppers_time_overlap
-    pl[time_of_flight.Ltotal] = ltotal
+    pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
     pl[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
     pl[time_of_flight.LookupTableRelativeErrorThreshold] = 0.01
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
@@ -437,12 +438,12 @@ def test_v20_compute_wavelengths_from_wfm(
         time_of_flight.providers(), params=time_of_flight.default_parameters()
     )
 
-    pl[time_of_flight.RawData] = raw
+    pl[DetectorData[SampleRun]] = raw
     pl[time_of_flight.SimulationResults] = simulation_v20_choppers
-    pl[time_of_flight.Ltotal] = ltotal
+    pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
     pl[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
 
-    tofs = pl.compute(time_of_flight.TofData)
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
