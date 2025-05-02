@@ -28,9 +28,9 @@ class FakeBeamline:
         import math
 
         import tof as tof_pkg
-        from tof.facilities.ess_pulse import pulse
+        from tof.facilities.ess_pulse import frequency as ess_frequency
 
-        self.frequency = pulse.frequency
+        self.frequency = ess_frequency
         self.npulses = math.ceil((run_length * self.frequency).to(unit="").value)
         self.events_per_pulse = events_per_pulse
         if source_position is None:
