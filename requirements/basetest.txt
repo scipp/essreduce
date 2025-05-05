@@ -96,7 +96,7 @@ python-dateutil==2.9.0.post0
     # via matplotlib
 requests==2.32.3
     # via pooch
-scipp==25.4.0
+scipp==25.5.0
     # via tof
 scipy==1.15.2
     # via
