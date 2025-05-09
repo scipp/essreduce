@@ -19,7 +19,6 @@ from ..utils import prune_type_vars
 from . import _nexus_loader as nexus
 from .types import (
     AllNeXusComponents,
-    Analyzers,
     Beamline,
     CalibratedBeamline,
     CalibratedDetector,
@@ -525,13 +524,6 @@ def parse_disk_choppers(
     )
 
 
-def parse_analyzers(
-    analyzers: AllNeXusComponents[snx.NXcrystal, RunType],
-) -> Analyzers[RunType]:
-    """Convert the NeXus representation of an analyzer to ours."""
-    return Analyzers[RunType](analyzers.apply(nexus.compute_component_position))
-
-
 def _drop(
     children: dict[str, snx.Field | snx.Group], classes: tuple[snx.NXobject, ...]
 ) -> dict[str, snx.Field | snx.Group]:
@@ -628,7 +620,6 @@ _common_providers = (
     nx_class_for_source,
     nx_class_for_sample,
     nx_class_for_disk_chopper,
-    nx_class_for_crystal,
 )
 
 _monitor_providers = (
@@ -646,8 +637,6 @@ _detector_providers = (
 )
 
 _chopper_providers = (parse_disk_choppers,)
-
-_analyzer_providers = (parse_analyzers,)
 
 _metadata_providers = (
     load_beamline_metadata_from_nexus,
@@ -711,7 +700,6 @@ def GenericNeXusWorkflow(
             *_monitor_providers,
             *_detector_providers,
             *_chopper_providers,
-            *_analyzer_providers,
             *_metadata_providers,
         )
     )

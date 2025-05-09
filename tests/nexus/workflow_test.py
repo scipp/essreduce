@@ -10,7 +10,6 @@ from scipp.testing import assert_identical
 from ess.reduce import data
 from ess.reduce.nexus import compute_component_position, workflow
 from ess.reduce.nexus.types import (
-    Analyzers,
     BackgroundRun,
     Beamline,
     Choppers,
@@ -573,18 +572,6 @@ def test_generic_nexus_workflow_load_choppers() -> None:
     assert chopper['slit_edges'].shape == (2,)
 
 
-def test_generic_nexus_workflow_load_analyzers() -> None:
-    wf = GenericNeXusWorkflow()
-    wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
-    analyzers = wf.compute(Analyzers[SampleRun])
-
-    assert len(analyzers) == 45
-    analyzer = analyzers['144_channel_2_1_monochromator']
-    assert 'position' in analyzer
-    assert analyzer['d_spacing'].ndim == 0
-    assert analyzer['usage'] == 'Bragg'
-
-
 def test_generic_nexus_workflow_load_beamline_metadata() -> None:
     wf = GenericNeXusWorkflow()
     wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
@@ -626,8 +613,6 @@ def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> N
     assert MonitorData[BackgroundRun, Monitor3] not in graph
     assert Choppers[SampleRun] in graph
     assert Choppers[BackgroundRun] not in graph
-    assert Analyzers[SampleRun] in graph
-    assert Analyzers[BackgroundRun] not in graph
 
     assert NeXusComponentLocationSpec[Monitor1, SampleRun] in graph
     assert NeXusComponentLocationSpec[Monitor2, SampleRun] not in graph
@@ -664,8 +649,6 @@ def test_generic_nexus_workflow_includes_only_given_run_types() -> None:
     assert MonitorData[SampleRun, Monitor3] not in graph
     assert Choppers[EmptyBeamRun] in graph
     assert Choppers[SampleRun] not in graph
-    assert Analyzers[EmptyBeamRun] in graph
-    assert Analyzers[SampleRun] not in graph
 
     excluded_run_types = set(RunType.__constraints__) - {EmptyBeamRun}
     for node in graph:
@@ -689,8 +672,6 @@ def test_generic_nexus_workflow_includes_only_given_monitor_types() -> None:
     assert MonitorData[BackgroundRun, Monitor3] not in graph
     assert Choppers[SampleRun] in graph
     assert Choppers[BackgroundRun] in graph
-    assert Analyzers[SampleRun] in graph
-    assert Analyzers[BackgroundRun] in graph
 
     excluded_monitor_types = set(MonitorType.__constraints__) - {
         Monitor1,

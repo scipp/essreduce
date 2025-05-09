@@ -107,27 +107,6 @@ def _choppers_data() -> sc.DataGroup[sc.DataGroup[Any]]:
     )
 
 
-def _analyzers_data() -> sc.DataGroup[sc.DataGroup[Any]]:
-    return sc.DataGroup[sc.DataGroup[Any]](
-        {
-            'analyzer_B': sc.DataGroup[Any](
-                {
-                    'd_spacing': sc.scalar(3.355, unit='angstrom'),
-                    'usage': 'Bragg',
-                    'nexus_component_name': 'analyzer_B',
-                }
-            ),
-            'analyzer_A': sc.DataGroup[Any](
-                {
-                    'd_spacing': sc.scalar(3.104, unit='angstrom'),
-                    'usage': 'Bragg',
-                    'nexus_component_name': 'analyzer_A',
-                }
-            ),
-        }
-    )
-
-
 def _write_transformation(group: snx.Group, offset: sc.Variable) -> None:
     group.create_field('depends_on', sc.scalar('transformations/t1'))
     transformations = group.create_class('transformations', snx.NXtransformations)
@@ -183,11 +162,6 @@ def _write_nexus_data(store: Path | BytesIO) -> None:
             chop.create_field('slit_edges', chopper['slit_edges'])
             chop.create_field('slit_height', chopper['slit_height'])
             chop.create_field('slits', chopper['slits'])
-
-        for name, analyzer in _analyzers_data().items():
-            ana = instrument.create_class(name, snx.NXcrystal)
-            ana.create_field('d_spacing', analyzer['d_spacing'])
-            ana.create_field('usage', analyzer['usage'])
 
 
 @contextmanager
@@ -271,11 +245,6 @@ def expected_sample() -> sc.DataGroup:
 @pytest.fixture
 def expected_choppers() -> sc.DataGroup[sc.DataGroup[Any]]:
     return _choppers_data()
-
-
-@pytest.fixture
-def expected_analyzers() -> sc.DataGroup[sc.DataGroup[Any]]:
-    return _analyzers_data()
 
 
 def test_load_data_loads_expected_event_data(nexus_file, expected_bank12):
@@ -534,16 +503,6 @@ def test_load_disk_choppers(nexus_file, expected_choppers, entry_name):
     )
     choppers = nexus.load_all_components(loc, nx_class=snx.NXdisk_chopper)
     sc.testing.assert_identical(choppers, expected_choppers)
-
-
-@pytest.mark.parametrize('entry_name', [None, nexus.types.NeXusEntryName('entry-001')])
-def test_load_analyzers(nexus_file, expected_analyzers, entry_name):
-    loc = NeXusLocationSpec(
-        filename=nexus_file,
-        entry_name=entry_name,
-    )
-    analyzers = nexus.load_all_components(loc, nx_class=snx.NXcrystal)
-    sc.testing.assert_identical(analyzers, expected_analyzers)
 
 
 def test_extract_detector_data():
