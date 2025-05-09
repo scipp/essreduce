@@ -46,6 +46,12 @@ class SimulationResults:
     distance: sc.Variable
 
 
+NumberOfSimulatedNeutrons = NewType("NumberOfSimulatedNeutrons", int)
+"""
+Number of neutrons simulated in the simulation that is used to create the lookup table.
+This is typically a large number, e.g., 1e6 or 1e7.
+"""
+
 LtotalRange = NewType("LtotalRange", tuple[sc.Variable, sc.Variable])
 """
 Range (min, max) of the total length of the flight path from the source to the detector.
@@ -77,6 +83,10 @@ Since the event_time_offset range needs to span exactly one pulse period, the fi
 resolution in the lookup table will be at least the supplied value here, but may be
 smaller if the pulse period is not an integer multiple of the time resolution.
 """
+
+TimeOfFlightLookupTableFilename = NewType("TimeOfFlightLookupTableFilename", str)
+"""Filename of the time-of-flight lookup table."""
+
 
 TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataArray)
 """

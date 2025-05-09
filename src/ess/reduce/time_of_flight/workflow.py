@@ -3,16 +3,26 @@
 from collections.abc import Iterable
 
 import sciline
+import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
 from ..utils import prune_type_vars
 from .eto_to_tof import default_parameters, providers
+from .simulation import simulate_chopper_cascade_using_tof
+from .types import TimeOfFlightLookupTable, TimeOfFlightLookupTableFilename
+
+
+def load_tof_lookup_table(
+    filename: TimeOfFlightLookupTableFilename,
+) -> TimeOfFlightLookupTable:
+    return TimeOfFlightLookupTable(sc.io.load_hdf5(filename))
 
 
 def GenericTofWorkflow(
     *,
     run_types: Iterable[sciline.typing.Key] | None = None,
     monitor_types: Iterable[sciline.typing.Key] | None = None,
+    lookup_table_from_file: bool = True,
 ) -> sciline.Pipeline:
     """
     Generic workflow for computing the neutron time-of-flight for detector and monitor
@@ -42,6 +52,9 @@ def GenericTofWorkflow(
         List of monitor types to include in the workflow. If not provided, all monitor
         types are included.
         Must be a possible value of :class:`ess.reduce.nexus.types.MonitorType`.
+    lookup_table_from_file:
+        If True, the lookup table is read from a file. If False, the lookup table is
+        computed from the chopper settings and the detector Ltotal.
 
     Returns
     -------
@@ -52,6 +65,12 @@ def GenericTofWorkflow(
 
     for provider in providers():
         wf.insert(provider)
+
+    if lookup_table_from_file:
+        wf.insert(load_tof_lookup_table)
+    else:
+        wf.insert(simulate_chopper_cascade_using_tof)
+
     for key, value in default_parameters().items():
         wf[key] = value
 
