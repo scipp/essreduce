@@ -5,7 +5,7 @@
 
 from collections.abc import Iterable
 from copy import deepcopy
-from typing import Any
+from typing import Any, TypeVar
 
 import sciline
 import sciline.typing
@@ -15,7 +15,6 @@ from scipp.constants import g
 from scipp.core import label_based_index_to_positional_index
 from scippneutron.chopper import extract_chopper_from_nexus
 
-from ..utils import prune_type_vars
 from . import _nexus_loader as nexus
 from .types import (
     AllNeXusComponents,
@@ -644,16 +643,34 @@ _metadata_providers = (
 )
 
 
-def LoadMonitorWorkflow() -> sciline.Pipeline:
+def LoadMonitorWorkflow(
+    *,
+    run_types: Iterable[sciline.typing.Key] | None = None,
+    monitor_types: Iterable[sciline.typing.Key] | None = None,
+) -> sciline.Pipeline:
     """Generic workflow for loading monitor data from a NeXus file."""
-    wf = sciline.Pipeline((*_common_providers, *_monitor_providers))
+    wf = sciline.Pipeline(
+        (*_common_providers, *_monitor_providers),
+        constraints=_gather_constraints(
+            run_types=run_types, monitor_types=monitor_types
+        ),
+    )
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
     return wf
 
 
-def LoadDetectorWorkflow() -> sciline.Pipeline:
+def LoadDetectorWorkflow(
+    *,
+    run_types: Iterable[sciline.typing.Key] | None = None,
+    monitor_types: Iterable[sciline.typing.Key] | None = None,
+) -> sciline.Pipeline:
     """Generic workflow for loading detector data from a NeXus file."""
-    wf = sciline.Pipeline((*_common_providers, *_detector_providers))
+    wf = sciline.Pipeline(
+        (*_common_providers, *_detector_providers),
+        constraints=_gather_constraints(
+            run_types=run_types, monitor_types=monitor_types
+        ),
+    )
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
     return wf
@@ -701,12 +718,28 @@ def GenericNeXusWorkflow(
             *_detector_providers,
             *_chopper_providers,
             *_metadata_providers,
-        )
+        ),
+        constraints=_gather_constraints(
+            run_types=run_types, monitor_types=monitor_types
+        ),
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
 
-    if run_types is not None or monitor_types is not None:
-        prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
-
     return wf
+
+
+def _gather_constraints(
+    *,
+    run_types: Iterable[sciline.typing.Key] | None = None,
+    monitor_types: Iterable[sciline.typing.Key] | None = None,
+) -> dict[TypeVar, Iterable[type]]:
+    constraints = {}
+    if run_types is not None:
+        constraints[RunType] = run_types
+    if monitor_types is not None:
+        constraints[MonitorType] = monitor_types
+        constraints[Component] = set(Component.__constraints__) - (
+            set(MonitorType.__constraints__) - set(monitor_types)
+        )
+    return constraints

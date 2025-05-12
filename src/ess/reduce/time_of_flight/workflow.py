@@ -7,7 +7,6 @@ import sciline
 import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
-from ..utils import prune_type_vars
 from . import eto_to_tof, simulation
 from .types import TimeOfFlightLookupTable, TimeOfFlightLookupTableFilename
 
@@ -87,8 +86,5 @@ def GenericTofWorkflow(
 
     for key, value in eto_to_tof.default_parameters().items():
         wf[key] = value
-
-    if run_types is not None or monitor_types is not None:
-        prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
 
     return wf

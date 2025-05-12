@@ -108,13 +108,13 @@ IncidentMonitor = NewType('IncidentMonitor', int)
 """Incident monitor"""
 TransmissionMonitor = NewType('TransmissionMonitor', int)
 """Transmission monitor"""
-FrameMonitor0 = NewType('FrameMonitor', int)
+FrameMonitor0 = NewType('FrameMonitor0', int)
 """Frame monitor number 0"""
-FrameMonitor1 = NewType('FrameMonitor', int)
+FrameMonitor1 = NewType('FrameMonitor1', int)
 """Frame monitor number 1"""
-FrameMonitor2 = NewType('FrameMonitor', int)
+FrameMonitor2 = NewType('FrameMonitor2', int)
 """Frame monitor number 2"""
-FrameMonitor3 = NewType('FrameMonitor', int)
+FrameMonitor3 = NewType('FrameMonitor3', int)
 """Frame monitor number 3"""
 CaveMonitor = NewType('CaveMonitor', int)
 """A monitor located in the instrument cave"""
