@@ -16,7 +16,7 @@ class TofLutProvider(Enum):
     """Provider for the time-of-flight lookup table."""
 
     FILE = auto()  # From file
-    TOF = auto()  # Computed from chopper settings
+    TOF = auto()  # Computed with 'tof' package from chopper settings
     MCSTAS = auto()  # McStas simulation (not implemented yet)
 
 
