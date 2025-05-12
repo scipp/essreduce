@@ -341,10 +341,3 @@ class Choppers(
     sc.DataGroup[sc.DataGroup[Any]],
 ):
     """All choppers in a NeXus file."""
-
-
-class Analyzers(
-    sciline.Scope[RunType, sc.DataGroup[sc.DataGroup[Any]]],
-    sc.DataGroup[sc.DataGroup[Any]],
-):
-    """All analyzers in a NeXus file."""
