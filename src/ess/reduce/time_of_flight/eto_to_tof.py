@@ -12,7 +12,6 @@ from collections.abc import Callable
 import numpy as np
 import scipp as sc
 import scippneutron as scn
-from scipp._scipp.core import _bins_no_validate
 from scippneutron._utils import elem_unit
 
 try:
@@ -532,7 +531,7 @@ def _time_of_flight_data_events(
 
     parts = da.bins.constituents
     parts["data"] = tofs
-    return da.bins.assign_coords(tof=_bins_no_validate(**parts))
+    return da.bins.assign_coords(tof=sc.bins(**parts, validate_indices=False))
 
 
 def detector_ltotal_from_straight_line_approximation(

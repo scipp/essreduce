@@ -53,12 +53,14 @@ def get_typical_outputs(pipeline: Pipeline) -> tuple[Key, ...]:
     if (typical_outputs := getattr(pipeline, "typical_outputs", None)) is None:
         graph = pipeline.underlying_graph
         sink_nodes = [node for node, degree in graph.out_degree if degree == 0]
-        return sorted(_with_pretty_names(sink_nodes))
+        return sorted(_with_pretty_names(sink_nodes), key=lambda x: x[0])
     return _with_pretty_names(typical_outputs)
 
 
 def get_possible_outputs(pipeline: Pipeline) -> tuple[Key, ...]:
-    return sorted(_with_pretty_names(tuple(pipeline.underlying_graph.nodes)))
+    return sorted(
+        _with_pretty_names(tuple(pipeline.underlying_graph.nodes)), key=lambda x: x[0]
+    )
 
 
 def _with_pretty_names(outputs: Sequence[Key]) -> tuple[tuple[str, Key], ...]:

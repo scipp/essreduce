@@ -29,9 +29,10 @@ from .types import (
     ResampledMonitorTofData,
     SimulationResults,
     TimeOfFlightLookupTable,
+    TimeOfFlightLookupTableFilename,
     TimeResolution,
 )
-from .workflow import GenericTofWorkflow
+from .workflow import GenericTofWorkflow, TofLutProvider
 
 __all__ = [
     "DetectorLtotal",
@@ -49,7 +50,9 @@ __all__ = [
     "ResampledMonitorTofData",
     "SimulationResults",
     "TimeOfFlightLookupTable",
+    "TimeOfFlightLookupTableFilename",
     "TimeResolution",
+    "TofLutProvider",
     "default_parameters",
     "providers",
     "resample_detector_time_of_flight_data",

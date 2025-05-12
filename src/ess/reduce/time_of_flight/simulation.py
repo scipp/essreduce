@@ -3,9 +3,11 @@
 from collections.abc import Mapping
 
 import scipp as sc
+import scippnexus as snx
 from scippneutron.chopper import DiskChopper
 
-from .types import SimulationResults
+from ..nexus.types import Choppers, Position, SampleRun
+from .types import NumberOfSimulatedNeutrons, SimulationResults
 
 
 def simulate_beamline(
@@ -81,4 +83,26 @@ def simulate_beamline(
         wavelength=events.coords["wavelength"],
         weight=events.data,
         distance=furthest_chopper.distance,
+    )
+
+
+def simulate_chopper_cascade_using_tof(
+    choppers: Choppers[SampleRun],
+    neutrons: NumberOfSimulatedNeutrons,
+    source_position: Position[snx.NXsource, SampleRun],
+) -> SimulationResults:
+    """
+    Simulate neutrons traveling through the chopper cascade using the ``tof`` package.
+
+    Parameters
+    ----------
+    choppers:
+        Chopper settings.
+    neutrons:
+        Number of neutrons to simulate.
+    source_position:
+        Position of the source.
+    """
+    return simulate_beamline(
+        choppers=choppers, neutrons=neutrons, source_position=source_position
     )
