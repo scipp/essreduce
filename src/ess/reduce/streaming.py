@@ -156,6 +156,11 @@ class MeanAccumulator(EternalAccumulator[T]):
     def _get_value(self) -> T:
         return super()._get_value() / self._count
 
+    def clear(self) -> None:
+        """Clear the accumulated value and count."""
+        super().clear()
+        self._count = 0
+
 
 class RollingAccumulator(Accumulator[T]):
     """

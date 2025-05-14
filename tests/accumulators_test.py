@@ -257,3 +257,25 @@ def test_mean_accumulator_incremental_mean_calculation() -> None:
 
     accum.push(var[3])
     assert sc.identical(accum.value, sc.mean(var))
+
+
+def test_mean_accumulator_after_clear() -> None:
+    accum = streaming.MeanAccumulator()
+    var = sc.array(dims=['x'], values=[2.0, 4.0, 6.0])
+
+    # First round of accumulation
+    for i in range(3):
+        accum.push(var[i].copy())
+    assert sc.identical(accum.value, sc.mean(var))
+
+    # Clear and verify empty state
+    accum.clear()
+    assert accum.is_empty
+
+    # Second round with new values
+    new_var = sc.array(dims=['x'], values=[10.0, 20.0])
+    for i in range(2):
+        accum.push(new_var[i].copy())
+
+    # Verify mean is calculated correctly with only the new values
+    assert sc.identical(accum.value, sc.mean(new_var))
