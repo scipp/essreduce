@@ -265,7 +265,7 @@ def test_load_data_loads_expected_event_data(nexus_file, expected_bank12):
 def test_load_data_loads_expected_histogram_data(nexus_file, expected_monitor):
     histogram = nexus.load_data(
         nexus_file,
-        component_name=nexus.types.NeXusName[nexus.types.Monitor1]('monitor'),
+        component_name=nexus.types.NeXusName[nexus.types.CaveMonitor]('monitor'),
     )
     sc.testing.assert_identical(histogram, expected_monitor)
 
@@ -438,7 +438,7 @@ def test_load_monitor(nexus_file, expected_monitor, entry_name, selection):
     loc = NeXusLocationSpec(
         filename=nexus_file,
         entry_name=entry_name,
-        component_name=nexus.types.NeXusName[nexus.types.Monitor1]('monitor'),
+        component_name=nexus.types.NeXusName[nexus.types.FrameMonitor1]('monitor'),
     )
     if selection is not None:
         loc.selection = selection

@@ -69,19 +69,13 @@ class TransmissionRun(Generic[ScatteringRunType]):
     """
 
 
-RunType = TypeVar(
-    'RunType',
-    BackgroundRun,
-    EmptyBeamRun,
-    SampleRun,
-    # Note that mypy does not seem to like this nesting, may need to find a workaround
-    TransmissionRun[SampleRun],
-    TransmissionRun[BackgroundRun],
-    VanadiumRun,
-)
+RunType = TypeVar('RunType')
 """TypeVar for specifying what run some data belongs to.
 
-Possible values:
+This type must be constrained when used in a Sciline pipeline.
+E.g., by passing ``run_types`` to :class:`ess.reduce.nexus.GenericNeXusWorkflow`.
+
+ESSreduce provides the following but custom types can be used:
 
 - :class:`BackgroundRun`
 - :class:`EmptyBeamRun`
@@ -92,18 +86,6 @@ Possible values:
 
 
 # 1.2  Monitor types
-Monitor1 = NewType('Monitor1', int)
-"""Identifier for an arbitrary monitor"""
-Monitor2 = NewType('Monitor2', int)
-"""Identifier for an arbitrary monitor"""
-Monitor3 = NewType('Monitor3', int)
-"""Identifier for an arbitrary monitor"""
-Monitor4 = NewType('Monitor4', int)
-"""Identifier for an arbitrary monitor"""
-Monitor5 = NewType('Monitor5', int)
-"""Identifier for an arbitrary monitor"""
-Monitor6 = NewType('Monitor6', int)
-"""Identifier for an arbitrary monitor"""
 IncidentMonitor = NewType('IncidentMonitor', int)
 """Incident monitor"""
 TransmissionMonitor = NewType('TransmissionMonitor', int)
@@ -118,32 +100,14 @@ FrameMonitor3 = NewType('FrameMonitor3', int)
 """Frame monitor number 3"""
 CaveMonitor = NewType('CaveMonitor', int)
 """A monitor located in the instrument cave"""
-MonitorType = TypeVar(
-    'MonitorType',
-    Monitor1,
-    Monitor2,
-    Monitor3,
-    Monitor4,
-    Monitor5,
-    Monitor6,
-    IncidentMonitor,
-    TransmissionMonitor,
-    FrameMonitor0,
-    FrameMonitor1,
-    FrameMonitor2,
-    FrameMonitor3,
-    CaveMonitor,
-)
+MonitorType = TypeVar('MonitorType')
 """TypeVar for specifying what monitor some data belongs to.
 
-Possible values:
+This type must be constrained when used in a Sciline pipeline.
+E.g., by passing ``monitor_types`` to :class:`ess.reduce.nexus.GenericNeXusWorkflow`.
 
-- :class:`Monitor1`
-- :class:`Monitor2`
-- :class:`Monitor3`
-- :class:`Monitor4`
-- :class:`Monitor5`
-- :class:`Monitor6`
+ESSreduce provides the following but custom types can be used:
+
 - :class:`IncidentMonitor`
 - :class:`TransmissionMonitor`
 - :class:`FrameMonitor0`
@@ -154,27 +118,20 @@ Possible values:
 """
 
 
-Component = TypeVar(
-    'Component',
+Component = TypeVar('Component')
+"""A beamline component in a neXus file."""
+COMPONENT_CONSTRAINTS = (
     snx.NXdetector,
     snx.NXsample,
     snx.NXsource,
     snx.NXdisk_chopper,
     snx.NXcrystal,
-    Monitor1,
-    Monitor2,
-    Monitor3,
-    Monitor4,
-    Monitor5,
-    Monitor6,
-    IncidentMonitor,
-    TransmissionMonitor,
-    FrameMonitor0,
-    FrameMonitor1,
-    FrameMonitor2,
-    FrameMonitor3,
-    CaveMonitor,
 )
+"""Base constraints for the Component type variable.
+
+This list will be supplemented with monitor types when creating a pipeline.
+"""
+
 UniqueComponent = TypeVar('UniqueComponent', snx.NXsample, snx.NXsource)
 """Components that can be identified by their type as there will only be one."""
 

@@ -16,10 +16,10 @@ from ess.reduce.nexus.types import (
     DetectorData,
     EmptyBeamRun,
     Filename,
+    FrameMonitor0,
+    FrameMonitor1,
+    FrameMonitor2,
     Measurement,
-    Monitor1,
-    Monitor2,
-    Monitor3,
     MonitorData,
     MonitorType,
     NeXusComponentLocationSpec,
@@ -412,9 +412,9 @@ def test_assemble_detector_preserves_masks(calibrated_detector, detector_event_d
 @pytest.fixture
 def nexus_monitor(
     depends_on: snx.TransformationChain,
-) -> workflow.NeXusComponent[Monitor1, SampleRun]:
+) -> workflow.NeXusComponent[FrameMonitor1, SampleRun]:
     data = sc.DataArray(sc.scalar(1.2), coords={'something': sc.scalar(13)})
-    return workflow.NeXusComponent[Monitor1, SampleRun](
+    return workflow.NeXusComponent[FrameMonitor1, SampleRun](
         sc.DataGroup(data=data, depends_on=depends_on)
     )
 
@@ -446,8 +446,8 @@ def test_get_calibrated_monitor_subtracts_offset_from_position(
 
 
 @pytest.fixture
-def calibrated_monitor() -> workflow.CalibratedMonitor[SampleRun, Monitor1]:
-    return workflow.CalibratedMonitor[SampleRun, Monitor1](
+def calibrated_monitor() -> workflow.CalibratedMonitor[SampleRun, FrameMonitor1]:
+    return workflow.CalibratedMonitor[SampleRun, FrameMonitor1](
         sc.DataArray(
             sc.scalar(0),
             coords={'position': sc.vector([1.0, 2.0, 3.0], unit='m')},
@@ -456,10 +456,10 @@ def calibrated_monitor() -> workflow.CalibratedMonitor[SampleRun, Monitor1]:
 
 
 @pytest.fixture
-def monitor_event_data() -> workflow.NeXusData[Monitor1, SampleRun]:
+def monitor_event_data() -> workflow.NeXusData[FrameMonitor1, SampleRun]:
     content = sc.DataArray(sc.ones(dims=['event'], shape=[17], unit='counts'))
     weights = sc.bins(data=content, dim='event')
-    return workflow.NeXusData[Monitor1, SampleRun](
+    return workflow.NeXusData[FrameMonitor1, SampleRun](
         sc.DataArray(
             weights,
             coords={
@@ -511,10 +511,10 @@ def test_assemble_monitor_preserves_masks(calibrated_monitor, monitor_event_data
 
 
 def test_load_monitor_workflow() -> None:
-    wf = LoadMonitorWorkflow()
+    wf = LoadMonitorWorkflow(run_types=[SampleRun], monitor_types=[FrameMonitor1])
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
-    wf[NeXusName[Monitor1]] = 'monitor_1'
-    da = wf.compute(MonitorData[SampleRun, Monitor1])
+    wf[NeXusName[FrameMonitor1]] = 'monitor_1'
+    da = wf.compute(MonitorData[SampleRun, FrameMonitor1])
     assert 'position' in da.coords
     assert 'source_position' in da.coords
     assert da.bins is not None
@@ -522,7 +522,7 @@ def test_load_monitor_workflow() -> None:
 
 
 def test_load_detector_workflow() -> None:
-    wf = LoadDetectorWorkflow()
+    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     da = wf.compute(DetectorData[SampleRun])
@@ -535,9 +535,9 @@ def test_load_detector_workflow() -> None:
 
 @pytest.mark.parametrize('preopen', [True, False])
 def test_generic_nexus_workflow(preopen: bool) -> None:
-    wf = GenericNeXusWorkflow()
+    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[FrameMonitor1])
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
-    wf[NeXusName[Monitor1]] = 'monitor_1'
+    wf[NeXusName[FrameMonitor1]] = 'monitor_1'
     wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     wf[PreopenNeXusFile] = preopen
     da = wf.compute(DetectorData[SampleRun])
@@ -546,7 +546,7 @@ def test_generic_nexus_workflow(preopen: bool) -> None:
     assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('detector_number',)
-    da = wf.compute(MonitorData[SampleRun, Monitor1])
+    da = wf.compute(MonitorData[SampleRun, FrameMonitor1])
     assert 'position' in da.coords
     assert 'source_position' in da.coords
     assert da.bins is not None
@@ -554,7 +554,7 @@ def test_generic_nexus_workflow(preopen: bool) -> None:
 
 
 def test_generic_nexus_workflow_load_choppers() -> None:
-    wf = GenericNeXusWorkflow()
+    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
     choppers = wf.compute(Choppers[SampleRun])
 
@@ -573,7 +573,7 @@ def test_generic_nexus_workflow_load_choppers() -> None:
 
 
 def test_generic_nexus_workflow_load_beamline_metadata() -> None:
-    wf = GenericNeXusWorkflow()
+    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
     beamline = wf.compute(Beamline)
 
@@ -583,7 +583,7 @@ def test_generic_nexus_workflow_load_beamline_metadata() -> None:
 
 
 def test_generic_nexus_workflow_load_measurement_metadata() -> None:
-    wf = GenericNeXusWorkflow()
+    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[Filename[BackgroundRun]] = data.loki_tutorial_background_run_60248()
     measurement = wf.compute(Measurement)
@@ -599,54 +599,62 @@ def test_generic_nexus_workflow_load_measurement_metadata() -> None:
 
 
 def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> None:
-    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[Monitor1, Monitor3])
+    wf = GenericNeXusWorkflow(
+        run_types=[SampleRun], monitor_types=[FrameMonitor1, FrameMonitor0]
+    )
     graph = wf.underlying_graph
 
     # Check some examples to avoid relying entirely on complicated loops below.
     assert DetectorData[SampleRun] in graph
     assert DetectorData[BackgroundRun] not in graph
-    assert MonitorData[SampleRun, Monitor1] in graph
-    assert MonitorData[SampleRun, Monitor2] not in graph
-    assert MonitorData[SampleRun, Monitor3] in graph
-    assert MonitorData[BackgroundRun, Monitor1] not in graph
-    assert MonitorData[BackgroundRun, Monitor2] not in graph
-    assert MonitorData[BackgroundRun, Monitor3] not in graph
+    assert MonitorData[SampleRun, FrameMonitor1] in graph
+    assert MonitorData[SampleRun, FrameMonitor2] not in graph
+    assert MonitorData[SampleRun, FrameMonitor0] in graph
+    assert MonitorData[BackgroundRun, FrameMonitor0] not in graph
+    assert MonitorData[BackgroundRun, FrameMonitor1] not in graph
+    assert MonitorData[BackgroundRun, FrameMonitor2] not in graph
     assert Choppers[SampleRun] in graph
     assert Choppers[BackgroundRun] not in graph
 
-    assert NeXusComponentLocationSpec[Monitor1, SampleRun] in graph
-    assert NeXusComponentLocationSpec[Monitor2, SampleRun] not in graph
-    assert NeXusComponentLocationSpec[Monitor3, SampleRun] in graph
+    assert NeXusComponentLocationSpec[FrameMonitor0, SampleRun] in graph
+    assert NeXusComponentLocationSpec[FrameMonitor1, SampleRun] in graph
+    assert NeXusComponentLocationSpec[FrameMonitor2, SampleRun] not in graph
     assert NeXusComponentLocationSpec[snx.NXdetector, SampleRun] in graph
     assert NeXusComponentLocationSpec[snx.NXsample, SampleRun] in graph
     assert NeXusComponentLocationSpec[snx.NXsource, SampleRun] in graph
-    assert NeXusComponentLocationSpec[Monitor1, BackgroundRun] not in graph
-    assert NeXusComponentLocationSpec[Monitor2, BackgroundRun] not in graph
-    assert NeXusComponentLocationSpec[Monitor3, BackgroundRun] not in graph
+    assert NeXusComponentLocationSpec[FrameMonitor0, BackgroundRun] not in graph
+    assert NeXusComponentLocationSpec[FrameMonitor1, BackgroundRun] not in graph
+    assert NeXusComponentLocationSpec[FrameMonitor2, BackgroundRun] not in graph
     assert NeXusComponentLocationSpec[snx.NXdetector, BackgroundRun] not in graph
     assert NeXusComponentLocationSpec[snx.NXsample, BackgroundRun] not in graph
     assert NeXusComponentLocationSpec[snx.NXsource, BackgroundRun] not in graph
 
     excluded_run_types = set(RunType.__constraints__) - {SampleRun}
-    excluded_monitor_types = set(MonitorType.__constraints__) - {Monitor1, Monitor3}
+    excluded_monitor_types = set(MonitorType.__constraints__) - {
+        FrameMonitor1,
+        FrameMonitor0,
+    }
     for node in graph:
         assert_not_contains_type_arg(node, excluded_run_types)
         assert_not_contains_type_arg(node, excluded_monitor_types)
 
 
 def test_generic_nexus_workflow_includes_only_given_run_types() -> None:
-    wf = GenericNeXusWorkflow(run_types=[EmptyBeamRun])
+    wf = GenericNeXusWorkflow(
+        run_types=[EmptyBeamRun],
+        monitor_types=[FrameMonitor0, FrameMonitor1, FrameMonitor2],
+    )
     graph = wf.underlying_graph
 
     # Check some examples to avoid relying entirely on complicated loops below.
     assert DetectorData[EmptyBeamRun] in graph
     assert DetectorData[SampleRun] not in graph
-    assert MonitorData[EmptyBeamRun, Monitor1] in graph
-    assert MonitorData[EmptyBeamRun, Monitor2] in graph
-    assert MonitorData[EmptyBeamRun, Monitor3] in graph
-    assert MonitorData[SampleRun, Monitor1] not in graph
-    assert MonitorData[SampleRun, Monitor2] not in graph
-    assert MonitorData[SampleRun, Monitor3] not in graph
+    assert MonitorData[EmptyBeamRun, FrameMonitor1] in graph
+    assert MonitorData[EmptyBeamRun, FrameMonitor2] in graph
+    assert MonitorData[EmptyBeamRun, FrameMonitor0] in graph
+    assert MonitorData[SampleRun, FrameMonitor1] not in graph
+    assert MonitorData[SampleRun, FrameMonitor2] not in graph
+    assert MonitorData[SampleRun, FrameMonitor0] not in graph
     assert Choppers[EmptyBeamRun] in graph
     assert Choppers[SampleRun] not in graph
 
@@ -656,25 +664,28 @@ def test_generic_nexus_workflow_includes_only_given_run_types() -> None:
 
 
 def test_generic_nexus_workflow_includes_only_given_monitor_types() -> None:
-    wf = GenericNeXusWorkflow(monitor_types=[TransmissionMonitor, Monitor1])
+    wf = GenericNeXusWorkflow(
+        run_types=[SampleRun, BackgroundRun],
+        monitor_types=[TransmissionMonitor, FrameMonitor1],
+    )
     graph = wf.underlying_graph
 
     # Check some examples to avoid relying entirely on complicated loops below.
     assert DetectorData[SampleRun] in graph
     assert DetectorData[BackgroundRun] in graph
     assert MonitorData[SampleRun, TransmissionMonitor] in graph
-    assert MonitorData[SampleRun, Monitor1] in graph
-    assert MonitorData[SampleRun, Monitor2] not in graph
-    assert MonitorData[SampleRun, Monitor3] not in graph
+    assert MonitorData[SampleRun, FrameMonitor1] in graph
+    assert MonitorData[SampleRun, FrameMonitor2] not in graph
+    assert MonitorData[SampleRun, FrameMonitor0] not in graph
     assert MonitorData[BackgroundRun, TransmissionMonitor] in graph
-    assert MonitorData[BackgroundRun, Monitor1] in graph
-    assert MonitorData[BackgroundRun, Monitor2] not in graph
-    assert MonitorData[BackgroundRun, Monitor3] not in graph
+    assert MonitorData[BackgroundRun, FrameMonitor1] in graph
+    assert MonitorData[BackgroundRun, FrameMonitor2] not in graph
+    assert MonitorData[BackgroundRun, FrameMonitor0] not in graph
     assert Choppers[SampleRun] in graph
     assert Choppers[BackgroundRun] in graph
 
     excluded_monitor_types = set(MonitorType.__constraints__) - {
-        Monitor1,
+        FrameMonitor1,
         TransmissionMonitor,
     }
     for node in graph:
