@@ -8,7 +8,7 @@ from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
-from ess.reduce.nexus.types import DetectorData, SampleRun
+from ess.reduce.nexus.types import DetectorData, MonitorType, RunType, SampleRun
 from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
@@ -54,7 +54,9 @@ def _make_workflow_event_mode(
     mon, ref = beamline.get_monitor("detector")
 
     pl = sl.Pipeline(
-        time_of_flight.providers(), params=time_of_flight.default_parameters()
+        time_of_flight.providers(),
+        params=time_of_flight.default_parameters(),
+        constraints={RunType: [SampleRun], MonitorType: []},
     )
 
     pl[DetectorData[SampleRun]] = mon
@@ -91,6 +93,7 @@ def _make_workflow_histogram_mode(
             time_of_flight.resample_detector_time_of_flight_data,
         ),
         params=time_of_flight.default_parameters(),
+        constraints={RunType: [SampleRun], MonitorType: []},
     )
 
     pl[DetectorData[SampleRun]] = mon
@@ -336,7 +339,9 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     )
 
     pl = sl.Pipeline(
-        time_of_flight.providers(), params=time_of_flight.default_parameters()
+        time_of_flight.providers(),
+        params=time_of_flight.default_parameters(),
+        constraints={RunType: [SampleRun], MonitorType: []},
     )
 
     # Skip first pulse = half of the first frame

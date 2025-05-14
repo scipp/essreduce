@@ -27,8 +27,8 @@ def load_tof_lookup_table(
 
 def GenericTofWorkflow(
     *,
-    run_types: Iterable[sciline.typing.Key] | None = None,
-    monitor_types: Iterable[sciline.typing.Key] | None = None,
+    run_types: Iterable[sciline.typing.Key],
+    monitor_types: Iterable[sciline.typing.Key],
     tof_lut_provider: TofLutProvider = TofLutProvider.FILE,
 ) -> sciline.Pipeline:
     """
@@ -52,13 +52,12 @@ def GenericTofWorkflow(
     Parameters
     ----------
     run_types:
-        List of run types to include in the workflow. If not provided, all run types
-        are included.
-        Must be a possible value of :class:`ess.reduce.nexus.types.RunType`.
+        List of run types to include in the workflow.
+        Constrains the possible values of :class:`ess.reduce.nexus.types.RunType`.
     monitor_types:
-        List of monitor types to include in the workflow. If not provided, all monitor
-        types are included.
-        Must be a possible value of :class:`ess.reduce.nexus.types.MonitorType`.
+        List of monitor types to include in the workflow.
+        Constrains the possible values of :class:`ess.reduce.nexus.types.MonitorType`
+        and :class:`ess.reduce.nexus.types.Component`.
     tof_lut_provider:
         Specifies how the time-of-flight lookup table is provided:
         - FILE: Read from a file

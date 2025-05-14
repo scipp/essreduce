@@ -17,6 +17,7 @@ from scippneutron.chopper import extract_chopper_from_nexus
 
 from . import _nexus_loader as nexus
 from .types import (
+    COMPONENT_CONSTRAINTS,
     AllNeXusComponents,
     Beamline,
     CalibratedBeamline,
@@ -645,8 +646,8 @@ _metadata_providers = (
 
 def LoadMonitorWorkflow(
     *,
-    run_types: Iterable[sciline.typing.Key] | None = None,
-    monitor_types: Iterable[sciline.typing.Key] | None = None,
+    run_types: Iterable[sciline.typing.Key],
+    monitor_types: Iterable[sciline.typing.Key],
 ) -> sciline.Pipeline:
     """Generic workflow for loading monitor data from a NeXus file."""
     wf = sciline.Pipeline(
@@ -661,8 +662,8 @@ def LoadMonitorWorkflow(
 
 def LoadDetectorWorkflow(
     *,
-    run_types: Iterable[sciline.typing.Key] | None = None,
-    monitor_types: Iterable[sciline.typing.Key] | None = None,
+    run_types: Iterable[sciline.typing.Key],
+    monitor_types: Iterable[sciline.typing.Key],
 ) -> sciline.Pipeline:
     """Generic workflow for loading detector data from a NeXus file."""
     wf = sciline.Pipeline(
@@ -678,8 +679,8 @@ def LoadDetectorWorkflow(
 
 def GenericNeXusWorkflow(
     *,
-    run_types: Iterable[sciline.typing.Key] | None = None,
-    monitor_types: Iterable[sciline.typing.Key] | None = None,
+    run_types: Iterable[sciline.typing.Key],
+    monitor_types: Iterable[sciline.typing.Key],
 ) -> sciline.Pipeline:
     """
     Generic workflow for loading detector and monitor data from a NeXus file.
@@ -698,13 +699,12 @@ def GenericNeXusWorkflow(
     Parameters
     ----------
     run_types:
-        List of run types to include in the workflow. If not provided, all run types
-        are included.
-        Must be a possible value of :class:`ess.reduce.nexus.types.RunType`.
+        List of run types to include in the workflow.
+        Constrains the possible values of :class:`ess.reduce.nexus.types.RunType`.
     monitor_types:
-        List of monitor types to include in the workflow. If not provided, all monitor
-        types are included.
-        Must be a possible value of :class:`ess.reduce.nexus.types.MonitorType`.
+        List of monitor types to include in the workflow.
+        Constrains the possible values of :class:`ess.reduce.nexus.types.MonitorType`
+        and :class:`ess.reduce.nexus.types.Component`.
 
     Returns
     -------
@@ -731,15 +731,13 @@ def GenericNeXusWorkflow(
 
 def _gather_constraints(
     *,
-    run_types: Iterable[sciline.typing.Key] | None = None,
-    monitor_types: Iterable[sciline.typing.Key] | None = None,
+    run_types: Iterable[sciline.typing.Key],
+    monitor_types: Iterable[sciline.typing.Key],
 ) -> dict[TypeVar, Iterable[type]]:
-    constraints = {}
-    if run_types is not None:
-        constraints[RunType] = run_types
-    if monitor_types is not None:
-        constraints[MonitorType] = monitor_types
-        constraints[Component] = set(Component.__constraints__) - (
-            set(MonitorType.__constraints__) - set(monitor_types)
-        )
+    mon = tuple(iter(monitor_types))
+    constraints = {
+        RunType: run_types,
+        MonitorType: mon,
+        Component: (*COMPONENT_CONSTRAINTS, *mon),
+    }
     return constraints
