@@ -23,7 +23,6 @@ from .types import (
     CalibratedBeamline,
     CalibratedDetector,
     CalibratedMonitor,
-    Choppers,
     Component,
     DetectorBankSizes,
     DetectorData,
@@ -46,6 +45,7 @@ from .types import (
     NeXusTransformationChain,
     Position,
     PreopenNeXusFile,
+    RawChoppers,
     RunType,
     SampleRun,
     TimeInterval,
@@ -513,9 +513,18 @@ def assemble_monitor_data(
 
 def parse_disk_choppers(
     choppers: AllNeXusComponents[snx.NXdisk_chopper, RunType],
-) -> Choppers[RunType]:
-    """Convert the NeXus representation of a chopper to ours."""
-    return Choppers[RunType](
+) -> RawChoppers[RunType]:
+    """Convert the NeXus representation of a chopper to ours.
+
+    Returns
+    -------
+    :
+        A nested data group containing the loaded choppers.
+        The elements may be time-dependent arrays that first need to be processed
+        before they can be passed to other functions as
+        :class:`ess.reduce.nexus.types.DiskChoppers`.
+    """
+    return RawChoppers[RunType](
         choppers.apply(
             lambda chopper: extract_chopper_from_nexus(
                 nexus.compute_component_position(chopper)

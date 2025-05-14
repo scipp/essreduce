@@ -12,7 +12,6 @@ from ess.reduce.nexus import compute_component_position, workflow
 from ess.reduce.nexus.types import (
     BackgroundRun,
     Beamline,
-    Choppers,
     DetectorData,
     EmptyBeamRun,
     Filename,
@@ -26,6 +25,7 @@ from ess.reduce.nexus.types import (
     NeXusName,
     NeXusTransformation,
     PreopenNeXusFile,
+    RawChoppers,
     RunType,
     SampleRun,
     TimeInterval,
@@ -556,7 +556,7 @@ def test_generic_nexus_workflow(preopen: bool) -> None:
 def test_generic_nexus_workflow_load_choppers() -> None:
     wf = GenericNeXusWorkflow()
     wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
-    choppers = wf.compute(Choppers[SampleRun])
+    choppers = wf.compute(RawChoppers[SampleRun])
 
     assert choppers.keys() == {
         '005_PulseShapingChopper',
@@ -611,8 +611,8 @@ def test_generic_nexus_workflow_includes_only_given_run_and_monitor_types() -> N
     assert MonitorData[BackgroundRun, Monitor1] not in graph
     assert MonitorData[BackgroundRun, Monitor2] not in graph
     assert MonitorData[BackgroundRun, Monitor3] not in graph
-    assert Choppers[SampleRun] in graph
-    assert Choppers[BackgroundRun] not in graph
+    assert RawChoppers[SampleRun] in graph
+    assert RawChoppers[BackgroundRun] not in graph
 
     assert NeXusComponentLocationSpec[Monitor1, SampleRun] in graph
     assert NeXusComponentLocationSpec[Monitor2, SampleRun] not in graph
@@ -647,8 +647,8 @@ def test_generic_nexus_workflow_includes_only_given_run_types() -> None:
     assert MonitorData[SampleRun, Monitor1] not in graph
     assert MonitorData[SampleRun, Monitor2] not in graph
     assert MonitorData[SampleRun, Monitor3] not in graph
-    assert Choppers[EmptyBeamRun] in graph
-    assert Choppers[SampleRun] not in graph
+    assert RawChoppers[EmptyBeamRun] in graph
+    assert RawChoppers[SampleRun] not in graph
 
     excluded_run_types = set(RunType.__constraints__) - {EmptyBeamRun}
     for node in graph:
@@ -670,8 +670,8 @@ def test_generic_nexus_workflow_includes_only_given_monitor_types() -> None:
     assert MonitorData[BackgroundRun, Monitor1] in graph
     assert MonitorData[BackgroundRun, Monitor2] not in graph
     assert MonitorData[BackgroundRun, Monitor3] not in graph
-    assert Choppers[SampleRun] in graph
-    assert Choppers[BackgroundRun] in graph
+    assert RawChoppers[SampleRun] in graph
+    assert RawChoppers[BackgroundRun] in graph
 
     excluded_monitor_types = set(MonitorType.__constraints__) - {
         Monitor1,
