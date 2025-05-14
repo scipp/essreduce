@@ -180,3 +180,80 @@ def test_max_accumulator() -> None:
     assert accum.is_empty
     with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
         _ = accum.value
+
+
+def test_mean_accumulator_calculates_mean() -> None:
+    accum = streaming.MeanAccumulator()
+    var = sc.linspace(dim='x', start=0, stop=10, num=5)
+    for i in range(5):
+        accum.push(var[i].copy())
+    assert sc.identical(accum.value, sc.mean(var))
+
+
+def test_mean_accumulator_with_preprocess() -> None:
+    accum = streaming.MeanAccumulator(preprocess=lambda x: x**2)
+    var = sc.linspace(dim='x', start=0, stop=10, num=5)
+    for i in range(5):
+        accum.push(var[i].copy())
+    assert sc.identical(accum.value, sc.mean(var**2))
+
+
+def test_mean_accumulator_works_if_output_value_is_modified() -> None:
+    accum = streaming.MeanAccumulator()
+    var = sc.linspace(dim='x', start=0, stop=10, num=5)
+    for i in range(5):
+        accum.push(var[i].copy())
+    value = accum.value
+    value += 1.0
+    assert sc.identical(accum.value, sc.mean(var))
+
+
+def test_mean_accumulator_does_not_modify_pushed_values() -> None:
+    accum = streaming.MeanAccumulator()
+    var = sc.linspace(dim='x', start=0, stop=10, num=5)
+    original = var.copy()
+    for i in range(5):
+        accum.push(var[i])
+    assert sc.identical(var, original)
+
+
+def test_mean_accumulator_clear() -> None:
+    accum = streaming.MeanAccumulator()
+    var = sc.linspace(dim='x', start=0, stop=10, num=5)
+    for i in range(5):
+        accum.push(var[i].copy())
+    assert sc.identical(accum.value, sc.mean(var))
+    accum.clear()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+
+def test_mean_accumulator_is_empty() -> None:
+    accum = streaming.MeanAccumulator()
+    assert accum.is_empty
+    with pytest.raises(ValueError, match="Cannot get value from empty accumulator"):
+        _ = accum.value
+
+    var = sc.linspace(dim='x', start=0, stop=10, num=5)
+    accum.push(var[0].copy())
+    assert not accum.is_empty
+    assert sc.identical(accum.value, var[0])
+
+
+def test_mean_accumulator_incremental_mean_calculation() -> None:
+    accum = streaming.MeanAccumulator()
+    var = sc.array(dims=['x'], values=[2.0, 4.0, 6.0, 8.0])
+
+    # Push values one by one and verify mean is calculated correctly each time
+    accum.push(var[0])
+    assert sc.identical(accum.value, var[0])
+
+    accum.push(var[1])
+    assert sc.identical(accum.value, sc.mean(var[0:2]))
+
+    accum.push(var[2])
+    assert sc.identical(accum.value, sc.mean(var[0:3]))
+
+    accum.push(var[3])
+    assert sc.identical(accum.value, sc.mean(var))

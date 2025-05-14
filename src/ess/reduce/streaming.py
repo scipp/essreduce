@@ -138,6 +138,25 @@ class EternalAccumulator(Accumulator[T]):
         self._value = None
 
 
+class MeanAccumulator(EternalAccumulator[T]):
+    """
+    Accumulator that computes the mean of pushed values.
+
+    Does not support event data.
+    """
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._count = 0
+
+    def _do_push(self, value: T) -> None:
+        super()._do_push(value)
+        self._count += 1
+
+    def _get_value(self) -> T:
+        return super()._get_value() / self._count
+
+
 class RollingAccumulator(Accumulator[T]):
     """
     Accumulator that adds pushed values to a rolling window.
