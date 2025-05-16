@@ -7,7 +7,6 @@ import sciline
 import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
-from ..utils import prune_type_vars
 from . import eto_to_tof, simulation
 from .types import TimeOfFlightLookupTable, TimeOfFlightLookupTableFilename
 
@@ -28,8 +27,8 @@ def load_tof_lookup_table(
 
 def GenericTofWorkflow(
     *,
-    run_types: Iterable[sciline.typing.Key] | None = None,
-    monitor_types: Iterable[sciline.typing.Key] | None = None,
+    run_types: Iterable[sciline.typing.Key],
+    monitor_types: Iterable[sciline.typing.Key],
     tof_lut_provider: TofLutProvider = TofLutProvider.FILE,
 ) -> sciline.Pipeline:
     """
@@ -53,13 +52,12 @@ def GenericTofWorkflow(
     Parameters
     ----------
     run_types:
-        List of run types to include in the workflow. If not provided, all run types
-        are included.
-        Must be a possible value of :class:`ess.reduce.nexus.types.RunType`.
+        List of run types to include in the workflow.
+        Constrains the possible values of :class:`ess.reduce.nexus.types.RunType`.
     monitor_types:
-        List of monitor types to include in the workflow. If not provided, all monitor
-        types are included.
-        Must be a possible value of :class:`ess.reduce.nexus.types.MonitorType`.
+        List of monitor types to include in the workflow.
+        Constrains the possible values of :class:`ess.reduce.nexus.types.MonitorType`
+        and :class:`ess.reduce.nexus.types.Component`.
     tof_lut_provider:
         Specifies how the time-of-flight lookup table is provided:
         - FILE: Read from a file
@@ -87,8 +85,5 @@ def GenericTofWorkflow(
 
     for key, value in eto_to_tof.default_parameters().items():
         wf[key] = value
-
-    if run_types is not None or monitor_types is not None:
-        prune_type_vars(wf, run_types=run_types, monitor_types=monitor_types)
 
     return wf

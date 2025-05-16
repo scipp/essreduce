@@ -9,7 +9,7 @@ from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
-from ess.reduce.nexus.types import DetectorData, SampleRun
+from ess.reduce.nexus.types import DetectorData, MonitorType, RunType, SampleRun
 from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
@@ -165,7 +165,9 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
     ref = sc.sort(ref, key='id')
 
     pl = sl.Pipeline(
-        time_of_flight.providers(), params=time_of_flight.default_parameters()
+        time_of_flight.providers(),
+        params=time_of_flight.default_parameters(),
+        constraints={RunType: [SampleRun], MonitorType: []},
     )
 
     pl[DetectorData[SampleRun]] = raw
@@ -250,7 +252,9 @@ def test_dream_wfm_with_subframe_time_overlap(
     ref = sc.sort(ref, key='id')
 
     pl = sl.Pipeline(
-        time_of_flight.providers(), params=time_of_flight.default_parameters()
+        time_of_flight.providers(),
+        params=time_of_flight.default_parameters(),
+        constraints={RunType: [SampleRun], MonitorType: []},
     )
 
     pl[DetectorData[SampleRun]] = raw
@@ -435,7 +439,9 @@ def test_v20_compute_wavelengths_from_wfm(
     ref = sc.sort(ref, key='id')
 
     pl = sl.Pipeline(
-        time_of_flight.providers(), params=time_of_flight.default_parameters()
+        time_of_flight.providers(),
+        params=time_of_flight.default_parameters(),
+        constraints={RunType: [SampleRun], MonitorType: []},
     )
 
     pl[DetectorData[SampleRun]] = raw
