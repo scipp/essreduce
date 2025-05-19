@@ -79,7 +79,7 @@ networkx==3.4.2
     # via cyclebane
 numba==0.61.2
     # via -r nightly.in
-numpy==2.2.5
+numpy==2.2.6
     # via
     #   contourpy
     #   h5py
@@ -106,7 +106,7 @@ plopp==25.4.1
     # via
     #   scippneutron
     #   tof
-pluggy==1.5.0
+pluggy==1.6.0
     # via pytest
 pooch==1.8.2
     # via -r nightly.in
