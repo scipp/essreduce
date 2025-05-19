@@ -8,6 +8,7 @@ import sciline
 import scipp as sc
 import scippnexus as snx
 from scippneutron import metadata as scn_meta
+from scippneutron.chopper import DiskChopper
 
 FilePath = NewType('FilePath', Path)
 """Full path to a NeXus file on disk."""
@@ -293,8 +294,15 @@ class NeXusTransformation(Generic[Component, RunType]):
         return NeXusTransformation(value=transform)
 
 
-class Choppers(
+class RawChoppers(
     sciline.Scope[RunType, sc.DataGroup[sc.DataGroup[Any]]],
     sc.DataGroup[sc.DataGroup[Any]],
 ):
     """All choppers in a NeXus file."""
+
+
+class DiskChoppers(
+    sciline.Scope[RunType, sc.DataGroup[DiskChopper]],
+    sc.DataGroup[DiskChopper],
+):
+    """All disk choppers parsed from a NeXus file."""

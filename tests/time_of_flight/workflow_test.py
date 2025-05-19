@@ -10,8 +10,8 @@ from scipp.testing import assert_identical
 from ess.reduce import time_of_flight
 from ess.reduce.nexus.types import (
     CalibratedBeamline,
-    Choppers,
     DetectorData,
+    DiskChoppers,
     NeXusData,
     Position,
     SampleRun,
@@ -62,7 +62,7 @@ def test_GenericTofWorkflow_can_compute_tof_lut_without_nexus_file_or_detector_i
         run_types=[SampleRun],
         monitor_types=[],
     )
-    wf[Choppers[SampleRun]] = fakes.psc_choppers()
+    wf[DiskChoppers[SampleRun]] = fakes.psc_choppers()
     wf[time_of_flight.types.NumberOfSimulatedNeutrons] = 10_000
     wf[time_of_flight.types.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
@@ -93,7 +93,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
     with pytest.raises(sciline.UnsatisfiedRequirement):
         _ = wf.compute(time_of_flight.DetectorTofData[SampleRun])
 
-    wf[Choppers[SampleRun]] = fakes.psc_choppers()
+    wf[DiskChoppers[SampleRun]] = fakes.psc_choppers()
     wf[time_of_flight.types.NumberOfSimulatedNeutrons] = 10_000
     wf[time_of_flight.types.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
@@ -128,7 +128,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
         run_types=[SampleRun],
         monitor_types=[],
     )
-    make_lut_wf[Choppers[SampleRun]] = fakes.psc_choppers()
+    make_lut_wf[DiskChoppers[SampleRun]] = fakes.psc_choppers()
     make_lut_wf[time_of_flight.types.NumberOfSimulatedNeutrons] = 10_000
     make_lut_wf[time_of_flight.types.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
