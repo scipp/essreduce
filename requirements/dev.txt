@@ -26,13 +26,13 @@ async-lru==2.0.5
     # via jupyterlab
 cffi==1.17.1
     # via argon2-cffi-bindings
-click==8.1.8
+click==8.2.0
     # via
     #   pip-compile-multi
     #   pip-tools
 copier==9.7.1
     # via -r dev.in
-dunamai==1.23.1
+dunamai==1.24.1
     # via copier
 fqdn==1.5.1
     # via jsonschema
@@ -61,7 +61,7 @@ jupyter-events==0.12.0
     # via jupyter-server
 jupyter-lsp==2.2.5
     # via jupyterlab
-jupyter-server==2.15.0
+jupyter-server==2.16.0
     # via
     #   jupyter-lsp
     #   jupyterlab
@@ -69,7 +69,7 @@ jupyter-server==2.15.0
     #   notebook-shim
 jupyter-server-terminals==0.5.3
     # via jupyter-server
-jupyterlab==4.4.1
+jupyterlab==4.4.2
     # via -r dev.in
 jupyterlab-server==2.27.3
     # via jupyterlab

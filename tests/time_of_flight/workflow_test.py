@@ -57,7 +57,11 @@ def nexus_data():
 
 
 def test_GenericTofWorkflow_can_compute_tof_lut_without_nexus_file_or_detector_info():
-    wf = GenericTofWorkflow(tof_lut_provider=TofLutProvider.TOF)
+    wf = GenericTofWorkflow(
+        tof_lut_provider=TofLutProvider.TOF,
+        run_types=[SampleRun],
+        monitor_types=[],
+    )
     wf[Choppers[SampleRun]] = fakes.psc_choppers()
     wf[time_of_flight.types.NumberOfSimulatedNeutrons] = 10_000
     wf[time_of_flight.types.LtotalRange] = (
@@ -72,7 +76,11 @@ def test_GenericTofWorkflow_can_compute_tof_lut_without_nexus_file_or_detector_i
 def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
     calibrated_beamline: sc.DataArray, nexus_data: sc.DataArray
 ):
-    wf = GenericTofWorkflow(tof_lut_provider=TofLutProvider.TOF)
+    wf = GenericTofWorkflow(
+        tof_lut_provider=TofLutProvider.TOF,
+        run_types=[SampleRun],
+        monitor_types=[],
+    )
     wf[CalibratedBeamline[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
 
@@ -103,7 +111,11 @@ def test_GenericTofWorkflow_with_tof_lut_from_mcstas_simulation():
     with pytest.raises(
         NotImplementedError, match="McStas simulation not implemented yet"
     ):
-        GenericTofWorkflow(tof_lut_provider=TofLutProvider.MCSTAS)
+        GenericTofWorkflow(
+            tof_lut_provider=TofLutProvider.MCSTAS,
+            run_types=[SampleRun],
+            monitor_types=[],
+        )
 
 
 def test_GenericTofWorkflow_with_tof_lut_from_file(
@@ -111,7 +123,11 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     nexus_data: sc.DataArray,
     tmp_path: pytest.TempPathFactory,
 ):
-    make_lut_wf = GenericTofWorkflow(tof_lut_provider=TofLutProvider.TOF)
+    make_lut_wf = GenericTofWorkflow(
+        tof_lut_provider=TofLutProvider.TOF,
+        run_types=[SampleRun],
+        monitor_types=[],
+    )
     make_lut_wf[Choppers[SampleRun]] = fakes.psc_choppers()
     make_lut_wf[time_of_flight.types.NumberOfSimulatedNeutrons] = 10_000
     make_lut_wf[time_of_flight.types.LtotalRange] = (
@@ -122,7 +138,11 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     lut = make_lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
     lut.save_hdf5(filename=tmp_path / "lut.h5")
 
-    wf = GenericTofWorkflow(tof_lut_provider=TofLutProvider.FILE)
+    wf = GenericTofWorkflow(
+        tof_lut_provider=TofLutProvider.FILE,
+        run_types=[SampleRun],
+        monitor_types=[],
+    )
     wf[CalibratedBeamline[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
     wf[time_of_flight.TimeOfFlightLookupTableFilename] = (
