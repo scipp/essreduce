@@ -560,10 +560,10 @@ class _StrippedDetector(snx.NXdetector):
 class _DummyField:
     """Dummy field that can replace snx.Field in NXmonitor."""
 
-    def __init__(self):
+    def __init__(self, dim: str):
         self.attrs = {}
-        self.sizes = {'event_time_zero': 0}
-        self.dims = ('event_time_zero',)
+        self.sizes = {dim: 0}
+        self.dims = (dim,)
         self.shape = (0,)
 
     def __getitem__(self, key: Any) -> sc.Variable:
@@ -573,14 +573,17 @@ class _DummyField:
 class _StrippedMonitor(snx.NXmonitor):
     """Monitor definition without event data for ScippNexus.
 
-    Drops NXevent_data group, data is replaced by a dummy field.
+    Drops NXevent_data and NXdata groups, data is replaced by a dummy field.
     """
 
     def __init__(
         self, attrs: dict[str, Any], children: dict[str, snx.Field | snx.Group]
     ):
-        children = _drop(children, (snx.NXevent_data,))
-        children['data'] = _DummyField()
+        is_dense = snx.NXdata in (
+            getattr(child, 'nx_class', None) for child in children
+        )
+        children = _drop(children, (snx.NXevent_data, snx.NXdata))
+        children['data'] = _DummyField(dim='time' if is_dense else 'event_time_zero')
         super().__init__(attrs=attrs, children=children)
 
 
@@ -590,6 +593,12 @@ def _add_variances(da: sc.DataArray) -> sc.DataArray:
         content = out.bins.constituents['data']
         if content.variances is None:
             content.variances = content.values
+    elif out.variances is None:
+        try:
+            out.variances = out.values
+        except sc.VariancesError:
+            out = out.to(dtype=sc.DType.float64)
+            out.variances = out.values
     return out
 
 
