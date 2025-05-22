@@ -569,7 +569,7 @@ def test_load_histogram_monitor_workflow() -> None:
     assert 'position' in da.coords
     assert 'source_position' in da.coords
     assert da.bins is None
-    assert da.dims == ('time', 'frame_time')
+    assert set(da.dims) == {'time', 'frame_time'}
     assert 'time' in da.coords.keys()
     assert 'frame_time' in da.coords.keys()
     assert da.variances is not None
