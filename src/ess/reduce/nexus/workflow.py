@@ -560,10 +560,10 @@ class _StrippedDetector(snx.NXdetector):
 class _DummyField:
     """Dummy field that can replace snx.Field in NXmonitor."""
 
-    def __init__(self):
+    def __init__(self, dim: str):
         self.attrs = {}
-        self.sizes = {'event_time_zero': 0}
-        self.dims = ('event_time_zero',)
+        self.sizes = {dim: 0}
+        self.dims = (dim,)
         self.shape = (0,)
 
     def __getitem__(self, key: Any) -> sc.Variable:
@@ -573,14 +573,17 @@ class _DummyField:
 class _StrippedMonitor(snx.NXmonitor):
     """Monitor definition without event data for ScippNexus.
 
-    Drops NXevent_data group, data is replaced by a dummy field.
+    Drops NXevent_data and NXdata groups, data is replaced by a dummy field.
     """
 
     def __init__(
         self, attrs: dict[str, Any], children: dict[str, snx.Field | snx.Group]
     ):
-        children = _drop(children, (snx.NXevent_data,))
-        children['data'] = _DummyField()
+        is_dense = snx.NXdata in (
+            getattr(child, 'nx_class', None) for child in children
+        )
+        children = _drop(children, (snx.NXevent_data, snx.NXdata))
+        children['data'] = _DummyField(dim='time' if is_dense else 'event_time_zero')
         super().__init__(attrs=attrs, children=children)
 
 
@@ -588,9 +591,19 @@ def _add_variances(da: sc.DataArray) -> sc.DataArray:
     out = da.copy(deep=False)
     if out.bins is not None:
         content = out.bins.constituents['data']
-        if content.variances is None:
-            content.variances = content.values
+        content.data = _assign_values_as_variances(content.data)
+    elif out.variances is None:
+        out.data = _assign_values_as_variances(out.data)
     return out
+
+
+def _assign_values_as_variances(var: sc.Variable) -> sc.Variable:
+    try:
+        var.variances = var.values
+    except sc.VariancesError:
+        var = var.to(dtype=sc.DType.float64)
+        var.variances = var.values
+    return var
 
 
 def load_beamline_metadata_from_nexus(file_spec: NeXusFileSpec[SampleRun]) -> Beamline:

@@ -40,6 +40,15 @@ _bifrost_registry = Registry(
 )
 
 
+_dream_registry = Registry(
+    instrument='dream',
+    files={
+        "TEST_977695_00068064.hdf": "md5:9e6ee9ec70d7c5e8c0c93b9e07e8949f",
+    },
+    version='2',
+)
+
+
 _loki_registry = Registry(
     instrument='loki',
     files={
@@ -94,3 +103,11 @@ def loki_tutorial_background_run_60393() -> str:
 def loki_tutorial_sample_transmission_run() -> str:
     """Sample transmission run (sample + sample holder/can + transmission monitor)."""
     return _loki_registry.get_path('60394-2022-02-28_2215.nxs')
+
+
+def dream_coda_test_file() -> str:
+    """CODA file for DREAM where most pulses have been removed.
+
+    See ``tools/shrink_nexus.py``.
+    """
+    return _dream_registry.get_path('TEST_977695_00068064.hdf')

@@ -471,6 +471,21 @@ def monitor_event_data() -> workflow.NeXusData[FrameMonitor1, SampleRun]:
     )
 
 
+@pytest.fixture
+def monitor_histogram_data() -> workflow.NeXusData[FrameMonitor1, SampleRun]:
+    time = sc.epoch(unit='ns') + sc.arange('time', 1, 6, unit='s').to(unit='ns')
+    frame_time = sc.arange('frame_time', 12, unit='ms').to(unit='ns')
+    return workflow.NeXusData[FrameMonitor1, SampleRun](
+        sc.DataArray(
+            10.0
+            * sc.arange('x', 5 * 12, unit='counts').fold(
+                'x', sizes={'time': 5, 'frame_time': 12}
+            ),
+            coords={'time': time, 'frame_time': frame_time},
+        )
+    )
+
+
 def test_assemble_monitor_data_adds_events_as_values_and_coords(
     calibrated_monitor, monitor_event_data
 ) -> None:
@@ -482,7 +497,7 @@ def test_assemble_monitor_data_adds_events_as_values_and_coords(
     )
 
 
-def test_assemble_monitor_data_adds_variances_to_weights(
+def test_assemble_monitor_data_adds_variances_to_events(
     calibrated_monitor, monitor_event_data
 ) -> None:
     monitor_data = workflow.assemble_monitor_data(
@@ -491,6 +506,30 @@ def test_assemble_monitor_data_adds_variances_to_weights(
     assert_identical(
         sc.variances(monitor_data.drop_coords(tuple(calibrated_monitor.coords))),
         monitor_event_data,
+    )
+
+
+def test_assemble_monitor_data_adds_histogram_as_values_and_coords(
+    calibrated_monitor, monitor_histogram_data
+) -> None:
+    monitor_data = workflow.assemble_monitor_data(
+        calibrated_monitor, monitor_histogram_data
+    )
+    assert_identical(
+        monitor_data.drop_coords(tuple(calibrated_monitor.coords)),
+        monitor_histogram_data,
+    )
+
+
+def test_assemble_monitor_data_adds_variances_to_weights(
+    calibrated_monitor, monitor_histogram_data
+) -> None:
+    monitor_data = workflow.assemble_monitor_data(
+        calibrated_monitor, monitor_histogram_data
+    )
+    assert_identical(
+        sc.variances(monitor_data.drop_coords(tuple(calibrated_monitor.coords))),
+        monitor_histogram_data,
     )
 
 
@@ -510,7 +549,7 @@ def test_assemble_monitor_preserves_masks(calibrated_monitor, monitor_event_data
     assert 'mymask' in monitor_data.masks
 
 
-def test_load_monitor_workflow() -> None:
+def test_load_event_monitor_workflow() -> None:
     wf = LoadMonitorWorkflow(run_types=[SampleRun], monitor_types=[FrameMonitor1])
     wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
     wf[NeXusName[FrameMonitor1]] = 'monitor_1'
@@ -519,6 +558,21 @@ def test_load_monitor_workflow() -> None:
     assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('event_time_zero',)
+    assert da.bins.constituents['data'].variances is not None
+
+
+def test_load_histogram_monitor_workflow() -> None:
+    wf = LoadMonitorWorkflow(run_types=[SampleRun], monitor_types=[FrameMonitor1])
+    wf[Filename[SampleRun]] = data.dream_coda_test_file()
+    wf[NeXusName[FrameMonitor1]] = 'monitor_bunker'
+    da = wf.compute(MonitorData[SampleRun, FrameMonitor1])
+    assert 'position' in da.coords
+    assert 'source_position' in da.coords
+    assert da.bins is None
+    assert set(da.dims) == {'time', 'frame_time'}
+    assert 'time' in da.coords.keys()
+    assert 'frame_time' in da.coords.keys()
+    assert da.variances is not None
 
 
 def test_load_detector_workflow() -> None:
