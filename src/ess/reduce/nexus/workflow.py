@@ -591,15 +591,19 @@ def _add_variances(da: sc.DataArray) -> sc.DataArray:
     out = da.copy(deep=False)
     if out.bins is not None:
         content = out.bins.constituents['data']
-        if content.variances is None:
-            content.variances = content.values
+        content.data = _assign_values_as_variances(content.data)
     elif out.variances is None:
-        try:
-            out.variances = out.values
-        except sc.VariancesError:
-            out = out.to(dtype=sc.DType.float64)
-            out.variances = out.values
+        out.data = _assign_values_as_variances(out.data)
     return out
+
+
+def _assign_values_as_variances(var: sc.Variable) -> sc.Variable:
+    try:
+        var.variances = var.values
+    except sc.VariancesError:
+        var = var.to(dtype=sc.DType.float64)
+        var.variances = var.values
+    return var
 
 
 def load_beamline_metadata_from_nexus(file_spec: NeXusFileSpec[SampleRun]) -> Beamline:
