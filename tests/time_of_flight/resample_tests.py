@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 
+import numpy as np
 import pytest
 import scipp as sc
-import numpy as np
 
 from ess.reduce.time_of_flight import resample
 
@@ -95,3 +95,78 @@ class TestFindStrictlyIncreasingSections:
         var = sc.array(dims=['x'], values=[3, 3, 2, 3, 4, 5])
         sections = resample.find_strictly_increasing_sections(var)
         assert sections == [slice(2, 6)]
+
+
+class TestGetMinMax:
+    """Tests for get_min_max function."""
+
+    def test_basic_functionality(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 2, 3, 4, 5, 3, 4, 5, 6])
+        slices = [slice(0, 3), slice(3, 7), slice(7, 11)]
+        min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
+        assert min_val.value == 1
+        assert max_val.value == 6
+
+    def test_with_units(self):
+        var = sc.array(dims=['x'], values=[1.0, 2.0, 3.0, 2.0, 3.0, 4.0], unit='m')
+        slices = [slice(0, 3), slice(3, 6)]
+        min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
+        assert min_val.value == 1.0
+        assert max_val.value == 4.0
+        assert min_val.unit == sc.Unit('m')
+        assert max_val.unit == sc.Unit('m')
+
+    def test_with_single_slice(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 4, 5])
+        slices = [slice(0, 5)]
+        min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
+        assert min_val.value == 1
+        assert max_val.value == 5
+
+    def test_with_non_contiguous_slices(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 4, 5, 0, 1, 2])
+        slices = [slice(0, 5), slice(5, 8)]
+        min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
+        assert min_val.value == 0  # The min value is at the start of the second slice
+        assert max_val.value == 5  # The max value is at the end of the first slice
+
+    def test_with_overlapping_slices(self):
+        var = sc.array(dims=['x'], values=[1, 3, 5, 7, 9])
+        slices = [slice(0, 3), slice(1, 4), slice(2, 5)]
+        min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
+        assert min_val.value == 1  # The min value is at the start of the first slice
+        assert max_val.value == 9  # The max value is at the end of the third slice
+
+    def test_with_different_dimension_name(self):
+        var = sc.array(dims=['time'], values=[10, 20, 30, 40, 50])
+        slices = [slice(1, 3), slice(3, 5)]
+        min_val, max_val = resample.get_min_max(var, dim='time', slices=slices)
+        assert min_val.value == 20  # The min value is at the start of the first slice
+        assert max_val.value == 50  # The max value is at the end of the second slice
+
+    def test_with_float_data(self):
+        var = sc.array(dims=['x'], values=[1.1, 2.2, 3.3, 4.4, 5.5])
+        slices = [slice(0, 3), slice(3, 5)]
+        min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
+        assert min_val.value == 1.1
+        assert max_val.value == 5.5
+
+    def test_with_mixed_positive_and_negative_values(self):
+        var = sc.array(dims=['x'], values=[-5, -3, -1, 0, 2, 4])
+        slices = [slice(0, 3), slice(3, 6)]
+        min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
+        assert min_val.value == -5
+        assert max_val.value == 4
+
+    def test_with_empty_slices_list_raises_error(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 4, 5])
+        slices = []
+        with pytest.raises(ValueError, match="No strictly increasing sections found."):
+            resample.get_min_max(var, dim='x', slices=slices)
+
+    def test_integration_with_find_strictly_increasing_sections(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 2, 3, 4, 1, 2, 3])
+        slices = resample.find_strictly_increasing_sections(var)
+        min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
+        assert min_val.value == 1
+        assert max_val.value == 4

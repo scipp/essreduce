@@ -6,14 +6,6 @@ import numpy as np
 import scipp as sc
 
 
-def rebin_strictly_increasing(da: sc.DataArray, dim: str) -> sc.DataArray:
-    """
-    Find strictly monotonic sections in a coordinate dimension and rebin the data array
-    into a regular grid based on these sections.
-    """
-    pass
-
-
 def find_strictly_increasing_sections(var: sc.Variable) -> list[slice]:
     """
     Find strictly increasing sections in a coordinate dimension (minimum length 2).
@@ -40,3 +32,46 @@ def find_strictly_increasing_sections(var: sc.Variable) -> list[slice]:
         for start, end in zip(section_starts, section_ends, strict=True)
         if end - start >= 2  # Ensure section has at least 2 points
     ]
+
+
+def get_min_max(
+    var: sc.Variable, *, dim: str, slices: list[slice]
+) -> tuple[sc.Variable, sc.Variable]:
+    if not slices:
+        raise ValueError("No strictly increasing sections found.")
+    combined = sc.concat([var[dim, slice] for slice in slices], dim)
+    return combined.min(), combined.max()
+
+
+def make_regular_grid(
+    var: sc.Variable, *, dim: str, slices: list[slice]
+) -> sc.Variable:
+    """
+    Create a regular grid variable based on the min and max of the slices.
+    """
+    min_val, max_val = get_min_max(var, dim=dim, slices=slices)
+    step = sc.reduce(
+        [var[dim, slice][1] - var[dim, slice][0] for slice in slices]
+    ).min()
+    return sc.arange(
+        dim=dim,
+        start=min_val.value,
+        stop=max_val.value + step.value,  # Ensure the last bin edge is included
+        step=step.value,
+        unit=step.unit,
+        dtype=step.dtype,
+    )
+
+
+def rebin_strictly_increasing(da: sc.DataArray, dim: str) -> sc.DataArray:
+    """
+    Find strictly monotonic sections in a coordinate dimension and rebin the data array
+    into a regular grid based on these sections.
+    """
+    slices = find_strictly_increasing_sections(da.coords[dim])
+    if len(slices) == 1:
+        return da[dim, slices[0]]
+    if not slices:
+        raise ValueError("No strictly increasing sections found.")
+    sections = [da[dim, section] for section in slices]
+    edges = make_regular_grid(da.coords[dim], dim=dim, slices=slices)
