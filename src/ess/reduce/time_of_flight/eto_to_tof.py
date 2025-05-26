@@ -27,6 +27,7 @@ from ..nexus.types import (
     MonitorType,
     RunType,
 )
+from .resample import rebin_strictly_increasing
 from .to_events import to_events
 from .types import (
     DetectorLtotal,
@@ -708,7 +709,7 @@ def resample_detector_time_of_flight_data(
     """
     Resample the detector time-of-flight data to ensure that the bin edges are sorted.
     """
-    return ResampledDetectorTofData(_resample_tof_data(da))
+    return ResampledDetectorTofData(rebin_strictly_increasing(da, dim='tof'))
 
 
 def resample_monitor_time_of_flight_data(
@@ -717,7 +718,7 @@ def resample_monitor_time_of_flight_data(
     """
     Resample the monitor time-of-flight data to ensure that the bin edges are sorted.
     """
-    return ResampledMonitorTofData(_resample_tof_data(da))
+    return ResampledMonitorTofData(rebin_strictly_increasing(da, dim='tof'))
 
 
 def default_parameters() -> dict:

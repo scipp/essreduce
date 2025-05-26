@@ -80,6 +80,8 @@ def rebin_strictly_increasing(da: sc.DataArray, dim: str) -> sc.DataArray:
     Find strictly monotonic sections in a coordinate dimension and rebin the data array
     into a regular grid based on these sections.
     """
+    # Ensure the dimension is named like the coordinate.
+    da = da.rename_dims({da.coords[dim].dim: dim})
     slices = find_strictly_increasing_sections(da.coords[dim])
     if len(slices) == 1:
         return da[dim, slices[0]]
