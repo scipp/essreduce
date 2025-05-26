@@ -315,6 +315,50 @@ class TestRebinStrictlyIncreasing:
         # For a single increasing section, should return just that section
         assert sc.identical(result, da)
 
+    def test_with_single_section_minimum_length(self):
+        """Test with a single section of the minimum length (2 points)."""
+        tof = sc.array(dims=['tof'], values=[1, 2])
+        data = sc.array(dims=['tof'], values=[10])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Should return the original section without rebinning
+        assert sc.identical(result, da)
+
+    def test_with_single_section_integer_coords(self):
+        """Test with a single section with integer coordinates."""
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, 4], dtype=np.int32)
+        data = sc.array(dims=['tof'], values=[10, 20, 30])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Should return the original section, with converted coords
+        assert sc.identical(result, da)
+        # Check that we're maintaining the same values even if the dtype changed
+        assert sc.allclose(result.coords['tof'], da.coords['tof'])
+
+    def test_with_single_section_with_masks_and_extra_coords(self):
+        """Test with a single section that has masks and attributes."""
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, 4, 5])
+        data = sc.array(dims=['tof'], values=[10, 20, 30, 40])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        # Add mask and attribute
+        mask = sc.array(dims=['tof'], values=[False, True, False, False])
+        da.masks['quality'] = mask
+        da.coords['test_attr'] = sc.scalar(42)
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Should preserve the original data with masks and attributes
+        assert sc.identical(result, da)
+        assert 'quality' in result.masks
+        assert sc.identical(result.masks['quality'], mask)
+        assert 'test_attr' in result.coords
+        assert sc.identical(result.coords['test_attr'], sc.scalar(42))
+
     def test_with_three_increasing_sections(self):
         tof = sc.array(dims=['tof'], values=[1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5])
         data = sc.array(dims=['tof'], values=[5, 10, 6, 12, 18, 8, 14, 21, 28, 35])
