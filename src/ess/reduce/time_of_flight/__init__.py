@@ -13,7 +13,6 @@ from .eto_to_tof import (
     resample_monitor_time_of_flight_data,
 )
 from .simulation import simulate_beamline
-from .to_events import to_events
 from .types import (
     DetectorLtotal,
     DetectorTofData,
@@ -58,5 +57,4 @@ __all__ = [
     "resample_detector_time_of_flight_data",
     "resample_monitor_time_of_flight_data",
     "simulate_beamline",
-    "to_events",
 ]
