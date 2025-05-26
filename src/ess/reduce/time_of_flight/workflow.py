@@ -34,6 +34,7 @@ def GenericTofWorkflow(
     """
     Generic workflow for computing the neutron time-of-flight for detector and monitor
     data.
+
     This workflow builds on the ``GenericNeXusWorkflow`` and computes time-of-flight
     from a lookup table that is created from the chopper settings, detector Ltotal and
     the neutron time-of-arrival.
