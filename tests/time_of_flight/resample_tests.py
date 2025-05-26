@@ -265,7 +265,8 @@ class TestRebinStrictlyIncreasing:
         # Create a data array with a simple time-of-flight coordinate that has two
         # strictly increasing sections
         tof = sc.array(dims=['tof'], values=[1, 2, 3, 2, 3, 4, 5])
-        data = sc.array(dims=['tof'], values=[10, 20, 15, 25, 35, 11])
+        # 666 is in the "unphysical" negative-size bin and should be dropped.
+        data = sc.array(dims=['tof'], values=[10, 20, 666, 25, 35, 11])
         da = sc.DataArray(data=data, coords={'tof': tof})
 
         result = resample.rebin_strictly_increasing(da, 'tof')
