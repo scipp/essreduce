@@ -27,6 +27,11 @@ class TestFindStrictlyIncreasingSections:
         sections = resample.find_strictly_increasing_sections(var)
         assert sections == [slice(0, 2), slice(2, 5), slice(5, 7)]
 
+    def test_given_extended_flat_sections_finds_strictly_increasing_parts_only(self):
+        var = sc.array(dims=['x'], values=[1, 2, 2, 2, 3, 4, 4, 5])
+        sections = resample.find_strictly_increasing_sections(var)
+        assert sections == [slice(0, 2), slice(3, 6), slice(6, 8)]
+
     def test_given_decreasing_values_returns_empty_list(self):
         var = sc.array(dims=['x'], values=[5, 4, 3, 2, 1])
         sections = resample.find_strictly_increasing_sections(var)
