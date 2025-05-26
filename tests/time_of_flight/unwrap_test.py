@@ -88,10 +88,7 @@ def _make_workflow_histogram_mode(
     ).rename(event_time_offset=dim)
 
     pl = sl.Pipeline(
-        (
-            *time_of_flight.providers(),
-            time_of_flight.resample_detector_time_of_flight_data,
-        ),
+        time_of_flight.providers(),
         params=time_of_flight.default_parameters(),
         constraints={RunType: [SampleRun], MonitorType: []},
     )
@@ -203,7 +200,7 @@ def test_standard_unwrap_histogram_mode(dist, dim, simulation_psc_choppers) -> N
         pulse_stride=1,
     )
 
-    tofs = pl.compute(time_of_flight.ResampledDetectorTofData[SampleRun])
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_histogram_mode(
         tofs=tofs, ref=ref, percentile=96, diff_threshold=0.4, rtol=0.05
@@ -432,7 +429,7 @@ def test_pulse_skipping_unwrap_histogram_mode(simulation_pulse_skipping) -> None
         pulse_stride=2,
     )
 
-    tofs = pl.compute(time_of_flight.ResampledDetectorTofData[SampleRun])
+    tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
     _validate_result_histogram_mode(
         tofs=tofs, ref=ref, percentile=96, diff_threshold=0.4, rtol=0.05

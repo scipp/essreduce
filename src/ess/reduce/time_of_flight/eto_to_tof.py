@@ -39,8 +39,6 @@ from .types import (
     PulsePeriod,
     PulseStride,
     PulseStrideOffset,
-    ResampledDetectorTofData,
-    ResampledMonitorTofData,
     SimulationResults,
     TimeOfFlightLookupTable,
     TimeResolution,
@@ -586,7 +584,8 @@ def _compute_tof_data(
     pulse_stride_offset: int,
 ) -> sc.DataArray:
     if da.bins is None:
-        return _time_of_flight_data_histogram(da=da, lookup=lookup, ltotal=ltotal)
+        data = _time_of_flight_data_histogram(da=da, lookup=lookup, ltotal=ltotal)
+        return rebin_strictly_increasing(data, dim='tof')
     else:
         return _time_of_flight_data_events(
             da=da,
@@ -661,26 +660,6 @@ def monitor_time_of_flight_data(
             ltotal=ltotal,
             pulse_stride_offset=pulse_stride_offset,
         )
-    )
-
-
-def resample_detector_time_of_flight_data(
-    da: DetectorTofData[RunType],
-) -> ResampledDetectorTofData[RunType]:
-    """
-    Resample the detector time-of-flight data to ensure that the bin edges are sorted.
-    """
-    return ResampledDetectorTofData[RunType](rebin_strictly_increasing(da, dim='tof'))
-
-
-def resample_monitor_time_of_flight_data(
-    da: MonitorTofData[RunType, MonitorType],
-) -> ResampledMonitorTofData[RunType, MonitorType]:
-    """
-    Resample the monitor time-of-flight data to ensure that the bin edges are sorted.
-    """
-    return ResampledMonitorTofData[RunType, MonitorType](
-        rebin_strictly_increasing(da, dim='tof')
     )
 
 

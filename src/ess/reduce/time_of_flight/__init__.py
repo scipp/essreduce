@@ -6,12 +6,7 @@ Utilities for computing real neutron time-of-flight from chopper settings and
 neutron time-of-arrival at the detectors.
 """
 
-from .eto_to_tof import (
-    default_parameters,
-    providers,
-    resample_detector_time_of_flight_data,
-    resample_monitor_time_of_flight_data,
-)
+from .eto_to_tof import default_parameters, providers
 from .simulation import simulate_beamline
 from .types import (
     DetectorLtotal,
@@ -24,8 +19,6 @@ from .types import (
     PulsePeriod,
     PulseStride,
     PulseStrideOffset,
-    ResampledDetectorTofData,
-    ResampledMonitorTofData,
     SimulationResults,
     TimeOfFlightLookupTable,
     TimeOfFlightLookupTableFilename,
@@ -36,17 +29,17 @@ from .workflow import GenericTofWorkflow, TofLutProvider
 __all__ = [
     "DetectorLtotal",
     "DetectorTofData",
+    "DetectorTofData",
     "DistanceResolution",
     "GenericTofWorkflow",
     "LookupTableRelativeErrorThreshold",
     "LtotalRange",
     "MonitorLtotal",
     "MonitorTofData",
+    "MonitorTofData",
     "PulsePeriod",
     "PulseStride",
     "PulseStrideOffset",
-    "ResampledDetectorTofData",
-    "ResampledMonitorTofData",
     "SimulationResults",
     "TimeOfFlightLookupTable",
     "TimeOfFlightLookupTableFilename",
@@ -54,7 +47,5 @@ __all__ = [
     "TofLutProvider",
     "default_parameters",
     "providers",
-    "resample_detector_time_of_flight_data",
-    "resample_monitor_time_of_flight_data",
     "simulate_beamline",
 ]
