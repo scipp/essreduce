@@ -170,3 +170,88 @@ class TestGetMinMax:
         min_val, max_val = resample.get_min_max(var, dim='x', slices=slices)
         assert min_val.value == 1
         assert max_val.value == 4
+
+
+class TestMakeRegularGrid:
+    """Tests for make_regular_grid function."""
+
+    def test_basic_functionality(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 2, 3, 4])
+        slices = [slice(0, 3), slice(3, 6)]
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        assert sc.identical(grid, sc.array(dims=['x'], values=[1, 2, 3, 4]))
+
+    def test_with_units(self):
+        var = sc.array(dims=['x'], values=[1.0, 2.0, 3.0, 1.5, 2.5, 3.5], unit='m')
+        slices = [slice(0, 3), slice(3, 6)]
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        expected = sc.array(dims=['x'], values=[1.0, 2.0, 3.0, 4.0], unit='m')
+        assert sc.identical(grid, expected)
+        assert grid.unit == sc.Unit('m')
+
+    def test_with_different_step_sizes_uses_minimum_section(self):
+        # First section has step size 1, second has step size 0.5
+        var = sc.array(dims=['x'], values=[1, 2, 3, 3.5, 4, 4.5])
+        slices = [slice(0, 3), slice(3, 6)]
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        # Should use step size 1 from the first section (where min value is located)
+        expected = sc.array(dims=['x'], values=[1.0, 2, 3, 4, 5])
+        assert sc.identical(grid, expected)
+
+    def test_with_different_dimension_name(self):
+        var = sc.array(dims=['time'], values=[10, 20, 30, 5, 15, 25])
+        slices = [slice(0, 3), slice(3, 6)]
+        grid = resample.make_regular_grid(var, dim='time', slices=slices)
+        expected = sc.array(dims=['time'], values=[5, 15, 25, 35])
+        assert sc.identical(grid, expected)
+
+    def test_with_float_data(self):
+        var = sc.array(dims=['x'], values=[1.1, 2.2, 3.3, 0.5, 1.6, 2.7])
+        slices = [slice(0, 3), slice(3, 6)]
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        expected = sc.array(dims=['x'], values=[0.5, 1.6, 2.7, 3.8])
+        assert sc.allclose(grid, expected)
+
+    def test_with_mixed_positive_and_negative_values(self):
+        var = sc.array(dims=['x'], values=[-5, -3, -1, 0, 2, 4])
+        slices = [slice(0, 3), slice(3, 6)]
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        expected = sc.array(dims=['x'], values=[-5, -3, -1, 1, 3, 5])
+        assert sc.identical(grid, expected)
+
+    def test_with_single_slice(self):
+        var = sc.array(dims=['x'], values=[1, 3, 5, 7, 9])
+        slices = [slice(0, 5)]
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        expected = sc.array(dims=['x'], values=[1, 3, 5, 7, 9])
+        assert sc.identical(grid, expected)
+
+    def test_with_different_dtype(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 2, 3, 4], dtype=np.int64)
+        slices = [slice(0, 3), slice(3, 6)]
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        expected = sc.array(dims=['x'], values=[1, 2, 3, 4], dtype=np.int64)
+        assert sc.identical(grid, expected)
+        assert grid.dtype == np.int64
+
+    def test_empty_slices_list_raises_error(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 4, 5])
+        slices = []
+        with pytest.raises(ValueError, match="No strictly increasing sections found."):
+            resample.make_regular_grid(var, dim='x', slices=slices)
+
+    def test_integration_with_find_strictly_increasing_sections(self):
+        var = sc.array(dims=['x'], values=[1, 3, 5, 2, 4, 6])
+        slices = resample.find_strictly_increasing_sections(var)
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        expected = sc.array(dims=['x'], values=[1, 3, 5, 7])
+        assert sc.identical(grid, expected)
+
+    def test_ensures_last_bin_edge_is_included(self):
+        var = sc.array(dims=['x'], values=[1, 2, 3, 2, 3, 4, 5])
+        slices = [slice(0, 3), slice(3, 7)]
+        grid = resample.make_regular_grid(var, dim='x', slices=slices)
+        expected = sc.array(dims=['x'], values=[1, 2, 3, 4, 5])
+        assert sc.identical(grid, expected)
+        # Test that the maximum value from original data is included in the grid
+        assert grid[-1].value == 5

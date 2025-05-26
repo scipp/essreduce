@@ -48,11 +48,23 @@ def make_regular_grid(
 ) -> sc.Variable:
     """
     Create a regular grid variable based on the min and max of the slices.
+
+    The grid is constructed such that it includes the minimum and maximum values
+    of the strictly increasing sections, with a step size equal to the difference
+    between the first two values of the section with the minimum start value (which is
+    not necessarily the first section).
     """
     min_val, max_val = get_min_max(var, dim=dim, slices=slices)
-    step = sc.reduce(
-        [var[dim, slice][1] - var[dim, slice][0] for slice in slices]
-    ).min()
+    first: sc.Variable | None = None
+    for s in slices:
+        first = var[dim, s]
+        if sc.identical(first[0], min_val):
+            break
+    if first is None:
+        # This should not happen if slices are correctly identified and passed from
+        # find_strictly_increasing_sections.
+        raise ValueError("Section is not strictly increasing.")
+    step = first[1] - first[0]
     return sc.arange(
         dim=dim,
         start=min_val.value,
@@ -75,3 +87,4 @@ def rebin_strictly_increasing(da: sc.DataArray, dim: str) -> sc.DataArray:
         raise ValueError("No strictly increasing sections found.")
     sections = [da[dim, section] for section in slices]
     edges = make_regular_grid(da.coords[dim], dim=dim, slices=slices)
+    return sc.concat([sc.rebin(section, {dim: edges}) for section in sections]).sum()
