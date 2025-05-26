@@ -444,3 +444,28 @@ class TestRebinStrictlyIncreasing:
         # Rebin applies masks
         assert 'quality' not in baseline.masks
         assert result.sum().value < baseline.sum().value
+
+    def test_uses_coord_name_as_new_dimension_name(self):
+        """Test with a dimension name different from the coordinate name."""
+        # Create data array with dimension name 'd' but coordinate named 'tof'
+        tof = sc.array(dims=['d'], values=[1, 2, 3, 2, 3, 4])
+        data = sc.array(dims=['d'], values=[10, 20, 15, 25, 35])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        # The dimension name 'd' is different from the coordinate name 'tof'
+        assert da.coords['tof'].dims[0] == 'd'
+        assert 'tof' not in da.dims
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Check that the dimension has been renamed to match the coordinate
+        assert 'tof' in result.dims
+        assert result.coords['tof'].dims[0] == 'tof'
+
+        # Check that rebinning worked correctly
+        expected_tof = sc.array(dims=['tof'], values=[1.0, 2.0, 3.0, 4.0])
+        assert sc.identical(result.coords['tof'], expected_tof)
+
+        # Check the data values are properly rebinned and combined
+        expected_data = sc.array(dims=['tof'], values=[10.0, 20.0 + 25.0, 35.0])
+        assert_identical(result.data, expected_data)
