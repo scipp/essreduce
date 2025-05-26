@@ -27,7 +27,7 @@ from ..nexus.types import (
     MonitorType,
     RunType,
 )
-from .to_events import to_events
+from .resample import rebin_strictly_increasing
 from .types import (
     DetectorLtotal,
     DetectorTofData,
@@ -664,51 +664,13 @@ def monitor_time_of_flight_data(
     )
 
 
-def _resample_tof_data(da: sc.DataArray) -> sc.DataArray:
-    """
-    Histogrammed data that has been converted to `tof` will typically have
-    unsorted bin edges (due to either wrapping of `time_of_flight` or wavelength
-    overlap between subframes).
-    This function re-histograms the data to ensure that the bin edges are sorted.
-    It makes use of the ``to_events`` helper which generates a number of events in each
-    bin with a uniform distribution. The new events are then histogrammed using a set of
-    sorted bin edges.
-
-    WARNING:
-    This function is highly experimental, has limitations and should be used with
-    caution. It is a workaround to the issue that rebinning data with unsorted bin
-    edges is not supported in scipp.
-    As such, this function is not part of the default set of providers, and needs to be
-    inserted manually into the workflow.
-
-    Parameters
-    ----------
-    da:
-        Histogrammed data with the time-of-flight coordinate.
-    """
-    dim = next(iter(set(da.dims) & {"time_of_flight", "tof"}))
-    data = da.rename_dims({dim: "tof"}).drop_coords(
-        [name for name in da.coords if name != "tof"]
-    )
-    events = to_events(data, "event")
-
-    # Define a new bin width, close to the original bin width.
-    # TODO: this could be a workflow parameter
-    coord = da.coords["tof"]
-    bin_width = (coord[dim, 1:] - coord[dim, :-1]).nanmedian()
-    rehist = events.hist(tof=bin_width)
-    return rehist.assign_coords(
-        {key: var for key, var in da.coords.items() if dim not in var.dims}
-    )
-
-
 def resample_detector_time_of_flight_data(
     da: DetectorTofData[RunType],
 ) -> ResampledDetectorTofData[RunType]:
     """
     Resample the detector time-of-flight data to ensure that the bin edges are sorted.
     """
-    return ResampledDetectorTofData(_resample_tof_data(da))
+    return ResampledDetectorTofData[RunType](rebin_strictly_increasing(da, dim='tof'))
 
 
 def resample_monitor_time_of_flight_data(
@@ -717,7 +679,9 @@ def resample_monitor_time_of_flight_data(
     """
     Resample the monitor time-of-flight data to ensure that the bin edges are sorted.
     """
-    return ResampledMonitorTofData(_resample_tof_data(da))
+    return ResampledMonitorTofData[RunType, MonitorType](
+        rebin_strictly_increasing(da, dim='tof')
+    )
 
 
 def default_parameters() -> dict:
