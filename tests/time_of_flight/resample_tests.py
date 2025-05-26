@@ -4,6 +4,7 @@
 import numpy as np
 import pytest
 import scipp as sc
+from scipp.testing import assert_identical
 
 from ess.reduce.time_of_flight import resample
 
@@ -255,3 +256,147 @@ class TestMakeRegularGrid:
         assert sc.identical(grid, expected)
         # Test that the maximum value from original data is included in the grid
         assert grid[-1].value == 5
+
+
+class TestRebinStrictlyIncreasing:
+    """Tests for rebin_strictly_increasing function."""
+
+    def test_basic_functionality(self):
+        # Create a data array with a simple time-of-flight coordinate that has two
+        # strictly increasing sections
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, 2, 3, 4, 5])
+        data = sc.array(dims=['tof'], values=[10, 20, 15, 25, 35, 11])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Check the rebinned result has a regular grid from 1 to 5
+        expected_tof = sc.array(dims=['tof'], values=[1.0, 2, 3, 4, 5])
+        assert sc.identical(result.coords['tof'], expected_tof)
+
+        # Check the data values are properly rebinned and combined
+        expected_data = sc.array(dims=['tof'], values=[10.0, 20 + 25, 35, 11])
+        assert_identical(result.data, expected_data)
+
+    def test_with_different_step_sizes(self):
+        # First section has step size 1, second has step size 0.5
+        tof = sc.array(dims=['tof'], values=[1, 2, 4, 3.5, 4, 4.5, 5])
+        data = sc.array(dims=['tof'], values=[10, 20, 15, 25, 35, 45])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Should use step size 1 from the first section (where min value is found)
+        expected_tof = sc.array(dims=['tof'], values=[1.0, 2, 3, 4, 5])
+        assert_identical(result.coords['tof'], expected_tof)
+
+    def test_with_units(self):
+        tof = sc.array(dims=['tof'], values=[1.0, 2.0, 3.0, 2.0, 3.0, 4.0], unit='ms')
+        data = sc.array(dims=['tof'], values=[10, 20, 15, 25, 35], unit='counts')
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Check units are preserved
+        assert result.coords['tof'].unit == sc.Unit('ms')
+        assert result.data.unit == sc.Unit('counts')
+
+        # Check values
+        expected_tof = sc.array(dims=['tof'], values=[1.0, 2.0, 3.0, 4.0], unit='ms')
+        assert sc.identical(result.coords['tof'], expected_tof)
+
+    def test_with_single_increasing_section(self):
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, 4, 5, 6])
+        data = sc.array(dims=['tof'], values=[10, 20, 30, 40, 50])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # For a single increasing section, should return just that section
+        assert sc.identical(result, da)
+
+    def test_with_three_increasing_sections(self):
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, 1, 2, 3, 4, 2, 3, 4, 5])
+        data = sc.array(dims=['tof'], values=[5, 10, 6, 12, 18, 8, 14, 21, 28, 35])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        expected_tof = sc.array(dims=['tof'], values=[1.0, 2, 3, 4, 5])
+        assert_identical(result.coords['tof'], expected_tof)
+
+        # Sum of all three sections properly rebinned
+        expected_data = sc.array(
+            dims=['tof'], values=[5.0 + 12, 10 + 18 + 21, 8 + 28, 35]
+        )
+        assert_identical(result.data, expected_data)
+
+    def test_with_nan_values_in_coordinate(self):
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, np.nan, 5, 6, 7])
+        data = sc.array(dims=['tof'], values=[10, 20, 40, 50, 60, 70])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Should have two increasing sections: [1,2,3] and [5,6,7]
+        expected_tof = sc.array(dims=['tof'], values=[1.0, 2, 3, 4, 5, 6, 7])
+        assert_identical(result.coords['tof'], expected_tof)
+
+        # Data should be correctly rebinned, excluding the NaN point
+        expected_data = sc.array(dims=['tof'], values=[10.0, 20, 0, 0, 60, 70])
+        assert_identical(result.data, expected_data)
+
+    def test_with_no_increasing_sections_raises_error(self):
+        tof = sc.array(dims=['tof'], values=[5, 4, 3, 2, 1, 0])
+        data = sc.array(dims=['tof'], values=[10, 20, 30, 40, 50])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        with pytest.raises(ValueError, match="No strictly increasing sections found."):
+            resample.rebin_strictly_increasing(da, 'tof')
+
+    def test_with_variances(self):
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, 2, 3, 4])
+        values = [
+            10.0,
+            20.0,
+            15.0,
+            25.0,
+            35.0,
+        ]  # Using float for values to match variances
+        variances = [1.0, 2.0, 1.5, 2.5, 3.5]  # Float variances
+        data = sc.array(dims=['tof'], values=values, variances=variances)
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Check that variances are properly propagated
+        assert result.data.variances is not None
+        expected_variances = sc.array(dims=['tof'], values=[1.0, 2.0 + 2.5, 3.5])
+        assert_identical(sc.variances(result.data), expected_variances)
+
+    def test_additional_coords_are_dropped(self):
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, 2, 3, 4, 5])
+        data = sc.array(dims=['tof'], values=[10, 20, 15, 25, 35, 45])
+        energy = sc.array(dims=['tof'], values=[1.1, 1.2, 1.3, 1.2, 1.4, 1.2])
+        da = sc.DataArray(data=data, coords={'tof': tof, 'energy': energy})
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Rebin cannot preserve coords
+        assert 'energy' not in result.coords
+
+    def test_masks_are_applied(self):
+        tof = sc.array(dims=['tof'], values=[1, 2, 3, 2, 3, 4, 5])
+        data = sc.array(dims=['tof'], values=[10, 20, 15, 25, 35, 45])
+        da = sc.DataArray(data=data, coords={'tof': tof})
+
+        baseline = resample.rebin_strictly_increasing(da, 'tof')
+
+        # Add a mask
+        mask = sc.array(dims=['tof'], values=[False, False, True, False, False, True])
+        da.masks['quality'] = mask
+
+        result = resample.rebin_strictly_increasing(da, 'tof')
+        # Rebin applies masks
+        assert 'quality' not in baseline.masks
+        assert result.sum().value < baseline.sum().value
