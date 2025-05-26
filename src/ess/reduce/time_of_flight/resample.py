@@ -29,31 +29,14 @@ def find_strictly_increasing_sections(var: sc.Variable) -> list[slice]:
         Slice objects that can be used extract strictly increasing sections.
     """
     values = var.values
-
-    # Find indices where values are strictly increasing
-    sections = []
-    start_idx = 0
-    in_section = False
-
-    diffs = np.diff(values)
-    signs = np.sign(diffs)
-    is_increasing = signs > 0 & np.isfinite(values[:-1]) & np.isfinite(values[1:])
-
-    for i in range(1, len(values)):
-        increasing = is_increasing[i - 1]
-
-        if increasing and not in_section:
-            # Start of a new section
-            start_idx = i - 1
-            in_section = True
-        elif not increasing and in_section:
-            # End of a section
-            if i - start_idx >= 2:  # Ensure section has at least 2 points
-                sections.append(slice(start_idx, i))
-            in_section = False
-
-    # Don't forget to handle the case where the sequence is increasing at the end
-    if in_section and len(values) - start_idx >= 2:
-        sections.append(slice(start_idx, len(values)))
-
-    return sections
+    finite = np.isfinite(values)
+    increasing = (np.sign(np.diff(values)) > 0) & finite[:-1] & finite[1:]
+    # 1 marks the start of an increasing section, -1 marks the end
+    transitions = np.diff(np.concatenate(([False], increasing, [False])).astype(int))
+    section_starts = np.where(transitions == 1)[0]
+    section_ends = np.where(transitions == -1)[0] + np.array(1)
+    return [
+        slice(start, end)
+        for start, end in zip(section_starts, section_ends, strict=True)
+        if end - start >= 2  # Ensure section has at least 2 points
+    ]
