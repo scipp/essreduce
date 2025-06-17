@@ -80,6 +80,14 @@ body:
     validations:
       required: true
   - type: textarea
+    id: existingimplementations
+    attributes:
+      label: Existing implementations
+      description: Are there any existing implementations or proof-of-concept implementations that we can imitate? This field is specifically for linking to source code.
+      placeholder: "Example: See this repository ... This script implements the procedure: https://file-storage.server.eu/script.code."
+    validations:
+      required: false
+  - type: textarea
     id: comments
     attributes:
       label: Comments
