@@ -6,7 +6,7 @@ Utilities for computing real neutron time-of-flight from chopper settings and
 neutron time-of-arrival at the detectors.
 """
 
-from .eto_to_tof import default_parameters, providers
+from .eto_to_tof import default_parameters, providers, pulse_index_from_event_time_zero
 from .simulation import simulate_beamline
 from .types import (
     DetectorLtotal,
@@ -47,5 +47,6 @@ __all__ = [
     "TofLutProvider",
     "default_parameters",
     "providers",
+    "pulse_index_from_event_time_zero",
     "simulate_beamline",
 ]

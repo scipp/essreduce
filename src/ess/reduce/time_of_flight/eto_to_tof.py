@@ -456,6 +456,54 @@ def _guess_pulse_stride_offset(
     return sorted(tofs, key=lambda x: sc.isnan(tofs[x]).sum())[0]
 
 
+def pulse_index_from_event_time_zero(
+    da: sc.DataArray,
+    pulse_period: sc.Variable,
+    pulse_stride: int,
+) -> sc.Variable:
+    """
+    Compute the pulse index for every event in the data array.
+    It is the index of the pulse within a frame period.
+    The index ranges from zero to ``pulse_stride - 1``.
+
+    Parameters
+    ----------
+    da:
+        Data array with event_time_zero coordinate.
+    pulse_period:
+        Period of the source pulses, i.e., time between consecutive pulse starts.
+    pulse_stride:
+        Stride of used pulses.
+    """
+    etz_unit = 'ns'
+    etz = (
+        da.bins.coords["event_time_zero"]
+        .bins.constituents["data"]
+        .to(unit=etz_unit, copy=False)
+    )
+    pulse_period_ns = pulse_period.to(unit=etz_unit, dtype=int)
+    frame_period = pulse_period_ns * pulse_stride
+    # Define a common reference time using epoch as a base, but making sure that it
+    # is aligned with the pulse_period and the frame_period.
+    # We need to use a global reference time instead of simply taking the minimum
+    # event_time_zero because the events may arrive in chunks, and the first event
+    # may not be the first event of the first pulse for all chunks. This would lead
+    # to inconsistent pulse indices.
+    epoch = sc.datetime(0, unit=etz_unit)
+    diff_to_epoch = (etz.min() - epoch) % pulse_period_ns
+    # Here we offset the reference by half a pulse period to avoid errors from
+    # fluctuations in the event_time_zeros in the data. They are triggered by the
+    # neutron source, and may not always be exactly separated by the pulse period.
+    # While fluctuations will exist, they will be small, and offsetting the times
+    # by half a pulse period is a simple enough fix.
+    reference = epoch + diff_to_epoch - (pulse_period_ns // 2)
+    # Use in-place operations to avoid large allocations
+    pulse_index = etz - reference
+    pulse_index %= frame_period
+    pulse_index //= pulse_period_ns
+    return pulse_index
+
+
 def _time_of_flight_data_events(
     da: sc.DataArray,
     lookup: sc.DataArray,
@@ -477,34 +525,11 @@ def _time_of_flight_data_events(
     pulse_stride = lookup.coords["pulse_stride"].value
 
     if pulse_stride > 1:
-        # Compute a pulse index for every event: it is the index of the pulse within a
-        # frame period. The index ranges from zero to pulse_stride - 1.
-        etz_unit = 'ns'
-        etz = (
-            da.bins.coords["event_time_zero"]
-            .bins.constituents["data"]
-            .to(unit=etz_unit, copy=False)
+        pulse_index = pulse_index_from_event_time_zero(
+            da=da,
+            pulse_period=pulse_period,
+            pulse_stride=pulse_stride,
         )
-        pulse_period_ns = pulse_period.to(unit=etz_unit, dtype=int)
-        frame_period = pulse_period_ns * pulse_stride
-        # Define a common reference time using epoch as a base, but making sure that it
-        # is aligned with the pulse_period and the frame_period.
-        # We need to use a global reference time instead of simply taking the minimum
-        # event_time_zero because the events may arrive in chunks, and the first event
-        # may not be the first event of the first pulse for all chunks. This would lead
-        # to inconsistent pulse indices.
-        epoch = sc.datetime(0, unit=etz_unit)
-        diff_to_epoch = (etz.min() - epoch) % pulse_period_ns
-        # Here we offset the reference by half a pulse period to avoid errors from
-        # fluctuations in the event_time_zeros in the data. They are triggered by the
-        # neutron source, and may not always be exactly separated by the pulse period.
-        # While fluctuations will exist, they will be small, and offsetting the times
-        # by half a pulse period is a simple enough fix.
-        reference = epoch + diff_to_epoch - (pulse_period_ns // 2)
-        # Use in-place operations to avoid large allocations
-        pulse_index = etz - reference
-        pulse_index %= frame_period
-        pulse_index //= pulse_period_ns
 
         # Apply the pulse_stride_offset
         if pulse_stride_offset is None:
