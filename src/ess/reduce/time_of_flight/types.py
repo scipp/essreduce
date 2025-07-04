@@ -11,7 +11,7 @@ from ..nexus.types import MonitorType, RunType
 
 
 @dataclass
-class SimluatedNeutronEventList:
+class SimulatedNeutronEvents:
     """
     Results of a time-of-flight simulation used to create a lookup table.
 
@@ -47,7 +47,7 @@ class SimluatedNeutronEventList:
 
 
 class SimulationResults(
-    sciline.Scope[RunType, SimluatedNeutronEventList], SimluatedNeutronEventList
+    sl.Scope[RunType, SimulatedNeutronEvents], SimulatedNeutronEvents
 ):
     """
     Results of a time-of-flight simulation used to create a lookup table.
@@ -93,11 +93,11 @@ smaller if the pulse period is not an integer multiple of the time resolution.
 """
 
 
-class TimeOfFlightLookupTableFilename(sciline.Scope[RunType, str], str):
+class TimeOfFlightLookupTableFilename(sl.Scope[RunType, str], str):
     """Filename of the time-of-flight lookup table."""
 
 
-class TimeOfFlightLookupTable(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
+class TimeOfFlightLookupTable(sl.Scope[RunType, sc.DataArray], sc.DataArray):
     """
     Lookup table giving time-of-flight as a function of distance and time of arrival.
     """

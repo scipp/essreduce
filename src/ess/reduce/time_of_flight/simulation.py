@@ -7,7 +7,7 @@ import scippnexus as snx
 from scippneutron.chopper import DiskChopper
 
 from ..nexus.types import DiskChoppers, Position, RunType
-from .types import NumberOfSimulatedNeutrons, SimulationResults
+from .types import NumberOfSimulatedNeutrons, SimulatedNeutronEvents, SimulationResults
 
 
 def simulate_beamline(
@@ -18,7 +18,7 @@ def simulate_beamline(
     pulses: int = 1,
     seed: int | None = None,
     facility: str = 'ess',
-) -> SimulationResults:
+) -> SimulatedNeutronEvents:
     """
     Simulate a pulse of neutrons propagating through a chopper cascade using the
     ``tof`` package (https://tof.readthedocs.io).
@@ -62,7 +62,7 @@ def simulate_beamline(
     source = tof.Source(facility=facility, neutrons=neutrons, pulses=pulses, seed=seed)
     if not tof_choppers:
         events = source.data.squeeze().flatten(to='event')
-        return SimulationResults(
+        return SimulatedNeutronEvents(
             time_of_arrival=events.coords["birth_time"],
             speed=events.coords["speed"],
             wavelength=events.coords["wavelength"],
@@ -77,7 +77,7 @@ def simulate_beamline(
     events = events[
         ~(events.masks["blocked_by_others"] | events.masks["blocked_by_me"])
     ]
-    return SimulationResults(
+    return SimulatedNeutronEvents(
         time_of_arrival=events.coords["toa"],
         speed=events.coords["speed"],
         wavelength=events.coords["wavelength"],
