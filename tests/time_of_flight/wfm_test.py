@@ -172,7 +172,7 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
 
     pl[DetectorData[SampleRun]] = raw
     pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
-    pl[time_of_flight.SimulationResults] = simulation_dream_choppers
+    pl[time_of_flight.SimulationResults[SampleRun]] = simulation_dream_choppers
     pl[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
 
     tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
@@ -258,7 +258,9 @@ def test_dream_wfm_with_subframe_time_overlap(
     )
 
     pl[DetectorData[SampleRun]] = raw
-    pl[time_of_flight.SimulationResults] = simulation_dream_choppers_time_overlap
+    pl[time_of_flight.SimulationResults[SampleRun]] = (
+        simulation_dream_choppers_time_overlap
+    )
     pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
     pl[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
     pl[time_of_flight.LookupTableRelativeErrorThreshold] = 0.01
@@ -445,7 +447,7 @@ def test_v20_compute_wavelengths_from_wfm(
     )
 
     pl[DetectorData[SampleRun]] = raw
-    pl[time_of_flight.SimulationResults] = simulation_v20_choppers
+    pl[time_of_flight.SimulationResults[SampleRun]] = simulation_v20_choppers
     pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
     pl[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
 

@@ -69,7 +69,7 @@ def test_GenericTofWorkflow_can_compute_tof_lut_without_nexus_file_or_detector_i
         sc.scalar(100.0, unit="m"),
     )
     wf[Position[snx.NXsource, SampleRun]] = fakes.source_position()
-    lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    lut = wf.compute(time_of_flight.TimeOfFlightLookupTable[SampleRun])
     assert isinstance(lut, sc.DataArray)
 
 
@@ -89,7 +89,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
     _ = wf.compute(DetectorData[SampleRun])
     # LUT and Tof data cannot be computed without chopper and simulation params
     with pytest.raises(sciline.UnsatisfiedRequirement):
-        _ = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+        _ = wf.compute(time_of_flight.TimeOfFlightLookupTable[SampleRun])
     with pytest.raises(sciline.UnsatisfiedRequirement):
         _ = wf.compute(time_of_flight.DetectorTofData[SampleRun])
 
@@ -102,7 +102,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
     wf[Position[snx.NXsource, SampleRun]] = fakes.source_position()
 
     # Should be able to compute DetectorData with chopper and simulation params
-    _ = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    _ = wf.compute(time_of_flight.TimeOfFlightLookupTable[SampleRun])
     detector = wf.compute(time_of_flight.DetectorTofData[SampleRun])
     assert 'tof' in detector.bins.coords
 
@@ -135,7 +135,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
         sc.scalar(100.0, unit="m"),
     )
     make_lut_wf[Position[snx.NXsource, SampleRun]] = fakes.source_position()
-    lut = make_lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    lut = make_lut_wf.compute(time_of_flight.TimeOfFlightLookupTable[SampleRun])
     lut.save_hdf5(filename=tmp_path / "lut.h5")
 
     wf = GenericTofWorkflow(
@@ -145,11 +145,11 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     )
     wf[CalibratedBeamline[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
-    wf[time_of_flight.TimeOfFlightLookupTableFilename] = (
+    wf[time_of_flight.TimeOfFlightLookupTableFilename[SampleRun]] = (
         tmp_path / "lut.h5"
     ).as_posix()
 
-    loaded_lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    loaded_lut = wf.compute(time_of_flight.TimeOfFlightLookupTable[SampleRun])
     assert_identical(lut, loaded_lut)
 
     detector = wf.compute(time_of_flight.DetectorTofData[SampleRun])

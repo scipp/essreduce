@@ -8,7 +8,7 @@ import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
 from . import eto_to_tof, simulation
-from .types import TimeOfFlightLookupTable, TimeOfFlightLookupTableFilename
+from .types import RunType, TimeOfFlightLookupTable, TimeOfFlightLookupTableFilename
 
 
 class TofLutProvider(Enum):
@@ -20,9 +20,9 @@ class TofLutProvider(Enum):
 
 
 def load_tof_lookup_table(
-    filename: TimeOfFlightLookupTableFilename,
-) -> TimeOfFlightLookupTable:
-    return TimeOfFlightLookupTable(sc.io.load_hdf5(filename))
+    filename: TimeOfFlightLookupTableFilename[RunType],
+) -> TimeOfFlightLookupTable[RunType]:
+    return TimeOfFlightLookupTable[RunType](sc.io.load_hdf5(filename))
 
 
 def GenericTofWorkflow(

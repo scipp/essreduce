@@ -60,7 +60,7 @@ def _make_workflow_event_mode(
     )
 
     pl[DetectorData[SampleRun]] = mon
-    pl[time_of_flight.SimulationResults] = simulation
+    pl[time_of_flight.SimulationResults[SampleRun]] = simulation
     pl[time_of_flight.DetectorLtotal[SampleRun]] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = pulse_stride
@@ -94,7 +94,7 @@ def _make_workflow_histogram_mode(
     )
 
     pl[DetectorData[SampleRun]] = mon
-    pl[time_of_flight.SimulationResults] = simulation
+    pl[time_of_flight.SimulationResults[SampleRun]] = simulation
     pl[time_of_flight.DetectorLtotal[SampleRun]] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = pulse_stride
@@ -345,7 +345,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     a = mon.group('event_time_zero')['event_time_zero', 1:]
     a.bins.coords['event_time_zero'] = sc.bins_like(a, a.coords['event_time_zero'])
     pl[DetectorData[SampleRun]] = a.bins.concat('event_time_zero')
-    pl[time_of_flight.SimulationResults] = sim
+    pl[time_of_flight.SimulationResults[SampleRun]] = sim
     pl[time_of_flight.DetectorLtotal[SampleRun]] = distance
     pl[time_of_flight.LtotalRange] = distance, distance
     pl[time_of_flight.PulseStride] = 2
