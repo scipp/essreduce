@@ -143,14 +143,14 @@ def _compute_mean_tof_in_distance_range(
 
 
 def compute_tof_lookup_table(
-    simulation: SimulationResults,
+    simulation: SimulationResults[RunType],
     ltotal_range: LtotalRange,
     distance_resolution: DistanceResolution,
     time_resolution: TimeResolution,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
     error_threshold: LookupTableRelativeErrorThreshold,
-) -> TimeOfFlightLookupTable:
+) -> TimeOfFlightLookupTable[RunType]:
     """
     Compute a lookup table for time-of-flight as a function of distance and
     time-of-arrival.
@@ -300,7 +300,7 @@ def compute_tof_lookup_table(
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
 
-    return TimeOfFlightLookupTable(table)
+    return TimeOfFlightLookupTable[RunType](table)
 
 
 class TofInterpolator:
@@ -597,7 +597,7 @@ def _compute_tof_data(
 
 def detector_time_of_flight_data(
     detector_data: DetectorData[RunType],
-    lookup: TimeOfFlightLookupTable,
+    lookup: TimeOfFlightLookupTable[RunType],
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> DetectorTofData[RunType]:
@@ -631,7 +631,7 @@ def detector_time_of_flight_data(
 
 def monitor_time_of_flight_data(
     monitor_data: MonitorData[RunType, MonitorType],
-    lookup: TimeOfFlightLookupTable,
+    lookup: TimeOfFlightLookupTable[RunType],
     ltotal: MonitorLtotal[RunType, MonitorType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> MonitorTofData[RunType, MonitorType]:
