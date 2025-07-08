@@ -6,9 +6,9 @@ Utilities for computing real neutron time-of-flight from chopper settings and
 neutron time-of-arrival at the detectors.
 """
 
-from .eto_to_tof import default_parameters, providers
 from .simulation import simulate_beamline
 from .types import (
+    CommonTimeOfFlightLookupTable,
     DetectorLtotal,
     DetectorTofData,
     DistanceResolution,
@@ -22,13 +22,14 @@ from .types import (
     SimulationResults,
     TimeOfFlightLookupTable,
     TimeOfFlightLookupTableFilename,
+    TimeOfFlightLookupTableFromSimulation,
     TimeResolution,
 )
-from .workflow import GenericTofWorkflow, TofLutProvider
+from .workflow import GenericTofWorkflow, TofLutProvider, default_parameters, providers
 
 __all__ = [
+    "CommonTimeOfFlightLookupTable",
     "DetectorLtotal",
-    "DetectorTofData",
     "DetectorTofData",
     "DistanceResolution",
     "GenericTofWorkflow",
@@ -36,13 +37,13 @@ __all__ = [
     "LtotalRange",
     "MonitorLtotal",
     "MonitorTofData",
-    "MonitorTofData",
     "PulsePeriod",
     "PulseStride",
     "PulseStrideOffset",
     "SimulationResults",
     "TimeOfFlightLookupTable",
     "TimeOfFlightLookupTableFilename",
+    "TimeOfFlightLookupTableFromSimulation",
     "TimeResolution",
     "TofLutProvider",
     "default_parameters",

@@ -92,14 +92,31 @@ resolution in the lookup table will be at least the supplied value here, but may
 smaller if the pulse period is not an integer multiple of the time resolution.
 """
 
+TimeOfFlightLookupTableFilename = NewType("TimeOfFlightLookupTableFilename", str)
+"""
+Filename of the time-of-flight lookup table.
+"""
 
-class TimeOfFlightLookupTableFilename(sl.Scope[RunType, str], str):
-    """Filename of the time-of-flight lookup table."""
+CommonTimeOfFlightLookupTable = NewType("CommonTimeOfFlightLookupTable", sc.DataArray)
+"""
+A single lookup table giving time-of-flight as a function of distance and time of
+arrival, for all run types.
+"""
+
+
+class TimeOfFlightLookupTableFromSimulation(
+    sl.Scope[RunType, sc.DataArray], sc.DataArray
+):
+    """
+    Time-of-flight lookup table generated from a simulation of neutrons traveling
+    through a chopper cascade.
+    """
 
 
 class TimeOfFlightLookupTable(sl.Scope[RunType, sc.DataArray], sc.DataArray):
     """
-    Lookup table giving time-of-flight as a function of distance and time of arrival.
+    Lookup table giving time-of-flight as a function of distance and time of arrival
+    (wrapper around ``RunType``)
     """
 
 

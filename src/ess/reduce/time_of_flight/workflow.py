@@ -1,14 +1,25 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from enum import Enum, auto
 
 import sciline
 import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
-from . import eto_to_tof, simulation
-from .types import RunType, TimeOfFlightLookupTable, TimeOfFlightLookupTableFilename
+from . import eto_to_tof, lookup_table, simulation
+from .types import (
+    CommonTimeOfFlightLookupTable,
+    DistanceResolution,
+    LookupTableRelativeErrorThreshold,
+    PulsePeriod,
+    PulseStride,
+    PulseStrideOffset,
+    RunType,
+    TimeOfFlightLookupTable,
+    TimeOfFlightLookupTableFilename,
+    TimeResolution,
+)
 
 
 class TofLutProvider(Enum):
@@ -20,9 +31,44 @@ class TofLutProvider(Enum):
 
 
 def load_tof_lookup_table(
-    filename: TimeOfFlightLookupTableFilename[RunType],
+    filename: TimeOfFlightLookupTableFilename,
+) -> CommonTimeOfFlightLookupTable:
+    return CommonTimeOfFlightLookupTable(sc.io.load_hdf5(filename))
+
+
+def common_tof_lookup_table_to_runtype(
+    table: CommonTimeOfFlightLookupTable,
 ) -> TimeOfFlightLookupTable[RunType]:
-    return TimeOfFlightLookupTable[RunType](sc.io.load_hdf5(filename))
+    return TimeOfFlightLookupTable[RunType](table)
+
+
+def providers() -> tuple[Callable]:
+    """
+    Providers of the time-of-flight workflow.
+    """
+    return (
+        lookup_table.compute_tof_lookup_table,
+        common_tof_lookup_table_to_runtype,
+        eto_to_tof.detector_time_of_flight_data,
+        eto_to_tof.monitor_time_of_flight_data,
+        eto_to_tof.detector_ltotal_from_straight_line_approximation,
+        eto_to_tof.monitor_ltotal_from_straight_line_approximation,
+    )
+
+
+def default_parameters() -> dict:
+    """
+    Default parameters for computing a tof lookup table from Tof/McStas simulation
+    results.
+    """
+    return {
+        PulsePeriod: 1.0 / sc.scalar(14.0, unit="Hz"),
+        PulseStride: 1,
+        PulseStrideOffset: None,
+        DistanceResolution: sc.scalar(0.1, unit="m"),
+        TimeResolution: sc.scalar(250.0, unit='us'),
+        LookupTableRelativeErrorThreshold: 0.1,
+    }
 
 
 def GenericTofWorkflow(
@@ -72,19 +118,19 @@ def GenericTofWorkflow(
     """
     wf = GenericNeXusWorkflow(run_types=run_types, monitor_types=monitor_types)
 
-    for provider in eto_to_tof.providers():
+    for provider in providers():
         wf.insert(provider)
 
     if tof_lut_provider == TofLutProvider.FILE:
         wf.insert(load_tof_lookup_table)
     else:
-        wf.insert(eto_to_tof.compute_tof_lookup_table)
+        wf.insert(lookup_table.use_tof_lookup_table_from_simulation)
         if tof_lut_provider == TofLutProvider.TOF:
             wf.insert(simulation.simulate_chopper_cascade_using_tof)
         if tof_lut_provider == TofLutProvider.MCSTAS:
             raise NotImplementedError("McStas simulation not implemented yet")
 
-    for key, value in eto_to_tof.default_parameters().items():
+    for key, value in default_parameters().items():
         wf[key] = value
 
     return wf
