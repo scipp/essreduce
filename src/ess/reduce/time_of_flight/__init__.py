@@ -32,7 +32,7 @@ from .types import (
     MonitorTofData,
     # PulsePeriod,
     # PulseStride,
-    # PulseStrideOffset,
+    PulseStrideOffset,
     # SimulationResults,
     TimeOfFlightLookupTable,
     TimeOfFlightLookupTableFilename,
