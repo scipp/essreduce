@@ -8,7 +8,7 @@ from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
-from ess.reduce.nexus.types import DetectorData, MonitorType, RunType, SampleRun
+from ess.reduce.nexus.types import DetectorData, SampleRun
 from ess.reduce.time_of_flight import fakes
 
 sl = pytest.importorskip("sciline")
