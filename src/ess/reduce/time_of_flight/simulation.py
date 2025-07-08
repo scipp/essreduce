@@ -3,14 +3,16 @@
 from collections.abc import Mapping
 
 import scipp as sc
-import scippnexus as snx
+
+# import scippnexus as snx
 from scippneutron.chopper import DiskChopper
 
-from ..nexus.types import DiskChoppers, Position, SampleRun
-from .types import NumberOfSimulatedNeutrons, SimulationResults
+# from ..nexus.types import DiskChoppers, Position, SampleRun
+# from .types import NumberOfSimulatedNeutrons, SimulationResults
+from .types import SimulationResults
 
 
-def simulate_beamline(
+def simulate_beamline_using_tof(
     *,
     choppers: Mapping[str, DiskChopper],
     source_position: sc.Variable,
@@ -86,23 +88,23 @@ def simulate_beamline(
     )
 
 
-def simulate_chopper_cascade_using_tof(
-    choppers: DiskChoppers[SampleRun],
-    neutrons: NumberOfSimulatedNeutrons,
-    source_position: Position[snx.NXsource, SampleRun],
-) -> SimulationResults:
-    """
-    Simulate neutrons traveling through the chopper cascade using the ``tof`` package.
+# def simulate_chopper_cascade_using_tof(
+#     choppers: DiskChoppers[SampleRun],
+#     neutrons: NumberOfSimulatedNeutrons,
+#     source_position: Position[snx.NXsource, SampleRun],
+# ) -> SimulationResults:
+#     """
+#     Simulate neutrons traveling through the chopper cascade using the ``tof`` package.
 
-    Parameters
-    ----------
-    choppers:
-        Chopper settings.
-    neutrons:
-        Number of neutrons to simulate.
-    source_position:
-        Position of the source.
-    """
-    return simulate_beamline(
-        choppers=choppers, neutrons=neutrons, source_position=source_position
-    )
+#     Parameters
+#     ----------
+#     choppers:
+#         Chopper settings.
+#     neutrons:
+#         Number of neutrons to simulate.
+#     source_position:
+#         Position of the source.
+#     """
+#     return simulate_beamline(
+#         choppers=choppers, neutrons=neutrons, source_position=source_position
+#     )
