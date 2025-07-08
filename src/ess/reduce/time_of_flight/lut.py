@@ -12,18 +12,7 @@ import sciline as sl
 import scipp as sc
 
 from ..nexus.types import DiskChoppers
-from .types import (
-    # DistanceResolution,
-    # LookupTableRelativeErrorThreshold,
-    # LtotalRange,
-    # PulsePeriod,
-    # PulseStride,
-    # SimulatedNeutronEvents,
-    # SimulationResults,
-    TimeOfFlightLookupTable,
-    # TimeOfFlightLookupTableFromSimulation,
-    # TimeResolution,
-)
+from .types import TimeOfFlightLookupTable
 
 
 @dataclass
@@ -116,12 +105,6 @@ PulseStride = NewType("PulseStride", int)
 """
 Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
 """
-
-
-# Choppers = NewType("Choppers", sc.DataGroup)
-# """
-# A collection of disk choppers used in the time-of-flight simulation.
-# """
 
 SourcePosition = NewType("SourcePosition", sc.Variable)
 """
@@ -399,12 +382,6 @@ def make_tof_lookup_table(
     _mask_large_uncertainty(table, error_threshold)
 
     return TimeOfFlightLookupTable(table)
-
-
-# def use_tof_lookup_table_from_simulation(
-#     table: TimeOfFlightLookupTableFromSimulation[RunType],
-# ) -> TimeOfFlightLookupTable[RunType]:
-#     return TimeOfFlightLookupTable[RunType](table)
 
 
 def simulate_chopper_cascade_using_tof(

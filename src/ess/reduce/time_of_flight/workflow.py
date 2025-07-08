@@ -2,24 +2,16 @@
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 from collections.abc import Iterable
 
-# from enum import Enum, auto
 import sciline
 import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
-from . import eto_to_tof  # , simulation
+from . import eto_to_tof
 from .types import (
     PulseStrideOffset,
     TimeOfFlightLookupTable,
     TimeOfFlightLookupTableFilename,
 )
-
-# class TofLutProvider(Enum):
-#     """Provider for the time-of-flight lookup table."""
-
-#     FILE = auto()  # From file
-#     TOF = auto()  # Computed with 'tof' package from chopper settings
-#     MCSTAS = auto()  # McStas simulation (not implemented yet)
 
 
 def load_tof_lookup_table(
@@ -32,7 +24,6 @@ def GenericTofWorkflow(
     *,
     run_types: Iterable[sciline.typing.Key],
     monitor_types: Iterable[sciline.typing.Key],
-    # tof_lut_provider: TofLutProvider = TofLutProvider.FILE,
 ) -> sciline.Pipeline:
     """
     Generic workflow for computing the neutron time-of-flight for detector and monitor
@@ -62,11 +53,6 @@ def GenericTofWorkflow(
         List of monitor types to include in the workflow.
         Constrains the possible values of :class:`ess.reduce.nexus.types.MonitorType`
         and :class:`ess.reduce.nexus.types.Component`.
-    tof_lut_provider:
-        Specifies how the time-of-flight lookup table is provided:
-        - FILE: Read from a file
-        - TOF: Computed from chopper settings using the 'tof' package
-        - MCSTAS: From McStas simulation (not implemented yet)
 
     Returns
     -------
@@ -78,14 +64,7 @@ def GenericTofWorkflow(
     for provider in eto_to_tof.providers():
         wf.insert(provider)
 
-    # if tof_lut_provider == TofLutProvider.FILE:
     wf.insert(load_tof_lookup_table)
-    # else:
-    #     wf.insert(eto_to_tof.compute_tof_lookup_table)
-    #     if tof_lut_provider == TofLutProvider.TOF:
-    #         wf.insert(simulation.simulate_chopper_cascade_using_tof)
-    #     if tof_lut_provider == TofLutProvider.MCSTAS:
-    #         raise NotImplementedError("McStas simulation not implemented yet")
 
     # Default parameters
     wf[PulseStrideOffset] = None
