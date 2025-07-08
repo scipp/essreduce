@@ -164,10 +164,10 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
     ref = beamline.get_monitor(next(iter(monitors)))[1].squeeze()
     ref = sc.sort(ref, key='id')
 
-    pl = sl.Pipeline(
-        time_of_flight.providers(),
-        params=time_of_flight.default_parameters(),
-        constraints={RunType: [SampleRun], MonitorType: []},
+    pl = time_of_flight.GenericTofWorkflow(
+        run_types=[SampleRun],
+        monitor_types=[],
+        tof_lut_provider=time_of_flight.TofLutProvider.TOF,
     )
 
     pl[DetectorData[SampleRun]] = raw
@@ -251,10 +251,10 @@ def test_dream_wfm_with_subframe_time_overlap(
     ref = beamline.get_monitor(next(iter(monitors)))[1].squeeze()
     ref = sc.sort(ref, key='id')
 
-    pl = sl.Pipeline(
-        time_of_flight.providers(),
-        params=time_of_flight.default_parameters(),
-        constraints={RunType: [SampleRun], MonitorType: []},
+    pl = time_of_flight.GenericTofWorkflow(
+        run_types=[SampleRun],
+        monitor_types=[],
+        tof_lut_provider=time_of_flight.TofLutProvider.TOF,
     )
 
     pl[DetectorData[SampleRun]] = raw
@@ -440,10 +440,10 @@ def test_v20_compute_wavelengths_from_wfm(
     ref = beamline.get_monitor(next(iter(monitors)))[1].squeeze()
     ref = sc.sort(ref, key='id')
 
-    pl = sl.Pipeline(
-        time_of_flight.providers(),
-        params=time_of_flight.default_parameters(),
-        constraints={RunType: [SampleRun], MonitorType: []},
+    pl = time_of_flight.GenericTofWorkflow(
+        run_types=[SampleRun],
+        monitor_types=[],
+        tof_lut_provider=time_of_flight.TofLutProvider.TOF,
     )
 
     pl[DetectorData[SampleRun]] = raw

@@ -53,10 +53,10 @@ def _make_workflow_event_mode(
     )
     mon, ref = beamline.get_monitor("detector")
 
-    pl = sl.Pipeline(
-        time_of_flight.providers(),
-        params=time_of_flight.default_parameters(),
-        constraints={RunType: [SampleRun], MonitorType: []},
+    pl = time_of_flight.GenericTofWorkflow(
+        run_types=[SampleRun],
+        monitor_types=[],
+        tof_lut_provider=time_of_flight.TofLutProvider.TOF,
     )
 
     pl[DetectorData[SampleRun]] = mon
@@ -87,10 +87,10 @@ def _make_workflow_histogram_mode(
         ).to(unit=mon.bins.coords["event_time_offset"].bins.unit)
     ).rename(event_time_offset=dim)
 
-    pl = sl.Pipeline(
-        time_of_flight.providers(),
-        params=time_of_flight.default_parameters(),
-        constraints={RunType: [SampleRun], MonitorType: []},
+    pl = time_of_flight.GenericTofWorkflow(
+        run_types=[SampleRun],
+        monitor_types=[],
+        tof_lut_provider=time_of_flight.TofLutProvider.TOF,
     )
 
     pl[DetectorData[SampleRun]] = mon
@@ -335,10 +335,10 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
         pulses=2,
     )
 
-    pl = sl.Pipeline(
-        time_of_flight.providers(),
-        params=time_of_flight.default_parameters(),
-        constraints={RunType: [SampleRun], MonitorType: []},
+    pl = time_of_flight.GenericTofWorkflow(
+        run_types=[SampleRun],
+        monitor_types=[],
+        tof_lut_provider=time_of_flight.TofLutProvider.TOF,
     )
 
     # Skip first pulse = half of the first frame

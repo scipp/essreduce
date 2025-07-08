@@ -145,7 +145,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     )
     wf[CalibratedBeamline[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
-    wf[time_of_flight.TimeOfFlightLookupTableFilename[SampleRun]] = (
+    wf[time_of_flight.TimeOfFlightLookupTableFilename] = (
         tmp_path / "lut.h5"
     ).as_posix()
 
