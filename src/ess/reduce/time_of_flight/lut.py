@@ -387,10 +387,10 @@ def make_tof_lookup_table(
 def simulate_chopper_cascade_using_tof(
     choppers: DiskChoppers,
     source_position: SourcePosition,
-    neutrons: NumberOfSimulatedNeutrons = 1_000_000,
-    pulses: NumberOfPulses = 1,
-    seed: SimulationSeed = None,
-    facility: SimulationFacility = 'ess',
+    neutrons: NumberOfSimulatedNeutrons,
+    pulses: NumberOfPulses,
+    seed: SimulationSeed,
+    facility: SimulationFacility,
 ) -> SimulationResults:
     """
     Simulate a pulse of neutrons propagating through a chopper cascade using the
