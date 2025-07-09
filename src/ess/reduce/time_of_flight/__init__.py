@@ -19,7 +19,7 @@ from .lut import (
     SimulationSeed,
     SourcePosition,
     TimeResolution,
-    TofLutWorkflow,
+    TofLookupTableWorkflow,
     simulate_chopper_cascade_using_tof,
 )
 from .types import (
@@ -53,7 +53,7 @@ __all__ = [
     "TimeOfFlightLookupTable",
     "TimeOfFlightLookupTableFilename",
     "TimeResolution",
-    "TofLutWorkflow",
+    "TofLookupTableWorkflow",
     "providers",
     "simulate_chopper_cascade_using_tof",
 ]

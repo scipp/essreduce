@@ -9,13 +9,13 @@ from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
 from ess.reduce.nexus.types import DetectorData, SampleRun
-from ess.reduce.time_of_flight import GenericTofWorkflow, TofLutWorkflow, fakes
+from ess.reduce.time_of_flight import GenericTofWorkflow, TofLookupTableWorkflow, fakes
 
 sl = pytest.importorskip("sciline")
 
 
 def make_lut_workflow(choppers, neutrons, seed, pulse_stride):
-    lut_wf = TofLutWorkflow()
+    lut_wf = TofLookupTableWorkflow()
     lut_wf[time_of_flight.DiskChoppers] = choppers
     lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
     lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = neutrons

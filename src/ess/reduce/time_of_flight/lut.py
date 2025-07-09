@@ -457,7 +457,7 @@ def simulate_chopper_cascade_using_tof(
     )
 
 
-def TofLutWorkflow():
+def TofLookupTableWorkflow():
     """
     Create a workflow for computing a time-of-flight lookup table from a
     simulation of neutrons propagating through a chopper cascade.
