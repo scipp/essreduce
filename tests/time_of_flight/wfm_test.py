@@ -110,27 +110,30 @@ def dream_source_position() -> sc.Variable:
 
 
 @pytest.fixture(scope="module")
-def simulation_dream_choppers():
-    return time_of_flight.simulate_chopper_cascade_using_tof(
-        choppers=dream_choppers(),
-        source_position=dream_source_position(),
-        neutrons=100_000,
-        seed=432,
+def lut_workflow_dream_choppers() -> sl.Pipeline:
+    lut_wf = TofLutWorkflow()
+    lut_wf[time_of_flight.DiskChoppers] = dream_choppers()
+    lut_wf[time_of_flight.SourcePosition] = dream_source_position()
+    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 100_000
+    lut_wf[time_of_flight.SimulationSeed] = 432
+    lut_wf[time_of_flight.PulseStride] = 1
+    lut_wf[time_of_flight.SimulationResults] = lut_wf.compute(
+        time_of_flight.SimulationResults
     )
+    return lut_wf
 
 
 def setup_workflow(
     raw_data: sc.DataArray,
     ltotal: sc.Variable,
-    simulation: time_of_flight.SimulationResults,
+    lut_workflow: sl.Pipeline,
     error_threshold: float = 0.1,
 ) -> sl.Pipeline:
     pl = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     pl[DetectorData[SampleRun]] = raw_data
     pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
 
-    lut_wf = TofLutWorkflow()
-    lut_wf[time_of_flight.SimulationResults] = simulation
+    lut_wf = lut_workflow.copy()
     lut_wf[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
     lut_wf[time_of_flight.LookupTableRelativeErrorThreshold] = error_threshold
 
@@ -154,7 +157,9 @@ def setup_workflow(
 )
 @pytest.mark.parametrize("time_offset_unit", ["s", "ms", "us", "ns"])
 @pytest.mark.parametrize("distance_unit", ["m", "mm"])
-def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance_unit):
+def test_dream_wfm(
+    lut_workflow_dream_choppers, ltotal, time_offset_unit, distance_unit
+):
     monitors = {
         f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to="detector"))
     }
@@ -186,7 +191,7 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
     ref = sc.sort(ref, key='id')
 
     pl = setup_workflow(
-        raw_data=raw, ltotal=ltotal, simulation=simulation_dream_choppers
+        raw_data=raw, ltotal=ltotal, lut_workflow=lut_workflow_dream_choppers
     )
 
     tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
@@ -206,13 +211,17 @@ def test_dream_wfm(simulation_dream_choppers, ltotal, time_offset_unit, distance
 
 
 @pytest.fixture(scope="module")
-def simulation_dream_choppers_time_overlap():
-    return time_of_flight.simulate_chopper_cascade_using_tof(
-        choppers=dream_choppers_with_frame_overlap(),
-        source_position=dream_source_position(),
-        neutrons=100_000,
-        seed=432,
+def lut_workflow_dream_choppers_time_overlap():
+    lut_wf = TofLutWorkflow()
+    lut_wf[time_of_flight.DiskChoppers] = dream_choppers_with_frame_overlap()
+    lut_wf[time_of_flight.SourcePosition] = dream_source_position()
+    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 100_000
+    lut_wf[time_of_flight.SimulationSeed] = 432
+    lut_wf[time_of_flight.PulseStride] = 1
+    lut_wf[time_of_flight.SimulationResults] = lut_wf.compute(
+        time_of_flight.SimulationResults
     )
+    return lut_wf
 
 
 @pytest.mark.parametrize(
@@ -230,7 +239,7 @@ def simulation_dream_choppers_time_overlap():
 @pytest.mark.parametrize("time_offset_unit", ["s", "ms", "us", "ns"])
 @pytest.mark.parametrize("distance_unit", ["m", "mm"])
 def test_dream_wfm_with_subframe_time_overlap(
-    simulation_dream_choppers_time_overlap,
+    lut_workflow_dream_choppers_time_overlap,
     ltotal,
     time_offset_unit,
     distance_unit,
@@ -268,7 +277,7 @@ def test_dream_wfm_with_subframe_time_overlap(
     pl = setup_workflow(
         raw_data=raw,
         ltotal=ltotal,
-        simulation=simulation_dream_choppers_time_overlap,
+        lut_workflow=lut_workflow_dream_choppers_time_overlap,
         error_threshold=0.01,
     )
 
@@ -394,13 +403,17 @@ def v20_source_position():
 
 
 @pytest.fixture(scope="module")
-def simulation_v20_choppers():
-    return time_of_flight.simulate_chopper_cascade_using_tof(
-        choppers=v20_choppers(),
-        source_position=v20_source_position(),
-        neutrons=300_000,
-        seed=432,
+def lut_workflow_v20_choppers():
+    lut_wf = TofLutWorkflow()
+    lut_wf[time_of_flight.DiskChoppers] = v20_choppers()
+    lut_wf[time_of_flight.SourcePosition] = v20_source_position()
+    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 300_000
+    lut_wf[time_of_flight.SimulationSeed] = 431
+    lut_wf[time_of_flight.PulseStride] = 1
+    lut_wf[time_of_flight.SimulationResults] = lut_wf.compute(
+        time_of_flight.SimulationResults
     )
+    return lut_wf
 
 
 @pytest.mark.parametrize(
@@ -416,7 +429,7 @@ def simulation_v20_choppers():
 @pytest.mark.parametrize("time_offset_unit", ["s", "ms", "us", "ns"])
 @pytest.mark.parametrize("distance_unit", ["m", "mm"])
 def test_v20_compute_wavelengths_from_wfm(
-    simulation_v20_choppers, ltotal, time_offset_unit, distance_unit
+    lut_workflow_v20_choppers, ltotal, time_offset_unit, distance_unit
 ):
     monitors = {
         f"detector{i}": ltot for i, ltot in enumerate(ltotal.flatten(to="detector"))
@@ -447,7 +460,9 @@ def test_v20_compute_wavelengths_from_wfm(
     ref = beamline.get_monitor(next(iter(monitors)))[1].squeeze()
     ref = sc.sort(ref, key='id')
 
-    pl = setup_workflow(raw_data=raw, ltotal=ltotal, simulation=simulation_v20_choppers)
+    pl = setup_workflow(
+        raw_data=raw, ltotal=ltotal, lut_workflow=lut_workflow_v20_choppers
+    )
 
     tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
 
