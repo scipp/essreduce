@@ -105,15 +105,15 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     nexus_data: sc.DataArray,
     tmp_path: pytest.TempPathFactory,
 ):
-    make_lut_wf = TofLutWorkflow()
-    make_lut_wf[DiskChoppers] = fakes.psc_choppers()
-    make_lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
-    make_lut_wf[time_of_flight.LtotalRange] = (
+    lut_wf = TofLutWorkflow()
+    lut_wf[DiskChoppers] = fakes.psc_choppers()
+    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
+    lut_wf[time_of_flight.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
         sc.scalar(100.0, unit="m"),
     )
-    make_lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    lut = make_lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
+    lut = lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
     lut.save_hdf5(filename=tmp_path / "lut.h5")
 
     wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
