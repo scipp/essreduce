@@ -29,23 +29,13 @@ def make_lut_workflow(choppers, neutrons, seed, pulse_stride):
 
 @pytest.fixture(scope="module")
 def lut_workflow_psc_choppers():
-    lut_wf = make_lut_workflow(
+    return make_lut_workflow(
         choppers=fakes.psc_choppers(), neutrons=500_000, seed=1234, pulse_stride=1
     )
-    return lut_wf
 
 
 @pytest.fixture(scope="module")
 def lut_workflow_pulse_skipping():
-    # lut_wf = TofLutWorkflow()
-    # lut_wf[time_of_flight.DiskChoppers] = fakes.pulse_skipping_choppers()
-    # lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    # lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 500_000
-    # lut_wf[time_of_flight.SimulationSeed] = 112
-    # lut_wf[time_of_flight.PulseStride] = 2
-    # lut_wf[time_of_flight.SimulationResults] = lut_wf.compute(
-    #     time_of_flight.SimulationResults
-    # )
     return make_lut_workflow(
         choppers=fakes.pulse_skipping_choppers(),
         neutrons=500_000,
@@ -153,14 +143,6 @@ def test_unwrap_with_no_choppers() -> None:
     distance = sc.scalar(10.0, unit="m")
     choppers = {}
 
-    # lut_wf = TofLutWorkflow()
-    # lut_wf[time_of_flight.DiskChoppers] = choppers
-    # lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    # lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 300_000
-    # lut_wf[time_of_flight.SimulationSeed] = 1234
-    # lut_wf[time_of_flight.SimulationResults] = lut_wf.compute(
-    #     time_of_flight.SimulationResults
-    # )
     lut_wf = make_lut_workflow(
         choppers=choppers, neutrons=300_000, seed=1234, pulse_stride=1
     )
@@ -217,7 +199,6 @@ def test_standard_unwrap_histogram_mode(dist, dim, lut_workflow_psc_choppers) ->
         choppers=fakes.psc_choppers(),
         lut_workflow=lut_workflow_psc_choppers,
         seed=37,
-        # pulse_stride=1,
     )
 
     tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
@@ -250,24 +231,6 @@ def test_pulse_skipping_unwrap_180_phase_shift() -> None:
     choppers = fakes.pulse_skipping_choppers()
     choppers["pulse_skipping"].phase.value += 180.0
 
-    # sim = time_of_flight.simulate_chopper_cascade_using_tof(
-    #     choppers=choppers,
-    #     source_position=fakes.source_position(),
-    #     neutrons=500_000,
-    #     seed=111,
-    #     pulses=2,
-    #     facility='ess',
-    # )
-
-    # lut_wf = TofLutWorkflow()
-    # lut_wf[time_of_flight.DiskChoppers] = choppers
-    # lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    # lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 500_000
-    # lut_wf[time_of_flight.SimulationSeed] = 111
-    # lut_wf[time_of_flight.PulseStride] = 2
-    # lut_wf[time_of_flight.SimulationResults] = lut_wf.compute(
-    #     time_of_flight.SimulationResults
-    # )
     lut_wf = make_lut_workflow(
         choppers=choppers, neutrons=500_000, seed=111, pulse_stride=2
     )
@@ -321,24 +284,6 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
         radius=sc.scalar(30.0, unit="cm"),
     )
 
-    # sim = time_of_flight.simulate_chopper_cascade_using_tof(
-    #     choppers=choppers,
-    #     source_position=fakes.source_position(),
-    #     neutrons=500_000,
-    #     seed=222,
-    #     pulses=2,
-    #     facility='ess',
-    # )
-    # lut_wf = TofLutWorkflow()
-    # lut_wf[time_of_flight.DiskChoppers] = choppers
-    # lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    # lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 500_000
-    # lut_wf[time_of_flight.SimulationSeed] = 222
-    # lut_wf[time_of_flight.PulseStride] = 2
-    # # lut_wf[time_of_flight.NumberOfPulses] = 2
-    # lut_wf[time_of_flight.SimulationResults] = lut_wf.compute(
-    #     time_of_flight.SimulationResults
-    # )
     lut_wf = make_lut_workflow(
         choppers=choppers, neutrons=500_000, seed=222, pulse_stride=2
     )
@@ -348,7 +293,6 @@ def test_pulse_skipping_unwrap_when_all_neutrons_arrive_after_second_pulse() -> 
         choppers=choppers,
         lut_workflow=lut_wf,
         seed=6,
-        # pulse_stride=2,
         pulse_stride_offset=1,
         error_threshold=0.1,
     )
@@ -372,29 +316,6 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
         seed=21,
     )
     mon, ref = beamline.get_monitor("detector")
-
-    # sim = time_of_flight.simulate_chopper_cascade_using_tof(
-    #     choppers=choppers,
-    #     source_position=fakes.source_position(),
-    #     neutrons=300_000,
-    #     seed=1234,
-    #     pulses=2,
-    #     facility='ess',
-    # )
-    # # lut_wf = TofLutWorkflow()
-    # # lut_wf[time_of_flight.SimulationResults] = sim
-    # # lut_wf[time_of_flight.LtotalRange] = distance, distance
-    # # lut_wf[time_of_flight.PulseStride] = 2
-    # lut_wf = TofLutWorkflow()
-    # lut_wf[time_of_flight.DiskChoppers] = choppers
-    # lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    # lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 300_000
-    # lut_wf[time_of_flight.SimulationSeed] = 1234
-    # lut_wf[time_of_flight.PulseStride] = 2
-    # # lut_wf[time_of_flight.NumberOfPulses] = 2
-    # # lut_wf[time_of_flight.SimulationResults] = lut_wf.compute(
-    # #     time_of_flight.SimulationResults
-    # # )
 
     lut_wf = make_lut_workflow(
         choppers=choppers, neutrons=300_000, seed=1234, pulse_stride=2
@@ -457,14 +378,6 @@ def test_pulse_skipping_stride_3() -> None:
     choppers = fakes.pulse_skipping_choppers()
     choppers["pulse_skipping"].frequency.value = -14.0 / 3.0
 
-    # sim = time_of_flight.simulate_chopper_cascade_using_tof(
-    #     choppers=choppers,
-    #     source_position=fakes.source_position(),
-    #     neutrons=500_000,
-    #     seed=111,
-    #     pulses=1,
-    #     facility='ess',
-    # )
     lut_wf = make_lut_workflow(
         choppers=choppers, neutrons=500_000, seed=111, pulse_stride=3
     )
@@ -474,7 +387,6 @@ def test_pulse_skipping_stride_3() -> None:
         choppers=choppers,
         lut_workflow=lut_wf,
         seed=68,
-        pulse_stride=3,
         pulse_stride_offset=None,
         error_threshold=0.1,
     )
@@ -493,7 +405,6 @@ def test_pulse_skipping_unwrap_histogram_mode(lut_workflow_pulse_skipping) -> No
         choppers=fakes.pulse_skipping_choppers(),
         lut_workflow=lut_workflow_pulse_skipping,
         seed=9,
-        pulse_stride=2,
     )
 
     tofs = pl.compute(time_of_flight.DetectorTofData[SampleRun])
@@ -510,7 +421,6 @@ def test_unwrap_int(dtype, lut_workflow_psc_choppers) -> None:
         choppers=fakes.psc_choppers(),
         lut_workflow=lut_workflow_psc_choppers,
         seed=2,
-        pulse_stride=1,
         pulse_stride_offset=0,
         error_threshold=0.1,
     )

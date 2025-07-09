@@ -388,7 +388,7 @@ def simulate_chopper_cascade_using_tof(
     choppers: DiskChoppers,
     source_position: SourcePosition,
     neutrons: NumberOfSimulatedNeutrons,
-    # pulses: NumberOfPulses,
+    pulses: PulseStride,
     seed: SimulationSeed,
     facility: SimulationFacility,
 ) -> SimulationResults:
@@ -407,8 +407,8 @@ def simulate_chopper_cascade_using_tof(
         Must be in the same coordinate system as the choppers' axle positions.
     neutrons:
         Number of neutrons to simulate.
-    # pulses:
-    #     Number of pulses to simulate.
+    pulses:
+        Number of pulses to simulate.
     seed:
         Seed for the random number generator used in the simulation.
     facility:
@@ -432,7 +432,7 @@ def simulate_chopper_cascade_using_tof(
         )
         for name, ch in choppers.items()
     ]
-    source = tof.Source(facility=facility, neutrons=neutrons, pulses=1, seed=seed)
+    source = tof.Source(facility=facility, neutrons=neutrons, pulses=pulses, seed=seed)
     if not tof_choppers:
         events = source.data.squeeze().flatten(to='event')
         return SimulationResults(
