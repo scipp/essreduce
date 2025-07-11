@@ -123,7 +123,7 @@ def _time_of_flight_data_histogram(
     )
 
     return rebinned.assign_coords(tof=tofs).drop_coords(
-        {key} & {"time_of_flight", "frame_time"}
+        list({key} & {"time_of_flight", "frame_time"})
     )
 
 
