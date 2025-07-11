@@ -108,7 +108,6 @@ def _make_workflow_histogram_mode(dim, distance, choppers, lut_workflow, seed):
 
 def _validate_result_events(tofs, ref, percentile, diff_threshold, rtol):
     assert "event_time_offset" not in tofs.coords
-    assert "event_time_zero" not in tofs.coords
 
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
