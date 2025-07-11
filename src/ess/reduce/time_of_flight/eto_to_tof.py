@@ -95,8 +95,8 @@ def _time_of_flight_data_histogram(
     da: sc.DataArray, lookup: sc.DataArray, ltotal: sc.Variable
 ) -> sc.DataArray:
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
-    # it may be called 'tof'.
-    key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof"}))
+    # it may be called 'tof' or 'frame_time'.
+    key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof", "frame_time"}))
     raw_eto = da.coords[key].to(dtype=float, copy=False)
     eto_unit = raw_eto.unit
     pulse_period = lookup.coords["pulse_period"].to(unit=eto_unit)
@@ -122,7 +122,9 @@ def _time_of_flight_data_histogram(
         pulse_period=pulse_period,
     )
 
-    return rebinned.assign_coords(tof=tofs)
+    return rebinned.assign_coords(tof=tofs).drop_coords(
+        {key} & {"time_of_flight", "frame_time"}
+    )
 
 
 def _guess_pulse_stride_offset(
@@ -264,7 +266,8 @@ def _time_of_flight_data_events(
 
     parts = da.bins.constituents
     parts["data"] = tofs
-    return da.bins.assign_coords(tof=sc.bins(**parts, validate_indices=False))
+    result = da.bins.assign_coords(tof=sc.bins(**parts, validate_indices=False))
+    return result.bins.drop_coords(["event_time_offset", "event_time_zero"])
 
 
 def detector_ltotal_from_straight_line_approximation(
