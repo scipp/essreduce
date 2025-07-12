@@ -267,7 +267,7 @@ def _time_of_flight_data_events(
     parts = da.bins.constituents
     parts["data"] = tofs
     result = da.bins.assign_coords(tof=sc.bins(**parts, validate_indices=False))
-    return result.bins.drop_coords("event_time_zero")
+    return result.bins.drop_coords("event_time_offset")
 
 
 def detector_ltotal_from_straight_line_approximation(
