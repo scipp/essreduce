@@ -13,10 +13,9 @@ from ess.reduce.nexus.types import (
     DetectorData,
     DiskChoppers,
     NeXusData,
-    Position,
     SampleRun,
 )
-from ess.reduce.time_of_flight import GenericTofWorkflow, TofLutProvider, fakes
+from ess.reduce.time_of_flight import GenericTofWorkflow, TofLookupTableWorkflow, fakes
 
 sl = pytest.importorskip("sciline")
 
@@ -56,19 +55,15 @@ def nexus_data():
     )
 
 
-def test_GenericTofWorkflow_can_compute_tof_lut_without_nexus_file_or_detector_info():
-    wf = GenericTofWorkflow(
-        tof_lut_provider=TofLutProvider.TOF,
-        run_types=[SampleRun],
-        monitor_types=[],
-    )
-    wf[DiskChoppers[SampleRun]] = fakes.psc_choppers()
-    wf[time_of_flight.types.NumberOfSimulatedNeutrons] = 10_000
-    wf[time_of_flight.types.LtotalRange] = (
+def test_TofLookupTableWorkflow_can_compute_tof_lut():
+    wf = TofLookupTableWorkflow()
+    wf[DiskChoppers] = fakes.psc_choppers()
+    wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
+    wf[time_of_flight.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
         sc.scalar(100.0, unit="m"),
     )
-    wf[Position[snx.NXsource, SampleRun]] = fakes.source_position()
+    wf[time_of_flight.SourcePosition] = fakes.source_position()
     lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
     assert isinstance(lut, sc.DataArray)
 
@@ -76,46 +71,33 @@ def test_GenericTofWorkflow_can_compute_tof_lut_without_nexus_file_or_detector_i
 def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
     calibrated_beamline: sc.DataArray, nexus_data: sc.DataArray
 ):
-    wf = GenericTofWorkflow(
-        tof_lut_provider=TofLutProvider.TOF,
-        run_types=[SampleRun],
-        monitor_types=[],
-    )
+    wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[CalibratedBeamline[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
 
     # Should be able to compute DetectorData without chopper and simulation params
     # This contains event_time_offset (time-of-arrival).
     _ = wf.compute(DetectorData[SampleRun])
-    # LUT and Tof data cannot be computed without chopper and simulation params
+    # By default, the workflow tries to load the LUT from file
     with pytest.raises(sciline.UnsatisfiedRequirement):
         _ = wf.compute(time_of_flight.TimeOfFlightLookupTable)
     with pytest.raises(sciline.UnsatisfiedRequirement):
         _ = wf.compute(time_of_flight.DetectorTofData[SampleRun])
 
-    wf[DiskChoppers[SampleRun]] = fakes.psc_choppers()
-    wf[time_of_flight.types.NumberOfSimulatedNeutrons] = 10_000
-    wf[time_of_flight.types.LtotalRange] = (
+    lut_wf = TofLookupTableWorkflow()
+    lut_wf[DiskChoppers] = fakes.psc_choppers()
+    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
+    lut_wf[time_of_flight.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
         sc.scalar(100.0, unit="m"),
     )
-    wf[Position[snx.NXsource, SampleRun]] = fakes.source_position()
+    lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
+    table = lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
 
-    # Should be able to compute DetectorData with chopper and simulation params
-    _ = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    wf[time_of_flight.TimeOfFlightLookupTable] = table
+    # Should now be able to compute DetectorData with chopper and simulation params
     detector = wf.compute(time_of_flight.DetectorTofData[SampleRun])
     assert 'tof' in detector.bins.coords
-
-
-def test_GenericTofWorkflow_with_tof_lut_from_mcstas_simulation():
-    with pytest.raises(
-        NotImplementedError, match="McStas simulation not implemented yet"
-    ):
-        GenericTofWorkflow(
-            tof_lut_provider=TofLutProvider.MCSTAS,
-            run_types=[SampleRun],
-            monitor_types=[],
-        )
 
 
 def test_GenericTofWorkflow_with_tof_lut_from_file(
@@ -123,26 +105,18 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     nexus_data: sc.DataArray,
     tmp_path: pytest.TempPathFactory,
 ):
-    make_lut_wf = GenericTofWorkflow(
-        tof_lut_provider=TofLutProvider.TOF,
-        run_types=[SampleRun],
-        monitor_types=[],
-    )
-    make_lut_wf[DiskChoppers[SampleRun]] = fakes.psc_choppers()
-    make_lut_wf[time_of_flight.types.NumberOfSimulatedNeutrons] = 10_000
-    make_lut_wf[time_of_flight.types.LtotalRange] = (
+    lut_wf = TofLookupTableWorkflow()
+    lut_wf[DiskChoppers] = fakes.psc_choppers()
+    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
+    lut_wf[time_of_flight.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
         sc.scalar(100.0, unit="m"),
     )
-    make_lut_wf[Position[snx.NXsource, SampleRun]] = fakes.source_position()
-    lut = make_lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
+    lut = lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
     lut.save_hdf5(filename=tmp_path / "lut.h5")
 
-    wf = GenericTofWorkflow(
-        tof_lut_provider=TofLutProvider.FILE,
-        run_types=[SampleRun],
-        monitor_types=[],
-    )
+    wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[CalibratedBeamline[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
     wf[time_of_flight.TimeOfFlightLookupTableFilename] = (

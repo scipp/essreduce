@@ -6,46 +6,54 @@ Utilities for computing real neutron time-of-flight from chopper settings and
 neutron time-of-arrival at the detectors.
 """
 
-from .eto_to_tof import default_parameters, providers
-from .simulation import simulate_beamline
-from .types import (
-    DetectorLtotal,
-    DetectorTofData,
+from ..nexus.types import DiskChoppers
+from .eto_to_tof import providers
+from .lut import (
     DistanceResolution,
     LookupTableRelativeErrorThreshold,
     LtotalRange,
-    MonitorLtotal,
-    MonitorTofData,
+    NumberOfSimulatedNeutrons,
     PulsePeriod,
     PulseStride,
-    PulseStrideOffset,
     SimulationResults,
+    SimulationSeed,
+    SourcePosition,
+    TimeResolution,
+    TofLookupTableWorkflow,
+    simulate_chopper_cascade_using_tof,
+)
+from .types import (
+    DetectorLtotal,
+    DetectorTofData,
+    MonitorLtotal,
+    MonitorTofData,
+    PulseStrideOffset,
     TimeOfFlightLookupTable,
     TimeOfFlightLookupTableFilename,
-    TimeResolution,
 )
-from .workflow import GenericTofWorkflow, TofLutProvider
+from .workflow import GenericTofWorkflow
 
 __all__ = [
     "DetectorLtotal",
     "DetectorTofData",
-    "DetectorTofData",
+    "DiskChoppers",
     "DistanceResolution",
     "GenericTofWorkflow",
     "LookupTableRelativeErrorThreshold",
     "LtotalRange",
     "MonitorLtotal",
     "MonitorTofData",
-    "MonitorTofData",
+    "NumberOfSimulatedNeutrons",
     "PulsePeriod",
     "PulseStride",
     "PulseStrideOffset",
     "SimulationResults",
+    "SimulationSeed",
+    "SourcePosition",
     "TimeOfFlightLookupTable",
     "TimeOfFlightLookupTableFilename",
     "TimeResolution",
-    "TofLutProvider",
-    "default_parameters",
+    "TofLookupTableWorkflow",
     "providers",
-    "simulate_beamline",
+    "simulate_chopper_cascade_using_tof",
 ]
