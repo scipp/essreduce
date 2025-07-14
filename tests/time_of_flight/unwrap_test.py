@@ -107,6 +107,8 @@ def _make_workflow_histogram_mode(dim, distance, choppers, lut_workflow, seed):
 
 
 def _validate_result_events(tofs, ref, percentile, diff_threshold, rtol):
+    assert "event_time_offset" not in tofs.coords
+
     # Convert to wavelength
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph).bins.concat().value
@@ -125,6 +127,9 @@ def _validate_result_events(tofs, ref, percentile, diff_threshold, rtol):
 
 
 def _validate_result_histogram_mode(tofs, ref, percentile, diff_threshold, rtol):
+    assert "time_of_flight" not in tofs.coords
+    assert "frame_time" not in tofs.coords
+
     graph = {**beamline_graph(scatter=False), **elastic_graph("tof")}
     wavs = tofs.transform_coords("wavelength", graph=graph)
     ref = ref.hist(wavelength=wavs.coords["wavelength"])
@@ -191,7 +196,7 @@ def test_standard_unwrap(dist, lut_workflow_psc_choppers) -> None:
 # At 80m, events are split between the second and third pulse.
 # At 108m, events are split between the third and fourth pulse.
 @pytest.mark.parametrize("dist", [30.0, 60.0, 80.0, 108.0])
-@pytest.mark.parametrize("dim", ["time_of_flight", "tof"])
+@pytest.mark.parametrize("dim", ["time_of_flight", "tof", "frame_time"])
 def test_standard_unwrap_histogram_mode(dist, dim, lut_workflow_psc_choppers) -> None:
     pl, ref = _make_workflow_histogram_mode(
         dim=dim,
