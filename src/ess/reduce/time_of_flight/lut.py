@@ -330,12 +330,11 @@ def make_tof_lookup_table(
     ndist = len(distance_bins) - 1
     max_size = 2e7
     total_size = ndist * len(simulation.time_of_arrival)
-    nchunks = total_size / max_size
+    nchunks = int(total_size / max_size) + 1
     chunk_size = int(ndist / nchunks) + 1
     pieces = []
-    for i in range(int(nchunks) + 1):
+    for i in range(nchunks):
         dist_edges = distance_bins[i * chunk_size : (i + 1) * chunk_size + 1]
-
         pieces.append(
             _compute_mean_tof_in_distance_range(
                 simulation=simulation,
