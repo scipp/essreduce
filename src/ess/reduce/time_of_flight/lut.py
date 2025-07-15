@@ -4,6 +4,7 @@
 Utilities for computing time-of-flight lookup tables from neutron simulations.
 """
 
+import math
 from dataclasses import dataclass
 from typing import NewType
 
@@ -330,8 +331,8 @@ def make_tof_lookup_table(
     ndist = len(distance_bins) - 1
     max_size = 2e7
     total_size = ndist * len(simulation.time_of_arrival)
-    nchunks = int(total_size / max_size) + 1
-    chunk_size = int(ndist / nchunks) + 1
+    nchunks = math.ceil(total_size / max_size)
+    chunk_size = math.ceil(ndist / nchunks)
     pieces = []
     for i in range(nchunks):
         dist_edges = distance_bins[i * chunk_size : (i + 1) * chunk_size + 1]
