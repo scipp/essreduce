@@ -32,7 +32,7 @@ requires-python = ">=3.10"
 # Make sure to list one dependency per line.
 dependencies = [
     "sciline>=25.05.1",
-    "scipp>=25.01.0",
+    "scipp>=25.04.0",
     "scippneutron>=25.02.0",
     "scippnexus>=24.11.0",
 ]
@@ -41,11 +41,11 @@ dynamic = ["version"]
 
 [project.optional-dependencies]
 test = [
-    "ipywidgets",
-    "numba",
-    "pooch",
-    "pytest",
-    "scipy>=1.7.0",
+    "ipywidgets>=8.1",
+    "numba>=0.59",
+    "pooch>=1.5",
+    "pytest>=7.0",
+    "scipy>=1.14",
     "tof>=25.05.0",
 ]
 
@@ -72,6 +72,7 @@ testpaths = "tests"
 filterwarnings = [
   "error",
   'ignore:\n            Sentinel is not a public part of the traitlets API:DeprecationWarning',
+  'ignore:Jupyter is migrating its paths:DeprecationWarning',
 ]
 
 [tool.ruff]
