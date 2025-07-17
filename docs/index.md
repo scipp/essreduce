@@ -23,10 +23,10 @@
 
 # {transparent}`ESSreduce`
 
-<span style="font-size:1.2em;font-style:italic;color:var(--pst-color-text-muted)">
+<div style="font-size:1.2em;font-style:italic;color:var(--pst-color-text-muted);text-align:center;">
   Common data reduction tools for the ESS facility
   </br></br>
-</span>
+</div>
 
 :::{include} user-guide/installation.md
 :heading-offset: 1
