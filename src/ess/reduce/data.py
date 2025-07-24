@@ -12,6 +12,7 @@ class Registry:
             + '{version}/',
             version=version,
             registry=files,
+            retry_if_failed=3,
         )
 
     def __contains__(self, key):
