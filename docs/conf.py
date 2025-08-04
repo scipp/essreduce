@@ -190,7 +190,7 @@ html_theme_options = {
         },
         {
             "name": "Conda",
-            "url": "https://anaconda.org/scipp/essreduce",
+            "url": "https://anaconda.org/conda-forge/essreduce",
             "icon": "fa-custom fa-anaconda",
             "type": "fontawesome",
         },

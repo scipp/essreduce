@@ -10,7 +10,7 @@ pip install essreduce
 ````
 ````{tab-item} conda
 ```sh
-conda install -c conda-forge -c scipp essreduce
+conda install -c conda-forge essreduce
 ```
 ````
 `````
