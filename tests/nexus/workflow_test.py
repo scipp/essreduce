@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 import scipp as sc
@@ -644,10 +644,8 @@ def test_generic_nexus_workflow_load_measurement_metadata() -> None:
 
     assert measurement.title == 'My experiment'
     assert measurement.experiment_id == 'p1234'
-    assert measurement.start_time == datetime(
-        2022, 2, 28, 21, 15, 0, tzinfo=timezone.utc
-    )
-    assert measurement.end_time == datetime(2032, 2, 29, 9, 15, 0, tzinfo=timezone.utc)
+    assert measurement.start_time == datetime(2022, 2, 28, 21, 15, 0, tzinfo=UTC)
+    assert measurement.end_time == datetime(2032, 2, 29, 9, 15, 0, tzinfo=UTC)
     assert measurement.run_number is None
     assert measurement.experiment_doi is None
 
