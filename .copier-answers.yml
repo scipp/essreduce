@@ -3,7 +3,7 @@ _commit: c3214e6
 _src_path: gh:scipp/copier_template
 description: Common data reduction tools for the ESS facility
 max_python: '3.13'
-min_python: '3.10'
+min_python: '3.11'
 namespace_package: ess
 nightly_deps: scippnexus,scipp,sciline,cyclebane,scippneutron,tof
 orgname: scipp
