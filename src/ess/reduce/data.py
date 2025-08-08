@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
+
+from pathlib import Path
 
 
 class Registry:
@@ -29,7 +31,7 @@ class Registry:
         """Return True if the key is in the registry."""
         return key in self._registry.registry
 
-    def get_path(self, name: str, unzip: bool = False) -> str:
+    def get_path(self, name: str, unzip: bool = False) -> Path:
         """
         Get the path to a file in the registry.
 
@@ -45,8 +47,10 @@ class Registry:
         :
             The Path to the file.
         """
-        return self._registry.fetch(
-            name, processor=self._unzip_processor if unzip else None
+        return Path(
+            self._registry.fetch(
+                name, processor=self._unzip_processor if unzip else None
+            )
         )
 
 
@@ -94,37 +98,37 @@ _loki_registry = Registry(
 )
 
 
-def bifrost_simulated_elastic() -> str:
+def bifrost_simulated_elastic() -> Path:
     """McStas simulation with elastic incoherent scattering + phonon."""
     return _bifrost_registry.get_path('BIFROST_20240914T053723.h5')
 
 
-def loki_tutorial_sample_run_60250() -> str:
+def loki_tutorial_sample_run_60250() -> Path:
     """Sample run with sample and sample holder/can, no transmission monitor in beam."""
     return _loki_registry.get_path('60250-2022-02-28_2215.nxs')
 
 
-def loki_tutorial_sample_run_60339() -> str:
+def loki_tutorial_sample_run_60339() -> Path:
     """Sample run with sample and sample holder/can, no transmission monitor in beam."""
     return _loki_registry.get_path('60339-2022-02-28_2215.nxs')
 
 
-def loki_tutorial_background_run_60248() -> str:
+def loki_tutorial_background_run_60248() -> Path:
     """Background run with sample holder/can only, no transmission monitor."""
     return _loki_registry.get_path('60248-2022-02-28_2215.nxs')
 
 
-def loki_tutorial_background_run_60393() -> str:
+def loki_tutorial_background_run_60393() -> Path:
     """Background run with sample holder/can only, no transmission monitor."""
     return _loki_registry.get_path('60393-2022-02-28_2215.nxs')
 
 
-def loki_tutorial_sample_transmission_run() -> str:
+def loki_tutorial_sample_transmission_run() -> Path:
     """Sample transmission run (sample + sample holder/can + transmission monitor)."""
     return _loki_registry.get_path('60394-2022-02-28_2215.nxs')
 
 
-def dream_coda_test_file() -> str:
+def dream_coda_test_file() -> Path:
     """CODA file for DREAM where most pulses have been removed.
 
     See ``tools/shrink_nexus.py``.
