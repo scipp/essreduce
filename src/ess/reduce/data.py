@@ -15,7 +15,13 @@ class Registry:
     is not a hard dependency of ESSreduce and needs to be installed separately.
     """
 
-    def __init__(self, instrument: str, files: dict[str, str], version: str) -> None:
+    def __init__(
+        self,
+        instrument: str,
+        files: dict[str, str],
+        version: str,
+        retry_if_failed: int = 3,
+    ) -> None:
         import pooch
 
         self._registry = pooch.create(
@@ -25,7 +31,7 @@ class Registry:
             + '{version}/',
             version=version,
             registry=files,
-            retry_if_failed=3,
+            retry_if_failed=retry_if_failed,
         )
         self._unzip_processor = pooch.Unzip()
 
