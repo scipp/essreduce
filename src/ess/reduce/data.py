@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
+"""Data files bundled with ESSreduce."""
 
 from functools import cache
 from pathlib import Path
