@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
+from functools import cache
 from pathlib import Path
 
 
@@ -31,9 +32,19 @@ class Registry:
         """Return True if the key is in the registry."""
         return key in self._registry.registry
 
+    @cache  # noqa: B019
     def get_path(self, name: str, unzip: bool = False) -> Path:
-        """
-        Get the path to a file in the registry.
+        """Get the path to a file in the registry.
+
+        Downloads the file if necessary.
+
+        Note that return values of this method are cached to avoid recomputing
+        potentially expensive checksums.
+        This usually means that the ``Registry`` object itself gets stored until the
+        Python interpreter shuts down.
+        However, registries are small and do not own resources.
+        It is anyway expected that the registry objects are stored at
+        module scope and live until program exit.
 
         Parameters
         ----------
