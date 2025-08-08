@@ -1,10 +1,19 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-import pooch
 
 
 class Registry:
-    def __init__(self, instrument: str, files: dict[str, str], version: str):
+    """A registry for data files.
+
+    Note
+    ----
+    This class requires [Pooch](https://www.fatiando.org/pooch/latest/) which
+    is not a hard dependency of ESSreduce and needs to be installed separately.
+    """
+
+    def __init__(self, instrument: str, files: dict[str, str], version: str) -> None:
+        import pooch
+
         self._registry = pooch.create(
             path=pooch.os_cache(f'ess/{instrument}'),
             env=f'ESS_{instrument.upper()}_DATA_DIR',
@@ -14,8 +23,10 @@ class Registry:
             registry=files,
             retry_if_failed=3,
         )
+        self._unzip_processor = pooch.Unzip()
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
+        """Return True if the key is in the registry."""
         return key in self._registry.registry
 
     def get_path(self, name: str, unzip: bool = False) -> str:
@@ -28,8 +39,15 @@ class Registry:
             Name of the file to get the path for.
         unzip:
             If `True`, unzip the file before returning the path.
+
+        Returns
+        -------
+        :
+            The Path to the file.
         """
-        return self._registry.fetch(name, processor=pooch.Unzip() if unzip else None)
+        return self._registry.fetch(
+            name, processor=self._unzip_processor if unzip else None
+        )
 
 
 _bifrost_registry = Registry(
