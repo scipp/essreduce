@@ -1,10 +1,29 @@
 # SPDX-License-Identifier: BSD-3-Clause
-# Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
-import pooch
+# Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
+"""Data files bundled with ESSreduce."""
+
+from functools import cache
+from pathlib import Path
 
 
 class Registry:
-    def __init__(self, instrument: str, files: dict[str, str], version: str):
+    """A registry for data files.
+
+    Note
+    ----
+    This class requires [Pooch](https://www.fatiando.org/pooch/latest/) which
+    is not a hard dependency of ESSreduce and needs to be installed separately.
+    """
+
+    def __init__(
+        self,
+        instrument: str,
+        files: dict[str, str],
+        version: str,
+        retry_if_failed: int = 3,
+    ) -> None:
+        import pooch
+
         self._registry = pooch.create(
             path=pooch.os_cache(f'ess/{instrument}'),
             env=f'ESS_{instrument.upper()}_DATA_DIR',
@@ -12,15 +31,27 @@ class Registry:
             + '{version}/',
             version=version,
             registry=files,
-            retry_if_failed=3,
+            retry_if_failed=retry_if_failed,
         )
+        self._unzip_processor = pooch.Unzip()
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
+        """Return True if the key is in the registry."""
         return key in self._registry.registry
 
-    def get_path(self, name: str, unzip: bool = False) -> str:
-        """
-        Get the path to a file in the registry.
+    @cache  # noqa: B019
+    def get_path(self, name: str, unzip: bool = False) -> Path:
+        """Get the path to a file in the registry.
+
+        Downloads the file if necessary.
+
+        Note that return values of this method are cached to avoid recomputing
+        potentially expensive checksums.
+        This usually means that the ``Registry`` object itself gets stored until the
+        Python interpreter shuts down.
+        However, registries are small and do not own resources.
+        It is anyway expected that the registry objects are stored at
+        module scope and live until program exit.
 
         Parameters
         ----------
@@ -28,8 +59,17 @@ class Registry:
             Name of the file to get the path for.
         unzip:
             If `True`, unzip the file before returning the path.
+
+        Returns
+        -------
+        :
+            The Path to the file.
         """
-        return self._registry.fetch(name, processor=pooch.Unzip() if unzip else None)
+        return Path(
+            self._registry.fetch(
+                name, processor=self._unzip_processor if unzip else None
+            )
+        )
 
 
 _bifrost_registry = Registry(
@@ -76,37 +116,37 @@ _loki_registry = Registry(
 )
 
 
-def bifrost_simulated_elastic() -> str:
+def bifrost_simulated_elastic() -> Path:
     """McStas simulation with elastic incoherent scattering + phonon."""
     return _bifrost_registry.get_path('BIFROST_20240914T053723.h5')
 
 
-def loki_tutorial_sample_run_60250() -> str:
+def loki_tutorial_sample_run_60250() -> Path:
     """Sample run with sample and sample holder/can, no transmission monitor in beam."""
     return _loki_registry.get_path('60250-2022-02-28_2215.nxs')
 
 
-def loki_tutorial_sample_run_60339() -> str:
+def loki_tutorial_sample_run_60339() -> Path:
     """Sample run with sample and sample holder/can, no transmission monitor in beam."""
     return _loki_registry.get_path('60339-2022-02-28_2215.nxs')
 
 
-def loki_tutorial_background_run_60248() -> str:
+def loki_tutorial_background_run_60248() -> Path:
     """Background run with sample holder/can only, no transmission monitor."""
     return _loki_registry.get_path('60248-2022-02-28_2215.nxs')
 
 
-def loki_tutorial_background_run_60393() -> str:
+def loki_tutorial_background_run_60393() -> Path:
     """Background run with sample holder/can only, no transmission monitor."""
     return _loki_registry.get_path('60393-2022-02-28_2215.nxs')
 
 
-def loki_tutorial_sample_transmission_run() -> str:
+def loki_tutorial_sample_transmission_run() -> Path:
     """Sample transmission run (sample + sample holder/can + transmission monitor)."""
     return _loki_registry.get_path('60394-2022-02-28_2215.nxs')
 
 
-def dream_coda_test_file() -> str:
+def dream_coda_test_file() -> Path:
     """CODA file for DREAM where most pulses have been removed.
 
     See ``tools/shrink_nexus.py``.
