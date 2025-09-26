@@ -2,78 +2,12 @@
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 """Data files bundled with ESSreduce."""
 
-from functools import cache
 from pathlib import Path
 
+from ._registry import Entry, LocalRegistry, PoochRegistry, Registry, make_registry
 
-class Registry:
-    """A registry for data files.
-
-    Note
-    ----
-    This class requires [Pooch](https://www.fatiando.org/pooch/latest/) which
-    is not a hard dependency of ESSreduce and needs to be installed separately.
-    """
-
-    def __init__(
-        self,
-        instrument: str,
-        files: dict[str, str],
-        version: str,
-        retry_if_failed: int = 3,
-    ) -> None:
-        import pooch
-
-        self._registry = pooch.create(
-            path=pooch.os_cache(f'ess/{instrument}'),
-            env=f'ESS_{instrument.upper()}_DATA_DIR',
-            base_url=f'https://public.esss.dk/groups/scipp/ess/{instrument}/'
-            + '{version}/',
-            version=version,
-            registry=files,
-            retry_if_failed=retry_if_failed,
-        )
-        self._unzip_processor = pooch.Unzip()
-
-    def __contains__(self, key: str) -> bool:
-        """Return True if the key is in the registry."""
-        return key in self._registry.registry
-
-    @cache  # noqa: B019
-    def get_path(self, name: str, unzip: bool = False) -> Path:
-        """Get the path to a file in the registry.
-
-        Downloads the file if necessary.
-
-        Note that return values of this method are cached to avoid recomputing
-        potentially expensive checksums.
-        This usually means that the ``Registry`` object itself gets stored until the
-        Python interpreter shuts down.
-        However, registries are small and do not own resources.
-        It is anyway expected that the registry objects are stored at
-        module scope and live until program exit.
-
-        Parameters
-        ----------
-        name:
-            Name of the file to get the path for.
-        unzip:
-            If `True`, unzip the file before returning the path.
-
-        Returns
-        -------
-        :
-            The Path to the file.
-        """
-        return Path(
-            self._registry.fetch(
-                name, processor=self._unzip_processor if unzip else None
-            )
-        )
-
-
-_bifrost_registry = Registry(
-    instrument='bifrost',
+_bifrost_registry = make_registry(
+    'ess/bifrost',
     files={
         "BIFROST_20240914T053723.h5": "md5:0f2fa5c9a851f8e3a4fa61defaa3752e",
     },
@@ -81,8 +15,8 @@ _bifrost_registry = Registry(
 )
 
 
-_dream_registry = Registry(
-    instrument='dream',
+_dream_registry = make_registry(
+    'ess/dream',
     files={
         "TEST_977695_00068064.hdf": "md5:9e6ee9ec70d7c5e8c0c93b9e07e8949f",
     },
@@ -90,8 +24,8 @@ _dream_registry = Registry(
 )
 
 
-_loki_registry = Registry(
-    instrument='loki',
+_loki_registry = make_registry(
+    'ess/loki',
     files={
         # Files from LoKI@Larmor detector test experiment
         #
@@ -152,3 +86,19 @@ def dream_coda_test_file() -> Path:
     See ``tools/shrink_nexus.py``.
     """
     return _dream_registry.get_path('TEST_977695_00068064.hdf')
+
+
+__all__ = [
+    'Entry',
+    'LocalRegistry',
+    'PoochRegistry',
+    'Registry',
+    'bifrost_simulated_elastic',
+    'dream_coda_test_file',
+    'loki_tutorial_background_run_60248',
+    'loki_tutorial_background_run_60393',
+    'loki_tutorial_sample_run_60250',
+    'loki_tutorial_sample_run_60339',
+    'loki_tutorial_sample_transmission_run',
+    'make_registry',
+]
