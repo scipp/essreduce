@@ -43,7 +43,7 @@ def make_registry(
         ...    "zipped.zip": Entry(alg="blake2b", chk="abcdef123456789", unzip=True),
         ... }
 
-    In the example above, the specification for ``file1.dat`` and ``file2.csv`` are
+    In the example above, the specifications for ``file1.dat`` and ``file2.csv`` are
     essentially equivalent.
     ``folder/nested.dat`` is a file in a subfolder.
     Paths like this must always use forward slashes (/) even on Windows.
@@ -84,7 +84,12 @@ def make_registry(
     """
     if (override := os.environ.get(_LOCAL_REGISTRY_ENV_VAR)) is not None:
         return LocalRegistry(
-            _check_local_override_path(override), prefix, files, version=version
+            _check_local_override_path(override),
+            prefix,
+            files,
+            version=version,
+            base_url=base_url,
+            retry_if_failed=retry_if_failed,
         )
     return PoochRegistry(
         prefix,
@@ -164,22 +169,14 @@ class PoochRegistry(Registry):
         base_url: str,
         retry_if_failed: int = 3,
     ) -> None:
-        try:
-            import pooch
-        except ImportError:
-            raise ImportError(
-                "You need to install Pooch to use the PoochRegistry."
-            ) from None
-
-        self._registry = pooch.create(
-            path=pooch.os_cache(prefix),
-            env=_LOCAL_CACHE_ENV_VAR,
-            base_url=f'{base_url}/{prefix}/{version}/',
-            registry=_to_pooch_registry(files),
+        self._registry = _create_pooch(
+            prefix,
+            files,
+            version=version,
+            base_url=base_url,
             retry_if_failed=retry_if_failed,
         )
-        self._unzip_processor = pooch.Unzip()
-
+        self._unzip_processor = _import_pooch().Unzip()
         super().__init__(files)
 
     @cache  # noqa: B019
@@ -189,21 +186,36 @@ class PoochRegistry(Registry):
         Downloads the file if necessary.
         """
         if self._needs_unzip(name):
-            paths = self._registry.fetch(name, processor=self._unzip_processor)
-            if len(paths) != 1:
-                raise ValueError(
-                    f"Expected exactly one file to unzip, got {len(paths)} in '{name}'."
-                )
-            return Path(paths[0])
+            paths: list[str] = self._registry.fetch(  # type: ignore[assignment]
+                name, processor=self._unzip_processor
+            )
+            return Path(_expect_single_unzipped(paths, name))
         return Path(self._registry.fetch(name))
 
 
 class LocalRegistry(Registry):
     def __init__(
-        self, path: Path, prefix: str, files: Mapping[str, str | Entry], *, version: str
+        self,
+        source_path: Path,
+        prefix: str,
+        files: Mapping[str, str | Entry],
+        *,
+        version: str,
+        base_url: str,
+        retry_if_failed: int = 3,
     ) -> None:
+        # Piggyback off of Pooch to determine the cache directory.
+        pooch_registry = _create_pooch(
+            prefix,
+            files,
+            version=version,
+            base_url=base_url,
+            retry_if_failed=retry_if_failed,
+        )
+        pooch = _import_pooch()
+        self._unzip_processor = pooch.processors.Unzip(extract_dir=pooch_registry.path)
+        self._source_path = source_path.resolve().joinpath(*prefix.split("/"), version)
         super().__init__(files)
-        self._path = path.resolve().joinpath(*prefix.split("/"), version)
 
     @cache  # noqa: B019
     def get_path(self, name: str) -> Path:
@@ -222,14 +234,66 @@ class LocalRegistry(Registry):
 
         _check_hash(name, path, entry)
 
-        # TODO unzip
-
+        if self._needs_unzip(name):
+            return Path(
+                _expect_single_unzipped(
+                    self._unzip_processor(os.fspath(path), "download", None), path
+                )
+            )
         return path
 
     def _local_path(self, name: str) -> Path:
         # Split on "/" because `name` is always a POSIX-style path, but the return
         # value is a system path, i.e., it can be a Windows-style path.
-        return self._path.joinpath(*name.split("/"))
+        return self._source_path.joinpath(*name.split("/"))
+
+
+def _import_pooch() -> Any:
+    try:
+        import pooch
+    except ImportError:
+        raise ImportError(
+            "You need to install Pooch to access test and tutorial files. "
+            "See https://www.fatiando.org/pooch/latest/index.html"
+        ) from None
+
+    return pooch
+
+
+def _create_pooch(
+    prefix: str,
+    files: Mapping[str, str | Entry],
+    *,
+    version: str,
+    base_url: str,
+    retry_if_failed: int = 3,
+) -> Any:
+    pooch = _import_pooch()
+    return pooch.create(
+        path=pooch.os_cache(prefix),
+        env=_LOCAL_CACHE_ENV_VAR,
+        base_url=f'{base_url}/{prefix}/{version}/',
+        registry=_to_pooch_registry(files),
+        retry_if_failed=retry_if_failed,
+    )
+
+
+def _pooch_unzip_processor(extract_dir: Path) -> Any:
+    try:
+        import pooch
+    except ImportError:
+        raise ImportError("You need to install Pooch to unzip files.") from None
+
+    return pooch.processors.Unzip(extract_dir=os.fspath(extract_dir))
+
+
+def _expect_single_unzipped(paths: list[str], archive: str | os.PathLike) -> str:
+    if len(paths) != 1:
+        raise ValueError(
+            f"Expected exactly one file to unzip, got {len(paths)} in "
+            f"'{os.fspath(archive)}'."
+        )
+    return paths[0]
 
 
 def _check_hash(name: str, path: Path, entry: Entry) -> None:
