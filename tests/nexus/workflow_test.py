@@ -1,13 +1,13 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2024 Scipp contributors (https://github.com/scipp)
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 import scipp as sc
 import scippnexus as snx
 from scipp.testing import assert_identical
 
-from ess.reduce import data
 from ess.reduce.nexus import compute_component_position, workflow
 from ess.reduce.nexus.types import (
     BackgroundRun,
@@ -176,11 +176,11 @@ def test_to_transform_raises_if_interval_does_not_yield_unique_value(
         )
 
 
-def test_given_no_sample_load_nexus_sample_returns_group_with_origin_depends_on() -> (
-    None
-):
+def test_given_no_sample_load_nexus_sample_returns_group_with_origin_depends_on(
+    loki_tutorial_sample_run_60250: Path,
+) -> None:
     filespec = workflow.file_path_to_file_spec(
-        data.loki_tutorial_sample_run_60250(), preopen=True
+        loki_tutorial_sample_run_60250, preopen=True
     )
     spec = workflow.unique_component_spec(filespec)
     assert spec.filename['/entry'][snx.NXsample] == {}
@@ -549,9 +549,9 @@ def test_assemble_monitor_preserves_masks(calibrated_monitor, monitor_event_data
     assert 'mymask' in monitor_data.masks
 
 
-def test_load_event_monitor_workflow() -> None:
+def test_load_event_monitor_workflow(loki_tutorial_sample_run_60250: Path) -> None:
     wf = LoadMonitorWorkflow(run_types=[SampleRun], monitor_types=[FrameMonitor1])
-    wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
     wf[NeXusName[FrameMonitor1]] = 'monitor_1'
     da = wf.compute(MonitorData[SampleRun, FrameMonitor1])
     assert 'position' in da.coords
@@ -561,9 +561,9 @@ def test_load_event_monitor_workflow() -> None:
     assert da.bins.constituents['data'].variances is not None
 
 
-def test_load_histogram_monitor_workflow() -> None:
+def test_load_histogram_monitor_workflow(dream_coda_test_file: Path) -> None:
     wf = LoadMonitorWorkflow(run_types=[SampleRun], monitor_types=[FrameMonitor1])
-    wf[Filename[SampleRun]] = data.dream_coda_test_file()
+    wf[Filename[SampleRun]] = dream_coda_test_file
     wf[NeXusName[FrameMonitor1]] = 'monitor_bunker'
     da = wf.compute(MonitorData[SampleRun, FrameMonitor1])
     assert 'position' in da.coords
@@ -575,9 +575,9 @@ def test_load_histogram_monitor_workflow() -> None:
     assert da.variances is not None
 
 
-def test_load_detector_workflow() -> None:
+def test_load_detector_workflow(loki_tutorial_sample_run_60250: Path) -> None:
     wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
-    wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
     wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     da = wf.compute(DetectorData[SampleRun])
     assert 'position' in da.coords
@@ -588,9 +588,11 @@ def test_load_detector_workflow() -> None:
 
 
 @pytest.mark.parametrize('preopen', [True, False])
-def test_generic_nexus_workflow(preopen: bool) -> None:
+def test_generic_nexus_workflow(
+    preopen: bool, loki_tutorial_sample_run_60250: Path
+) -> None:
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[FrameMonitor1])
-    wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
+    wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
     wf[NeXusName[FrameMonitor1]] = 'monitor_1'
     wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     wf[PreopenNeXusFile] = preopen
@@ -607,9 +609,9 @@ def test_generic_nexus_workflow(preopen: bool) -> None:
     assert da.dims == ('event_time_zero',)
 
 
-def test_generic_nexus_workflow_load_choppers() -> None:
+def test_generic_nexus_workflow_load_choppers(bifrost_simulated_elastic: Path) -> None:
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
-    wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
+    wf[Filename[SampleRun]] = bifrost_simulated_elastic
     choppers = wf.compute(RawChoppers[SampleRun])
 
     assert choppers.keys() == {
@@ -626,9 +628,11 @@ def test_generic_nexus_workflow_load_choppers() -> None:
     assert chopper['slit_edges'].shape == (2,)
 
 
-def test_generic_nexus_workflow_load_beamline_metadata() -> None:
+def test_generic_nexus_workflow_load_beamline_metadata(
+    bifrost_simulated_elastic: Path,
+) -> None:
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
-    wf[Filename[SampleRun]] = data.bifrost_simulated_elastic()
+    wf[Filename[SampleRun]] = bifrost_simulated_elastic
     beamline = wf.compute(Beamline)
 
     assert beamline.name == 'BIFROST'
@@ -636,10 +640,12 @@ def test_generic_nexus_workflow_load_beamline_metadata() -> None:
     assert beamline.site == 'ESS'
 
 
-def test_generic_nexus_workflow_load_measurement_metadata() -> None:
+def test_generic_nexus_workflow_load_measurement_metadata(
+    loki_tutorial_sample_run_60250: Path, loki_tutorial_background_run_60248: Path
+) -> None:
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
-    wf[Filename[SampleRun]] = data.loki_tutorial_sample_run_60250()
-    wf[Filename[BackgroundRun]] = data.loki_tutorial_background_run_60248()
+    wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
+    wf[Filename[BackgroundRun]] = loki_tutorial_background_run_60248
     measurement = wf.compute(Measurement)
 
     assert measurement.title == 'My experiment'
