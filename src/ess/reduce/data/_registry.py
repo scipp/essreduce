@@ -253,6 +253,8 @@ class LocalRegistry(Registry):
 
     @property
     def _unzip_processor(self) -> Any:
+        # Create a new processor on demand because reusing the same processor would
+        # reuse the same output path for every file.
         return _import_pooch().Unzip(self._extract_dir)
 
 
