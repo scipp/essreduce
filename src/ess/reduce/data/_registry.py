@@ -176,7 +176,6 @@ class PoochRegistry(Registry):
             base_url=base_url,
             retry_if_failed=retry_if_failed,
         )
-        self._unzip_processor = _import_pooch().Unzip()
         super().__init__(files)
 
     @cache  # noqa: B019
@@ -191,6 +190,12 @@ class PoochRegistry(Registry):
             )
             return Path(_expect_single_unzipped(paths, name))
         return Path(self._registry.fetch(name))
+
+    @property
+    def _unzip_processor(self) -> Any:
+        # Create a new processor on demand because reusing the same processor would
+        # reuse the same output path for every file.
+        return _import_pooch().Unzip()
 
 
 class LocalRegistry(Registry):
@@ -212,8 +217,7 @@ class LocalRegistry(Registry):
             base_url=base_url,
             retry_if_failed=retry_if_failed,
         )
-        pooch = _import_pooch()
-        self._unzip_processor = pooch.processors.Unzip(extract_dir=pooch_registry.path)
+        self._extract_dir = pooch_registry.path
         self._source_path = source_path.resolve().joinpath(*prefix.split("/"), version)
         super().__init__(files)
 
@@ -246,6 +250,12 @@ class LocalRegistry(Registry):
         # Split on "/" because `name` is always a POSIX-style path, but the return
         # value is a system path, i.e., it can be a Windows-style path.
         return self._source_path.joinpath(*name.split("/"))
+
+    @property
+    def _unzip_processor(self) -> Any:
+        # Create a new processor on demand because reusing the same processor would
+        # reuse the same output path for every file.
+        return _import_pooch().Unzip(self._extract_dir)
 
 
 def _import_pooch() -> Any:
