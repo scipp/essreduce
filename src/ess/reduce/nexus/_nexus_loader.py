@@ -119,6 +119,29 @@ def open_nexus_file(
     *,
     locking: bool | str | None | NoLockingIfNeededType = NoLockingIfNeeded,
 ) -> AbstractContextManager[snx.Group]:
+    """Open a NeXus file.
+
+    Parameters
+    ----------
+    file_path:
+        Path of the file to open or a NeXus file or group handle.
+    definitions:
+        If set, application definitions to use for the file.
+        If ``file_path`` is a NeXus file or group, this must be unset or match
+        the existing definitions.
+    locking:
+        This is an advanced feature to work around a limitation of the DMSC file system.
+        It may be removed in the future.
+
+        This flag can disable or force locking the HDF5 file.
+        By default, the file is locked if possible but may remain unlocked
+        if it is on a read-only filesystem.
+
+    Returns
+    -------
+    :
+        A context manager for the opened file.
+    """
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         if (
             definitions is not NoNewDefinitions
