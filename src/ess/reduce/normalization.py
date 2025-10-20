@@ -150,7 +150,7 @@ def _clip_monitor_to_detector_range(
 
     # Prefer a bin coord over an event coord because this makes the behavior for binned
     # and histogrammed data consistent. If we used an event coord, we might allow a
-    # monitor range that is less than the detector bins which is fine for the vents,
+    # monitor range that is less than the detector bins which is fine for the events,
     # but would be wrong if the detector was subsequently histogrammed.
     if dim in detector.coords:
         det_coord = detector.coords[dim]
