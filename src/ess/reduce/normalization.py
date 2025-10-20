@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
-"""Correction algorithms for neutron data reduction."""
+"""Normalization routines for neutron data reduction."""
 
 import scipp as sc
 
