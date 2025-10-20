@@ -7,6 +7,7 @@ import scipp as sc
 from .uncertainty import UncertaintyBroadcastMode, broadcast_uncertainties
 
 
+# TODO explain impact of masking, esp multi-dim
 def normalize_by_monitor_histogram(
     detector: sc.DataArray,
     *,
@@ -46,6 +47,14 @@ def normalize_by_monitor_histogram(
     - *Binned detector*: The monitor value for bin :math:`i` is determined via
       :func:`scipp.lookup`. This means that for each event, the monitor value
       is obtained from the monitor histogram at that event coordinate value.
+
+    .. Attention::
+
+        Masked bins in ``detector`` are ignored when clipping the monitor and therefore
+        impact the normalization factor.
+        The output's masked bins are normalized using the same factor and may
+        be incorrect and even contain NaN.
+        You should only drop masks after normalization if you know what you are doing.
 
     This function is based on the implementation of
     `NormaliseToMonitor <https://docs.mantidproject.org/nightly/algorithms/NormaliseToMonitor-v1.html>`_
@@ -111,6 +120,14 @@ def normalize_by_monitor_integrated(
     :math:`x_i` is the lower bin edge of bin :math:`i`, and
     :math:`I(x_i, x_{i+1})` selects bins that are within the range of the detector.
 
+    .. Attention::
+
+        Masked bins in ``detector`` are ignored when clipping the monitor and therefore
+        impact the normalization factor.
+        The output's masked bins are normalized using the same factor and may
+        be incorrect and even contain NaN.
+        You should only drop masks after normalization if you know what you are doing.
+
     Parameters
     ----------
     detector:
@@ -149,30 +166,22 @@ def _clip_monitor_to_detector_range(
             f"Monitor coordinate '{dim}' must be bin-edges to integrate the monitor."
         )
 
+    # Reduce with `all` instead of `any` to include bins in range calculations
+    # that contain any unmasked data.
+    masks = {
+        name: mask.all(set(mask.dims) - {dim}) for name, mask in detector.masks.items()
+    }
+
     # Prefer a bin coord over an event coord because this makes the behavior for binned
     # and histogrammed data consistent. If we used an event coord, we might allow a
     # monitor range that is less than the detector bins which is fine for the events,
     # but would be wrong if the detector was subsequently histogrammed.
-    if dim in detector.coords:
-        det_coord = detector.coords[dim]
-
-        # Mask zero-count bins, which are an artifact from the rectangular 2-D binning.
-        # The wavelength of those bins must be excluded when determining the range.
-        if detector.bins is None:
-            mask = detector.data == sc.scalar(0.0, unit=detector.unit)
-        else:
-            mask = detector.data.bins.size() == sc.scalar(0.0, unit=None)
-        lo = (
-            sc.DataArray(det_coord[dim, :-1], masks={'zero_counts': mask}).nanmin().data
-        )
-        hi = sc.DataArray(det_coord[dim, 1:], masks={'zero_counts': mask}).nanmax().data
-
-    elif dim in detector.bins.coords:
-        det_coord = detector.bins.coords[dim]
-        # No need to mask here because we have the exact event coordinate values.
-        lo = det_coord.nanmin()
-        hi = det_coord.nanmax()
-
+    if (det_coord := detector.coords.get(dim)) is not None:
+        lo = sc.DataArray(det_coord[dim, :-1], masks=masks).nanmin().data
+        hi = sc.DataArray(det_coord[dim, 1:], masks=masks).nanmax().data
+    elif (det_coord := detector.bins.coords.get(dim)) is not None:
+        lo = sc.DataArray(det_coord, masks=masks).nanmin().data
+        hi = sc.DataArray(det_coord, masks=masks).nanmax().data
     else:
         raise sc.CoordError(
             f"Missing '{dim}' coordinate in detector for monitor normalization."
@@ -181,8 +190,8 @@ def _clip_monitor_to_detector_range(
     if monitor.coords[dim].min() > lo or monitor.coords[dim].max() < hi:
         raise ValueError(
             f"Cannot normalize by monitor: The {dim} range of the monitor "
-            f"({monitor.coords[dim].min().value} to {monitor.coords[dim].max().value}) "
-            f"is smaller than the range of the detector ({lo.value} to {hi.value})."
+            f"({monitor.coords[dim].min():c} to {monitor.coords[dim].max():c}) "
+            f"is smaller than the range of the detector ({lo:c} to {hi:c})."
         )
 
     if detector.bins is None:
