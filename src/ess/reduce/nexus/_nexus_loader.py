@@ -46,17 +46,37 @@ def load_component(
     location: NeXusLocationSpec,
     *,
     nx_class: type[snx.NXobject],
+    parent_class: type[snx.NXobject] | None = None,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataGroup:
-    """Load a single component of a given class from NeXus."""
+    """Load a single component of a given class from NeXus.
+
+    Parameters
+    ----------
+    location:
+        Specifies (part of) the location of the component to load.
+    nx_class:
+        NeXus class of the component to load.
+    parent_class:
+        NeXus class of the parent of the component to load.
+        If ``None``, is deduced from ``nx_class`` if possible.
+    definitions:
+        Application definitions to use for the file.
+
+    Returns
+    -------
+    :
+        The loaded component as a data group.
+    """
     selection = location.selection
-    group_name = location.component_name
-    with _open_component_parent(
-        location, nx_class=nx_class, definitions=definitions
-    ) as parent:
-        component = _unique_child_group(parent, nx_class, group_name)
-        loaded = cast(sc.DataGroup, component[selection])
-        loaded['nexus_component_name'] = component.name.rsplit('/', 1)[-1]
+    with open_component_group(
+        location,
+        nx_class=nx_class,
+        parent_class=parent_class,
+        definitions=definitions,
+    ) as group:
+        loaded = cast(sc.DataGroup, group[selection])
+        loaded['nexus_component_name'] = group.name.rsplit('/', 1)[-1]
     return loaded
 
 
@@ -64,11 +84,14 @@ def load_all_components(
     location: NeXusAllLocationSpec,
     *,
     nx_class: type[snx.NXobject],
+    parent_class: type[snx.NXobject] | None = None,
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataGroup:
     """Load all components of a given class from NeXus."""
     with _open_component_parent(
-        location, nx_class=nx_class, definitions=definitions
+        location,
+        parent_class=_deduce_component_parent_class(nx_class, parent_class),
+        definitions=definitions,
     ) as parent:
         components = sc.DataGroup()
         for name, component in parent[nx_class].items():
@@ -119,6 +142,29 @@ def open_nexus_file(
     *,
     locking: bool | str | None | NoLockingIfNeededType = NoLockingIfNeeded,
 ) -> AbstractContextManager[snx.Group]:
+    """Open a NeXus file.
+
+    Parameters
+    ----------
+    file_path:
+        Path of the file to open or a NeXus file or group handle.
+    definitions:
+        If set, application definitions to use for the file.
+        If ``file_path`` is a NeXus file or group, this must be unset or match
+        the existing definitions.
+    locking:
+        This is an advanced feature to work around a limitation of the DMSC file system.
+        It may be removed in the future.
+
+        This flag can disable or force locking the HDF5 file.
+        By default, the file is locked if possible but may remain unlocked
+        if it is on a read-only filesystem.
+
+    Returns
+    -------
+    :
+        A context manager for the opened file.
+    """
     if isinstance(file_path, getattr(NeXusGroup, '__supertype__', type(None))):
         if (
             definitions is not NoNewDefinitions
@@ -203,10 +249,46 @@ def _open_nexus_file_from_path(
 
 
 @contextmanager
-def _open_component_parent(
+def open_component_group(
     location: NeXusLocationSpec,
     *,
     nx_class: type[snx.NXobject],
+    parent_class: type[snx.NXobject] | None = None,
+    definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
+) -> Generator[snx.Group, None, None]:
+    """Open the HDF5 group of a NeXus component.
+
+    Parameters
+    ----------
+    location:
+        Specifies (part of) the location of the component to load.
+    nx_class:
+        NeXus class of the component to load.
+    parent_class:
+        NeXus class of the parent of the component to load.
+        If ``None``, is deduced from ``nx_class`` if possible.
+    definitions:
+        Application definitions to use for the file.
+
+    Returns
+    -------
+    :
+        A context manager for the group of the specified component.
+    """
+    group_name = location.component_name
+    with _open_component_parent(
+        location,
+        parent_class=_deduce_component_parent_class(nx_class, parent_class),
+        definitions=definitions,
+    ) as parent:
+        yield _unique_child_group(parent, nx_class, group_name)
+
+
+@contextmanager
+def _open_component_parent(
+    location: NeXusLocationSpec,
+    *,
+    parent_class: type[snx.NXobject],
     definitions: Mapping | None | NoNewDefinitionsType = NoNewDefinitions,
 ) -> Generator[snx.Group, None, None]:
     """Locate the parent group of a NeXus component."""
@@ -214,10 +296,30 @@ def _open_component_parent(
     entry_name = location.entry_name
     with open_nexus_file(file_path, definitions=definitions) as f:
         entry = _unique_child_group(f, snx.NXentry, entry_name)
-        if nx_class is snx.NXsample:
-            yield entry
-        else:
-            yield _unique_child_group(entry, snx.NXinstrument, None)
+        match parent_class:
+            case snx.NXentry:
+                yield entry
+            case snx.NXinstrument:
+                yield _unique_child_group(entry, snx.NXinstrument, None)
+            case _:
+                raise NotImplementedError(
+                    f"No support for loading a NeXus component from a {parent_class}."
+                )
+
+
+def _deduce_component_parent_class(
+    nx_class: type[snx.NXobject], parent_class: type[snx.NXobject] | None
+) -> type[snx.NXobject]:
+    if parent_class is not None:
+        return parent_class
+
+    match nx_class:
+        case snx.NXsample:
+            return snx.NXentry
+        case _:
+            # Most components are in the instrument,
+            # callers need to override this for specialized components stored elsewhere.
+            return snx.NXinstrument
 
 
 def _unique_child_group(
