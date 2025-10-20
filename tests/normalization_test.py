@@ -5,7 +5,7 @@ import pytest
 import scipp as sc
 import scipp.testing
 
-from ess.reduce.correction import (
+from ess.reduce.normalization import (
     normalize_by_monitor_histogram,
     normalize_by_monitor_integrated,
 )
