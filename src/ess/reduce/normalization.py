@@ -2,12 +2,13 @@
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 """Normalization routines for neutron data reduction."""
 
+import itertools
+
 import scipp as sc
 
 from .uncertainty import UncertaintyBroadcastMode, broadcast_uncertainties
 
 
-# TODO explain impact of masking, esp multi-dim
 def normalize_by_monitor_histogram(
     detector: sc.DataArray,
     *,
@@ -84,14 +85,15 @@ def normalize_by_monitor_histogram(
     """
     dim = monitor.dim
 
+    detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
     clipped = _clip_monitor_to_detector_range(monitor=monitor, detector=detector)
     coord = clipped.coords[dim]
-    delta_w = coord[1:] - coord[:-1]
+    delta_w = sc.DataArray(coord[1:] - coord[:-1], masks=clipped.masks)
     total_monitor_weight = broadcast_uncertainties(
         clipped.sum() / delta_w.sum(),
         prototype=clipped,
         mode=uncertainty_broadcast_mode,
-    )
+    ).data
     delta_w *= total_monitor_weight
     norm = broadcast_uncertainties(
         clipped / delta_w, prototype=detector, mode=uncertainty_broadcast_mode
@@ -148,6 +150,7 @@ def normalize_by_monitor_integrated(
     normalize_by_monitor_histogram:
         Normalize by a monitor histogram without integration.
     """
+    detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
     clipped = _clip_monitor_to_detector_range(monitor=monitor, detector=detector)
     coord = clipped.coords[clipped.dim]
     norm = (clipped * (coord[1:] - coord[:-1])).data.sum()
@@ -201,3 +204,41 @@ def _clip_monitor_to_detector_range(
         # But integration would pick up all monitor bins.
         return monitor.rebin({dim: det_coord})
     return monitor[dim, lo:hi]
+
+
+def _mask_detector_for_norm(
+    *, detector: sc.DataArray, monitor: sc.DataArray
+) -> sc.DataArray:
+    """Mask the detector where the monitor is masked.
+
+    For performance, this applies the monitor mask to the detector bins.
+    This can lead to masking more vents than strictly necessary if we
+    used an event mask.
+    """
+    if (monitor_mask := _monitor_mask(monitor)) is None:
+        return detector
+
+    # Use rebin to reshape the mask to the detector:
+    dim = monitor.dim
+    mask = sc.DataArray(monitor_mask, coords={dim: monitor.coords[dim]}).rebin(
+        {dim: detector.coords[dim]}
+    ).data != sc.scalar(0, unit=None)
+    return detector.assign_masks({"_monitor_mask": mask})
+
+
+def _monitor_mask(monitor: sc.DataArray) -> sc.Variable | None:
+    """Mask nonfinite monitor values and combine all masks."""
+    masks = monitor.masks.values()
+
+    finite = sc.isfinite(monitor.data)
+    if not finite.all():
+        masks = itertools.chain(masks, (~finite,))
+
+    mask = None
+    for m in masks:
+        if mask is None:
+            mask = m
+        else:
+            mask |= m
+
+    return mask

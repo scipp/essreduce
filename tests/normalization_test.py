@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
+import numpy as np
 import pytest
 import scipp as sc
 import scipp.testing
@@ -484,3 +485,149 @@ def test_normalize_by_monitor_integrated_raises_if_monitor_range_too_narrow() ->
             monitor=monitor,
             uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
         )
+
+
+def test_normalize_by_monitor_histogram_monitor_mask_aligned_bins() -> None:
+    detector = sc.DataArray(
+        sc.array(dims=['w'], values=[0, 10, 20, 30], unit='counts'),
+        coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+    ).bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+    monitor = sc.DataArray(
+        sc.array(dims=['w'], values=[5.0, 6.0, 7.0], unit='counts'),
+        coords={'w': sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å')},
+        masks={'m': sc.array(dims=['w'], values=[False, True, False])},
+    )
+    normalized = normalize_by_monitor_histogram(
+        detector,
+        monitor=monitor,
+        uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+    )
+
+    expected = (
+        sc.DataArray(
+            sc.array(dims=['w'], values=[0.0, 9.6, 0, 216 / 7], unit='counts'),
+            coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+        )
+        .bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+        .assign_masks(_monitor_mask=sc.array(dims=['w'], values=[False, True, False]))
+    )
+
+    sc.testing.assert_allclose(normalized, expected)
+
+
+def test_normalize_by_monitor_histogram_monitor_mask_multiple() -> None:
+    detector = sc.DataArray(
+        sc.array(dims=['w'], values=[0, 10, 20, 30], unit='counts'),
+        coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+    ).bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+    monitor = sc.DataArray(
+        sc.array(dims=['w'], values=[5.0, 6.0, 7.0], unit='counts'),
+        coords={'w': sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å')},
+        masks={
+            'm1': sc.array(dims=['w'], values=[False, True, False]),
+            'm2': sc.array(dims=['w'], values=[False, True, True]),
+        },
+    )
+    normalized = normalize_by_monitor_histogram(
+        detector,
+        monitor=monitor,
+        uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+    )
+
+    expected = (
+        sc.DataArray(
+            sc.array(dims=['w'], values=[0.0, 10, 0, 0], unit='counts'),
+            coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+        )
+        .bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+        .assign_masks(_monitor_mask=sc.array(dims=['w'], values=[False, True, True]))
+    )
+
+    sc.testing.assert_identical(normalized, expected)
+
+
+def test_normalize_by_monitor_histogram_monitor_mask_unaligned_bins() -> None:
+    detector = sc.DataArray(
+        sc.array(dims=['w'], values=[0, 10, 20, 30], unit='counts'),
+        coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+    ).bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+    monitor = sc.DataArray(
+        sc.array(dims=['w'], values=[5.0, 6.0, 7.0, 8.0], unit='counts'),
+        coords={'w': sc.array(dims=['w'], values=[0.0, 2, 3.5, 4, 7], unit='Å')},
+        masks={'m': sc.array(dims=['w'], values=[False, True, False, False])},
+    )
+
+    normalized = normalize_by_monitor_histogram(
+        detector,
+        monitor=monitor,
+        uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+    )
+
+    expected = (
+        sc.DataArray(
+            sc.array(dims=['w'], values=[0.0, 0, 0, 30], unit='counts'),
+            coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+        )
+        .bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+        .assign_masks(_monitor_mask=sc.array(dims=['w'], values=[True, True, False]))
+    )
+
+    sc.testing.assert_identical(normalized, expected)
+
+
+def test_normalize_by_monitor_histogram_monitor_mask_at_edge() -> None:
+    detector = sc.DataArray(
+        sc.array(dims=['w'], values=[0, 10, 30], unit='counts'),
+        coords={'w': sc.arange('w', 3.0, unit='Å')},
+    ).bin(w=sc.array(dims=['w'], values=[0.0, 2, 3], unit='Å'))
+    monitor = sc.DataArray(
+        sc.array(dims=['w'], values=[5.0, 6.0], unit='counts'),
+        coords={'w': sc.array(dims=['w'], values=[0.0, 2, 3], unit='Å')},
+        masks={'m': sc.array(dims=['w'], values=[False, True])},
+    )
+    normalized = normalize_by_monitor_histogram(
+        detector,
+        monitor=monitor,
+        uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+    )
+
+    expected = (
+        sc.DataArray(
+            sc.array(dims=['w'], values=[0, 10, 0], unit='counts'),
+            coords={'w': sc.arange('w', 3.0, unit='Å')},
+        )
+        .bin(w=sc.array(dims=['w'], values=[0.0, 2, 3], unit='Å'))
+        .assign_masks(_monitor_mask=sc.array(dims=['w'], values=[False, True]))
+    )
+
+    sc.testing.assert_identical(normalized, expected)
+
+
+@pytest.mark.parametrize("nonfinite_value", [np.nan, np.inf])
+def test_normalize_by_monitor_histogram_nonfinite_in_monitor_is_masked(
+    nonfinite_value: float,
+) -> None:
+    detector = sc.DataArray(
+        sc.array(dims=['w'], values=[0, 10, 20, 30], unit='counts'),
+        coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+    ).bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+    monitor = sc.DataArray(
+        sc.array(dims=['w'], values=[nonfinite_value, 6.0, 7.0], unit='counts'),
+        coords={'w': sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å')},
+    )
+    normalized = normalize_by_monitor_histogram(
+        detector,
+        monitor=monitor,
+        uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+    )
+
+    expected = (
+        sc.DataArray(
+            sc.array(dims=['w'], values=[0.0, 0.0, 65 / 6, 585 / 14], unit='counts'),
+            coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+        )
+        .bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+        .assign_masks(_monitor_mask=sc.array(dims=['w'], values=[True, False, False]))
+    )
+
+    sc.testing.assert_allclose(normalized, expected)
