@@ -32,7 +32,8 @@ def normalize_by_monitor_histogram(
         d_i^\\text{Norm} = \\frac{d_i}{\\bar{m}_i} \\Delta x_i
         \\frac{\\sum_j\\,\\bar{m}_j}{\\sum_j\\,\\Delta x_j}
 
-    where :math:`\\Delta x_i` is the width of monitor bin :math:`i` (see below).
+    where :math:`\\Delta x_i = x_{i+1} - x_i` is the width of
+    monitor bin :math:`i` (see below).
     This normalization leads to a result that has the same
     unit as the input detector data.
 
@@ -46,16 +47,16 @@ def normalize_by_monitor_histogram(
       :func:`scipp.lookup`. This means that for each event, the monitor value
       is obtained from the monitor histogram at that event coordinate value.
 
-    This function is based on the implementation in
+    This function is based on the implementation of
     `NormaliseToMonitor <https://docs.mantidproject.org/nightly/algorithms/NormaliseToMonitor-v1.html>`_
-    of Mantid.
+    in Mantid.
 
     Parameters
     ----------
     detector:
         Input detector data.
         Must have a coordinate named ``monitor.dim``, that is, the single
-        dimension name of the monitor.
+        dimension name of the **monitor**.
     monitor:
         A histogrammed monitor.
         Must be one-dimensional and have a dimension coordinate, typically "wavelength".
