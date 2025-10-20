@@ -319,10 +319,11 @@ def test_normalize_by_monitor_histogram_monitor_finer_bins_in_monitor_hist() -> 
     sc.testing.assert_allclose(normalized, expected)
 
 
-def test_normalize_by_monitor_histogram_zero_count_bins_are_ignored_hist() -> None:
+def test_normalize_by_monitor_histogram_masked_bins_are_ignored_hist() -> None:
     detector = sc.DataArray(
         sc.array(dims=['w'], values=[0, 10, 30, 0], unit='counts'),
         coords={'w': sc.array(dims=['w'], values=[-1.0, 0, 2, 3, 4], unit='Å')},
+        masks={'m': sc.array(dims=['w'], values=[True, False, False, True])},
     )
     monitor = sc.DataArray(
         sc.array(dims=['w'], values=[5.0, 6.0], unit='counts'),
@@ -339,16 +340,21 @@ def test_normalize_by_monitor_histogram_zero_count_bins_are_ignored_hist() -> No
     expected = sc.DataArray(
         sc.array(dims=['w'], values=[0.0, 11, 11, float('NaN')], unit='counts'),
         coords={'w': sc.array(dims=['w'], values=[-1.0, 0, 2, 3, 4], unit='Å')},
+        masks={'m': sc.array(dims=['w'], values=[True, False, False, True])},
     )
 
     sc.testing.assert_identical(normalized, expected)
 
 
-def test_normalize_by_monitor_histogram_zero_count_bins_are_ignored() -> None:
-    detector = sc.DataArray(
-        sc.array(dims=['w'], values=[0, 10, 30], unit='counts'),
-        coords={'w': sc.arange('w', 3.0, unit='Å')},
-    ).bin(w=sc.array(dims=['w'], values=[-1.0, 0, 2, 3, 4], unit='Å'))
+def test_normalize_by_monitor_histogram_masked_bins_are_ignored() -> None:
+    detector = (
+        sc.DataArray(
+            sc.array(dims=['w'], values=[0, 10, 30, 40], unit='counts'),
+            coords={'w': sc.arange('w', 4.0, unit='Å')},
+        )
+        .bin(w=sc.array(dims=['w'], values=[-1.0, 0, 2, 3, 4], unit='Å'))
+        .assign_masks(m=sc.array(dims=['w'], values=[True, False, False, True]))
+    )
     monitor = sc.DataArray(
         sc.array(dims=['w'], values=[5.0, 6.0], unit='counts'),
         coords={'w': sc.array(dims=['w'], values=[-0.5, 2, 3], unit='Å')},
@@ -359,10 +365,14 @@ def test_normalize_by_monitor_histogram_zero_count_bins_are_ignored() -> None:
         uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
     )
 
-    expected = sc.DataArray(
-        sc.array(dims=['w'], values=[0.0, 110 / 7, 110 / 7], unit='counts'),
-        coords={'w': sc.arange('w', 3.0, unit='Å')},
-    ).bin(w=sc.array(dims=['w'], values=[-1.0, 0, 2, 3, 4], unit='Å'))
+    expected = (
+        sc.DataArray(
+            sc.array(dims=['w'], values=[0.0, 110 / 7, 110 / 7, 0], unit='counts'),
+            coords={'w': sc.arange('w', 4.0, unit='Å')},
+        )
+        .bin(w=sc.array(dims=['w'], values=[-1.0, 0, 2, 3, 4], unit='Å'))
+        .assign_masks(m=sc.array(dims=['w'], values=[True, False, False, True]))
+    )
 
     sc.testing.assert_allclose(normalized, expected)
 
