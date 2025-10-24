@@ -212,7 +212,7 @@ def _mask_detector_for_norm(
     """Mask the detector where the monitor is masked.
 
     For performance, this applies the monitor mask to the detector bins.
-    This can lead to masking more vents than strictly necessary if we
+    This can lead to masking more events than strictly necessary if we
     used an event mask.
     """
     if (monitor_mask := _monitor_mask(monitor)) is None:
