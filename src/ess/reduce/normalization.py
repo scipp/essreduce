@@ -2,7 +2,7 @@
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 """Normalization routines for neutron data reduction."""
 
-import itertools
+import functools
 
 import scipp as sc
 
@@ -228,17 +228,12 @@ def _mask_detector_for_norm(
 
 def _monitor_mask(monitor: sc.DataArray) -> sc.Variable | None:
     """Mask nonfinite monitor values and combine all masks."""
-    masks = monitor.masks.values()
+    masks = list(monitor.masks.values())
 
     finite = sc.isfinite(monitor.data)
     if not finite.all():
-        masks = itertools.chain(masks, (~finite,))
+        masks.append(~finite)
 
-    mask = None
-    for m in masks:
-        if mask is None:
-            mask = m
-        else:
-            mask |= m
-
-    return mask
+    if not masks:
+        return None
+    return functools.reduce(sc.logical_or, masks)
