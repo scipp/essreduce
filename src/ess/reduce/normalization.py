@@ -77,6 +77,8 @@ def normalize_by_monitor_histogram(
     -------
     :
         ``detector`` normalized by ``monitor``.
+        If the monitor has masks or contains non-finite values, the output has a mask
+        called '_monitor_mask' constructed from the monitor masks and non-finite values.
 
     See also
     --------
@@ -144,6 +146,8 @@ def normalize_by_monitor_integrated(
     -------
     :
         `detector` normalized by a monitor.
+        If the monitor has masks or contains non-finite values, the output has a mask
+        called '_monitor_mask' constructed from the monitor masks and non-finite values.
 
     See also
     --------
