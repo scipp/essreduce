@@ -270,6 +270,18 @@ def test_load_data_loads_expected_histogram_data(nexus_file, expected_monitor):
     sc.testing.assert_identical(histogram, expected_monitor)
 
 
+def test_load_data_loads_expected_histogram_data_from_nxlog(
+    tbl_commissioning_orca_file: Path,
+):
+    histogram = nexus.load_data(
+        tbl_commissioning_orca_file,
+        component_name=nexus.types.NeXusDetectorName('orca_detector'),
+    )
+    assert histogram.ndim == 3
+    assert histogram.sizes['time'] == 13
+    assert 'time' in histogram.coords
+
+
 @pytest.mark.parametrize('entry_name', [None, nexus.types.NeXusEntryName('entry-001')])
 @pytest.mark.parametrize(
     'selection',
