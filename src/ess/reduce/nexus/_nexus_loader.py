@@ -469,6 +469,9 @@ def load_data(
         elif _contains_nx_class(component, snx.NXdata):
             data = _unique_child_group(component, snx.NXdata, None)
             sel = _to_snx_selection(selection, for_events=False)
+        elif _contains_nx_class(component, snx.NXlog):
+            data = _unique_child_group(component, snx.NXlog, "data")
+            sel = _to_snx_selection(selection, for_events=False)
         else:
             raise ValueError(
                 f"NeXus group '{component.name}' contains neither "

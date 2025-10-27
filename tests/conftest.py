@@ -59,6 +59,17 @@ def loki_registry() -> Registry:
 
 
 @pytest.fixture(scope='session')
+def tbl_registry() -> Registry:
+    return make_registry(
+        'ess/tbl',
+        files={
+            "857127_00000112_small.hdf": "md5:6f3059e0e5e111a2a8f1b368f24c6f93",
+        },
+        version='1',
+    )
+
+
+@pytest.fixture(scope='session')
 def bifrost_simulated_elastic(bifrost_registry: Registry) -> Path:
     """McStas simulation with elastic incoherent scattering + phonon."""
     return bifrost_registry.get_path('BIFROST_20240914T053723.h5')
@@ -101,3 +112,9 @@ def dream_coda_test_file(dream_registry: Registry) -> Path:
     See ``tools/shrink_nexus.py``.
     """
     return dream_registry.get_path('TEST_977695_00068064.hdf')
+
+
+@pytest.fixture(scope='session')
+def tbl_commissioning_orca_file(tbl_registry: Registry) -> Path:
+    """TBL file from cold commissioning with the ORCA detector."""
+    return tbl_registry.get_path('857127_00000112_small.hdf')
