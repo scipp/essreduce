@@ -167,11 +167,9 @@ TofMonitor        # Time-of-flight domain
 WavelengthMonitor # Wavelength domain (end of monitor chain)
 ```
 
-Monitors remain in "Monitor" space throughout processing as they serve as normalization references rather than primary measurements.
-
 **Detector types**
 
-Detectors progress through both processing stages and coordinate transformations:
+Detectors progress through both processing stages and move from "detector space" (pixel space) to, e.g., Q-space:
 
 ```
 EmptyDetector      # Geometry only, calibrated, pixel-masked
@@ -181,14 +179,16 @@ WavelengthDetector # With added wavelength coord
 CorrectedDetector  # Corrections applied (masking, filtering, efficiency, Lorentz, absorption)
 CorrectedQ         # Transformed to Q-space, pixels reduced
 NormalizedQ        # Normalized (to monitor, proton charge)
-IntensityQ         # Absolute intensity
+IntensityQ         # Absolute intensity, e.g., normalized to vanadium
 ```
+
+Alternative domain-specific names to, e.g., `IntensityQ` such as `ReflectivityQ` are also valid.
 
 **Coordinate space variants**
 
 The final coordinate space (`Q` in the example above) should be replaced with the appropriate space for the technique:
 - `Dspacing` for d-spacing coordinates
-- `Energy` for energy transfer
+- `EnergyTransfer` for energy transfer
 - `TwoTheta` for scattering angle
 - Multiple dimensions can be combined: `DspacingTwoTheta`
 
