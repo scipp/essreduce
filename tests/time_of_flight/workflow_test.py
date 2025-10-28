@@ -11,9 +11,9 @@ from ess.reduce import time_of_flight
 from ess.reduce.nexus.types import (
     AnyRun,
     CalibratedBeamline,
-    DetectorData,
     DiskChoppers,
     NeXusData,
+    RawDetector,
     SampleRun,
 )
 from ess.reduce.time_of_flight import (
@@ -82,12 +82,12 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
 
     # Should be able to compute DetectorData without chopper and simulation params
     # This contains event_time_offset (time-of-arrival).
-    _ = wf.compute(DetectorData[SampleRun])
+    _ = wf.compute(RawDetector[SampleRun])
     # By default, the workflow tries to load the LUT from file
     with pytest.raises(sciline.UnsatisfiedRequirement):
         _ = wf.compute(time_of_flight.TimeOfFlightLookupTable)
     with pytest.raises(sciline.UnsatisfiedRequirement):
-        _ = wf.compute(time_of_flight.DetectorTofData[SampleRun])
+        _ = wf.compute(time_of_flight.TofDetector[SampleRun])
 
     lut_wf = TofLookupTableWorkflow()
     lut_wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
@@ -101,7 +101,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
 
     wf[time_of_flight.TimeOfFlightLookupTable] = table
     # Should now be able to compute DetectorData with chopper and simulation params
-    detector = wf.compute(time_of_flight.DetectorTofData[SampleRun])
+    detector = wf.compute(time_of_flight.TofDetector[SampleRun])
     assert 'tof' in detector.bins.coords
 
 
@@ -131,5 +131,5 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     loaded_lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
     assert_identical(lut, loaded_lut)
 
-    detector = wf.compute(time_of_flight.DetectorTofData[SampleRun])
+    detector = wf.compute(time_of_flight.TofDetector[SampleRun])
     assert 'tof' in detector.bins.coords

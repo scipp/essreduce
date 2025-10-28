@@ -199,25 +199,23 @@ class MonitorPositionOffset(
     """Offset for the monitor position, added to base position."""
 
 
-class CalibratedDetector(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
-    """Calibrated data from a detector."""
+class EmptyDetector(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
+    """Detector without neutron data."""
 
 
 class CalibratedBeamline(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
     """Calibrated beamline with detector and other components."""
 
 
-class CalibratedMonitor(
-    sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray
-):
-    """Calibrated data from a monitor."""
+class EmptyMonitor(sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
+    """Monitor without neutron data."""
 
 
-class DetectorData(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
+class RawDetector(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
     """Calibrated detector merged with neutron event or histogram data."""
 
 
-class MonitorData(sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
+class RawMonitor(sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
     """Calibrated monitor merged with neutron event or histogram data."""
 
 
