@@ -581,8 +581,6 @@ def test_load_detector_workflow(loki_tutorial_sample_run_60250: Path) -> None:
     wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     da = wf.compute(RawDetector[SampleRun])
     assert 'position' in da.coords
-    assert 'sample_position' in da.coords
-    assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('detector_number',)
 
@@ -598,8 +596,6 @@ def test_generic_nexus_workflow(
     wf[PreopenNeXusFile] = preopen
     da = wf.compute(RawDetector[SampleRun])
     assert 'position' in da.coords
-    assert 'sample_position' in da.coords
-    assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('detector_number',)
     da = wf.compute(RawMonitor[SampleRun, FrameMonitor1])

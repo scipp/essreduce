@@ -20,7 +20,6 @@ from .types import (
     COMPONENT_CONSTRAINTS,
     AllNeXusComponents,
     Beamline,
-    CalibratedBeamline,
     Component,
     DetectorBankSizes,
     DetectorPositionOffset,
@@ -364,9 +363,7 @@ def get_calibrated_detector(
     """
     Extract the data array corresponding to a detector's signal field.
 
-    The returned data array includes coords and masks pertaining directly to the
-    signal values array, but not additional information about the detector. The
-    data array is reshaped to the logical detector shape, which by folding the data
+    The data array is reshaped to the logical detector shape, by folding the data
     array along the detector_number dimension.
 
     Parameters
@@ -400,43 +397,8 @@ def get_calibrated_detector(
     )
 
 
-def assemble_beamline(
-    detector: EmptyDetector[RunType],
-    source_position: Position[snx.NXsource, RunType],
-    sample_position: Position[snx.NXsample, RunType],
-    gravity: GravityVector,
-) -> CalibratedBeamline[RunType]:
-    """
-    Add beamline information (gravity vector, source- and sample-position) to detector.
-
-    This is performed separately and after :py:func:`get_calibrated_detector` to avoid
-    as false dependency of, e.g., the reshaped detector numbers on the sample position.
-    The latter can change during a run, e.g., for a rotating sample. The detector
-    numbers might be used, e.g., to mask certain detector pixels, and should not depend
-    on the sample position.
-
-    Parameters
-    ----------
-    detector:
-        NeXus detector group.
-    source_position:
-        Position of the neutron source.
-    sample_position:
-        Position of the sample.
-    gravity:
-        Gravity vector.
-    """
-    return CalibratedBeamline[RunType](
-        detector.assign_coords(
-            source_position=source_position,
-            sample_position=sample_position,
-            gravity=gravity,
-        )
-    )
-
-
 def assemble_detector_data(
-    detector: CalibratedBeamline[RunType],
+    detector: EmptyDetector[RunType],
     event_data: NeXusData[snx.NXdetector, RunType],
 ) -> RawDetector[RunType]:
     """
@@ -655,7 +617,6 @@ _detector_providers = (
     no_detector_position_offset,
     load_nexus_sample,
     get_calibrated_detector,
-    assemble_beamline,
     assemble_detector_data,
 )
 

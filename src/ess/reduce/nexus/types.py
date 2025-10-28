@@ -203,10 +203,6 @@ class EmptyDetector(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
     """Detector without neutron data."""
 
 
-class CalibratedBeamline(sciline.Scope[RunType, sc.DataArray], sc.DataArray):
-    """Calibrated beamline with detector and other components."""
-
-
 class EmptyMonitor(sciline.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
     """Monitor without neutron data."""
 

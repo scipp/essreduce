@@ -12,6 +12,7 @@ from collections.abc import Callable
 import numpy as np
 import scipp as sc
 import scippneutron as scn
+import scippnexus as snx
 from scippneutron._utils import elem_unit
 
 try:
@@ -20,9 +21,11 @@ except ImportError:
     from .interpolator_scipy import Interpolator as InterpolatorImpl
 
 from ..nexus.types import (
-    CalibratedBeamline,
+    EmptyDetector,
     EmptyMonitor,
+    GravityVector,
     MonitorType,
+    Position,
     RawDetector,
     RawMonitor,
     RunType,
@@ -271,23 +274,35 @@ def _time_of_flight_data_events(
 
 
 def detector_ltotal_from_straight_line_approximation(
-    detector_beamline: CalibratedBeamline[RunType],
+    detector: EmptyDetector[RunType],
+    source_position: Position[snx.NXsource, RunType],
+    sample_position: Position[snx.NXsample, RunType],
+    gravity: GravityVector,
 ) -> DetectorLtotal[RunType]:
-    """
-    Compute Ltotal for the detector pixels.
+    """Compute Ltotal for the detector pixels.
+
     This is a naive straight-line approximation to Ltotal based on basic component
     positions.
 
     Parameters
     ----------
-    detector_beamline:
-        Beamline data for the detector that contains the positions necessary to compute
-        the straight-line approximation to Ltotal (source, sample, and detector
-        positions).
+    detector:
+        Data array with detector positions.
+    source_position:
+        Position of the neutron source.
+    sample_position:
+        Position of the sample.
+    gravity:
+        Gravity vector.
     """
-    graph = scn.conversion.graph.beamline.beamline(scatter=True)
+    graph = {
+        **scn.conversion.graph.beamline.beamline(scatter=True),
+        'source_position': lambda: source_position,
+        'sample_position': lambda: sample_position,
+        'gravity': lambda: gravity,
+    }
     return DetectorLtotal[RunType](
-        detector_beamline.transform_coords(
+        detector.transform_coords(
             "Ltotal", graph=graph, keep_intermediate=False
         ).coords["Ltotal"]
     )
