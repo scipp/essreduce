@@ -146,6 +146,69 @@ workflow.visualize(Result)
 workflow.compute(Result)
 ```
 
+### C.6: Domain types for data products
+
+Data types that flow through the reduction workflow should follow a systematic naming convention that reflects their processing stage and coordinate space. This ensures consistency across instruments and techniques, making workflows more transferable and easier to understand.
+
+**Type structure**
+
+Domain types use a **prefix-suffix** pattern:
+- **Prefix**: Describes the processing stage (e.g., `Raw`, `Tof`, `Corrected`, `Normalized`)
+- **Suffix**: Describes the coordinate space or component (e.g., `Monitor`, `Detector`, `Q`, `Dspacing`, `Energy`)
+
+**Monitor types**
+
+Monitors follow a linear progression through processing stages:
+
+```
+EmptyMonitor      # Geometry only, calibrated
+RawMonitor        # With counts
+TofMonitor        # Time-of-flight domain
+WavelengthMonitor # Wavelength domain (end of monitor chain)
+```
+
+Monitors remain in "Monitor" space throughout processing as they serve as normalization references rather than primary measurements.
+
+**Detector types**
+
+Detectors progress through both processing stages and coordinate transformations:
+
+```
+EmptyDetector      # Geometry only, calibrated, pixel-masked
+RawDetector        # With counts
+TofDetector        # With added time-of-flight coord
+WavelengthDetector # With added wavelength coord
+CorrectedDetector  # Corrections applied (masking, filtering, efficiency, Lorentz, absorption)
+CorrectedQ         # Transformed to Q-space, pixels reduced
+NormalizedQ        # Normalized (to monitor, proton charge)
+IntensityQ         # Absolute intensity
+```
+
+**Coordinate space variants**
+
+The final coordinate space (`Q` in the example above) should be replaced with the appropriate space for the technique:
+- `Dspacing` for d-spacing coordinates
+- `Energy` for energy transfer
+- `TwoTheta` for scattering angle
+- Multiple dimensions can be combined: `DspacingTwoTheta`
+
+For example, a powder diffraction workflow might use:
+```
+CorrectedDetector → CorrectedDspacing → NormalizedDspacing → IntensityDspacing
+```
+
+**Guidelines**
+
+1. **Maintain the standard progression**: Keep processing stages separate unless there's a scientific reason to combine them (e.g., computational efficiency for a specific technique).
+
+2. **Prefix carries forward**: When transforming coordinate spaces without additional processing, the prefix carries forward (e.g., `CorrectedDetector` → `CorrectedQ`).
+
+3. **Skip only when appropriate**: Stages can be skipped if they don't exist for a particular technique, but avoid skipping for convenience alone.
+
+4. **Be explicit about the space**: Always include the coordinate space or component in the suffix to make the data's nature clear.
+
+5. **Consistency across instruments**: Use the same type names for equivalent processing stages across different instruments and techniques to facilitate knowledge transfer.
+
 ## D: Documentation
 
 ### D.1: Document math and references in docstrings
