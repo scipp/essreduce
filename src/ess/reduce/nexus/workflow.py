@@ -388,7 +388,11 @@ def get_calibrated_detector(
     # If the NXdetector in the file is not 1-D, we want to match the order of dims.
     # zip_pixel_offsets otherwise yields a vector with dimensions in the order given
     # by the x/y/z offsets.
-    offsets = snx.zip_pixel_offsets(da.coords).transpose(da.dims).copy()
+    offsets = snx.zip_pixel_offsets(da.coords)
+    # Get the dims in the order of the detector data array, but filter out dims that
+    # don't exist in the offsets (e.g. the detector data may have a 'time' dimension).
+    dims = [dim for dim in da.dims if dim in offsets.dims]
+    offsets = offsets.transpose(dims).copy()
     # We use the unit of the offsets as this is likely what the user expects.
     if transform.value.unit is not None and transform.value.unit != '':
         transform_value = transform.value.to(unit=offsets.unit)
@@ -437,7 +441,7 @@ def assemble_beamline(
 
 def assemble_detector_data(
     detector: CalibratedBeamline[RunType],
-    event_data: NeXusData[snx.NXdetector, RunType],
+    neutron_data: NeXusData[snx.NXdetector, RunType],
 ) -> DetectorData[RunType]:
     """
     Assemble a detector data array with event data.
@@ -448,14 +452,15 @@ def assemble_detector_data(
     ----------
     detector:
         Calibrated detector data array.
-    event_data:
-        Event data array.
+    neutron_data:
+        Neutron data array (events or histogram).
     """
-    grouped = nexus.group_event_data(
-        event_data=event_data, detector_number=detector.coords['detector_number']
-    )
+    if neutron_data.bins is not None:
+        neutron_data = nexus.group_event_data(
+            event_data=neutron_data, detector_number=detector.coords['detector_number']
+        )
     return DetectorData[RunType](
-        _add_variances(grouped)
+        _add_variances(neutron_data)
         .assign_coords(detector.coords)
         .assign_masks(detector.masks)
     )
@@ -552,7 +557,10 @@ class _StrippedDetector(snx.NXdetector):
         self, attrs: dict[str, Any], children: dict[str, snx.Field | snx.Group]
     ):
         children = _drop(children, (snx.NXoff_geometry, snx.NXevent_data))
-        children['data'] = children['detector_number']
+        # Histogram mode detectors may not have a detector_number, as it is not needed
+        # for grouping data by detector id.
+        if 'detector_number' in children:
+            children['data'] = children['detector_number']
         super().__init__(attrs=attrs, children=children)
 
 
