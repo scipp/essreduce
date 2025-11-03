@@ -20,17 +20,14 @@ from .types import (
     COMPONENT_CONSTRAINTS,
     AllNeXusComponents,
     Beamline,
-    CalibratedBeamline,
-    CalibratedDetector,
-    CalibratedMonitor,
     Component,
     DetectorBankSizes,
-    DetectorData,
     DetectorPositionOffset,
+    EmptyDetector,
+    EmptyMonitor,
     Filename,
     GravityVector,
     Measurement,
-    MonitorData,
     MonitorPositionOffset,
     MonitorType,
     NeXusAllComponentLocationSpec,
@@ -46,6 +43,8 @@ from .types import (
     Position,
     PreopenNeXusFile,
     RawChoppers,
+    RawDetector,
+    RawMonitor,
     RunType,
     TimeInterval,
     UniqueComponent,
@@ -360,13 +359,11 @@ def get_calibrated_detector(
     # all.
     offset: DetectorPositionOffset[RunType],
     bank_sizes: DetectorBankSizes,
-) -> CalibratedDetector[RunType]:
+) -> EmptyDetector[RunType]:
     """
     Extract the data array corresponding to a detector's signal field.
 
-    The returned data array includes coords and masks pertaining directly to the
-    signal values array, but not additional information about the detector. The
-    data array is reshaped to the logical detector shape, which by folding the data
+    The data array is reshaped to the logical detector shape, by folding the data
     array along the detector_number dimension.
 
     Parameters
@@ -395,50 +392,15 @@ def get_calibrated_detector(
     else:
         transform_value = transform.value
     position = transform_value * offsets
-    return CalibratedDetector[RunType](
+    return EmptyDetector[RunType](
         da.assign_coords(position=position + offset.to(unit=position.unit))
     )
 
 
-def assemble_beamline(
-    detector: CalibratedDetector[RunType],
-    source_position: Position[snx.NXsource, RunType],
-    sample_position: Position[snx.NXsample, RunType],
-    gravity: GravityVector,
-) -> CalibratedBeamline[RunType]:
-    """
-    Add beamline information (gravity vector, source- and sample-position) to detector.
-
-    This is performed separately and after :py:func:`get_calibrated_detector` to avoid
-    as false dependency of, e.g., the reshaped detector numbers on the sample position.
-    The latter can change during a run, e.g., for a rotating sample. The detector
-    numbers might be used, e.g., to mask certain detector pixels, and should not depend
-    on the sample position.
-
-    Parameters
-    ----------
-    detector:
-        NeXus detector group.
-    source_position:
-        Position of the neutron source.
-    sample_position:
-        Position of the sample.
-    gravity:
-        Gravity vector.
-    """
-    return CalibratedBeamline[RunType](
-        detector.assign_coords(
-            source_position=source_position,
-            sample_position=sample_position,
-            gravity=gravity,
-        )
-    )
-
-
 def assemble_detector_data(
-    detector: CalibratedBeamline[RunType],
+    detector: EmptyDetector[RunType],
     event_data: NeXusData[snx.NXdetector, RunType],
-) -> DetectorData[RunType]:
+) -> RawDetector[RunType]:
     """
     Assemble a detector data array with event data.
 
@@ -454,7 +416,7 @@ def assemble_detector_data(
     grouped = nexus.group_event_data(
         event_data=event_data, detector_number=detector.coords['detector_number']
     )
-    return DetectorData[RunType](
+    return RawDetector[RunType](
         _add_variances(grouped)
         .assign_coords(detector.coords)
         .assign_masks(detector.masks)
@@ -465,7 +427,7 @@ def get_calibrated_monitor(
     monitor: NeXusComponent[MonitorType, RunType],
     offset: MonitorPositionOffset[RunType, MonitorType],
     source_position: Position[snx.NXsource, RunType],
-) -> CalibratedMonitor[RunType, MonitorType]:
+) -> EmptyMonitor[RunType, MonitorType]:
     """
     Extract the data array corresponding to a monitor's signal field.
 
@@ -482,7 +444,7 @@ def get_calibrated_monitor(
         Position of the neutron source.
     """
     monitor = nexus.compute_component_position(monitor)
-    return CalibratedMonitor[RunType, MonitorType](
+    return EmptyMonitor[RunType, MonitorType](
         nexus.extract_signal_data_array(monitor).assign_coords(
             position=monitor['position'] + offset.to(unit=monitor['position'].unit),
             source_position=source_position,
@@ -491,9 +453,9 @@ def get_calibrated_monitor(
 
 
 def assemble_monitor_data(
-    monitor: CalibratedMonitor[RunType, MonitorType],
+    monitor: EmptyMonitor[RunType, MonitorType],
     data: NeXusData[MonitorType, RunType],
-) -> MonitorData[RunType, MonitorType]:
+) -> RawMonitor[RunType, MonitorType]:
     """
     Assemble a monitor data array with event data.
 
@@ -507,7 +469,7 @@ def assemble_monitor_data(
         Data array with neutron counts.
     """
     da = data.assign_coords(monitor.coords).assign_masks(monitor.masks)
-    return MonitorData[RunType, MonitorType](_add_variances(da))
+    return RawMonitor[RunType, MonitorType](_add_variances(da))
 
 
 def parse_disk_choppers(
@@ -655,7 +617,6 @@ _detector_providers = (
     no_detector_position_offset,
     load_nexus_sample,
     get_calibrated_detector,
-    assemble_beamline,
     assemble_detector_data,
 )
 

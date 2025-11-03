@@ -12,6 +12,7 @@ from collections.abc import Callable
 import numpy as np
 import scipp as sc
 import scippneutron as scn
+import scippnexus as snx
 from scippneutron._utils import elem_unit
 
 try:
@@ -20,21 +21,23 @@ except ImportError:
     from .interpolator_scipy import Interpolator as InterpolatorImpl
 
 from ..nexus.types import (
-    CalibratedBeamline,
-    CalibratedMonitor,
-    DetectorData,
-    MonitorData,
+    EmptyDetector,
+    EmptyMonitor,
+    GravityVector,
     MonitorType,
+    Position,
+    RawDetector,
+    RawMonitor,
     RunType,
 )
 from .resample import rebin_strictly_increasing
 from .types import (
     DetectorLtotal,
-    DetectorTofData,
     MonitorLtotal,
-    MonitorTofData,
     PulseStrideOffset,
     TimeOfFlightLookupTable,
+    TofDetector,
+    TofMonitor,
 )
 
 
@@ -271,30 +274,42 @@ def _time_of_flight_data_events(
 
 
 def detector_ltotal_from_straight_line_approximation(
-    detector_beamline: CalibratedBeamline[RunType],
+    detector: EmptyDetector[RunType],
+    source_position: Position[snx.NXsource, RunType],
+    sample_position: Position[snx.NXsample, RunType],
+    gravity: GravityVector,
 ) -> DetectorLtotal[RunType]:
-    """
-    Compute Ltotal for the detector pixels.
+    """Compute Ltotal for the detector pixels.
+
     This is a naive straight-line approximation to Ltotal based on basic component
     positions.
 
     Parameters
     ----------
-    detector_beamline:
-        Beamline data for the detector that contains the positions necessary to compute
-        the straight-line approximation to Ltotal (source, sample, and detector
-        positions).
+    detector:
+        Data array with detector positions.
+    source_position:
+        Position of the neutron source.
+    sample_position:
+        Position of the sample.
+    gravity:
+        Gravity vector.
     """
-    graph = scn.conversion.graph.beamline.beamline(scatter=True)
+    graph = {
+        **scn.conversion.graph.beamline.beamline(scatter=True),
+        'source_position': lambda: source_position,
+        'sample_position': lambda: sample_position,
+        'gravity': lambda: gravity,
+    }
     return DetectorLtotal[RunType](
-        detector_beamline.transform_coords(
+        detector.transform_coords(
             "Ltotal", graph=graph, keep_intermediate=False
         ).coords["Ltotal"]
     )
 
 
 def monitor_ltotal_from_straight_line_approximation(
-    monitor_beamline: CalibratedMonitor[RunType, MonitorType],
+    monitor_beamline: EmptyMonitor[RunType, MonitorType],
 ) -> MonitorLtotal[RunType, MonitorType]:
     """
     Compute Ltotal for the monitor.
@@ -334,11 +349,11 @@ def _compute_tof_data(
 
 
 def detector_time_of_flight_data(
-    detector_data: DetectorData[RunType],
+    detector_data: RawDetector[RunType],
     lookup: TimeOfFlightLookupTable,
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
-) -> DetectorTofData[RunType]:
+) -> TofDetector[RunType]:
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
     The output data will have a time-of-flight coordinate.
@@ -357,7 +372,7 @@ def detector_time_of_flight_data(
         When pulse-skipping, the offset of the first pulse in the stride. This is
         typically zero but can be a small integer < pulse_stride.
     """
-    return DetectorTofData[RunType](
+    return TofDetector[RunType](
         _compute_tof_data(
             da=detector_data,
             lookup=lookup,
@@ -368,11 +383,11 @@ def detector_time_of_flight_data(
 
 
 def monitor_time_of_flight_data(
-    monitor_data: MonitorData[RunType, MonitorType],
+    monitor_data: RawMonitor[RunType, MonitorType],
     lookup: TimeOfFlightLookupTable,
     ltotal: MonitorLtotal[RunType, MonitorType],
     pulse_stride_offset: PulseStrideOffset,
-) -> MonitorTofData[RunType, MonitorType]:
+) -> TofMonitor[RunType, MonitorType]:
     """
     Convert the time-of-arrival data to time-of-flight data using a lookup table.
     The output data will have a time-of-flight coordinate.
@@ -391,7 +406,7 @@ def monitor_time_of_flight_data(
         When pulse-skipping, the offset of the first pulse in the stride. This is
         typically zero but can be a small integer < pulse_stride.
     """
-    return MonitorTofData[RunType, MonitorType](
+    return TofMonitor[RunType, MonitorType](
         _compute_tof_data(
             da=monitor_data,
             lookup=lookup,

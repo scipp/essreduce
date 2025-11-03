@@ -24,25 +24,23 @@ from .lut import (
 )
 from .types import (
     DetectorLtotal,
-    DetectorTofData,
     MonitorLtotal,
-    MonitorTofData,
     PulseStrideOffset,
     TimeOfFlightLookupTable,
     TimeOfFlightLookupTableFilename,
+    TofDetector,
+    TofMonitor,
 )
 from .workflow import GenericTofWorkflow
 
 __all__ = [
     "DetectorLtotal",
-    "DetectorTofData",
     "DiskChoppers",
     "DistanceResolution",
     "GenericTofWorkflow",
     "LookupTableRelativeErrorThreshold",
     "LtotalRange",
     "MonitorLtotal",
-    "MonitorTofData",
     "NumberOfSimulatedNeutrons",
     "PulsePeriod",
     "PulseStride",
@@ -53,7 +51,9 @@ __all__ = [
     "TimeOfFlightLookupTable",
     "TimeOfFlightLookupTableFilename",
     "TimeResolution",
+    "TofDetector",
     "TofLookupTableWorkflow",
+    "TofMonitor",
     "providers",
     "simulate_chopper_cascade_using_tof",
 ]

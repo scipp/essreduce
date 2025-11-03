@@ -29,7 +29,7 @@ import scipp as sc
 import scippnexus as snx
 
 from ess.reduce.nexus.types import (
-    CalibratedDetector,
+    EmptyDetector,
     Filename,
     NeXusComponent,
     NeXusDetectorName,
@@ -305,7 +305,7 @@ class RollingDetectorView(Detector):
 
     @staticmethod
     def from_detector_and_histogrammer(
-        detector: CalibratedDetector[SampleRun],
+        detector: EmptyDetector[SampleRun],
         window: RollingDetectorViewWindow,
         projection: Histogrammer,
     ) -> RollingDetectorView:
@@ -320,10 +320,10 @@ class RollingDetectorView(Detector):
     def from_detector_with_projection(
         projection: Callable[[sc.DataArray], sc.DataArray] | None,
     ) -> Callable[
-        [CalibratedDetector[SampleRun], RollingDetectorViewWindow], RollingDetectorView
+        [EmptyDetector[SampleRun], RollingDetectorViewWindow], RollingDetectorView
     ]:
         def factory(
-            detector: CalibratedDetector[SampleRun],
+            detector: EmptyDetector[SampleRun],
             window: RollingDetectorViewWindow,
         ) -> RollingDetectorView:
             """Helper for constructing via a Sciline workflow."""
@@ -591,7 +591,7 @@ def gaussian_position_noise(sigma: PositionNoiseSigma) -> PositionNoise:
 
 def position_with_noisy_replicas(
     *,
-    detector: CalibratedDetector[SampleRun],
+    detector: EmptyDetector[SampleRun],
     position_noise: PositionNoise,
     replicas: PositionNoiseReplicaCount,
 ) -> CalibratedPositionWithNoisyReplicas:
