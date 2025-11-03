@@ -633,7 +633,7 @@ def test_generic_nexus_workflow_load_beamline_metadata(
 ) -> None:
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[Filename[SampleRun]] = bifrost_simulated_elastic
-    beamline = wf.compute(Beamline)
+    beamline = wf.compute(Beamline[SampleRun])
 
     assert beamline.name == 'BIFROST'
     assert beamline.facility == 'ESS'
@@ -646,7 +646,7 @@ def test_generic_nexus_workflow_load_measurement_metadata(
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
     wf[Filename[BackgroundRun]] = loki_tutorial_background_run_60248
-    measurement = wf.compute(Measurement)
+    measurement = wf.compute(Measurement[SampleRun])
 
     assert measurement.title == 'My experiment'
     assert measurement.experiment_id == 'p1234'

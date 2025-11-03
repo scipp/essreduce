@@ -47,7 +47,6 @@ from .types import (
     PreopenNeXusFile,
     RawChoppers,
     RunType,
-    SampleRun,
     TimeInterval,
     UniqueComponent,
 )
@@ -606,14 +605,16 @@ def _assign_values_as_variances(var: sc.Variable) -> sc.Variable:
     return var
 
 
-def load_beamline_metadata_from_nexus(file_spec: NeXusFileSpec[SampleRun]) -> Beamline:
+def load_beamline_metadata_from_nexus(
+    file_spec: NeXusFileSpec[RunType],
+) -> Beamline[RunType]:
     """Load beamline metadata from a sample NeXus file."""
     return nexus.load_metadata(file_spec.value, Beamline)
 
 
 def load_measurement_metadata_from_nexus(
-    file_spec: NeXusFileSpec[SampleRun],
-) -> Measurement:
+    file_spec: NeXusFileSpec[RunType],
+) -> Measurement[RunType]:
     """Load measurement metadata from a sample NeXus file."""
     return nexus.load_metadata(file_spec.value, Measurement)
 
