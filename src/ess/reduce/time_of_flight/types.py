@@ -33,9 +33,9 @@ class MonitorLtotal(sl.Scope[RunType, MonitorType, sc.Variable], sc.Variable):
     """Total path length of neutrons from source to monitor."""
 
 
-class DetectorTofData(sl.Scope[RunType, sc.DataArray], sc.DataArray):
+class TofDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
     """Detector data with time-of-flight coordinate."""
 
 
-class MonitorTofData(sl.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
+class TofMonitor(sl.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
     """Monitor data with time-of-flight coordinate."""
