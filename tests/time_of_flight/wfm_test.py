@@ -9,7 +9,7 @@ from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
-from ess.reduce.nexus.types import DetectorData, SampleRun
+from ess.reduce.nexus.types import AnyRun, DetectorData, SampleRun
 from ess.reduce.time_of_flight import GenericTofWorkflow, TofLookupTableWorkflow, fakes
 
 sl = pytest.importorskip("sciline")
@@ -112,7 +112,7 @@ def dream_source_position() -> sc.Variable:
 @pytest.fixture(scope="module")
 def lut_workflow_dream_choppers() -> sl.Pipeline:
     lut_wf = TofLookupTableWorkflow()
-    lut_wf[time_of_flight.DiskChoppers] = dream_choppers()
+    lut_wf[time_of_flight.DiskChoppers[AnyRun]] = dream_choppers()
     lut_wf[time_of_flight.SourcePosition] = dream_source_position()
     lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 100_000
     lut_wf[time_of_flight.SimulationSeed] = 432
@@ -213,7 +213,7 @@ def test_dream_wfm(
 @pytest.fixture(scope="module")
 def lut_workflow_dream_choppers_time_overlap():
     lut_wf = TofLookupTableWorkflow()
-    lut_wf[time_of_flight.DiskChoppers] = dream_choppers_with_frame_overlap()
+    lut_wf[time_of_flight.DiskChoppers[AnyRun]] = dream_choppers_with_frame_overlap()
     lut_wf[time_of_flight.SourcePosition] = dream_source_position()
     lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 100_000
     lut_wf[time_of_flight.SimulationSeed] = 432
@@ -405,7 +405,7 @@ def v20_source_position():
 @pytest.fixture(scope="module")
 def lut_workflow_v20_choppers():
     lut_wf = TofLookupTableWorkflow()
-    lut_wf[time_of_flight.DiskChoppers] = v20_choppers()
+    lut_wf[time_of_flight.DiskChoppers[AnyRun]] = v20_choppers()
     lut_wf[time_of_flight.SourcePosition] = v20_source_position()
     lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 300_000
     lut_wf[time_of_flight.SimulationSeed] = 431

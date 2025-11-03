@@ -40,6 +40,14 @@ PreopenNeXusFile = NewType('PreopenNeXusFile', bool)
 # 1  TypeVars used to parametrize the generic parts of the workflow
 
 # 1.1  Run types
+
+AnyRun = NewType("AnyRun", int)
+"""RunType that does not represent a specific measurement run.
+
+This can be used in cases where it makes no sense to use an 'actual' run type
+like ``SampleRun`` or ``BackgroundRun``.
+"""
+
 BackgroundRun = NewType('BackgroundRun', int)
 """Background run such as a run with only a solvent which the sample is placed in."""
 EmptyBeamRun = NewType('EmptyBeamRun', int)
@@ -136,12 +144,17 @@ This list will be supplemented with monitor types when creating a pipeline.
 UniqueComponent = TypeVar('UniqueComponent', snx.NXsample, snx.NXsource)
 """Components that can be identified by their type as there will only be one."""
 
-Beamline = scn_meta.Beamline
-"""Beamline metadata."""
-Measurement = scn_meta.Measurement
-"""measurement metadata."""
-Source = scn_meta.Source
-"""Neutron source metadata."""
+
+class Beamline(scn_meta.Beamline, Generic[RunType]):
+    """Beamline metadata."""
+
+
+class Measurement(scn_meta.Measurement, Generic[RunType]):
+    """measurement metadata."""
+
+
+class Source(scn_meta.Source, Generic[RunType]):
+    """Neutron source metadata."""
 
 
 class NeXusName(sciline.Scope[Component, str], str):

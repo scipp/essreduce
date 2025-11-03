@@ -50,11 +50,11 @@ ipython==9.6.0
     # via ipywidgets
 ipython-pygments-lexers==1.1.1
     # via ipython
-ipywidgets==8.1.7
+ipywidgets==8.1.8
     # via -r nightly.in
 jedi==0.19.2
     # via ipython
-jupyterlab-widgets==3.0.15
+jupyterlab-widgets==3.0.16
     # via ipywidgets
 kiwisolver==1.4.10rc0
     # via matplotlib
@@ -147,7 +147,7 @@ scippnexus @ git+https://github.com/scipp/scippnexus@main
     # via
     #   -r nightly.in
     #   scippneutron
-scipy==1.16.2
+scipy==1.16.3
     # via
     #   -r nightly.in
     #   scippneutron
@@ -177,5 +177,5 @@ urllib3==2.5.0
     # via requests
 wcwidth==0.2.14
     # via prompt-toolkit
-widgetsnbextension==4.0.14
+widgetsnbextension==4.0.15
     # via ipywidgets
