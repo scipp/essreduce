@@ -40,6 +40,14 @@ PreopenNeXusFile = NewType('PreopenNeXusFile', bool)
 # 1  TypeVars used to parametrize the generic parts of the workflow
 
 # 1.1  Run types
+
+AnyRun = NewType("AnyRun", int)
+"""RunType that does not represent a specific measurement run.
+
+This can be used in cases where it makes no sense to use an 'actual' run type
+like ``SampleRun`` or ``BackgroundRun``.
+"""
+
 BackgroundRun = NewType('BackgroundRun', int)
 """Background run such as a run with only a solvent which the sample is placed in."""
 EmptyBeamRun = NewType('EmptyBeamRun', int)

@@ -12,7 +12,7 @@ import numpy as np
 import sciline as sl
 import scipp as sc
 
-from ..nexus.types import DiskChoppers
+from ..nexus.types import AnyRun, DiskChoppers
 from .types import TimeOfFlightLookupTable
 
 
@@ -380,7 +380,7 @@ def make_tof_lookup_table(
 
 
 def simulate_chopper_cascade_using_tof(
-    choppers: DiskChoppers,
+    choppers: DiskChoppers[AnyRun],
     source_position: SourcePosition,
     neutrons: NumberOfSimulatedNeutrons,
     pulse_stride: PulseStride,
