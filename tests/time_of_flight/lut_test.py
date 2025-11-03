@@ -4,6 +4,7 @@ import pytest
 import scipp as sc
 
 from ess.reduce import time_of_flight
+from ess.reduce.nexus.types import AnyRun
 from ess.reduce.time_of_flight import TofLookupTableWorkflow
 
 sl = pytest.importorskip("sciline")
@@ -11,7 +12,7 @@ sl = pytest.importorskip("sciline")
 
 def test_lut_workflow_computes_table():
     wf = TofLookupTableWorkflow()
-    wf[time_of_flight.DiskChoppers] = {}
+    wf[time_of_flight.DiskChoppers[AnyRun]] = {}
     wf[time_of_flight.SourcePosition] = sc.vector([0, 0, 0], unit='m')
     wf[time_of_flight.NumberOfSimulatedNeutrons] = 100_000
     wf[time_of_flight.SimulationSeed] = 60
@@ -40,7 +41,7 @@ def test_lut_workflow_computes_table():
 
 def test_lut_workflow_computes_table_in_chunks():
     wf = TofLookupTableWorkflow()
-    wf[time_of_flight.DiskChoppers] = {}
+    wf[time_of_flight.DiskChoppers[AnyRun]] = {}
     wf[time_of_flight.SourcePosition] = sc.vector([0, 0, 0], unit='m')
     # Lots of neutrons activates chunking
     wf[time_of_flight.NumberOfSimulatedNeutrons] = 1_000_000
@@ -70,7 +71,7 @@ def test_lut_workflow_computes_table_in_chunks():
 
 def test_lut_workflow_pulse_skipping():
     wf = TofLookupTableWorkflow()
-    wf[time_of_flight.DiskChoppers] = {}
+    wf[time_of_flight.DiskChoppers[AnyRun]] = {}
     wf[time_of_flight.SourcePosition] = sc.vector([0, 0, 0], unit='m')
     wf[time_of_flight.NumberOfSimulatedNeutrons] = 100_000
     wf[time_of_flight.SimulationSeed] = 62
@@ -93,7 +94,7 @@ def test_lut_workflow_pulse_skipping():
 
 def test_lut_workflow_non_exact_distance_range():
     wf = TofLookupTableWorkflow()
-    wf[time_of_flight.DiskChoppers] = {}
+    wf[time_of_flight.DiskChoppers[AnyRun]] = {}
     wf[time_of_flight.SourcePosition] = sc.vector([0, 0, 0], unit='m')
     wf[time_of_flight.NumberOfSimulatedNeutrons] = 100_000
     wf[time_of_flight.SimulationSeed] = 63

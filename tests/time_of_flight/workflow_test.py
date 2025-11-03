@@ -9,13 +9,18 @@ from scipp.testing import assert_identical
 
 from ess.reduce import time_of_flight
 from ess.reduce.nexus.types import (
+    AnyRun,
     CalibratedBeamline,
     DetectorData,
     DiskChoppers,
     NeXusData,
     SampleRun,
 )
-from ess.reduce.time_of_flight import GenericTofWorkflow, TofLookupTableWorkflow, fakes
+from ess.reduce.time_of_flight import (
+    GenericTofWorkflow,
+    TofLookupTableWorkflow,
+    fakes,
+)
 
 sl = pytest.importorskip("sciline")
 
@@ -57,7 +62,7 @@ def nexus_data():
 
 def test_TofLookupTableWorkflow_can_compute_tof_lut():
     wf = TofLookupTableWorkflow()
-    wf[DiskChoppers] = fakes.psc_choppers()
+    wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
     wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
     wf[time_of_flight.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
@@ -85,7 +90,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
         _ = wf.compute(time_of_flight.DetectorTofData[SampleRun])
 
     lut_wf = TofLookupTableWorkflow()
-    lut_wf[DiskChoppers] = fakes.psc_choppers()
+    lut_wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
     lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
     lut_wf[time_of_flight.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
@@ -106,7 +111,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     tmp_path: pytest.TempPathFactory,
 ):
     lut_wf = TofLookupTableWorkflow()
-    lut_wf[DiskChoppers] = fakes.psc_choppers()
+    lut_wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
     lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
     lut_wf[time_of_flight.LtotalRange] = (
         sc.scalar(0.0, unit="m"),
