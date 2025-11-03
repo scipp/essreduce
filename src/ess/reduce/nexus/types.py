@@ -136,12 +136,17 @@ This list will be supplemented with monitor types when creating a pipeline.
 UniqueComponent = TypeVar('UniqueComponent', snx.NXsample, snx.NXsource)
 """Components that can be identified by their type as there will only be one."""
 
-Beamline = scn_meta.Beamline
-"""Beamline metadata."""
-Measurement = scn_meta.Measurement
-"""measurement metadata."""
-Source = scn_meta.Source
-"""Neutron source metadata."""
+
+class Beamline(scn_meta.Beamline, Generic[RunType]):
+    """Beamline metadata."""
+
+
+class Measurement(scn_meta.Measurement, Generic[RunType]):
+    """measurement metadata."""
+
+
+class Source(scn_meta.Source, Generic[RunType]):
+    """Neutron source metadata."""
 
 
 class NeXusName(sciline.Scope[Component, str], str):
