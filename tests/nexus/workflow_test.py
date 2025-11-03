@@ -585,6 +585,17 @@ def test_load_detector_workflow(loki_tutorial_sample_run_60250: Path) -> None:
     assert da.dims == ('detector_number',)
 
 
+def test_load_histogram_detector_workflow(tbl_commissioning_orca_file: Path) -> None:
+    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf[Filename[SampleRun]] = tbl_commissioning_orca_file
+    wf[NeXusName[snx.NXdetector]] = 'orca_detector'
+    da = wf.compute(RawDetector[SampleRun])
+    assert 'position' in da.coords
+    assert da.bins is None
+    assert 'time' in da.dims
+    assert da.ndim == 3
+
+
 @pytest.mark.parametrize('preopen', [True, False])
 def test_generic_nexus_workflow(
     preopen: bool, loki_tutorial_sample_run_60250: Path
