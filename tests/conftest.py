@@ -63,7 +63,7 @@ def tbl_registry() -> Registry:
     return make_registry(
         'ess/tbl',
         files={
-            "857127_00000112_small.hdf": "md5:be5741892537a264c6f5df009a7c2881",
+            "857127_00000112_small.hdf": "md5:0db89493b859dbb2f7354c3711ed7fbd",
         },
         version='2',
     )
