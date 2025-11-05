@@ -509,6 +509,19 @@ def _drop(
     }
 
 
+class _EmptyField:
+    """Empty field that can replace a missing detector_number in NXdetector."""
+
+    def __init__(self, sizes: dict[str, int]):
+        self.attrs = {}
+        self.sizes = sizes.copy()
+        self.dims = tuple(sizes.keys())
+        self.shape = tuple(sizes.values())
+
+    def __getitem__(self, key: Any) -> sc.Variable:
+        return sc.empty(dims=self.dims, shape=self.shape, unit=None)
+
+
 class _StrippedDetector(snx.NXdetector):
     """Detector definition without large geometry or event data for ScippNexus.
 
@@ -518,11 +531,22 @@ class _StrippedDetector(snx.NXdetector):
     def __init__(
         self, attrs: dict[str, Any], children: dict[str, snx.Field | snx.Group]
     ):
-        children = _drop(children, (snx.NXoff_geometry, snx.NXevent_data))
-        # Histogram mode detectors may not have a detector_number, as it is not needed
-        # for grouping data by detector id.
+        # We get the 'data' sizes before the NXdata is dropped
+        field_sizes = None
+        if ('detector_number' not in children) and ('data' in children):
+            if 'value' in children['data']:
+                field_sizes = children['data']['value'].sizes.copy()
+
+        children = _drop(
+            children, (snx.NXoff_geometry, snx.NXevent_data, snx.NXdata, snx.NXlog)
+        )
+
         if 'detector_number' in children:
             children['data'] = children['detector_number']
+        elif field_sizes is not None:
+            field_sizes.pop('time', None)
+            children['data'] = _EmptyField(sizes=field_sizes)
+
         super().__init__(attrs=attrs, children=children)
 
 
