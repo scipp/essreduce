@@ -519,7 +519,7 @@ class _EmptyField:
         self.shape = tuple(sizes.values())
 
     def __getitem__(self, key: Any) -> sc.Variable:
-        return sc.empty(dims=self.dims, shape=self.shape, unit=None)
+        return sc.zeros(dims=self.dims, shape=self.shape, unit=None, dtype='int32')
 
 
 class _StrippedDetector(snx.NXdetector):
@@ -574,7 +574,7 @@ class _DummyField:
         self.shape = (0,)
 
     def __getitem__(self, key: Any) -> sc.Variable:
-        return sc.empty(dims=self.dims, shape=self.shape, unit=None)
+        return sc.zeros(dims=self.dims, shape=self.shape, unit=None, dtype='int32')
 
 
 class _StrippedMonitor(snx.NXmonitor):
