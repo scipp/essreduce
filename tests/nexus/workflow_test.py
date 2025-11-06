@@ -13,6 +13,7 @@ from ess.reduce.nexus.types import (
     BackgroundRun,
     Beamline,
     EmptyBeamRun,
+    EmptyDetector,
     Filename,
     FrameMonitor0,
     FrameMonitor1,
@@ -583,6 +584,31 @@ def test_load_detector_workflow(loki_tutorial_sample_run_60250: Path) -> None:
     assert 'position' in da.coords
     assert da.bins is not None
     assert da.dims == ('detector_number',)
+
+
+def test_load_histogram_detector_workflow(tbl_commissioning_orca_file: Path) -> None:
+    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf[Filename[SampleRun]] = tbl_commissioning_orca_file
+    wf[NeXusName[snx.NXdetector]] = 'orca_detector'
+    da = wf.compute(RawDetector[SampleRun])
+    assert 'position' in da.coords
+    assert da.bins is None
+    assert 'time' in da.dims
+    assert da.ndim == 3
+
+
+def test_load_empty_histogram_detector_workflow(
+    tbl_commissioning_orca_file: Path,
+) -> None:
+    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf[Filename[SampleRun]] = tbl_commissioning_orca_file
+    wf[NeXusName[snx.NXdetector]] = 'orca_detector'
+    da = wf.compute(EmptyDetector[SampleRun])
+    assert 'position' in da.coords
+    assert da.bins is None
+    # The empty detector has no time dimension, only the dimensions of the geometry
+    assert 'time' not in da.dims
+    assert da.ndim == 2
 
 
 @pytest.mark.parametrize('preopen', [True, False])

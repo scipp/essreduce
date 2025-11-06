@@ -385,7 +385,11 @@ def get_calibrated_detector(
     # If the NXdetector in the file is not 1-D, we want to match the order of dims.
     # zip_pixel_offsets otherwise yields a vector with dimensions in the order given
     # by the x/y/z offsets.
-    offsets = snx.zip_pixel_offsets(da.coords).transpose(da.dims).copy()
+    offsets = snx.zip_pixel_offsets(da.coords)
+    # Get the dims in the order of the detector data array, but filter out dims that
+    # don't exist in the offsets (e.g. the detector data may have a 'time' dimension).
+    dims = [dim for dim in da.dims if dim in offsets.dims]
+    offsets = offsets.transpose(dims).copy()
     # We use the unit of the offsets as this is likely what the user expects.
     if transform.value.unit is not None and transform.value.unit != '':
         transform_value = transform.value.to(unit=offsets.unit)
@@ -399,7 +403,7 @@ def get_calibrated_detector(
 
 def assemble_detector_data(
     detector: EmptyDetector[RunType],
-    event_data: NeXusData[snx.NXdetector, RunType],
+    neutron_data: NeXusData[snx.NXdetector, RunType],
 ) -> RawDetector[RunType]:
     """
     Assemble a detector data array with event data.
@@ -410,14 +414,15 @@ def assemble_detector_data(
     ----------
     detector:
         Calibrated detector data array.
-    event_data:
-        Event data array.
+    neutron_data:
+        Neutron data array (events or histogram).
     """
-    grouped = nexus.group_event_data(
-        event_data=event_data, detector_number=detector.coords['detector_number']
-    )
+    if neutron_data.bins is not None:
+        neutron_data = nexus.group_event_data(
+            event_data=neutron_data, detector_number=detector.coords['detector_number']
+        )
     return RawDetector[RunType](
-        _add_variances(grouped)
+        _add_variances(neutron_data)
         .assign_coords(detector.coords)
         .assign_masks(detector.masks)
     )
@@ -504,6 +509,19 @@ def _drop(
     }
 
 
+class _EmptyField:
+    """Empty field that can replace a missing detector_number in NXdetector."""
+
+    def __init__(self, sizes: dict[str, int]):
+        self.attrs = {}
+        self.sizes = sizes.copy()
+        self.dims = tuple(sizes.keys())
+        self.shape = tuple(sizes.values())
+
+    def __getitem__(self, key: Any) -> sc.Variable:
+        return sc.zeros(dims=self.dims, shape=self.shape, unit=None, dtype='int32')
+
+
 class _StrippedDetector(snx.NXdetector):
     """Detector definition without large geometry or event data for ScippNexus.
 
@@ -513,8 +531,36 @@ class _StrippedDetector(snx.NXdetector):
     def __init__(
         self, attrs: dict[str, Any], children: dict[str, snx.Field | snx.Group]
     ):
-        children = _drop(children, (snx.NXoff_geometry, snx.NXevent_data))
-        children['data'] = children['detector_number']
+        if 'detector_number' in children:
+            data = children['detector_number']
+        else:
+            # We get the 'data' sizes before the NXdata is dropped
+            if 'data' not in children:
+                raise KeyError(
+                    "StrippedDetector: Cannot determine shape of the detector. "
+                    "No 'detector_number' was found, and the 'data' entry is missing."
+                )
+            if 'value' not in children['data']:
+                raise KeyError(
+                    "StrippedDetector: Cannot determine shape of the detector. "
+                    "The 'data' entry has no 'value'."
+                )
+            # We drop any time-related dimension from the data sizes, as they are not
+            # relevant for the detector geometry/shape.
+            data = _EmptyField(
+                sizes={
+                    dim: size
+                    for dim, size in children['data']['value'].sizes.items()
+                    if dim not in ('time', 'frame_time')
+                }
+            )
+
+        children = _drop(
+            children, (snx.NXoff_geometry, snx.NXevent_data, snx.NXdata, snx.NXlog)
+        )
+
+        children['data'] = data
+
         super().__init__(attrs=attrs, children=children)
 
 
@@ -528,7 +574,7 @@ class _DummyField:
         self.shape = (0,)
 
     def __getitem__(self, key: Any) -> sc.Variable:
-        return sc.empty(dims=self.dims, shape=self.shape, unit=None)
+        return sc.zeros(dims=self.dims, shape=self.shape, unit=None, dtype='int32')
 
 
 class _StrippedMonitor(snx.NXmonitor):
