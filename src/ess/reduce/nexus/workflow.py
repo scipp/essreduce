@@ -531,28 +531,35 @@ class _StrippedDetector(snx.NXdetector):
     def __init__(
         self, attrs: dict[str, Any], children: dict[str, snx.Field | snx.Group]
     ):
-        # We get the 'data' sizes before the NXdata is dropped
-        field_sizes = None
-        if ('detector_number' not in children) and ('data' in children):
+        if 'detector_number' in children:
+            data = children['detector_number']
+        else:
+            # We get the 'data' sizes before the NXdata is dropped
+            if 'data' not in children:
+                raise KeyError(
+                    "StrippedDetector: Cannot determine shape of the detector. "
+                    "No 'detector_number' was found, and the 'data' entry is missing."
+                )
             if 'value' not in children['data']:
                 raise KeyError(
-                    "Cannot determine shape of detector data as 'data' field has no"
-                    "'value'."
+                    "StrippedDetector: Cannot determine shape of the detector. "
+                    "The 'data' entry has no 'value'."
                 )
-            field_sizes = {
-                dim: size
-                for dim, size in children['data']['value'].sizes.items()
-                if dim not in ('time', 'frame_time')
-            }
+            # We drop any time-related dimension from the data sizes, as they are not
+            # relevant for the detector geometry/shape.
+            data = _EmptyField(
+                sizes={
+                    dim: size
+                    for dim, size in children['data']['value'].sizes.items()
+                    if dim not in ('time', 'frame_time')
+                }
+            )
 
         children = _drop(
             children, (snx.NXoff_geometry, snx.NXevent_data, snx.NXdata, snx.NXlog)
         )
 
-        if 'detector_number' in children:
-            children['data'] = children['detector_number']
-        elif field_sizes is not None:
-            children['data'] = _EmptyField(sizes=field_sizes)
+        children['data'] = data
 
         super().__init__(attrs=attrs, children=children)
 
