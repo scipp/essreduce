@@ -534,8 +534,16 @@ class _StrippedDetector(snx.NXdetector):
         # We get the 'data' sizes before the NXdata is dropped
         field_sizes = None
         if ('detector_number' not in children) and ('data' in children):
-            if 'value' in children['data']:
-                field_sizes = children['data']['value'].sizes.copy()
+            if 'value' not in children['data']:
+                raise KeyError(
+                    "Cannot determine shape of detector data as 'data' field has no"
+                    "'value'."
+                )
+            field_sizes = {
+                dim: size
+                for dim, size in children['data']['value'].sizes.items()
+                if dim not in ('time', 'frame_time')
+            }
 
         children = _drop(
             children, (snx.NXoff_geometry, snx.NXevent_data, snx.NXdata, snx.NXlog)
@@ -544,7 +552,6 @@ class _StrippedDetector(snx.NXdetector):
         if 'detector_number' in children:
             children['data'] = children['detector_number']
         elif field_sizes is not None:
-            field_sizes.pop('time', None)
             children['data'] = _EmptyField(sizes=field_sizes)
 
         super().__init__(attrs=attrs, children=children)
