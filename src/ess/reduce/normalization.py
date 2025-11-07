@@ -15,51 +15,26 @@ def normalize_by_monitor_histogram(
     monitor: sc.DataArray,
     uncertainty_broadcast_mode: UncertaintyBroadcastMode,
 ) -> sc.DataArray:
-    """Normalize detector data by a histogrammed monitor.
+    """Normalize detector data by a normalized histogrammed monitor.
 
-    First, the monitor is clipped to the range of the detector
+    This normalization accounts for both the (wavelength) profile of the incident beam
+    and the integrated neutron flux, meaning measurement duration and source strength.
+
+    - For *event* detectors, the monitor values are mapped to the detector
+      using :func:`scipp.lookup`. That is, for detector event :math:`d_i`,
+      :math:`m_i` is the monitor bin value at the same coordinate.
+    - For *histogram* detectors, the monitor is rebinned using to the detector
+      binning using :func:`scipp.rebin`. Thus, detector value :math:`d_i` and
+      monitor value :math:`m_i` correspond to the same bin.
+
+    In both cases, let :math:`x_i` be the lower bound of monitor bin :math:`i`
+    and let :math:`\\Delta x_i = x_{i+1} - x_i` be the width of that bin.
+
+    The detector is normalized according to
 
     .. math::
 
-        \\bar{m}_i = m_i I(x_i, x_{i+1}),
-
-    where :math:`m_i` is the monitor intensity in bin :math:`i`,
-    :math:`x_i` is the lower bin edge of bin :math:`i`, and
-    :math:`I(x_i, x_{i+1})` selects bins that are within the range of the detector.
-
-    The detector bins :math:`d_i` are normalized according to
-
-    .. math::
-
-        d_i^\\text{Norm} = \\frac{d_i}{\\bar{m}_i} \\Delta x_i
-        \\frac{\\sum_j\\,\\bar{m}_j}{\\sum_j\\,\\Delta x_j}
-
-    where :math:`\\Delta x_i = x_{i+1} - x_i` is the width of
-    monitor bin :math:`i` (see below).
-    This normalization leads to a result that has the same
-    unit as the input detector data.
-
-    Monitor bin :math:`i` is chosen according to:
-
-    - *Histogrammed detector*: The monitor is
-      `rebinned <https://scipp.github.io/generated/functions/scipp.rebin.html>`_
-      to the detector binning. This distributes the monitor weights to the
-      detector bins.
-    - *Binned detector*: The monitor value for bin :math:`i` is determined via
-      :func:`scipp.lookup`. This means that for each event, the monitor value
-      is obtained from the monitor histogram at that event coordinate value.
-
-    .. Attention::
-
-        Masked bins in ``detector`` are ignored when clipping the monitor and therefore
-        impact the normalization factor.
-        The output's masked bins are normalized using the same factor and may
-        be incorrect and even contain NaN.
-        You should only drop masks after normalization if you know what you are doing.
-
-    This function is based on the implementation of
-    `NormaliseToMonitor <https://docs.mantidproject.org/nightly/algorithms/NormaliseToMonitor-v1.html>`_
-    in Mantid.
+        d_i^\\text{Norm} = \\frac{d_i}{m_i} \\Delta x_i
 
     Parameters
     ----------
@@ -85,24 +60,21 @@ def normalize_by_monitor_histogram(
     normalize_by_monitor_integrated:
         Normalize by an integrated monitor.
     """
+    _check_monitor_range_contains_detector(monitor=monitor, detector=detector)
+
     dim = monitor.dim
 
+    if detector.bins is None:
+        monitor = monitor.rebin({dim: detector.coords[dim]})
     detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
-    clipped = _clip_monitor_to_detector_range(monitor=monitor, detector=detector)
-    coord = clipped.coords[dim]
-    delta_w = sc.DataArray(coord[1:] - coord[:-1], masks=clipped.masks)
-    total_monitor_weight = broadcast_uncertainties(
-        clipped.sum() / delta_w.sum(),
-        prototype=clipped,
-        mode=uncertainty_broadcast_mode,
-    ).data
-    delta_w *= total_monitor_weight
+    coord = monitor.coords[dim]
+    delta_w = sc.DataArray(coord[1:] - coord[:-1], masks=monitor.masks)
     norm = broadcast_uncertainties(
-        clipped / delta_w, prototype=detector, mode=uncertainty_broadcast_mode
+        monitor / delta_w, prototype=detector, mode=uncertainty_broadcast_mode
     )
 
     if detector.bins is None:
-        return detector / norm
+        return detector / norm.rebin({dim: detector.coords[dim]})
     return detector.bins / sc.lookup(norm, dim=dim)
 
 
@@ -114,23 +86,21 @@ def normalize_by_monitor_integrated(
 ) -> sc.DataArray:
     """Normalize detector data by an integrated monitor.
 
-    The monitor is integrated according to
+    This normalization accounts only for the integrated neutron flux,
+    meaning measurement duration and source strength.
+    It does *not* account for the (wavelength) profile of the incident beam.
+    For that, see :func:`normalize_by_monitor_histogram`.
+
+    Let :math:`d_i` be a detector event or the counts in a detector bin.
+    The normalized detector is
 
     .. math::
 
-        M = \\sum_{i=0}^{N-1}\\, m_i (x_{i+1} - x_i) I(x_i, x_{i+1}),
+        d_i^\\text{Norm} &= d_i / M \\\\
+        M &= \\sum_j\\, m_j (x_{j+1} - x_j)\\,,
 
-    where :math:`m_i` is the monitor intensity in bin :math:`i`,
-    :math:`x_i` is the lower bin edge of bin :math:`i`, and
-    :math:`I(x_i, x_{i+1})` selects bins that are within the range of the detector.
-
-    .. Attention::
-
-        Masked bins in ``detector`` are ignored when clipping the monitor and therefore
-        impact the normalization factor.
-        The output's masked bins are normalized using the same factor and may
-        be incorrect and even contain NaN.
-        You should only drop masks after normalization if you know what you are doing.
+    where :math:`m_j` is the monitor counts in bin :math:`j` and
+    :math:`x_j` is the lower bin edge of that bin.
 
     Parameters
     ----------
@@ -152,43 +122,37 @@ def normalize_by_monitor_integrated(
     See also
     --------
     normalize_by_monitor_histogram:
-        Normalize by a monitor histogram without integration.
+        Normalize by a monitor histogram.
     """
+    _check_monitor_range_contains_detector(monitor=monitor, detector=detector)
     detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
-    clipped = _clip_monitor_to_detector_range(monitor=monitor, detector=detector)
-    coord = clipped.coords[clipped.dim]
-    norm = (clipped * (coord[1:] - coord[:-1])).data.sum()
+    coord = monitor.coords[monitor.dim]
+    norm = (monitor * (coord[1:] - coord[:-1])).data.sum()
     norm = broadcast_uncertainties(
         norm, prototype=detector, mode=uncertainty_broadcast_mode
     )
     return detector / norm
 
 
-def _clip_monitor_to_detector_range(
+def _check_monitor_range_contains_detector(
     *, monitor: sc.DataArray, detector: sc.DataArray
-) -> sc.DataArray:
+) -> None:
     dim = monitor.dim
     if not monitor.coords.is_edges(dim):
         raise sc.CoordError(
             f"Monitor coordinate '{dim}' must be bin-edges to integrate the monitor."
         )
 
-    # Reduce with `all` instead of `any` to include bins in range calculations
-    # that contain any unmasked data.
-    masks = {
-        name: mask.all(set(mask.dims) - {dim}) for name, mask in detector.masks.items()
-    }
-
     # Prefer a bin coord over an event coord because this makes the behavior for binned
     # and histogrammed data consistent. If we used an event coord, we might allow a
     # monitor range that is less than the detector bins which is fine for the events,
     # but would be wrong if the detector was subsequently histogrammed.
     if (det_coord := detector.coords.get(dim)) is not None:
-        lo = sc.DataArray(det_coord[dim, :-1], masks=masks).nanmin().data
-        hi = sc.DataArray(det_coord[dim, 1:], masks=masks).nanmax().data
+        lo = det_coord[dim, :-1].nanmin()
+        hi = det_coord[dim, 1:].nanmax()
     elif (det_coord := detector.bins.coords.get(dim)) is not None:
-        lo = sc.DataArray(det_coord, masks=masks).nanmin().data
-        hi = sc.DataArray(det_coord, masks=masks).nanmax().data
+        lo = det_coord.nanmin()
+        hi = det_coord.nanmax()
     else:
         raise sc.CoordError(
             f"Missing '{dim}' coordinate in detector for monitor normalization."
@@ -200,14 +164,6 @@ def _clip_monitor_to_detector_range(
             f"({monitor.coords[dim].min():c} to {monitor.coords[dim].max():c}) "
             f"is smaller than the range of the detector ({lo:c} to {hi:c})."
         )
-
-    if detector.bins is None:
-        # If we didn't rebin to the detector coord here, then, for a finer monitor
-        # binning than detector, the lookup table would extract one monitor value for
-        # each detector bin and ignore other values lying in the same detector bin.
-        # But integration would pick up all monitor bins.
-        return monitor.rebin({dim: det_coord})
-    return monitor[dim, lo:hi]
 
 
 def _mask_detector_for_norm(
