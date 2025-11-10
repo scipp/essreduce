@@ -96,11 +96,13 @@ def normalize_by_monitor_integrated(
 
     .. math::
 
-        d_i^\\text{Norm} &= d_i / M \\\\
-        M &= \\sum_j\\, m_j (x_{j+1} - x_j)\\,,
+        d_i^\\text{Norm} = \\frac{d_i}{\\sum_j\\, m_j}
 
-    where :math:`m_j` is the monitor counts in bin :math:`j` and
-    :math:`x_j` is the lower bin edge of that bin.
+    where :math:`m_j` is the monitor counts in bin :math:`j`.
+    Note that this is not a true integral but only a sum over monitor events.
+
+    The result depends on the range of the monitor but not its
+    binning within that range.
 
     Parameters
     ----------
@@ -126,8 +128,7 @@ def normalize_by_monitor_integrated(
     """
     _check_monitor_range_contains_detector(monitor=monitor, detector=detector)
     detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
-    coord = monitor.coords[monitor.dim]
-    norm = (monitor * (coord[1:] - coord[:-1])).data.sum()
+    norm = monitor.data.sum()
     norm = broadcast_uncertainties(
         norm, prototype=detector, mode=uncertainty_broadcast_mode
     )
