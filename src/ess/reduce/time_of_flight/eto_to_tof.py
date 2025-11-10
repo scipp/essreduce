@@ -465,6 +465,26 @@ def detector_time_of_arrival_data(
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> ToaDetector[RunType]:
+    """
+    Convert the time-of-flight data to time-of-arrival data using a lookup table.
+    The output data will have a time-of-arrival coordinate.
+    The time-of-arrival is the time since the neutron was emitted from the source.
+    It is basically equal to event_time_offset + pulse_index * pulse_period.
+
+    Parameters
+    ----------
+    da:
+        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
+        NXevent_data.
+    lookup:
+        Lookup table giving time-of-flight as a function of distance and time of
+        arrival.
+    ltotal:
+        Total length of the flight path from the source to the detector.
+    pulse_stride_offset:
+        When pulse-skipping, the offset of the first pulse in the stride. This is
+        typically zero but can be a small integer < pulse_stride.
+    """
     if detector_data.bins is None:
         raise NotImplementedError(
             "Computing time-of-arrival in histogram mode is not implemented yet."
