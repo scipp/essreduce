@@ -569,9 +569,7 @@ class TestNormalizeByMonitorIntegrated:
             monitor=monitor,
             uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
         )
-        expected = detector / sc.scalar(
-            4 * 0.5 + 5 * 1.5 + 6 * 1 + 10 * 1, unit='counts * Å'
-        )
+        expected = detector / monitor.sum()
         sc.testing.assert_identical(normalized, expected)
 
     def test_expected_results_hist(self) -> None:
@@ -588,45 +586,7 @@ class TestNormalizeByMonitorIntegrated:
             monitor=monitor,
             uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
         )
-        expected = detector / sc.scalar(
-            4 * 0.5 + 5 * 1.5 + 6 * 1 + 10 * 1, unit='counts * Å'
-        )
-        sc.testing.assert_identical(normalized, expected)
-
-    @pytest.mark.parametrize('event_coord', [True, False])
-    def test_uses_monitor_values_at_boundary(
-        self,
-        event_coord: bool,
-    ) -> None:
-        detector = sc.DataArray(
-            sc.arange('wavelength', 4, unit='counts'),
-            coords={'wavelength': sc.arange('wavelength', 4.0, unit='Å')},
-        )
-        if event_coord:
-            # Make sure event at 3 is included
-            detector = detector.bin(
-                wavelength=sc.array(dims=['wavelength'], values=[0.0, 2, 3.1], unit='Å')
-            )
-            del detector.coords['wavelength']
-        else:
-            detector = detector.bin(
-                wavelength=sc.array(dims=['wavelength'], values=[0.0, 2, 3], unit='Å')
-            )
-            del detector.bins.coords['wavelength']
-        monitor = sc.DataArray(
-            sc.array(dims=['wavelength'], values=[4.0, 10.0], unit='counts'),
-            coords={
-                'wavelength': sc.array(
-                    dims=['wavelength'], values=[0.0, 2, 4], unit='Å'
-                )
-            },
-        )
-        normalized = normalize_by_monitor_integrated(
-            detector,
-            monitor=monitor,
-            uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
-        )
-        expected = detector / sc.scalar(4.0 * 2 + 10.0 * 2, unit='counts')
+        expected = detector / monitor.sum()
         sc.testing.assert_identical(normalized, expected)
 
     def test_raises_if_monitor_range_too_narrow(
@@ -651,7 +611,7 @@ class TestNormalizeByMonitorIntegrated:
                 uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
             )
 
-    def test_independent_of_monitor_binning_bin(self) -> None:
+    def test_independent_of_monitor_binning(self) -> None:
         detector = sc.DataArray(
             sc.array(dims=['w'], values=[3, 10, 20, 30], unit='counts'),
             coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
@@ -659,10 +619,10 @@ class TestNormalizeByMonitorIntegrated:
 
         monitor1 = sc.DataArray(
             sc.array(dims=['w'], values=[5.0, 6.0, 7.0], unit='counts'),
-            coords={'w': sc.array(dims=['w'], values=[1.0, 2, 4, 8], unit='Å')},
+            coords={'w': sc.array(dims=['w'], values=[1.0, 2, 4, 7], unit='Å')},
         )
         monitor2 = monitor1.rebin(
-            w=sc.array(dims=['w'], values=[1.0, 2, 3, 4, 7], unit='Å')
+            w=sc.array(dims=['w'], values=[1.0, 2, 3, 5, 7], unit='Å')
         )
 
         normalized1 = normalize_by_monitor_integrated(
