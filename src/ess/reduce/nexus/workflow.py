@@ -683,7 +683,7 @@ def LoadMonitorWorkflow(
     wf = sciline.Pipeline(
         (*_common_providers, *_monitor_providers),
         constraints=_gather_constraints(
-            run_types=run_types, monitor_types=monitor_types
+            run_types=run_types, monitor_types=monitor_types, component_types=[]
         ),
     )
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)
@@ -691,15 +691,13 @@ def LoadMonitorWorkflow(
 
 
 def LoadDetectorWorkflow(
-    *,
-    run_types: Iterable[sciline.typing.Key],
-    monitor_types: Iterable[sciline.typing.Key],
+    *, run_types: Iterable[sciline.typing.Key]
 ) -> sciline.Pipeline:
     """Generic workflow for loading detector data from a NeXus file."""
     wf = sciline.Pipeline(
         (*_common_providers, *_detector_providers),
         constraints=_gather_constraints(
-            run_types=run_types, monitor_types=monitor_types
+            run_types=run_types, monitor_types=[], component_types=[]
         ),
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
@@ -711,6 +709,7 @@ def GenericNeXusWorkflow(
     *,
     run_types: Iterable[sciline.typing.Key],
     monitor_types: Iterable[sciline.typing.Key],
+    component_types: Iterable[sciline.typing.Key] | None = None,
 ) -> sciline.Pipeline:
     """
     Generic workflow for loading detector and monitor data from a NeXus file.
@@ -735,6 +734,9 @@ def GenericNeXusWorkflow(
         List of monitor types to include in the workflow.
         Constrains the possible values of :class:`ess.reduce.nexus.types.MonitorType`
         and :class:`ess.reduce.nexus.types.Component`.
+    component_types:
+        Additional component types to include in the workflow.
+        Constrains the possible values of :class:`ess.reduce.nexus.types.Component`.
 
     Returns
     -------
@@ -750,7 +752,9 @@ def GenericNeXusWorkflow(
             *_metadata_providers,
         ),
         constraints=_gather_constraints(
-            run_types=run_types, monitor_types=monitor_types
+            run_types=run_types,
+            monitor_types=monitor_types,
+            component_types=[] if component_types is None else component_types,
         ),
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
@@ -763,11 +767,12 @@ def _gather_constraints(
     *,
     run_types: Iterable[sciline.typing.Key],
     monitor_types: Iterable[sciline.typing.Key],
+    component_types: Iterable[sciline.typing.Key],
 ) -> dict[TypeVar, Iterable[type]]:
     mon = tuple(iter(monitor_types))
     constraints = {
         RunType: run_types,
         MonitorType: mon,
-        Component: (*COMPONENT_CONSTRAINTS, *mon),
+        Component: (*COMPONENT_CONSTRAINTS, *mon, *component_types),
     }
     return constraints
