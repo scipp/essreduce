@@ -39,6 +39,7 @@ class TofDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
 
 class ToaDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
     """Detector data with time-of-arrival coordinate.
+
     When the pulse stride is 1 (i.e., no pulse skipping), the time-of-arrival is the
     same as the event_time_offset. When pulse skipping is used, the time-of-arrival is
     the event_time_offset + pulse_offset * pulse_period.
