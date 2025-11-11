@@ -4,11 +4,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+import sciline as sl
 import scipp as sc
 import scippnexus as snx
 from scipp.testing import assert_identical
 
-from ess.reduce.nexus import compute_component_position, workflow
+from ess.reduce.nexus import compute_component_position, load_component, workflow
 from ess.reduce.nexus.types import (
     BackgroundRun,
     Beamline,
@@ -773,6 +774,56 @@ def test_generic_nexus_workflow_includes_only_given_monitor_types() -> None:
 
 
 def assert_not_contains_type_arg(node: object, excluded: set[type]) -> None:
-    assert not any(
-        arg in excluded for arg in getattr(node, "__args__", ())
-    ), f"Node {node} contains one of {excluded!r}"
+    assert not any(arg in excluded for arg in getattr(node, "__args__", ())), (
+        f"Node {node} contains one of {excluded!r}"
+    )
+
+
+def test_generic_nexus_workflow_load_custom_component_user_affiliation(
+    loki_tutorial_sample_run_60250: Path,
+) -> None:
+    # Load a component in one of the top-level entries
+
+    class UserAffiliation(sl.Scope[RunType, str], str):
+        """User affiliation."""
+
+    def load_user_affiliation(
+        location: NeXusComponentLocationSpec[UserAffiliation, RunType],
+    ) -> UserAffiliation[RunType]:
+        return UserAffiliation[RunType](
+            load_component(location, nx_class=snx.NXuser)['affiliation']
+        )
+
+    wf = GenericNeXusWorkflow(
+        run_types=[SampleRun], monitor_types=[], component_types=[UserAffiliation]
+    )
+    wf.insert(load_user_affiliation)
+    wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
+    wf[NeXusName[UserAffiliation]] = '/entry/user_0'
+    affiliation = wf.compute(UserAffiliation[SampleRun])
+    assert affiliation == 'ESS'
+
+
+def test_generic_nexus_workflow_load_custom_component_source_name(
+    loki_tutorial_sample_run_60250: Path,
+) -> None:
+    # Load a component inside the instrument entry
+
+    class SourceName(sl.Scope[RunType, str], str):
+        """Source name."""
+
+    def load_source_name(
+        location: NeXusComponentLocationSpec[SourceName, RunType],
+    ) -> SourceName[RunType]:
+        return SourceName[RunType](
+            load_component(location, nx_class=snx.NXsource)['name']
+        )
+
+    wf = GenericNeXusWorkflow(
+        run_types=[SampleRun], monitor_types=[], component_types=[SourceName]
+    )
+    wf.insert(load_source_name)
+    wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
+    wf[NeXusName[SourceName]] = '/entry/instrument/source'
+    source_name = wf.compute(SourceName[SampleRun])
+    assert source_name == 'moderator'
