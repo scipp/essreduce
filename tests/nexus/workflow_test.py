@@ -578,7 +578,7 @@ def test_load_histogram_monitor_workflow(dream_coda_test_file: Path) -> None:
 
 
 def test_load_detector_workflow(loki_tutorial_sample_run_60250: Path) -> None:
-    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf = LoadDetectorWorkflow(run_types=[SampleRun])
     wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
     wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     da = wf.compute(RawDetector[SampleRun])
@@ -588,7 +588,7 @@ def test_load_detector_workflow(loki_tutorial_sample_run_60250: Path) -> None:
 
 
 def test_load_histogram_detector_workflow(tbl_commissioning_orca_file: Path) -> None:
-    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf = LoadDetectorWorkflow(run_types=[SampleRun])
     wf[Filename[SampleRun]] = tbl_commissioning_orca_file
     wf[NeXusName[snx.NXdetector]] = 'orca_detector'
     da = wf.compute(RawDetector[SampleRun])
@@ -601,7 +601,7 @@ def test_load_histogram_detector_workflow(tbl_commissioning_orca_file: Path) -> 
 def test_load_empty_histogram_detector_workflow(
     tbl_commissioning_orca_file: Path,
 ) -> None:
-    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf = LoadDetectorWorkflow(run_types=[SampleRun])
     wf[Filename[SampleRun]] = tbl_commissioning_orca_file
     wf[NeXusName[snx.NXdetector]] = 'orca_detector'
     da = wf.compute(EmptyDetector[SampleRun])
