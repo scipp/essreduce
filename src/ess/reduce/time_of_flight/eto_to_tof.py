@@ -497,6 +497,7 @@ def detector_time_of_arrival_data(
     )
     parts = detector_data.bins.constituents
     parts["data"] = inputs["eto"]
+    # The pulse index is None if pulse_stride == 1 (i.e., no pulse skipping)
     if inputs["pulse_index"] is not None:
         parts["data"] = parts["data"] + inputs["pulse_index"] * inputs["pulse_period"]
     result = detector_data.bins.assign_coords(
