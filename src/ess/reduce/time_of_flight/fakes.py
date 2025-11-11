@@ -56,7 +56,7 @@ class FakeBeamline:
                 else tof_pkg.Clockwise,
                 open=ch.slit_begin,
                 close=ch.slit_end,
-                phase=abs(ch.phase),
+                phase=ch.phase if ch.frequency.value > 0.0 else -ch.phase,
                 distance=sc.norm(ch.axle_position - source_position),
                 name=name,
             )
