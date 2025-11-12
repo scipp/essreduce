@@ -507,7 +507,7 @@ def detector_time_of_arrival_data(
     result = detector_data.bins.assign_coords(
         toa=sc.bins(**parts, validate_indices=False)
     )
-    return result
+    return ToaDetector[RunType](result)
 
 
 def providers() -> tuple[Callable]:
