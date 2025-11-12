@@ -376,7 +376,20 @@ def make_tof_lookup_table(
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
 
-    return TimeOfFlightLookupTable(table)
+    out = sc.DataGroup(
+        {
+            "data": table,
+            "pulse_period": pulse_period,
+            "pulse_stride": sc.scalar(pulse_stride, unit=None),
+            "distance_resolution": table.coords["distance"][1]
+            - table.coords["distance"][0],
+            "time_resolution": table.coords["event_time_offset"][1]
+            - table.coords["event_time_offset"][0],
+            "error_threshold": sc.scalar(error_threshold),
+        }
+    )
+
+    return TimeOfFlightLookupTable(out)
 
 
 def simulate_chopper_cascade_using_tof(
@@ -413,20 +426,7 @@ def simulate_chopper_cascade_using_tof(
     import tof
 
     tof_choppers = [
-        tof.Chopper(
-            frequency=abs(ch.frequency),
-            direction=tof.AntiClockwise
-            if (ch.frequency.value > 0.0)
-            else tof.Clockwise,
-            open=ch.slit_begin,
-            close=ch.slit_end,
-            phase=ch.phase if ch.frequency.value > 0.0 else -ch.phase,
-            distance=sc.norm(
-                ch.axle_position - source_position.to(unit=ch.axle_position.unit)
-            ),
-            name=name,
-        )
-        for name, ch in choppers.items()
+        tof.Chopper.from_diskchopper(ch, name=name) for name, ch in choppers.items()
     ]
     source = tof.Source(
         facility=facility, neutrons=neutrons, pulses=pulse_stride, seed=seed

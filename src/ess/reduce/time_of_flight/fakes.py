@@ -49,17 +49,7 @@ class FakeBeamline:
 
         # Convert the choppers to tof.Chopper
         self.choppers = [
-            tof_pkg.Chopper(
-                frequency=abs(ch.frequency),
-                direction=tof_pkg.AntiClockwise
-                if (ch.frequency.value > 0.0)
-                else tof_pkg.Clockwise,
-                open=ch.slit_begin,
-                close=ch.slit_end,
-                phase=ch.phase if ch.frequency.value > 0.0 else -ch.phase,
-                distance=sc.norm(ch.axle_position - source_position),
-                name=name,
-            )
+            tof_pkg.Chopper.from_diskchopper(ch, name=name)
             for name, ch in choppers.items()
         ]
 
