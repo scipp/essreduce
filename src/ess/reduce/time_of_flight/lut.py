@@ -425,9 +425,14 @@ def simulate_chopper_cascade_using_tof(
     """
     import tof
 
-    tof_choppers = [
-        tof.Chopper.from_diskchopper(ch, name=name) for name, ch in choppers.items()
-    ]
+    tof_choppers = []
+    for name, ch in choppers.items():
+        chop = tof.Chopper.from_diskchopper(ch, name=name)
+        chop.distance = sc.norm(
+            ch.axle_position - source_position.to(unit=ch.axle_position.unit)
+        )
+        tof_choppers.append(chop)
+
     source = tof.Source(
         facility=facility, neutrons=neutrons, pulses=pulse_stride, seed=seed
     )
