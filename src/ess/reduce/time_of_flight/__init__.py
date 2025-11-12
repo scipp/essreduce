@@ -28,6 +28,7 @@ from .types import (
     PulseStrideOffset,
     TimeOfFlightLookupTable,
     TimeOfFlightLookupTableFilename,
+    ToaDetector,
     TofDetector,
     TofMonitor,
 )
@@ -51,6 +52,7 @@ __all__ = [
     "TimeOfFlightLookupTable",
     "TimeOfFlightLookupTableFilename",
     "TimeResolution",
+    "ToaDetector",
     "TofDetector",
     "TofLookupTableWorkflow",
     "TofMonitor",

@@ -9,7 +9,12 @@ from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
 from ess.reduce.nexus.types import AnyRun, RawDetector, SampleRun
-from ess.reduce.time_of_flight import GenericTofWorkflow, TofLookupTableWorkflow, fakes
+from ess.reduce.time_of_flight import (
+    GenericTofWorkflow,
+    PulsePeriod,
+    TofLookupTableWorkflow,
+    fakes,
+)
 
 sl = pytest.importorskip("sciline")
 
@@ -441,3 +446,63 @@ def test_unwrap_int(dtype, lut_workflow_psc_choppers) -> None:
     _validate_result_events(
         tofs=tofs, ref=ref, percentile=100, diff_threshold=0.02, rtol=0.05
     )
+
+
+def test_compute_toa():
+    distance = sc.scalar(80.0, unit="m")
+    choppers = fakes.psc_choppers()
+
+    lut_wf = make_lut_workflow(
+        choppers=choppers, neutrons=500_000, seed=1234, pulse_stride=1
+    )
+
+    pl, _ = _make_workflow_event_mode(
+        distance=distance,
+        choppers=choppers,
+        lut_workflow=lut_wf,
+        seed=2,
+        pulse_stride_offset=0,
+        error_threshold=0.1,
+    )
+
+    toas = pl.compute(time_of_flight.ToaDetector[SampleRun])
+
+    assert "toa" in toas.bins.coords
+    raw = pl.compute(RawDetector[SampleRun])
+    assert sc.allclose(toas.bins.coords["toa"], raw.bins.coords["event_time_offset"])
+
+
+def test_compute_toa_pulse_skipping():
+    distance = sc.scalar(100.0, unit="m")
+    choppers = fakes.pulse_skipping_choppers()
+
+    lut_wf = make_lut_workflow(
+        choppers=choppers, neutrons=500_000, seed=1234, pulse_stride=2
+    )
+
+    pl, _ = _make_workflow_event_mode(
+        distance=distance,
+        choppers=choppers,
+        lut_workflow=lut_wf,
+        seed=2,
+        pulse_stride_offset=1,
+        error_threshold=0.1,
+    )
+
+    raw = pl.compute(RawDetector[SampleRun])
+
+    toas = pl.compute(time_of_flight.ToaDetector[SampleRun])
+
+    assert "toa" in toas.bins.coords
+    pulse_period = lut_wf.compute(PulsePeriod)
+    hist = toas.bins.concat().hist(
+        toa=sc.array(
+            dims=["toa"],
+            values=[0, pulse_period.value, pulse_period.value * 2],
+            unit=pulse_period.unit,
+        ).to(unit=toas.bins.coords["toa"].unit)
+    )
+    # There should be counts in both bins
+    n = raw.sum().value
+    assert hist.data[0].value > n / 5
+    assert hist.data[1].value > n / 5
