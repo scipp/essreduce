@@ -43,6 +43,8 @@ class SimulationResults:
         For a ``tof`` simulation, this is just the position of the detector where the
         events are recorded. For a ``McStas`` simulation, this is the distance between
         the source and the event monitor.
+    choppers:
+        The parameters of the choppers used in the simulation (if any).
     """
 
     time_of_arrival: sc.Variable
@@ -50,6 +52,7 @@ class SimulationResults:
     wavelength: sc.Variable
     weight: sc.Variable
     distance: sc.Variable
+    choppers: DiskChoppers[AnyRun] | None = None
 
 
 NumberOfSimulatedNeutrons = NewType("NumberOfSimulatedNeutrons", int)
@@ -389,6 +392,13 @@ def make_tof_lookup_table(
         }
     )
 
+    if simulation.choppers is not None:
+        out['choppers'] = (
+            sc.DataGroup(
+                {k: sc.DataGroup(ch.as_dict()) for k, ch in simulation.choppers.items()}
+            ),
+        )
+
     return TimeOfFlightLookupTable(out)
 
 
@@ -459,6 +469,7 @@ def simulate_chopper_cascade_using_tof(
         wavelength=events.coords["wavelength"],
         weight=events.data,
         distance=furthest_chopper.distance,
+        choppers=choppers,
     )
 
 
