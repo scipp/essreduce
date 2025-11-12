@@ -12,7 +12,7 @@ TimeOfFlightLookupTableFilename = NewType("TimeOfFlightLookupTableFilename", str
 """Filename of the time-of-flight lookup table."""
 
 
-TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataArray)
+TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataGroup)
 """
 Lookup table giving time-of-flight as a function of distance and time of arrival.
 """
