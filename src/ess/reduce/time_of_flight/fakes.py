@@ -48,20 +48,13 @@ class FakeBeamline:
             self.source = source(pulses=self.npulses)
 
         # Convert the choppers to tof.Chopper
-        self.choppers = [
-            tof_pkg.Chopper(
-                frequency=abs(ch.frequency),
-                direction=tof_pkg.AntiClockwise
-                if (ch.frequency.value > 0.0)
-                else tof_pkg.Clockwise,
-                open=ch.slit_begin,
-                close=ch.slit_end,
-                phase=ch.phase if ch.frequency.value > 0.0 else -ch.phase,
-                distance=sc.norm(ch.axle_position - source_position),
-                name=name,
+        self.choppers = []
+        for name, ch in choppers.items():
+            chop = tof_pkg.Chopper.from_diskchopper(ch, name=name)
+            chop.distance = sc.norm(
+                ch.axle_position - source_position.to(unit=ch.axle_position.unit)
             )
-            for name, ch in choppers.items()
-        ]
+            self.choppers.append(chop)
 
         # Add detectors
         self.monitors = [
