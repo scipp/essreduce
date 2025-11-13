@@ -393,10 +393,8 @@ def make_tof_lookup_table(
     )
 
     if simulation.choppers is not None:
-        out['choppers'] = (
-            sc.DataGroup(
-                {k: sc.DataGroup(ch.as_dict()) for k, ch in simulation.choppers.items()}
-            ),
+        out['choppers'] = sc.DataGroup(
+            {k: sc.DataGroup(ch.as_dict()) for k, ch in simulation.choppers.items()}
         )
 
     return TimeOfFlightLookupTable(out)
