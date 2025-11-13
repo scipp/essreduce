@@ -30,6 +30,7 @@
    live
    logging
    nexus
+   normalization
    streaming
    time_of_flight
    ui
