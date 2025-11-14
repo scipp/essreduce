@@ -46,7 +46,8 @@ NoLockingIfNeeded = NoLockingIfNeededType()
 def load_field(
     filename: NeXusFileSpec,
     field_path: str,
-) -> sc.Variable:
+    selection: snx.typing.ScippIndex | slice = (),
+) -> sc.Variable | sc.DataArray:
     """Load a single field from a NeXus file.
 
     Parameters
@@ -55,20 +56,23 @@ def load_field(
         Path of the file to load from.
     field_path:
         Path of the field within the NeXus file.
+    selection:
+        Selection to apply to the field.
 
     Returns
     -------
     :
-        The loaded field as a variable.
+        The loaded field as a variable or data array.
     """
     with open_nexus_file(filename.value) as f:
         field = f[field_path]
-        return cast(sc.Variable, field)
+        return cast(sc.Variable | sc.DataArray, field[selection])
 
 
 def load_group(
     filename: NeXusFileSpec,
     group_path: str,
+    selection: snx.typing.ScippIndex | slice = (),
 ) -> sc.DataGroup:
     """Load a single group from a NeXus file.
 
@@ -78,6 +82,8 @@ def load_group(
         Path of the file to load from.
     group_path:
         Path of the group within the NeXus file.
+    selection:
+        Selection to apply to the group.
 
     Returns
     -------
@@ -86,7 +92,7 @@ def load_group(
     """
     with open_nexus_file(filename.value) as f:
         group = f[group_path]
-        return cast(sc.DataGroup, group)
+        return cast(sc.DataGroup, group[selection])
 
 
 def load_component(
