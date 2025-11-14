@@ -36,6 +36,7 @@ from .types import (
     MonitorLtotal,
     PulseStrideOffset,
     TimeOfFlightLookupTable,
+    ToaDetector,
     TofDetector,
     TofMonitor,
 )
@@ -196,12 +197,32 @@ def _guess_pulse_stride_offset(
     return sorted(tofs, key=lambda x: sc.isnan(tofs[x]).sum())[0]
 
 
-def _time_of_flight_data_events(
+def _prepare_tof_interpolation_inputs(
     da: sc.DataArray,
     lookup: sc.DataArray,
     ltotal: sc.Variable,
-    pulse_stride_offset: int,
-) -> sc.DataArray:
+    pulse_stride_offset: int | None,
+) -> dict:
+    """
+    Prepare the inputs required for the time-of-flight interpolation.
+    This function is used when computing the time-of-flight for event data, and for
+    computing the time-of-arrival for event data (as they both require guessing the
+    pulse_stride_offset if not provided).
+
+    Parameters
+    ----------
+    da:
+        Data array with event data.
+    lookup:
+        Lookup table giving time-of-flight as a function of distance and time of
+        arrival.
+    ltotal:
+        Total length of the flight path from the source to the detector.
+    pulse_stride_offset:
+        When pulse-skipping, the offset of the first pulse in the stride. This is
+        typically zero but can be a small integer < pulse_stride.
+        If None, a guess is made.
+    """
     etos = da.bins.coords["event_time_offset"].to(dtype=float, copy=False)
     eto_unit = elem_unit(etos)
 
@@ -259,12 +280,34 @@ def _time_of_flight_data_events(
         pulse_index += pulse_stride_offset
         pulse_index %= pulse_stride
 
-    # Compute time-of-flight for all neutrons using the interpolator
-    tofs = interp(
+    return {
+        "eto": etos,
+        "pulse_index": pulse_index,
+        "pulse_period": pulse_period,
+        "interp": interp,
+        "ltotal": ltotal,
+    }
+
+
+def _time_of_flight_data_events(
+    da: sc.DataArray,
+    lookup: sc.DataArray,
+    ltotal: sc.Variable,
+    pulse_stride_offset: int | None,
+) -> sc.DataArray:
+    inputs = _prepare_tof_interpolation_inputs(
+        da=da,
+        lookup=lookup,
         ltotal=ltotal,
-        event_time_offset=etos,
-        pulse_index=pulse_index,
-        pulse_period=pulse_period,
+        pulse_stride_offset=pulse_stride_offset,
+    )
+
+    # Compute time-of-flight for all neutrons using the interpolator
+    tofs = inputs["interp"](
+        ltotal=inputs["ltotal"],
+        event_time_offset=inputs["eto"],
+        pulse_index=inputs["pulse_index"],
+        pulse_period=inputs["pulse_period"],
     )
 
     parts = da.bins.constituents
@@ -416,6 +459,53 @@ def monitor_time_of_flight_data(
     )
 
 
+def detector_time_of_arrival_data(
+    detector_data: RawDetector[RunType],
+    lookup: TimeOfFlightLookupTable,
+    ltotal: DetectorLtotal[RunType],
+    pulse_stride_offset: PulseStrideOffset,
+) -> ToaDetector[RunType]:
+    """
+    Convert the time-of-flight data to time-of-arrival data using a lookup table.
+    The output data will have a time-of-arrival coordinate.
+    The time-of-arrival is the time since the neutron was emitted from the source.
+    It is basically equal to event_time_offset + pulse_index * pulse_period.
+
+    Parameters
+    ----------
+    da:
+        Raw detector data loaded from a NeXus file, e.g., NXdetector containing
+        NXevent_data.
+    lookup:
+        Lookup table giving time-of-flight as a function of distance and time of
+        arrival.
+    ltotal:
+        Total length of the flight path from the source to the detector.
+    pulse_stride_offset:
+        When pulse-skipping, the offset of the first pulse in the stride. This is
+        typically zero but can be a small integer < pulse_stride.
+    """
+    if detector_data.bins is None:
+        raise NotImplementedError(
+            "Computing time-of-arrival in histogram mode is not implemented yet."
+        )
+    inputs = _prepare_tof_interpolation_inputs(
+        da=detector_data,
+        lookup=lookup,
+        ltotal=ltotal,
+        pulse_stride_offset=pulse_stride_offset,
+    )
+    parts = detector_data.bins.constituents
+    parts["data"] = inputs["eto"]
+    # The pulse index is None if pulse_stride == 1 (i.e., no pulse skipping)
+    if inputs["pulse_index"] is not None:
+        parts["data"] = parts["data"] + inputs["pulse_index"] * inputs["pulse_period"]
+    result = detector_data.bins.assign_coords(
+        toa=sc.bins(**parts, validate_indices=False)
+    )
+    return result
+
+
 def providers() -> tuple[Callable]:
     """
     Providers of the time-of-flight workflow.
@@ -425,4 +515,5 @@ def providers() -> tuple[Callable]:
         monitor_time_of_flight_data,
         detector_ltotal_from_straight_line_approximation,
         monitor_ltotal_from_straight_line_approximation,
+        detector_time_of_arrival_data,
     )
