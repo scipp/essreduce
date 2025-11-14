@@ -21,6 +21,7 @@ from .types import (
     NeXusAllLocationSpec,
     NeXusEntryName,
     NeXusFile,
+    NeXusFileSpec,
     NeXusGroup,
     NeXusLocationSpec,
 )
@@ -40,6 +41,52 @@ class NoLockingIfNeededType:
 
 
 NoLockingIfNeeded = NoLockingIfNeededType()
+
+
+def load_field(
+    filename: NeXusFileSpec,
+    field_path: str,
+) -> sc.Variable:
+    """Load a single field from a NeXus file.
+
+    Parameters
+    ----------
+    filename:
+        Path of the file to load from.
+    field_path:
+        Path of the field within the NeXus file.
+
+    Returns
+    -------
+    :
+        The loaded field as a variable.
+    """
+    with open_nexus_file(filename.value) as f:
+        field = f[field_path]
+        return cast(sc.Variable, field)
+
+
+def load_group(
+    filename: NeXusFileSpec,
+    group_path: str,
+) -> sc.DataGroup:
+    """Load a single group from a NeXus file.
+
+    Parameters
+    ----------
+    filename:
+        Path of the file to load from.
+    group_path:
+        Path of the group within the NeXus file.
+
+    Returns
+    -------
+    :
+        The loaded group as a data group.
+    """
+    with open_nexus_file(filename.value) as f:
+        group = f[group_path]
+        return cast(sc.DataGroup, group)
 
 
 def load_component(

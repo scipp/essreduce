@@ -9,7 +9,12 @@ import scipp as sc
 import scippnexus as snx
 from scipp.testing import assert_identical
 
-from ess.reduce.nexus import compute_component_position, load_component, workflow
+from ess.reduce.nexus import (
+    compute_component_position,
+    load_component,
+    load_field,
+    workflow,
+)
 from ess.reduce.nexus.types import (
     BackgroundRun,
     Beamline,
@@ -22,6 +27,7 @@ from ess.reduce.nexus.types import (
     Measurement,
     MonitorType,
     NeXusComponentLocationSpec,
+    NeXusFileSpec,
     NeXusName,
     NeXusTransformation,
     PreopenNeXusFile,
@@ -774,9 +780,9 @@ def test_generic_nexus_workflow_includes_only_given_monitor_types() -> None:
 
 
 def assert_not_contains_type_arg(node: object, excluded: set[type]) -> None:
-    assert not any(
-        arg in excluded for arg in getattr(node, "__args__", ())
-    ), f"Node {node} contains one of {excluded!r}"
+    assert not any(arg in excluded for arg in getattr(node, "__args__", ())), (
+        f"Node {node} contains one of {excluded!r}"
+    )
 
 
 def test_generic_nexus_workflow_load_custom_component_user_affiliation(
@@ -788,18 +794,18 @@ def test_generic_nexus_workflow_load_custom_component_user_affiliation(
         """User affiliation."""
 
     def load_user_affiliation(
-        location: NeXusComponentLocationSpec[UserAffiliation, RunType],
+        file: NeXusFileSpec[RunType],
+        path: NeXusName[UserAffiliation[RunType]],
     ) -> UserAffiliation[RunType]:
-        return UserAffiliation[RunType](
-            load_component(location, nx_class=snx.NXuser)['affiliation']
-        )
+        return UserAffiliation[RunType](load_field(file, path))
 
     wf = GenericNeXusWorkflow(
-        run_types=[SampleRun], monitor_types=[], component_types=[UserAffiliation]
+        run_types=[SampleRun],
+        monitor_types=[],  # component_types=[UserAffiliation]
     )
     wf.insert(load_user_affiliation)
     wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
-    wf[NeXusName[UserAffiliation]] = '/entry/user_0'
+    wf[NeXusName[UserAffiliation[SampleRun]]] = '/entry/user_0/affiliation'
     affiliation = wf.compute(UserAffiliation[SampleRun])
     assert affiliation == 'ESS'
 

@@ -20,6 +20,7 @@ from ._nexus_loader import (
     load_all_components,
     load_component,
     load_data,
+    load_field,
     open_component_group,
     open_nexus_file,
 )
@@ -33,6 +34,7 @@ __all__ = [
     'load_all_components',
     'load_component',
     'load_data',
+    'load_field',
     'open_component_group',
     'open_nexus_file',
     'types',
