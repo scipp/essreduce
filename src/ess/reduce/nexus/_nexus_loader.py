@@ -8,7 +8,7 @@ from collections.abc import Generator, Mapping
 from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import dataclass
 from math import prod
-from typing import TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import scipp as sc
 import scippnexus as snx
@@ -47,7 +47,7 @@ def load_field(
     filename: NeXusFileSpec,
     field_path: str,
     selection: snx.typing.ScippIndex | slice = (),
-) -> sc.Variable | sc.DataArray:
+) -> Any:
     """Load a single field from a NeXus file.
 
     Parameters
@@ -66,7 +66,7 @@ def load_field(
     """
     with open_nexus_file(filename.value) as f:
         field = f[field_path]
-        return cast(sc.Variable | sc.DataArray, field[selection])
+        return field[selection]
 
 
 def load_group(
