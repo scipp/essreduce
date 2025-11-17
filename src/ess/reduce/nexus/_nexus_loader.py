@@ -21,7 +21,6 @@ from .types import (
     NeXusAllLocationSpec,
     NeXusEntryName,
     NeXusFile,
-    NeXusFileSpec,
     NeXusGroup,
     NeXusLocationSpec,
 )
@@ -44,55 +43,47 @@ NoLockingIfNeeded = NoLockingIfNeededType()
 
 
 def load_field(
-    filename: NeXusFileSpec,
-    field_path: str,
-    selection: snx.typing.ScippIndex | slice = (),
+    location: NeXusLocationSpec,
+    definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
 ) -> Any:
     """Load a single field from a NeXus file.
 
     Parameters
     ----------
-    filename:
-        Path of the file to load from.
-    field_path:
-        Path of the field within the NeXus file.
-    selection:
-        Selection to apply to the field.
+    location:
+        Location of the field within the NeXus file (filename, entry name, selection).
+    definitions:
+        Application definitions to use for the file.
 
     Returns
     -------
     :
-        The loaded field as a variable or data array.
+        The loaded field (as a variable, data array, or raw python object).
     """
-    with open_nexus_file(filename.value) as f:
-        field = f[field_path]
-        return field[selection]
+    with open_nexus_file(location.filename, definitions=definitions) as f:
+        field = f[location.entry_name]
+        return field[location.selection]
 
 
 def load_group(
-    filename: NeXusFileSpec,
-    group_path: str,
-    selection: snx.typing.ScippIndex | slice = (),
+    location: NeXusLocationSpec,
+    definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
 ) -> sc.DataGroup:
     """Load a single group from a NeXus file.
 
     Parameters
     ----------
-    filename:
-        Path of the file to load from.
-    group_path:
-        Path of the group within the NeXus file.
-    selection:
-        Selection to apply to the group.
+    location:
+        Location of the group within the NeXus file (filename, entry name, selection).
 
     Returns
     -------
     :
         The loaded group as a data group.
     """
-    with open_nexus_file(filename.value) as f:
-        group = f[group_path]
-        return cast(sc.DataGroup, group[selection])
+    with open_nexus_file(location.filename, definitions=definitions) as f:
+        group = f[location.entry_name]
+        return cast(sc.DataGroup, group[location.selection])
 
 
 def load_component(

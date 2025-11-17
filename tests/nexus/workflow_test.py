@@ -28,6 +28,7 @@ from ess.reduce.nexus.types import (
     MonitorType,
     NeXusComponentLocationSpec,
     NeXusFileSpec,
+    NeXusLocationSpec,
     NeXusName,
     NeXusTransformation,
     PreopenNeXusFile,
@@ -795,7 +796,9 @@ def test_generic_nexus_workflow_load_custom_field_user_affiliation(
         file: NeXusFileSpec[RunType],
         path: NeXusName[UserAffiliation[RunType]],
     ) -> UserAffiliation[RunType]:
-        return UserAffiliation[RunType](load_field(file, path))
+        return UserAffiliation[RunType](
+            load_field(NeXusLocationSpec(filename=file.value, entry_name=path))
+        )
 
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf.insert(load_user_affiliation)
@@ -815,7 +818,9 @@ def test_generic_nexus_workflow_load_custom_group_user(
         file: NeXusFileSpec[RunType],
         path: NeXusName[UserInfo[RunType]],
     ) -> UserInfo[RunType]:
-        return UserInfo[RunType](load_group(file, path))
+        return UserInfo[RunType](
+            load_group(NeXusLocationSpec(filename=file.value, entry_name=path))
+        )
 
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf.insert(load_user_info)
