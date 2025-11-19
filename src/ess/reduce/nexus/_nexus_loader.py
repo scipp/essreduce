@@ -42,11 +42,11 @@ class NoLockingIfNeededType:
 NoLockingIfNeeded = NoLockingIfNeededType()
 
 
-def load_field(
+def load_from_path(
     location: NeXusLocationSpec,
     definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
 ) -> Any:
-    """Load a single field from a NeXus file.
+    """Load a field or group from a NeXus file given its location.
 
     Parameters
     ----------
@@ -58,32 +58,13 @@ def load_field(
     Returns
     -------
     :
-        The loaded field (as a variable, data array, or raw python object).
+        The loaded field (as a variable, data array, or raw python object) or group
+        (as a data group).
     """
     with open_nexus_file(location.filename, definitions=definitions) as f:
-        field = f[location.entry_name]
-        return field[location.selection]
-
-
-def load_group(
-    location: NeXusLocationSpec,
-    definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
-) -> sc.DataGroup:
-    """Load a single group from a NeXus file.
-
-    Parameters
-    ----------
-    location:
-        Location of the group within the NeXus file (filename, entry name, selection).
-
-    Returns
-    -------
-    :
-        The loaded group as a data group.
-    """
-    with open_nexus_file(location.filename, definitions=definitions) as f:
-        group = f[location.entry_name]
-        return cast(sc.DataGroup, group[location.selection])
+        entry = _unique_child_group(f, snx.NXentry, location.entry_name)
+        item = entry[location.component_name]
+        return item[location.selection]
 
 
 def load_component(

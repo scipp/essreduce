@@ -9,12 +9,7 @@ import scipp as sc
 import scippnexus as snx
 from scipp.testing import assert_identical
 
-from ess.reduce.nexus import (
-    compute_component_position,
-    load_field,
-    load_group,
-    workflow,
-)
+from ess.reduce.nexus import compute_component_position, load_from_path, workflow
 from ess.reduce.nexus.types import (
     BackgroundRun,
     Beamline,
@@ -781,9 +776,9 @@ def test_generic_nexus_workflow_includes_only_given_monitor_types() -> None:
 
 
 def assert_not_contains_type_arg(node: object, excluded: set[type]) -> None:
-    assert not any(
-        arg in excluded for arg in getattr(node, "__args__", ())
-    ), f"Node {node} contains one of {excluded!r}"
+    assert not any(arg in excluded for arg in getattr(node, "__args__", ())), (
+        f"Node {node} contains one of {excluded!r}"
+    )
 
 
 def test_generic_nexus_workflow_load_custom_field_user_affiliation(
@@ -793,17 +788,17 @@ def test_generic_nexus_workflow_load_custom_field_user_affiliation(
         """User affiliation."""
 
     def load_user_affiliation(
-        file: NeXusFileSpec[RunType],
-        path: NeXusName[UserAffiliation[RunType]],
+        file: NeXusFileSpec[RunType], path: NeXusName[UserAffiliation[RunType]]
     ) -> UserAffiliation[RunType]:
         return UserAffiliation[RunType](
-            load_field(NeXusLocationSpec(filename=file.value, entry_name=path))
+            load_from_path(NeXusLocationSpec(filename=file.value, component_name=path))
         )
 
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf.insert(load_user_affiliation)
     wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
-    wf[NeXusName[UserAffiliation[SampleRun]]] = '/entry/user_0/affiliation'
+    # Path is relative to the top-level '/entry'
+    wf[NeXusName[UserAffiliation[SampleRun]]] = 'user_0/affiliation'
     affiliation = wf.compute(UserAffiliation[SampleRun])
     assert affiliation == 'ESS'
 
@@ -815,17 +810,17 @@ def test_generic_nexus_workflow_load_custom_group_user(
         """User info."""
 
     def load_user_info(
-        file: NeXusFileSpec[RunType],
-        path: NeXusName[UserInfo[RunType]],
+        file: NeXusFileSpec[RunType], path: NeXusName[UserInfo[RunType]]
     ) -> UserInfo[RunType]:
         return UserInfo[RunType](
-            load_group(NeXusLocationSpec(filename=file.value, entry_name=path))
+            load_from_path(NeXusLocationSpec(filename=file.value, component_name=path))
         )
 
     wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
     wf.insert(load_user_info)
     wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
-    wf[NeXusName[UserInfo]] = '/entry/user_0'
+    # Path is relative to the top-level '/entry'
+    wf[NeXusName[UserInfo]] = 'user_0'
     user_info = wf.compute(UserInfo[SampleRun])
     assert user_info['affiliation'] == 'ESS'
     assert user_info['name'] == 'John Doe'
