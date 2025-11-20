@@ -128,7 +128,7 @@ def normalize_by_monitor_integrated(
     """
     _check_monitor_range_contains_detector(monitor=monitor, detector=detector)
     detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
-    norm = monitor.data.sum()
+    norm = monitor.nansum().data
     norm = broadcast_uncertainties(
         norm, prototype=detector, mode=uncertainty_broadcast_mode
     )
@@ -176,15 +176,28 @@ def _mask_detector_for_norm(
     This can lead to masking more events than strictly necessary if we
     used an event mask.
     """
+    dim = monitor.dim
+
     if (monitor_mask := _monitor_mask(monitor)) is None:
         return detector
 
-    # Use rebin to reshape the mask to the detector:
-    dim = monitor.dim
-    mask = sc.DataArray(monitor_mask, coords={dim: monitor.coords[dim]}).rebin(
-        {dim: detector.coords[dim]}
-    ).data != sc.scalar(0, unit=None)
-    return detector.assign_masks({"_monitor_mask": mask})
+    if (detector_coord := detector.coords.get(monitor.dim)) is not None:
+        # Apply the mask to the bins or a dense detector.
+        # Use rebin to reshape the mask to the detector.
+        mask = sc.DataArray(monitor_mask, coords={dim: monitor.coords[dim]}).rebin(
+            {dim: detector_coord}
+        ).data != sc.scalar(0, unit=None)
+        return detector.assign_masks({"_monitor_mask": mask})
+
+    # else: Apply the mask to the events.
+    if dim not in detector.bins.coords:
+        raise sc.CoordError(
+            f"Detector must have coordinate '{dim}' to mask by monitor."
+        )
+    event_mask = sc.lookup(
+        sc.DataArray(monitor_mask, coords={dim: monitor.coords[dim]})
+    )[detector.bins.coords[dim]]
+    return detector.bins.assign_masks({"_monitor_mask": event_mask})
 
 
 def _monitor_mask(monitor: sc.DataArray) -> sc.Variable | None:

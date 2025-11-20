@@ -463,6 +463,40 @@ class TestNormalizeByMonitorHistogram:
 
         sc.testing.assert_identical(normalized, expected)
 
+    def test_monitor_mask_different_bin_dim(self) -> None:
+        detector = sc.DataArray(
+            sc.array(dims=['e'], values=[0, 10, 20, 30], unit='counts'),
+            coords={
+                'w': sc.arange('e', 1.0, 5.0, unit='Å'),
+                'd': sc.array(dims=['e'], values=[0, 1, 0, 2]),
+            },
+        ).group('d')
+        monitor = sc.DataArray(
+            sc.array(dims=['w'], values=[5.0, 6.0, 7.0], unit='counts'),
+            coords={'w': sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å')},
+            masks={'m': sc.array(dims=['w'], values=[False, True, False])},
+        )
+        normalized = normalize_by_monitor_histogram(
+            detector,
+            monitor=monitor,
+            uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+        )
+
+        expected = sc.DataArray(
+            sc.array(dims=['e'], values=[0.0, 4, 0, 90 / 7], unit='counts'),
+            coords={
+                'w': sc.arange('e', 1.0, 5.0, unit='Å'),
+                'd': sc.array(dims=['e'], values=[0, 1, 0, 2]),
+            },
+            masks={
+                '_monitor_mask': sc.array(
+                    dims=['e'], values=[False, False, True, False]
+                )
+            },
+        ).group('d')
+
+        sc.testing.assert_allclose(normalized, expected)
+
     @pytest.mark.parametrize("nonfinite_value", [np.nan, np.inf])
     def test_nonfinite_in_monitor_gets_masked(
         self,
@@ -588,6 +622,42 @@ class TestNormalizeByMonitorIntegrated:
         )
         expected = detector / monitor.sum()
         sc.testing.assert_identical(normalized, expected)
+
+    def test_monitor_mask_different_bin_dim(self) -> None:
+        detector = sc.DataArray(
+            sc.array(dims=['e'], values=[0, 10, 20, 30], unit='counts'),
+            coords={
+                'w': sc.arange('e', 1.0, 5.0, unit='Å'),
+                'd': sc.array(dims=['e'], values=[0, 1, 0, 2]),
+            },
+        ).group('d')
+        monitor = sc.DataArray(
+            sc.array(dims=['w'], values=[5.0, 6.0, 7.0], unit='counts'),
+            coords={'w': sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å')},
+            masks={'m': sc.array(dims=['w'], values=[False, True, False])},
+        )
+        normalized = normalize_by_monitor_integrated(
+            detector,
+            monitor=monitor,
+            uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+        )
+
+        expected = sc.DataArray(
+            sc.array(
+                dims=['e'], values=[0 / 12, 10 / 12, 20 / 12, 30 / 12], unit='counts'
+            ),
+            coords={
+                'w': sc.arange('e', 1.0, 5.0, unit='Å'),
+                'd': sc.array(dims=['e'], values=[0, 1, 0, 2]),
+            },
+            masks={
+                '_monitor_mask': sc.array(
+                    dims=['e'], values=[False, False, True, False]
+                )
+            },
+        ).group('d')
+
+        sc.testing.assert_allclose(normalized, expected)
 
     def test_raises_if_monitor_range_too_narrow(
         self,
