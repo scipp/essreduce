@@ -533,6 +533,38 @@ class TestNormalizeByMonitorHistogram:
 
         sc.testing.assert_allclose(normalized, expected)
 
+    def test_zeros_in_monitor_get_masked(self) -> None:
+        detector = sc.DataArray(
+            sc.array(dims=['w'], values=[0, 10, 20, 30], unit='counts'),
+            coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+        ).bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+        monitor = sc.DataArray(
+            sc.array(dims=['w'], values=[0.0, 0.0, 7.0], unit='counts'),
+            coords={'w': sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å')},
+        )
+        normalized = normalize_by_monitor_histogram(
+            detector,
+            monitor=monitor,
+            uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+        )
+
+        expected = (
+            sc.DataArray(
+                sc.array(
+                    dims=['w'],
+                    values=[np.nan, np.inf, np.inf, 90 / 7],
+                    unit='counts',
+                ),
+                coords={'w': sc.arange('w', 1.0, 5.0, unit='Å')},
+            )
+            .bin(w=sc.array(dims=['w'], values=[1.0, 3, 4, 7], unit='Å'))
+            .assign_masks(
+                _monitor_mask=sc.array(dims=['w'], values=[True, True, False])
+            )
+        )
+
+        sc.testing.assert_allclose(normalized, expected)
+
     def test_independent_of_monitor_binning_bin(self) -> None:
         detector = sc.DataArray(
             sc.array(dims=['w'], values=[3, 10, 20, 30], unit='counts'),

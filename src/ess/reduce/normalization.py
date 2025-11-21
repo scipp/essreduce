@@ -201,12 +201,14 @@ def _mask_detector_for_norm(
 
 
 def _monitor_mask(monitor: sc.DataArray) -> sc.Variable | None:
-    """Mask nonfinite monitor values and combine all masks."""
+    """Mask nonfinite and zero monitor values and combine all masks."""
     masks = list(monitor.masks.values())
 
     finite = sc.isfinite(monitor.data)
-    if not finite.all():
-        masks.append(~finite)
+    nonzero = monitor.data != sc.scalar(0, unit=monitor.unit)
+    valid = finite & nonzero
+    if not valid.all():
+        masks.append(~valid)
 
     if not masks:
         return None
