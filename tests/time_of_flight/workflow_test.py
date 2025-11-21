@@ -71,7 +71,11 @@ def test_TofLookupTableWorkflow_can_compute_tof_lut():
     )
     wf[time_of_flight.SourcePosition] = fakes.source_position()
     lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
-    assert isinstance(lut, sc.DataArray)
+    assert "data" in lut
+    assert "distance_resolution" in lut
+    assert "time_resolution" in lut
+    assert "pulse_stride" in lut
+    assert "pulse_period" in lut
 
 
 def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
