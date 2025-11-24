@@ -138,6 +138,176 @@ class Histogrammer:
         return self._hist(replicated, coords=self._coords) / self.replicas
 
 
+class LogicalDownsampler:
+    """
+    Downsampler for logical detector views.
+
+    Implements downsampling by applying a user-defined transform (e.g., fold operations)
+    followed by reduction (summing) over specified dimensions. This provides a clean
+    separation between "how to group pixels" (transform) and "how to aggregate them"
+    (sum over reduction dimensions).
+
+    This class provides both data transformation (__call__) and index mapping
+    (input_indices) using the same transform, ensuring consistency for ROI filtering.
+    """
+
+    def __init__(
+        self,
+        transform: Callable[[sc.DataArray], sc.DataArray],
+        reduction_dim: str | list[str],
+        detector_number: sc.Variable | None = None,
+    ):
+        """
+        Create a logical downsampler.
+
+        Parameters
+        ----------
+        transform:
+            Callable that transforms input data by grouping pixels.
+            Example: lambda da: da.fold(
+                'x_pixel_offset', {'x_pixel_offset': 512, 'x_bin': 2}
+            )
+        reduction_dim:
+            Dimension(s) to sum over after applying transform.
+            Example: 'x_bin' or ['x_bin', 'y_bin']
+        detector_number:
+            Detector number array defining the input shape.
+            Required for input_indices().
+            If not provided, input_indices() will raise an error.
+        """
+        self._transform = transform
+        self._reduction_dim = (
+            [reduction_dim] if isinstance(reduction_dim, str) else reduction_dim
+        )
+        self._detector_number = detector_number
+
+    def __call__(self, da: sc.DataArray) -> sc.DataArray:
+        """
+        Downsample data by applying transform and summing over reduction dimensions.
+
+        Parameters
+        ----------
+        da:
+            Data to downsample.
+
+        Returns
+        -------
+        :
+            Downsampled data array.
+        """
+        transformed = self._transform(da)
+        return transformed.sum(self._reduction_dim)
+
+    def input_indices(self) -> sc.DataArray:
+        """
+        Create index mapping for ROI filtering.
+
+        Returns a binned DataArray where each output pixel contains
+        a list of contributing detector numbers (as indices into the
+        flattened detector_number array).
+
+        Returns
+        -------
+        :
+            Binned DataArray mapping output pixels to input detector indices.
+
+        Raises
+        ------
+        ValueError:
+            If detector_number was not provided during initialization.
+        """
+        if self._detector_number is None:
+            raise ValueError(
+                "detector_number is required for input_indices(). "
+                "Provide it during LogicalDownsampler initialization."
+            )
+
+        # Create sequential indices (0, 1, 2, ...) matching detector_number shape
+        indices = sc.arange(
+            'detector_number',
+            self._detector_number.size,
+            dtype='int64',
+            unit=None,
+        )
+        indices = indices.fold(
+            dim='detector_number',
+            sizes=dict(self._detector_number.sizes),
+        )
+
+        # Create DataArray to apply transform
+        indices_da = sc.DataArray(
+            data=indices,
+            coords={'detector_number': self._detector_number},
+        )
+
+        # Apply transform to get the grouping structure
+        transformed = self._transform(indices_da)
+
+        # Flatten the reduction dimensions and convert to binned structure
+        # Each output pixel will contain indices from the reduction dimensions
+        flat_dim = 'detector_number'
+        if len(self._reduction_dim) > 1:
+            # Multiple reduction dims: need to make them contiguous first
+            # Get all dimensions and move reduction dims to the end
+            all_dims = list(transformed.dims)
+            output_dims = [d for d in all_dims if d not in self._reduction_dim]
+            # Transpose to put reduction dims at the end, in order
+            new_order = output_dims + self._reduction_dim
+            transformed_transposed = transformed.transpose(new_order)
+            # Now flatten the (now contiguous) reduction dims
+            transformed_flat = transformed_transposed.flatten(
+                dims=self._reduction_dim, to=flat_dim
+            )
+        else:
+            # Single reduction dim: rename it
+            transformed_flat = transformed.rename_dims(
+                {self._reduction_dim[0]: flat_dim}
+            )
+
+        # Convert the dense array to binned data by creating bins manually
+        # Get the remaining dimensions (output dims) and create binned structure
+        output_dims = [d for d in transformed_flat.dims if d != flat_dim]
+
+        # Calculate bin structure: each output pixel has data from reduction dims
+        bin_size = transformed_flat.sizes[flat_dim]
+
+        # Create bin boundaries
+        begin_values = np.arange(
+            0, transformed_flat.data.size, bin_size, dtype=np.int64
+        )
+        end_values = begin_values + bin_size
+
+        # Get output shape
+        output_shape = [transformed_flat.sizes[d] for d in output_dims]
+
+        # Flatten output dimensions to create 1D bins
+        data_flat = transformed_flat.data.flatten(to=flat_dim + '_flat')
+
+        # Create binned data constituents
+        # Ensure all components have matching units (no unit for indices)
+        begin_var = sc.array(
+            dims=output_dims,
+            values=begin_values.reshape(output_shape),
+            dtype='int64',
+        )
+        end_var = sc.array(
+            dims=output_dims,
+            values=end_values.reshape(output_shape),
+            dtype='int64',
+        )  # Remove units from begin/end to match data (which has no unit from arange)
+        begin_var.unit = data_flat.unit
+        end_var.unit = data_flat.unit
+
+        binned_var = sc.bins(
+            begin=begin_var,
+            end=end_var,
+            dim=flat_dim + '_flat',
+            data=data_flat,
+        )
+
+        return sc.DataArray(binned_var)
+
+
 class Detector:
     def __init__(self, detector_number: sc.Variable):
         self._data = sc.DataArray(
