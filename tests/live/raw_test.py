@@ -712,3 +712,93 @@ def test_LogicalDownsampler_with_varying_input_values() -> None:
         unit='counts',
     )
     assert sc.allclose(result.data, expected)
+
+
+def test_RollingDetectorView_with_LogicalDownsampler_projection() -> None:
+    """Test that RollingDetectorView works with LogicalDownsampler as projection."""
+    # Create a 1D detector with 8 pixels
+    detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
+
+    # Define downsampling transform: 8 -> 4 pixels (2x binning)
+    def transform(da: sc.DataArray) -> sc.DataArray:
+        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
+
+    downsampler = raw.LogicalDownsampler(
+        transform=transform,
+        reduction_dim='x_bin',
+        detector_number=detector_number,
+    )
+
+    # Create RollingDetectorView with downsampler as projection
+    view = raw.RollingDetectorView(
+        detector_number=detector_number, window=2, projection=downsampler
+    )
+
+    # Add some counts: pixels 1, 2, 3, 4 -> downsampled bins [0, 1]
+    view.add_counts([1, 2, 3, 4])
+    result = view.get()
+
+    # After downsampling: [1+2, 3+4] = [2, 2] for first two bins
+    assert result.sizes == {'x_pixel_offset': 4}
+    assert result['x_pixel_offset', 0].value == 2
+    assert result['x_pixel_offset', 1].value == 2
+    assert result['x_pixel_offset', 2].value == 0
+    assert result['x_pixel_offset', 3].value == 0
+
+
+def test_RollingDetectorView_make_roi_filter_with_LogicalDownsampler() -> None:
+    """Test that make_roi_filter() works with LogicalDownsampler."""
+    detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
+
+    def transform(da: sc.DataArray) -> sc.DataArray:
+        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
+
+    downsampler = raw.LogicalDownsampler(
+        transform=transform,
+        reduction_dim='x_bin',
+        detector_number=detector_number,
+    )
+
+    view = raw.RollingDetectorView(
+        detector_number=detector_number, window=1, projection=downsampler
+    )
+
+    # Should not raise - LogicalDownsampler has input_indices()
+    roi_filter = view.make_roi_filter()
+
+    # The indices should be binned data (check via private attribute for now)
+    assert roi_filter._indices.bins is not None
+    assert roi_filter._indices.sizes == {'x_pixel_offset': 4}
+    # Each bin should contain 2 indices
+    assert all(roi_filter._indices.bins.size().values == 2)
+
+
+def test_RollingDetectorView_transform_weights_with_LogicalDownsampler() -> None:
+    """Test that transform_weights() works with LogicalDownsampler."""
+    detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
+
+    def transform(da: sc.DataArray) -> sc.DataArray:
+        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
+
+    downsampler = raw.LogicalDownsampler(
+        transform=transform,
+        reduction_dim='x_bin',
+        detector_number=detector_number,
+    )
+
+    view = raw.RollingDetectorView(
+        detector_number=detector_number, window=1, projection=downsampler
+    )
+
+    # Create weights: all pixels have weight 1.0
+    weights = sc.ones(sizes={'x_pixel_offset': 8}, dtype='float32', unit='')
+
+    # Transform weights through the downsampler
+    transformed = view.transform_weights(weights)
+
+    # After downsampling: each output bin sums 2 input weights = 2.0
+    assert transformed.sizes == {'x_pixel_offset': 4}
+    expected = sc.full(
+        dims=['x_pixel_offset'], shape=[4], value=2.0, dtype='float32', unit=''
+    )
+    assert sc.allclose(transformed.data, expected)

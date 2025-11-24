@@ -181,6 +181,11 @@ class LogicalDownsampler:
         )
         self._detector_number = detector_number
 
+    @property
+    def replicas(self) -> int:
+        """Number of replicas. Always 1 for LogicalDownsampler."""
+        return 1
+
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         """
         Downsample data by applying transform and summing over reduction dimensions.
@@ -419,9 +424,11 @@ class RollingDetectorView(Detector):
     def make_roi_filter(self) -> roi.ROIFilter:
         """Return a ROI filter operating via the projection plane of the view."""
         norm = 1.0
-        if isinstance(self._projection, Histogrammer):
+        # Use duck typing: check if projection has input_indices method
+        if hasattr(self._projection, 'input_indices'):
             indices = self._projection.input_indices()
-            norm = self._projection.replicas
+            # Get replicas property if it exists (Histogrammer has it, default to 1.0)
+            norm = getattr(self._projection, 'replicas', 1.0)
         else:
             indices = sc.ones(sizes=self.data.sizes, dtype='int32', unit=None)
             indices = sc.cumsum(indices, mode='exclusive')
@@ -462,10 +469,11 @@ class RollingDetectorView(Detector):
                     if not sc.identical(det_num, self.detector_number):
                         raise sc.CoordError("Mismatching detector numbers in weights.")
                 weights = weights.data
-        if isinstance(self._projection, Histogrammer):
+        # Use duck typing: check for apply_full method (Histogrammer)
+        if hasattr(self._projection, 'apply_full'):
             xs = self._projection.apply_full(weights)  # Use all replicas
         elif self._projection is not None:
-            xs = self._projection(weights)
+            xs = self._projection(weights)  # LogicalDownsampler or callable
         else:
             xs = weights.copy()
         nonempty = xs.values[xs.values > 0]
