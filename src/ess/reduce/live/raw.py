@@ -155,7 +155,7 @@ class LogicalDownsampler:
         self,
         transform: Callable[[sc.DataArray], sc.DataArray],
         reduction_dim: str | list[str],
-        detector_number: sc.Variable | None = None,
+        input_sizes: dict[str, int] | None = None,
     ):
         """
         Create a logical downsampler.
@@ -170,16 +170,18 @@ class LogicalDownsampler:
         reduction_dim:
             Dimension(s) to sum over after applying transform.
             Example: 'x_bin' or ['x_bin', 'y_bin']
-        detector_number:
-            Detector number array defining the input shape.
+        input_sizes:
+            Dictionary defining the input dimension sizes.
             Required for input_indices().
             If not provided, input_indices() will raise an error.
+            When used with RollingDetectorView, this is automatically
+            inferred from detector_number.
         """
         self._transform = transform
         self._reduction_dim = (
             [reduction_dim] if isinstance(reduction_dim, str) else reduction_dim
         )
-        self._detector_number = detector_number
+        self._input_sizes = input_sizes
 
     @property
     def replicas(self) -> int:
@@ -208,42 +210,38 @@ class LogicalDownsampler:
         Create index mapping for ROI filtering.
 
         Returns a binned DataArray where each output pixel contains
-        a list of contributing detector numbers (as indices into the
-        flattened detector_number array).
+        a list of contributing input indices (as indices into the
+        flattened input array).
 
         Returns
         -------
         :
-            Binned DataArray mapping output pixels to input detector indices.
+            Binned DataArray mapping output pixels to input indices.
 
         Raises
         ------
         ValueError:
-            If detector_number was not provided during initialization.
+            If input_sizes was not provided during initialization.
         """
-        if self._detector_number is None:
+        if self._input_sizes is None:
             raise ValueError(
-                "detector_number is required for input_indices(). "
+                "input_sizes is required for input_indices(). "
                 "Provide it during LogicalDownsampler initialization."
             )
 
-        # Create sequential indices (0, 1, 2, ...) matching detector_number shape
-        indices = sc.arange(
-            'detector_number',
-            self._detector_number.size,
-            dtype='int64',
-            unit=None,
-        )
-        indices = indices.fold(
-            dim='detector_number',
-            sizes=dict(self._detector_number.sizes),
-        )
+        # Calculate total number of elements
+        total_size = 1
+        for size in self._input_sizes.values():
+            total_size *= size
+
+        # Create sequential indices (0, 1, 2, ...) and fold to input shape
+        # Use a temporary dimension name for the flat indices
+        flat_dim = '_flat'
+        indices = sc.arange(flat_dim, total_size, dtype='int64', unit=None)
+        indices = indices.fold(dim=flat_dim, sizes=self._input_sizes)
 
         # Create DataArray to apply transform
-        indices_da = sc.DataArray(
-            data=indices,
-            coords={'detector_number': self._detector_number},
-        )
+        indices_da = sc.DataArray(data=indices)
 
         # Apply transform to get the grouping structure
         transformed = self._transform(indices_da)
@@ -394,6 +392,47 @@ class RollingDetectorView(Detector):
         self._cache: sc.DataArray
         self._cumulative: sc.DataArray
         self.clear_counts()
+
+    @staticmethod
+    def with_logical_downsampler(
+        *,
+        detector_number: sc.Variable,
+        window: int,
+        transform: Callable[[sc.DataArray], sc.DataArray],
+        reduction_dim: str | list[str],
+    ) -> RollingDetectorView:
+        """
+        Create a RollingDetectorView with a LogicalDownsampler projection.
+
+        This factory method creates a LogicalDownsampler with input_sizes
+        automatically inferred from detector_number.sizes.
+
+        Parameters
+        ----------
+        detector_number:
+            Detector number for each pixel.
+        window:
+            Size of the rolling window.
+        transform:
+            Transform function for the LogicalDownsampler.
+        reduction_dim:
+            Reduction dimension(s) for the LogicalDownsampler.
+
+        Returns
+        -------
+        :
+            RollingDetectorView with LogicalDownsampler projection.
+        """
+        downsampler = LogicalDownsampler(
+            transform=transform,
+            reduction_dim=reduction_dim,
+            input_sizes=dict(detector_number.sizes),
+        )
+        return RollingDetectorView(
+            detector_number=detector_number,
+            window=window,
+            projection=downsampler,
+        )
 
     @property
     def max_window(self) -> int:
