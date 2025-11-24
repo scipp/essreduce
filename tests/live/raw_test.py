@@ -549,256 +549,270 @@ def test_transform_weights_raises_given_DataArray_with_bad_det_num() -> None:
         view.transform_weights(weights)
 
 
-def test_LogicalDownsampler_single_dim_downsampling() -> None:
-    """Test basic 1D downsampling with transform + reduction."""
-    # Create a simple 1D detector: 8 pixels -> downsample to 4 pixels (2x2 binning)
-    detector_number = sc.arange('x_pixel_offset', 8, unit=None)
+class TestLogicalDownsampler:
+    """Tests for LogicalDownsampler class."""
 
-    # Transform: fold into 4 groups of 2
-    def transform(da: sc.DataArray) -> sc.DataArray:
-        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
+    def test_single_dim_downsampling(self) -> None:
+        """Test basic 1D downsampling with transform + reduction."""
+        # Create a simple 1D detector: 8 pixels -> downsample to 4 pixels (2x2 binning)
+        detector_number = sc.arange('x_pixel_offset', 8, unit=None)
 
-    downsampler = raw.LogicalDownsampler(
-        transform=transform,
-        reduction_dim='x_bin',
-        detector_number=detector_number,
-    )
+        # Transform: fold into 4 groups of 2
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(
+                dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
+            )
 
-    # Create test data: each pixel has value equal to its index
-    data = sc.DataArray(
-        data=sc.arange('x_pixel_offset', 8, dtype='float64', unit='counts'),
-        coords={'detector_number': detector_number},
-    )
+        downsampler = raw.LogicalDownsampler(
+            transform=transform,
+            reduction_dim='x_bin',
+            detector_number=detector_number,
+        )
 
-    # Apply downsampling
-    result = downsampler(data)
+        # Create test data: each pixel has value equal to its index
+        data = sc.DataArray(
+            data=sc.arange('x_pixel_offset', 8, dtype='float64', unit='counts'),
+            coords={'detector_number': detector_number},
+        )
 
-    # Should sum pairs: [0+1, 2+3, 4+5, 6+7] = [1, 5, 9, 13]
-    expected = sc.array(
-        dims=['x_pixel_offset'],
-        values=[1.0, 5.0, 9.0, 13.0],
-        unit='counts',
-    )
-    assert sc.allclose(result.data, expected)
-    assert result.sizes == {'x_pixel_offset': 4}
+        # Apply downsampling
+        result = downsampler(data)
 
-
-def test_LogicalDownsampler_multi_dim_downsampling() -> None:
-    """Test 2D downsampling similar to _resize_image example."""
-    # Create 8x8 detector -> downsample to 4x4 (2x2 binning in each dimension)
-    detector_number = sc.zeros(sizes={'x_pixel_offset': 8, 'y_pixel_offset': 8})
-
-    # Transform: fold both dimensions
-    def transform(da: sc.DataArray) -> sc.DataArray:
-        da = da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
-        da = da.fold(dim='y_pixel_offset', sizes={'y_pixel_offset': 4, 'y_bin': 2})
-        return da
-
-    downsampler = raw.LogicalDownsampler(
-        transform=transform,
-        reduction_dim=['x_bin', 'y_bin'],
-        detector_number=detector_number,
-    )
-
-    # Create test data: constant value of 1 everywhere
-    data = sc.DataArray(
-        data=sc.ones(sizes={'x_pixel_offset': 8, 'y_pixel_offset': 8}, unit='counts'),
-        coords={'detector_number': detector_number},
-    )
-
-    # Apply downsampling
-    result = downsampler(data)
-
-    # Each output pixel should be sum of 2x2=4 input pixels
-    expected = sc.full(
-        dims=['x_pixel_offset', 'y_pixel_offset'],
-        shape=[4, 4],
-        value=4.0,
-        unit='counts',
-    )
-    assert sc.allclose(result.data, expected)
-    assert result.sizes == {'x_pixel_offset': 4, 'y_pixel_offset': 4}
-
-
-def test_LogicalDownsampler_input_indices_single_dim() -> None:
-    """Test that input_indices creates correct binned mapping for 1D."""
-    detector_number = sc.arange('x_pixel_offset', 8, unit=None)
-
-    def transform(da: sc.DataArray) -> sc.DataArray:
-        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
-
-    downsampler = raw.LogicalDownsampler(
-        transform=transform,
-        reduction_dim='x_bin',
-        detector_number=detector_number,
-    )
-
-    # Get index mapping
-    indices = downsampler.input_indices()
-
-    # Should be binned data with 4 bins, each containing 2 indices
-    assert indices.sizes == {'x_pixel_offset': 4}
-    assert indices.bins is not None
-
-    # Check each bin contains the correct indices
-    # Bin 0: [0, 1], Bin 1: [2, 3], Bin 2: [4, 5], Bin 3: [6, 7]
-    # Extract all bin contents using the bins accessor
-    bin_sizes = indices.bins.size()
-    assert all(bin_sizes.values == 2)  # Each bin should have 2 indices
-
-    # Check total count
-    assert indices.bins.size().sum().value == 8
-
-
-def test_LogicalDownsampler_input_indices_multi_dim() -> None:
-    """Test that input_indices creates correct binned mapping for 2D."""
-    detector_number = sc.zeros(sizes={'x_pixel_offset': 4, 'y_pixel_offset': 4})
-
-    def transform(da: sc.DataArray) -> sc.DataArray:
-        da = da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 2, 'x_bin': 2})
-        da = da.fold(dim='y_pixel_offset', sizes={'y_pixel_offset': 2, 'y_bin': 2})
-        return da
-
-    downsampler = raw.LogicalDownsampler(
-        transform=transform,
-        reduction_dim=['x_bin', 'y_bin'],
-        detector_number=detector_number,
-    )
-
-    # Get index mapping
-    indices = downsampler.input_indices()
-
-    # Should be binned data with 2x2 output bins
-    assert indices.sizes == {'x_pixel_offset': 2, 'y_pixel_offset': 2}
-    assert indices.bins is not None
-
-    # Each bin should contain 2x2=4 indices from the flattened input
-    bin_sizes = indices.bins.size()
-    assert all(bin_sizes.values.ravel() == 4)  # Each bin should have 4 indices
-
-    # Check total count: 4x4 input pixels -> 2x2 output bins
-    assert indices.bins.size().sum().value == 16
-
-
-def test_LogicalDownsampler_with_varying_input_values() -> None:
-    """Test that downsampling correctly sums varying input values."""
-    detector_number = sc.arange('x_pixel_offset', 6, unit=None)
-
-    def transform(da: sc.DataArray) -> sc.DataArray:
-        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 3, 'x_bin': 2})
-
-    downsampler = raw.LogicalDownsampler(
-        transform=transform,
-        reduction_dim='x_bin',
-        detector_number=detector_number,
-    )
-
-    # Create test data with specific values: [10, 20, 30, 40, 50, 60]
-    data = sc.DataArray(
-        data=sc.array(
+        # Should sum pairs: [0+1, 2+3, 4+5, 6+7] = [1, 5, 9, 13]
+        expected = sc.array(
             dims=['x_pixel_offset'],
-            values=[10.0, 20.0, 30.0, 40.0, 50.0, 60.0],
+            values=[1.0, 5.0, 9.0, 13.0],
             unit='counts',
-        ),
-        coords={'detector_number': detector_number},
-    )
+        )
+        assert sc.allclose(result.data, expected)
+        assert result.sizes == {'x_pixel_offset': 4}
 
-    result = downsampler(data)
+    def test_multi_dim_downsampling(self) -> None:
+        """Test 2D downsampling similar to _resize_image example."""
+        # Create 8x8 detector -> downsample to 4x4 (2x2 binning in each dimension)
+        detector_number = sc.zeros(sizes={'x_pixel_offset': 8, 'y_pixel_offset': 8})
 
-    # Should sum pairs: [10+20, 30+40, 50+60] = [30, 70, 110]
-    expected = sc.array(
-        dims=['x_pixel_offset'],
-        values=[30.0, 70.0, 110.0],
-        unit='counts',
-    )
-    assert sc.allclose(result.data, expected)
+        # Transform: fold both dimensions
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            da = da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
+            da = da.fold(dim='y_pixel_offset', sizes={'y_pixel_offset': 4, 'y_bin': 2})
+            return da
+
+        downsampler = raw.LogicalDownsampler(
+            transform=transform,
+            reduction_dim=['x_bin', 'y_bin'],
+            detector_number=detector_number,
+        )
+
+        # Create test data: constant value of 1 everywhere
+        data = sc.DataArray(
+            data=sc.ones(
+                sizes={'x_pixel_offset': 8, 'y_pixel_offset': 8}, unit='counts'
+            ),
+            coords={'detector_number': detector_number},
+        )
+
+        # Apply downsampling
+        result = downsampler(data)
+
+        # Each output pixel should be sum of 2x2=4 input pixels
+        expected = sc.full(
+            dims=['x_pixel_offset', 'y_pixel_offset'],
+            shape=[4, 4],
+            value=4.0,
+            unit='counts',
+        )
+        assert sc.allclose(result.data, expected)
+        assert result.sizes == {'x_pixel_offset': 4, 'y_pixel_offset': 4}
+
+    def test_input_indices_single_dim(self) -> None:
+        """Test that input_indices creates correct binned mapping for 1D."""
+        detector_number = sc.arange('x_pixel_offset', 8, unit=None)
+
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(
+                dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
+            )
+
+        downsampler = raw.LogicalDownsampler(
+            transform=transform,
+            reduction_dim='x_bin',
+            detector_number=detector_number,
+        )
+
+        # Get index mapping
+        indices = downsampler.input_indices()
+
+        # Should be binned data with 4 bins, each containing 2 indices
+        assert indices.sizes == {'x_pixel_offset': 4}
+        assert indices.bins is not None
+
+        # Check each bin contains the correct indices
+        # Bin 0: [0, 1], Bin 1: [2, 3], Bin 2: [4, 5], Bin 3: [6, 7]
+        # Extract all bin contents using the bins accessor
+        bin_sizes = indices.bins.size()
+        assert all(bin_sizes.values == 2)  # Each bin should have 2 indices
+
+        # Check total count
+        assert indices.bins.size().sum().value == 8
+
+    def test_input_indices_multi_dim(self) -> None:
+        """Test that input_indices creates correct binned mapping for 2D."""
+        detector_number = sc.zeros(sizes={'x_pixel_offset': 4, 'y_pixel_offset': 4})
+
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            da = da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 2, 'x_bin': 2})
+            da = da.fold(dim='y_pixel_offset', sizes={'y_pixel_offset': 2, 'y_bin': 2})
+            return da
+
+        downsampler = raw.LogicalDownsampler(
+            transform=transform,
+            reduction_dim=['x_bin', 'y_bin'],
+            detector_number=detector_number,
+        )
+
+        # Get index mapping
+        indices = downsampler.input_indices()
+
+        # Should be binned data with 2x2 output bins
+        assert indices.sizes == {'x_pixel_offset': 2, 'y_pixel_offset': 2}
+        assert indices.bins is not None
+
+        # Each bin should contain 2x2=4 indices from the flattened input
+        bin_sizes = indices.bins.size()
+        assert all(bin_sizes.values.ravel() == 4)  # Each bin should have 4 indices
+
+        # Check total count: 4x4 input pixels -> 2x2 output bins
+        assert indices.bins.size().sum().value == 16
+
+    def test_with_varying_input_values(self) -> None:
+        """Test that downsampling correctly sums varying input values."""
+        detector_number = sc.arange('x_pixel_offset', 6, unit=None)
+
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(
+                dim='x_pixel_offset', sizes={'x_pixel_offset': 3, 'x_bin': 2}
+            )
+
+        downsampler = raw.LogicalDownsampler(
+            transform=transform,
+            reduction_dim='x_bin',
+            detector_number=detector_number,
+        )
+
+        # Create test data with specific values: [10, 20, 30, 40, 50, 60]
+        data = sc.DataArray(
+            data=sc.array(
+                dims=['x_pixel_offset'],
+                values=[10.0, 20.0, 30.0, 40.0, 50.0, 60.0],
+                unit='counts',
+            ),
+            coords={'detector_number': detector_number},
+        )
+
+        result = downsampler(data)
+
+        # Should sum pairs: [10+20, 30+40, 50+60] = [30, 70, 110]
+        expected = sc.array(
+            dims=['x_pixel_offset'],
+            values=[30.0, 70.0, 110.0],
+            unit='counts',
+        )
+        assert sc.allclose(result.data, expected)
 
 
-def test_RollingDetectorView_with_LogicalDownsampler_projection() -> None:
-    """Test that RollingDetectorView works with LogicalDownsampler as projection."""
-    # Create a 1D detector with 8 pixels
-    detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
+class TestRollingDetectorViewWithLogicalDownsampler:
+    """Tests for RollingDetectorView integration with LogicalDownsampler."""
 
-    # Define downsampling transform: 8 -> 4 pixels (2x binning)
-    def transform(da: sc.DataArray) -> sc.DataArray:
-        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
+    def test_as_projection(self) -> None:
+        """Test that RollingDetectorView works with LogicalDownsampler as projection."""
+        # Create a 1D detector with 8 pixels
+        detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
 
-    downsampler = raw.LogicalDownsampler(
-        transform=transform,
-        reduction_dim='x_bin',
-        detector_number=detector_number,
-    )
+        # Define downsampling transform: 8 -> 4 pixels (2x binning)
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(
+                dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
+            )
 
-    # Create RollingDetectorView with downsampler as projection
-    view = raw.RollingDetectorView(
-        detector_number=detector_number, window=2, projection=downsampler
-    )
+        downsampler = raw.LogicalDownsampler(
+            transform=transform,
+            reduction_dim='x_bin',
+            detector_number=detector_number,
+        )
 
-    # Add some counts: pixels 1, 2, 3, 4 -> downsampled bins [0, 1]
-    view.add_counts([1, 2, 3, 4])
-    result = view.get()
+        # Create RollingDetectorView with downsampler as projection
+        view = raw.RollingDetectorView(
+            detector_number=detector_number, window=2, projection=downsampler
+        )
 
-    # After downsampling: [1+2, 3+4] = [2, 2] for first two bins
-    assert result.sizes == {'x_pixel_offset': 4}
-    assert result['x_pixel_offset', 0].value == 2
-    assert result['x_pixel_offset', 1].value == 2
-    assert result['x_pixel_offset', 2].value == 0
-    assert result['x_pixel_offset', 3].value == 0
+        # Add some counts: pixels 1, 2, 3, 4 -> downsampled bins [0, 1]
+        view.add_counts([1, 2, 3, 4])
+        result = view.get()
 
+        # After downsampling: [1+2, 3+4] = [2, 2] for first two bins
+        assert result.sizes == {'x_pixel_offset': 4}
+        assert result['x_pixel_offset', 0].value == 2
+        assert result['x_pixel_offset', 1].value == 2
+        assert result['x_pixel_offset', 2].value == 0
+        assert result['x_pixel_offset', 3].value == 0
 
-def test_RollingDetectorView_make_roi_filter_with_LogicalDownsampler() -> None:
-    """Test that make_roi_filter() works with LogicalDownsampler."""
-    detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
+    def test_make_roi_filter(self) -> None:
+        """Test that make_roi_filter() works with LogicalDownsampler."""
+        detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
 
-    def transform(da: sc.DataArray) -> sc.DataArray:
-        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(
+                dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
+            )
 
-    downsampler = raw.LogicalDownsampler(
-        transform=transform,
-        reduction_dim='x_bin',
-        detector_number=detector_number,
-    )
+        downsampler = raw.LogicalDownsampler(
+            transform=transform,
+            reduction_dim='x_bin',
+            detector_number=detector_number,
+        )
 
-    view = raw.RollingDetectorView(
-        detector_number=detector_number, window=1, projection=downsampler
-    )
+        view = raw.RollingDetectorView(
+            detector_number=detector_number, window=1, projection=downsampler
+        )
 
-    # Should not raise - LogicalDownsampler has input_indices()
-    roi_filter = view.make_roi_filter()
+        # Should not raise - LogicalDownsampler has input_indices()
+        roi_filter = view.make_roi_filter()
 
-    # The indices should be binned data (check via private attribute for now)
-    assert roi_filter._indices.bins is not None
-    assert roi_filter._indices.sizes == {'x_pixel_offset': 4}
-    # Each bin should contain 2 indices
-    assert all(roi_filter._indices.bins.size().values == 2)
+        # The indices should be binned data (check via private attribute for now)
+        assert roi_filter._indices.bins is not None
+        assert roi_filter._indices.sizes == {'x_pixel_offset': 4}
+        # Each bin should contain 2 indices
+        assert all(roi_filter._indices.bins.size().values == 2)
 
+    def test_transform_weights(self) -> None:
+        """Test that transform_weights() works with LogicalDownsampler."""
+        detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
 
-def test_RollingDetectorView_transform_weights_with_LogicalDownsampler() -> None:
-    """Test that transform_weights() works with LogicalDownsampler."""
-    detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(
+                dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
+            )
 
-    def transform(da: sc.DataArray) -> sc.DataArray:
-        return da.fold(dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2})
+        downsampler = raw.LogicalDownsampler(
+            transform=transform,
+            reduction_dim='x_bin',
+            detector_number=detector_number,
+        )
 
-    downsampler = raw.LogicalDownsampler(
-        transform=transform,
-        reduction_dim='x_bin',
-        detector_number=detector_number,
-    )
+        view = raw.RollingDetectorView(
+            detector_number=detector_number, window=1, projection=downsampler
+        )
 
-    view = raw.RollingDetectorView(
-        detector_number=detector_number, window=1, projection=downsampler
-    )
+        # Create weights: all pixels have weight 1.0
+        weights = sc.ones(sizes={'x_pixel_offset': 8}, dtype='float32', unit='')
 
-    # Create weights: all pixels have weight 1.0
-    weights = sc.ones(sizes={'x_pixel_offset': 8}, dtype='float32', unit='')
+        # Transform weights through the downsampler
+        transformed = view.transform_weights(weights)
 
-    # Transform weights through the downsampler
-    transformed = view.transform_weights(weights)
-
-    # After downsampling: each output bin sums 2 input weights = 2.0
-    assert transformed.sizes == {'x_pixel_offset': 4}
-    expected = sc.full(
-        dims=['x_pixel_offset'], shape=[4], value=2.0, dtype='float32', unit=''
-    )
-    assert sc.allclose(transformed.data, expected)
+        # After downsampling: each output bin sums 2 input weights = 2.0
+        assert transformed.sizes == {'x_pixel_offset': 4}
+        expected = sc.full(
+            dims=['x_pixel_offset'], shape=[4], value=2.0, dtype='float32', unit=''
+        )
+        assert sc.allclose(transformed.data, expected)
