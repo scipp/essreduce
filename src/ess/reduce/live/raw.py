@@ -21,7 +21,7 @@ options:
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from math import ceil
+from math import ceil, prod
 from typing import Literal, NewType
 
 import numpy as np
@@ -229,74 +229,33 @@ class LogicalDownsampler:
                 "Provide it during LogicalDownsampler initialization."
             )
 
-        # Calculate total number of elements
-        total_size = 1
-        for size in self._input_sizes.values():
-            total_size *= size
-
         # Create sequential indices (0, 1, 2, ...) and fold to input shape
-        # Use a temporary dimension name for the flat indices
-        flat_dim = '_flat'
-        indices = sc.arange(flat_dim, total_size, dtype='int64', unit=None)
-        indices = indices.fold(dim=flat_dim, sizes=self._input_sizes)
-
-        # Create DataArray to apply transform
-        indices_da = sc.DataArray(data=indices)
+        total_size = prod(self._input_sizes.values())
+        indices = sc.arange('_temp', total_size, dtype='int64', unit=None)
+        indices = indices.fold(dim='_temp', sizes=self._input_sizes)
 
         # Apply transform to get the grouping structure
-        transformed = self._transform(indices_da)
+        transformed = self._transform(sc.DataArray(data=indices))
 
-        # Flatten the reduction dimensions and convert to binned structure
-        # Each output pixel will contain indices from the reduction dimensions
-        flat_dim = 'detector_number'
-        if len(self._reduction_dim) > 1:
-            # Multiple reduction dims: need to make them contiguous first
-            # Get all dimensions and move reduction dims to the end
-            all_dims = list(transformed.dims)
-            output_dims = [d for d in all_dims if d not in self._reduction_dim]
-            # Transpose to put reduction dims at the end, in order
-            new_order = output_dims + self._reduction_dim
-            transformed_transposed = transformed.transpose(new_order)
-            # Now flatten the (now contiguous) reduction dims
-            transformed_flat = transformed_transposed.flatten(
-                dims=self._reduction_dim, to=flat_dim
-            )
-        else:
-            # Single reduction dim: rename it
-            transformed_flat = transformed.rename_dims(
-                {self._reduction_dim[0]: flat_dim}
-            )
+        # Flatten reduction dimensions to a single dimension.
+        # First transpose to make reduction dims contiguous at the end.
+        output_dims = [d for d in transformed.dims if d not in self._reduction_dim]
+        transformed = transformed.transpose(output_dims + self._reduction_dim)
+        transformed = transformed.flatten(dims=self._reduction_dim, to='_reduction')
 
-        # Convert the dense array to binned data by creating bins manually
-        # Get the remaining dimensions (output dims) and create binned structure
-        output_dims = [d for d in transformed_flat.dims if d != flat_dim]
-
-        # Calculate bin structure: each output pixel has data from reduction dims
-        bin_size = transformed_flat.sizes[flat_dim]
-
-        # Create bin boundaries
-        begin_values = np.arange(
-            0, transformed_flat.data.size, bin_size, dtype=np.int64
-        )
-
-        # Get output shape
-        output_shape = [transformed_flat.sizes[d] for d in output_dims]
-
-        # Flatten output dimensions to create 1D bins
-        data_flat = transformed_flat.data.flatten(to=flat_dim + '_flat')
-
-        # Create binned data constituents
-        # Ensure all components have matching units (no unit for indices)
-        begin_var = sc.array(
+        # Convert dense array to binned structure where each output pixel
+        # contains a bin with the indices of contributing input pixels.
+        bin_size = transformed.sizes['_reduction']
+        output_shape = [transformed.sizes[d] for d in output_dims]
+        data_flat = transformed.data.flatten(to='_flat')
+        begin = sc.array(
             dims=output_dims,
-            values=begin_values.reshape(output_shape),
-            dtype='int64',
+            values=np.arange(0, data_flat.size, bin_size, dtype=np.int64).reshape(
+                output_shape
+            ),
             unit=None,
         )
-
-        binned_var = sc.bins(begin=begin_var, dim=flat_dim + '_flat', data=data_flat)
-
-        return sc.DataArray(binned_var)
+        return sc.DataArray(sc.bins(begin=begin, dim='_flat', data=data_flat))
 
 
 class Detector:
