@@ -144,8 +144,9 @@ class LogicalView:
 
     Implements a view by applying a user-defined transform (e.g., fold or slice
     operations) optionally followed by reduction (summing) over specified dimensions.
-    This provides a clean separation between "how to reshape/select pixels" (transform)
-    and "how to aggregate them" (sum over reduction dimensions).
+    Transformation and reduction must be specified separately for `LogicalView` to
+    construct a mapping from output indices to input indices. So `transform` must not
+    perform any reductions.
 
     This class provides both data transformation (__call__) and index mapping
     (input_indices) using the same transform, ensuring consistency for ROI filtering.
