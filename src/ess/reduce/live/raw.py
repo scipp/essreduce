@@ -278,7 +278,6 @@ class LogicalDownsampler:
         begin_values = np.arange(
             0, transformed_flat.data.size, bin_size, dtype=np.int64
         )
-        end_values = begin_values + bin_size
 
         # Get output shape
         output_shape = [transformed_flat.sizes[d] for d in output_dims]
@@ -292,21 +291,10 @@ class LogicalDownsampler:
             dims=output_dims,
             values=begin_values.reshape(output_shape),
             dtype='int64',
+            unit=None,
         )
-        end_var = sc.array(
-            dims=output_dims,
-            values=end_values.reshape(output_shape),
-            dtype='int64',
-        )  # Remove units from begin/end to match data (which has no unit from arange)
-        begin_var.unit = data_flat.unit
-        end_var.unit = data_flat.unit
 
-        binned_var = sc.bins(
-            begin=begin_var,
-            end=end_var,
-            dim=flat_dim + '_flat',
-            data=data_flat,
-        )
+        binned_var = sc.bins(begin=begin_var, dim=flat_dim + '_flat', data=data_flat)
 
         return sc.DataArray(binned_var)
 
