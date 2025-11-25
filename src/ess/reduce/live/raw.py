@@ -138,14 +138,14 @@ class Histogrammer:
         return self._hist(replicated, coords=self._coords) / self.replicas
 
 
-class LogicalDownsampler:
+class LogicalView:
     """
-    Downsampler for logical detector views.
+    Logical view for detector data.
 
-    Implements downsampling by applying a user-defined transform (e.g., fold operations)
-    followed by reduction (summing) over specified dimensions. This provides a clean
-    separation between "how to group pixels" (transform) and "how to aggregate them"
-    (sum over reduction dimensions).
+    Implements a view by applying a user-defined transform (e.g., fold or slice
+    operations) optionally followed by reduction (summing) over specified dimensions.
+    This provides a clean separation between "how to reshape/select pixels" (transform)
+    and "how to aggregate them" (sum over reduction dimensions).
 
     This class provides both data transformation (__call__) and index mapping
     (input_indices) using the same transform, ensuring consistency for ROI filtering.
@@ -154,21 +154,23 @@ class LogicalDownsampler:
     def __init__(
         self,
         transform: Callable[[sc.DataArray], sc.DataArray],
-        reduction_dim: str | list[str],
+        reduction_dim: str | list[str] | None = None,
         input_sizes: dict[str, int] | None = None,
     ):
         """
-        Create a logical downsampler.
+        Create a logical view.
 
         Parameters
         ----------
         transform:
-            Callable that transforms input data by grouping pixels.
-            Example: lambda da: da.fold(
-                'x_pixel_offset', {'x_pixel_offset': 512, 'x_bin': 2}
-            )
+            Callable that transforms input data by reshaping or selecting pixels.
+            Examples:
+            - Fold: lambda da: da.fold('x', {'x': 512, 'x_bin': 2})
+            - Slice: lambda da: da['z', 0]  (select front layer of volume)
+            - Combined: lambda da: da.fold('x', {'x': 4, 'z': 8})['z', 0]
         reduction_dim:
-            Dimension(s) to sum over after applying transform.
+            Dimension(s) to sum over after applying transform. If None or empty,
+            no reduction is performed (pure transform).
             Example: 'x_bin' or ['x_bin', 'y_bin']
         input_sizes:
             Dictionary defining the input dimension sizes.
@@ -178,19 +180,22 @@ class LogicalDownsampler:
             inferred from detector_number.
         """
         self._transform = transform
-        self._reduction_dim = (
-            [reduction_dim] if isinstance(reduction_dim, str) else reduction_dim
-        )
+        if reduction_dim is None:
+            self._reduction_dim = []
+        elif isinstance(reduction_dim, str):
+            self._reduction_dim = [reduction_dim]
+        else:
+            self._reduction_dim = reduction_dim
         self._input_sizes = input_sizes
 
     @property
     def replicas(self) -> int:
-        """Number of replicas. Always 1 for LogicalDownsampler."""
+        """Number of replicas. Always 1 for LogicalView."""
         return 1
 
     def __call__(self, da: sc.DataArray) -> sc.DataArray:
         """
-        Downsample data by applying transform and summing over reduction dimensions.
+        Apply transform and optionally sum over reduction dimensions.
 
         Parameters
         ----------
@@ -200,23 +205,26 @@ class LogicalDownsampler:
         Returns
         -------
         :
-            Downsampled data array.
+            Transformed (and optionally reduced) data array.
         """
         transformed = self._transform(da)
-        return transformed.sum(self._reduction_dim)
+        if self._reduction_dim:
+            return transformed.sum(self._reduction_dim)
+        return transformed
 
     def input_indices(self) -> sc.DataArray:
         """
         Create index mapping for ROI filtering.
 
-        Returns a binned DataArray where each output pixel contains
-        a list of contributing input indices (as indices into the
-        flattened input array).
+        Returns a DataArray mapping output pixels to input indices (as indices into
+        the flattened input array). If reduction dimensions are specified, returns
+        binned data where each output pixel contains a list of contributing input
+        indices. If no reduction, returns dense indices (1:1 mapping).
 
         Returns
         -------
         :
-            Binned DataArray mapping output pixels to input indices.
+            DataArray mapping output pixels to input indices.
 
         Raises
         ------
@@ -226,7 +234,7 @@ class LogicalDownsampler:
         if self._input_sizes is None:
             raise ValueError(
                 "input_sizes is required for input_indices(). "
-                "Provide it during LogicalDownsampler initialization."
+                "Provide it during LogicalView initialization."
             )
 
         # Create sequential indices (0, 1, 2, ...) and fold to input shape
@@ -236,6 +244,10 @@ class LogicalDownsampler:
 
         # Apply transform to get the grouping structure
         transformed = self._transform(sc.DataArray(data=indices))
+
+        if not self._reduction_dim:
+            # No reduction: 1:1 mapping, return dense indices
+            return sc.DataArray(data=transformed.data)
 
         # Flatten reduction dimensions to a single dimension.
         # First transpose to make reduction dims contiguous at the end.
@@ -341,17 +353,17 @@ class RollingDetectorView(Detector):
         self.clear_counts()
 
     @staticmethod
-    def with_logical_downsampler(
+    def with_logical_view(
         *,
         detector_number: sc.Variable,
         window: int,
         transform: Callable[[sc.DataArray], sc.DataArray],
-        reduction_dim: str | list[str],
+        reduction_dim: str | list[str] | None = None,
     ) -> RollingDetectorView:
         """
-        Create a RollingDetectorView with a LogicalDownsampler projection.
+        Create a RollingDetectorView with a LogicalView projection.
 
-        This factory method creates a LogicalDownsampler with input_sizes
+        This factory method creates a LogicalView with input_sizes
         automatically inferred from detector_number.sizes.
 
         Parameters
@@ -361,16 +373,17 @@ class RollingDetectorView(Detector):
         window:
             Size of the rolling window.
         transform:
-            Transform function for the LogicalDownsampler.
+            Transform function for the LogicalView.
         reduction_dim:
-            Reduction dimension(s) for the LogicalDownsampler.
+            Reduction dimension(s) for the LogicalView. If None or empty,
+            no reduction is performed (pure transform).
 
         Returns
         -------
         :
-            RollingDetectorView with LogicalDownsampler projection.
+            RollingDetectorView with LogicalView projection.
         """
-        downsampler = LogicalDownsampler(
+        view = LogicalView(
             transform=transform,
             reduction_dim=reduction_dim,
             input_sizes=dict(detector_number.sizes),
@@ -378,7 +391,7 @@ class RollingDetectorView(Detector):
         return RollingDetectorView(
             detector_number=detector_number,
             window=window,
-            projection=downsampler,
+            projection=view,
         )
 
     @property

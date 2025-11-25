@@ -549,8 +549,8 @@ def test_transform_weights_raises_given_DataArray_with_bad_det_num() -> None:
         view.transform_weights(weights)
 
 
-class TestLogicalDownsampler:
-    """Tests for LogicalDownsampler class."""
+class TestLogicalView:
+    """Tests for LogicalView class."""
 
     def test_single_dim_downsampling(self) -> None:
         """Test basic 1D downsampling with transform + reduction."""
@@ -561,7 +561,7 @@ class TestLogicalDownsampler:
                 dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
             )
 
-        downsampler = raw.LogicalDownsampler(
+        view = raw.LogicalView(
             transform=transform,
             reduction_dim='x_bin',
         )
@@ -572,7 +572,7 @@ class TestLogicalDownsampler:
         )
 
         # Apply downsampling
-        result = downsampler(data)
+        result = view(data)
 
         # Should sum pairs: [0+1, 2+3, 4+5, 6+7] = [1, 5, 9, 13]
         expected = sc.array(
@@ -592,7 +592,7 @@ class TestLogicalDownsampler:
             da = da.fold(dim='y_pixel_offset', sizes={'y_pixel_offset': 4, 'y_bin': 2})
             return da
 
-        downsampler = raw.LogicalDownsampler(
+        view = raw.LogicalView(
             transform=transform,
             reduction_dim=['x_bin', 'y_bin'],
         )
@@ -605,7 +605,7 @@ class TestLogicalDownsampler:
         )
 
         # Apply downsampling
-        result = downsampler(data)
+        result = view(data)
 
         # Each output pixel should be sum of 2x2=4 input pixels
         expected = sc.full(
@@ -625,14 +625,14 @@ class TestLogicalDownsampler:
                 dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
             )
 
-        downsampler = raw.LogicalDownsampler(
+        view = raw.LogicalView(
             transform=transform,
             reduction_dim='x_bin',
             input_sizes={'x_pixel_offset': 8},
         )
 
         # Get index mapping
-        indices = downsampler.input_indices()
+        indices = view.input_indices()
 
         # Should be binned data with 4 bins, each containing 2 indices
         assert indices.sizes == {'x_pixel_offset': 4}
@@ -655,14 +655,14 @@ class TestLogicalDownsampler:
             da = da.fold(dim='y_pixel_offset', sizes={'y_pixel_offset': 2, 'y_bin': 2})
             return da
 
-        downsampler = raw.LogicalDownsampler(
+        view = raw.LogicalView(
             transform=transform,
             reduction_dim=['x_bin', 'y_bin'],
             input_sizes={'x_pixel_offset': 4, 'y_pixel_offset': 4},
         )
 
         # Get index mapping
-        indices = downsampler.input_indices()
+        indices = view.input_indices()
 
         # Should be binned data with 2x2 output bins
         assert indices.sizes == {'x_pixel_offset': 2, 'y_pixel_offset': 2}
@@ -683,7 +683,7 @@ class TestLogicalDownsampler:
                 dim='x_pixel_offset', sizes={'x_pixel_offset': 3, 'x_bin': 2}
             )
 
-        downsampler = raw.LogicalDownsampler(
+        view = raw.LogicalView(
             transform=transform,
             reduction_dim='x_bin',
         )
@@ -697,7 +697,7 @@ class TestLogicalDownsampler:
             )
         )
 
-        result = downsampler(data)
+        result = view(data)
 
         # Should sum pairs: [10+20, 30+40, 50+60] = [30, 70, 110]
         expected = sc.array(
@@ -707,12 +707,92 @@ class TestLogicalDownsampler:
         )
         assert sc.allclose(result.data, expected)
 
+    def test_transform_without_reduction_slicing(self) -> None:
+        """Test transform without reduction (slicing to select front layer)."""
 
-class TestRollingDetectorViewWithLogicalDownsampler:
-    """Tests for RollingDetectorView integration with LogicalDownsampler."""
+        # Transform: fold to 3D volume, then slice front layer
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(dim='voxel', sizes={'x': 2, 'y': 2, 'z': 3})['z', 0]
+
+        view = raw.LogicalView(transform=transform)
+
+        # Create test data: each voxel has value equal to its index
+        data = sc.DataArray(data=sc.arange('voxel', 12, dtype='float64', unit='counts'))
+
+        result = view(data)
+
+        # fold orders: z is innermost, so z=0 gives every 3rd element starting at 0
+        # indices: 0, 3, 6, 9
+        assert result.sizes == {'x': 2, 'y': 2}
+        expected = sc.array(
+            dims=['x', 'y'],
+            values=[[0.0, 3.0], [6.0, 9.0]],
+            unit='counts',
+        )
+        assert sc.allclose(result.data, expected)
+
+    def test_transform_without_reduction_reshape(self) -> None:
+        """Test transform without reduction (pure reshape)."""
+
+        # Transform: just fold without any reduction
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(dim='pixel', sizes={'x': 3, 'y': 4})
+
+        view = raw.LogicalView(transform=transform)
+
+        data = sc.DataArray(data=sc.arange('pixel', 12, dtype='float64', unit='counts'))
+
+        result = view(data)
+
+        # Should just reshape, no reduction
+        assert result.sizes == {'x': 3, 'y': 4}
+        assert result.data.sum().value == 66.0  # Sum of 0..11
+
+    def test_input_indices_without_reduction(self) -> None:
+        """Test that input_indices returns dense indices when no reduction."""
+
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(dim='voxel', sizes={'x': 2, 'y': 2, 'z': 3})['z', 0]
+
+        view = raw.LogicalView(
+            transform=transform,
+            input_sizes={'voxel': 12},
+        )
+
+        indices = view.input_indices()
+
+        # Should be dense (not binned) - 1:1 mapping
+        assert indices.bins is None
+        assert indices.sizes == {'x': 2, 'y': 2}
+
+        # Indices should correspond to front layer of folded volume
+        # fold orders: z is innermost, so z=0 gives every 3rd index starting at 0
+        expected = sc.array(dims=['x', 'y'], values=[[0, 3], [6, 9]], unit=None)
+        assert sc.identical(indices.data, expected)
+
+    def test_input_indices_without_reduction_preserves_total_count(self) -> None:
+        """Test that non-reducing input_indices has correct number of indices."""
+
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(dim='pixel', sizes={'x': 4, 'y': 5})
+
+        view = raw.LogicalView(
+            transform=transform,
+            input_sizes={'pixel': 20},
+        )
+
+        indices = view.input_indices()
+
+        # Dense indices should have same total size as output shape
+        assert indices.sizes == {'x': 4, 'y': 5}
+        assert indices.data.size == 20
+
+
+class TestRollingDetectorViewWithLogicalView:
+    """Tests for RollingDetectorView integration with LogicalView."""
 
     def test_as_projection(self) -> None:
-        """Test that RollingDetectorView works with LogicalDownsampler as projection."""
+        """Test that RollingDetectorView works with LogicalView as projection."""
         # Create a 1D detector with 8 pixels
         detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
 
@@ -722,8 +802,8 @@ class TestRollingDetectorViewWithLogicalDownsampler:
                 dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
             )
 
-        # Create RollingDetectorView with downsampler using factory method
-        view = raw.RollingDetectorView.with_logical_downsampler(
+        # Create RollingDetectorView with LogicalView using factory method
+        view = raw.RollingDetectorView.with_logical_view(
             detector_number=detector_number,
             window=2,
             transform=transform,
@@ -742,7 +822,7 @@ class TestRollingDetectorViewWithLogicalDownsampler:
         assert result['x_pixel_offset', 3].value == 0
 
     def test_make_roi_filter(self) -> None:
-        """Test that make_roi_filter() works with LogicalDownsampler."""
+        """Test that make_roi_filter() works with LogicalView."""
         detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
 
         def transform(da: sc.DataArray) -> sc.DataArray:
@@ -750,14 +830,14 @@ class TestRollingDetectorViewWithLogicalDownsampler:
                 dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
             )
 
-        view = raw.RollingDetectorView.with_logical_downsampler(
+        view = raw.RollingDetectorView.with_logical_view(
             detector_number=detector_number,
             window=1,
             transform=transform,
             reduction_dim='x_bin',
         )
 
-        # Should not raise - LogicalDownsampler has input_indices()
+        # Should not raise - LogicalView has input_indices()
         roi_filter = view.make_roi_filter()
 
         # The indices should be binned data (check via private attribute for now)
@@ -767,7 +847,7 @@ class TestRollingDetectorViewWithLogicalDownsampler:
         assert all(roi_filter._indices.bins.size().values == 2)
 
     def test_transform_weights(self) -> None:
-        """Test that transform_weights() works with LogicalDownsampler."""
+        """Test that transform_weights() works with LogicalView."""
         detector_number = sc.arange('x_pixel_offset', 1, 9, unit=None)
 
         def transform(da: sc.DataArray) -> sc.DataArray:
@@ -775,7 +855,7 @@ class TestRollingDetectorViewWithLogicalDownsampler:
                 dim='x_pixel_offset', sizes={'x_pixel_offset': 4, 'x_bin': 2}
             )
 
-        view = raw.RollingDetectorView.with_logical_downsampler(
+        view = raw.RollingDetectorView.with_logical_view(
             detector_number=detector_number,
             window=1,
             transform=transform,
@@ -794,3 +874,50 @@ class TestRollingDetectorViewWithLogicalDownsampler:
             dims=['x_pixel_offset'], shape=[4], value=2.0, dtype='float32', unit=''
         )
         assert sc.allclose(transformed.data, expected)
+
+    def test_with_non_reducing_view(self) -> None:
+        """Test RollingDetectorView with LogicalView without reduction (slicing)."""
+        # 12 voxels that will be folded into 2x2x3 and sliced to front layer
+        detector_number = sc.arange('voxel', 1, 13, unit=None)
+
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(dim='voxel', sizes={'x': 2, 'y': 2, 'z': 3})['z', 0]
+
+        view = raw.RollingDetectorView.with_logical_view(
+            detector_number=detector_number,
+            window=2,
+            transform=transform,
+            # No reduction_dim - pure transform
+        )
+
+        # Add counts for detector_numbers that map to front layer (z=0)
+        # z is innermost, so front layer indices are 0, 3, 6, 9 (every 3rd)
+        # detector_numbers are 1-indexed, so front layer det_nums are 1, 4, 7, 10
+        view.add_counts([1, 4, 7, 10])
+        result = view.get()
+
+        assert result.sizes == {'x': 2, 'y': 2}
+        # Each front-layer pixel gets one count
+        expected = sc.array(
+            dims=['x', 'y'], values=[[1, 1], [1, 1]], dtype='int32', unit='counts'
+        )
+        assert sc.identical(result.data, expected)
+
+    def test_make_roi_filter_with_non_reducing_view(self) -> None:
+        """Test make_roi_filter with non-reducing LogicalView returns dense indices."""
+        detector_number = sc.arange('voxel', 1, 13, unit=None)
+
+        def transform(da: sc.DataArray) -> sc.DataArray:
+            return da.fold(dim='voxel', sizes={'x': 2, 'y': 2, 'z': 3})['z', 0]
+
+        view = raw.RollingDetectorView.with_logical_view(
+            detector_number=detector_number,
+            window=1,
+            transform=transform,
+        )
+
+        roi_filter = view.make_roi_filter()
+
+        # Indices should be dense (not binned) for non-reducing view
+        assert roi_filter._indices.bins is None
+        assert roi_filter._indices.sizes == {'x': 2, 'y': 2}
