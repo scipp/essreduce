@@ -4,11 +4,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
+import sciline as sl
 import scipp as sc
 import scippnexus as snx
 from scipp.testing import assert_identical
 
-from ess.reduce.nexus import compute_component_position, workflow
+from ess.reduce.nexus import compute_component_position, load_from_path, workflow
 from ess.reduce.nexus.types import (
     BackgroundRun,
     Beamline,
@@ -21,6 +22,8 @@ from ess.reduce.nexus.types import (
     Measurement,
     MonitorType,
     NeXusComponentLocationSpec,
+    NeXusFileSpec,
+    NeXusLocationSpec,
     NeXusName,
     NeXusTransformation,
     PreopenNeXusFile,
@@ -577,7 +580,7 @@ def test_load_histogram_monitor_workflow(dream_coda_test_file: Path) -> None:
 
 
 def test_load_detector_workflow(loki_tutorial_sample_run_60250: Path) -> None:
-    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf = LoadDetectorWorkflow(run_types=[SampleRun])
     wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
     wf[NeXusName[snx.NXdetector]] = 'larmor_detector'
     da = wf.compute(RawDetector[SampleRun])
@@ -587,7 +590,7 @@ def test_load_detector_workflow(loki_tutorial_sample_run_60250: Path) -> None:
 
 
 def test_load_histogram_detector_workflow(tbl_commissioning_orca_file: Path) -> None:
-    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf = LoadDetectorWorkflow(run_types=[SampleRun])
     wf[Filename[SampleRun]] = tbl_commissioning_orca_file
     wf[NeXusName[snx.NXdetector]] = 'orca_detector'
     da = wf.compute(RawDetector[SampleRun])
@@ -600,7 +603,7 @@ def test_load_histogram_detector_workflow(tbl_commissioning_orca_file: Path) -> 
 def test_load_empty_histogram_detector_workflow(
     tbl_commissioning_orca_file: Path,
 ) -> None:
-    wf = LoadDetectorWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf = LoadDetectorWorkflow(run_types=[SampleRun])
     wf[Filename[SampleRun]] = tbl_commissioning_orca_file
     wf[NeXusName[snx.NXdetector]] = 'orca_detector'
     da = wf.compute(EmptyDetector[SampleRun])
@@ -776,3 +779,48 @@ def assert_not_contains_type_arg(node: object, excluded: set[type]) -> None:
     assert not any(
         arg in excluded for arg in getattr(node, "__args__", ())
     ), f"Node {node} contains one of {excluded!r}"
+
+
+def test_generic_nexus_workflow_load_custom_field_user_affiliation(
+    loki_tutorial_sample_run_60250: Path,
+) -> None:
+    class UserAffiliation(sl.Scope[RunType, str], str):
+        """User affiliation."""
+
+    def load_user_affiliation(
+        file: NeXusFileSpec[RunType], path: NeXusName[UserAffiliation[RunType]]
+    ) -> UserAffiliation[RunType]:
+        return UserAffiliation[RunType](
+            load_from_path(NeXusLocationSpec(filename=file.value, component_name=path))
+        )
+
+    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf.insert(load_user_affiliation)
+    wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
+    # Path is relative to the top-level '/entry'
+    wf[NeXusName[UserAffiliation[SampleRun]]] = 'user_0/affiliation'
+    affiliation = wf.compute(UserAffiliation[SampleRun])
+    assert affiliation == 'ESS'
+
+
+def test_generic_nexus_workflow_load_custom_group_user(
+    loki_tutorial_sample_run_60250: Path,
+) -> None:
+    class UserInfo(sl.Scope[RunType, str], str):
+        """User info."""
+
+    def load_user_info(
+        file: NeXusFileSpec[RunType], path: NeXusName[UserInfo[RunType]]
+    ) -> UserInfo[RunType]:
+        return UserInfo[RunType](
+            load_from_path(NeXusLocationSpec(filename=file.value, component_name=path))
+        )
+
+    wf = GenericNeXusWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf.insert(load_user_info)
+    wf[Filename[SampleRun]] = loki_tutorial_sample_run_60250
+    # Path is relative to the top-level '/entry'
+    wf[NeXusName[UserInfo]] = 'user_0'
+    user_info = wf.compute(UserInfo[SampleRun])
+    assert user_info['affiliation'] == 'ESS'
+    assert user_info['name'] == 'John Doe'

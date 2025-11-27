@@ -8,7 +8,7 @@ from collections.abc import Generator, Mapping
 from contextlib import AbstractContextManager, contextmanager, nullcontext
 from dataclasses import dataclass
 from math import prod
-from typing import TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import scipp as sc
 import scippnexus as snx
@@ -40,6 +40,31 @@ class NoLockingIfNeededType:
 
 
 NoLockingIfNeeded = NoLockingIfNeededType()
+
+
+def load_from_path(
+    location: NeXusLocationSpec,
+    definitions: Mapping | NoNewDefinitionsType = NoNewDefinitions,
+) -> Any:
+    """Load a field or group from a NeXus file given its location.
+
+    Parameters
+    ----------
+    location:
+        Location of the field within the NeXus file (filename, entry name, selection).
+    definitions:
+        Application definitions to use for the file.
+
+    Returns
+    -------
+    :
+        The loaded field (as a variable, data array, or raw python object) or group
+        (as a data group).
+    """
+    with open_nexus_file(location.filename, definitions=definitions) as f:
+        entry = _unique_child_group(f, snx.NXentry, location.entry_name)
+        item = entry[location.component_name]
+        return item[location.selection]
 
 
 def load_component(

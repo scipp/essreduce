@@ -691,16 +691,12 @@ def LoadMonitorWorkflow(
 
 
 def LoadDetectorWorkflow(
-    *,
-    run_types: Iterable[sciline.typing.Key],
-    monitor_types: Iterable[sciline.typing.Key],
+    *, run_types: Iterable[sciline.typing.Key]
 ) -> sciline.Pipeline:
     """Generic workflow for loading detector data from a NeXus file."""
     wf = sciline.Pipeline(
         (*_common_providers, *_detector_providers),
-        constraints=_gather_constraints(
-            run_types=run_types, monitor_types=monitor_types
-        ),
+        constraints=_gather_constraints(run_types=run_types, monitor_types=[]),
     )
     wf[DetectorBankSizes] = DetectorBankSizes({})
     wf[PreopenNeXusFile] = PreopenNeXusFile(False)

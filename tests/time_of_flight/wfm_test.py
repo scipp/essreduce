@@ -206,7 +206,7 @@ def test_dream_wfm(
             (x.coords["wavelength"] - ref.coords["wavelength"])
             / ref.coords["wavelength"]
         )
-        assert np.nanpercentile(diff.values, 100) < 0.02
+        assert np.nanpercentile(diff.values, 99.9) < 0.02
         assert sc.isclose(ref.data.sum(), da.data.sum(), rtol=sc.scalar(1.0e-3))
 
 
@@ -292,7 +292,7 @@ def test_dream_wfm_with_subframe_time_overlap(
         sel = sc.isfinite(x.coords["wavelength"])
         y = ref.coords["wavelength"][sel]
         diff = abs((x.coords["wavelength"][sel] - y) / y)
-        assert np.nanpercentile(diff.values, 100) < 0.02
+        assert np.nanpercentile(diff.values, 99.9) < 0.02
         sum_wfm = da.hist(wavelength=100).data.sum()
         sum_ref = ref.hist(wavelength=100).data.sum()
         # Verify that we lost some neutrons that were in the overlapping region

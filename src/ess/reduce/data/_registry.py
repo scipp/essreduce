@@ -3,14 +3,14 @@
 
 from __future__ import annotations
 
+import dataclasses
 import hashlib
 import os
 from abc import ABC, abstractmethod
 from collections.abc import Mapping
-from dataclasses import dataclass
 from functools import cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 _LOCAL_CACHE_ENV_VAR = "SCIPP_DATA_DIR"
 _LOCAL_REGISTRY_ENV_VAR = "SCIPP_OVERRIDE_DATA_DIR"
@@ -28,8 +28,8 @@ def make_registry(
 
     By default, this function creates a :class:`PoochRegistry` to download files
     via HTTP from an online file store.
-    This can be overridden by setting the environment variable `SCIPP_DATA_DIR` to a
-    path on the local file system.
+    This can be overridden by setting the environment variable
+    ``SCIPP_OVERRIDE_DATA_DIR`` to a path on the local file system.
     In this case, a :class:`LocalRegistry` is returned.
 
     Files are specified as a dict using either the Pooch string format explicitly
@@ -40,7 +40,11 @@ def make_registry(
         ...    "file1.dat": "md5:1234567890abcdef",
         ...    "file2.csv": Entry(alg="md5", chk="abcdef123456789"),
         ...    "folder/nested.dat": "blake2b:1234567890abcdef",
-        ...    "zipped.zip": Entry(alg="blake2b", chk="abcdef123456789", unzip=True),
+        ...    "zipped.zip": Entry(
+        ...        alg="blake2b",
+        ...        chk="abcdef123456789",
+        ...        extractor="unzip"
+        ...    ),
         ... }
 
     In the example above, the specifications for ``file1.dat`` and ``file2.csv`` are
@@ -49,10 +53,11 @@ def make_registry(
     Paths like this must always use forward slashes (/) even on Windows.
 
     As shown above, it is possible to automatically unzip
-    files by specifying ``unzip=True``.
+    files by specifying ``extractor="unzip"``.
     When calling ``registry.get_path("zipped.zip")`` the file will be unzipped and
     a path to the content is returned.
-    This expects that there is only a single file in the zip archive.
+    Similarly, ``extractor="untar"`` specifies that a file needs to be untarred
+    (and possibly un-gzipped).
 
     The complete path to the source file is constructed as follows:
 
@@ -111,7 +116,7 @@ def _check_local_override_path(override: str) -> Path:
     return path
 
 
-@dataclass(frozen=True, slots=True)
+@dataclasses.dataclass(frozen=True, slots=True)
 class Entry:
     """An entry in a registry."""
 
@@ -119,8 +124,17 @@ class Entry:
     """Checksum."""
     alg: str
     """Checksum algorithm."""
-    unzip: bool = False
+    extractor: Literal["unzip", "untar"] | None = None
+    """Processor to extract file contents."""
+
+    unzip: dataclasses.InitVar[bool] = False
     """Whether to unzip the file."""
+
+    def __post_init__(self, unzip: bool) -> None:
+        if self.extractor is not None and unzip:
+            raise TypeError("Set either the 'unzip' argument or 'extractor', not both.")
+        if self.extractor is None and unzip:
+            object.__setattr__(self, "extractor", "unzip")
 
     @classmethod
     def from_pooch_string(cls, pooch_string: str) -> Entry:
@@ -132,7 +146,7 @@ class Registry(ABC):
     def __init__(self, files: Mapping[str, str | Entry]) -> None:
         self._files = _to_file_entries(files)
 
-    @abstractmethod
+    @cache  # noqa: B019
     def get_path(self, name: str) -> Path:
         """Get the path to a file in the registry.
 
@@ -154,9 +168,60 @@ class Registry(ABC):
         :
             The Path to the file.
         """
+        return Path(
+            _expect_single(
+                self._fetch(name, extractor=self._extractor_processor(name)),
+                name,
+            )
+        )
 
-    def _needs_unzip(self, name: str) -> bool:
-        return self._files[name].unzip
+    @cache  # noqa: B019
+    def get_paths(self, name: str) -> list[Path]:
+        """Get the paths to unpacked files from the registry.
+
+        This method downloads the given file, extracts its contents, and returns
+        the paths to all extracted contents.
+        Unlike :meth:`get_path`, this method requires an extractor processor
+        (unzip or untar).
+
+        Depending on the implementation, the file is downloaded if necessary.
+
+        Note that implementations are allowed to cache return values of this method
+        to avoid recomputing potentially expensive checksums.
+        This usually means that the ``Registry`` object itself gets stored until the
+        Python interpreter shuts down.
+        However, registries are small and do not own resources.
+
+        Parameters
+        ----------
+        name:
+            Name of the zipped or tarred file to get the path for.
+
+        Returns
+        -------
+        :
+            The Paths to the files.
+        """
+        if (extractor := self._extractor_processor(name)) is None:
+            raise ValueError(f"File '{name}' is not zipped or tarred.")
+        return [Path(path) for path in self._fetch(name, extractor=extractor)]
+
+    def _extractor_processor_type(self, name: str) -> Any:
+        match self._files[name].extractor:
+            case "unzip":
+                return _pooch_unzip_processor_class()
+            case "untar":
+                return _pooch_untar_processor_class()
+            case None:
+                return None
+
+    @abstractmethod
+    def _extractor_processor(self, name: str) -> Any:
+        """Return an instance of a processor for the given file."""
+
+    @abstractmethod
+    def _fetch(self, name: str, extractor: Any) -> list[str] | str:
+        """Fetch the given file from the registry."""
 
 
 class PoochRegistry(Registry):
@@ -178,24 +243,15 @@ class PoochRegistry(Registry):
         )
         super().__init__(files)
 
-    @cache  # noqa: B019
-    def get_path(self, name: str) -> Path:
-        """Get the path to a file in the registry.
+    def _fetch(self, name: str, extractor: Any) -> list[str] | str:
+        return self._registry.fetch(name, processor=extractor)
 
-        Downloads the file if necessary.
-        """
-        if self._needs_unzip(name):
-            paths: list[str] = self._registry.fetch(  # type: ignore[assignment]
-                name, processor=self._unzip_processor
-            )
-            return Path(_expect_single_unzipped(paths, name))
-        return Path(self._registry.fetch(name))
-
-    @property
-    def _unzip_processor(self) -> Any:
+    def _extractor_processor(self, name: str) -> Any:
         # Create a new processor on demand because reusing the same processor would
         # reuse the same output path for every file.
-        return _import_pooch().Unzip()
+        if (cls := self._extractor_processor_type(name=name)) is not None:
+            return cls()
+        return None
 
 
 class LocalRegistry(Registry):
@@ -217,12 +273,11 @@ class LocalRegistry(Registry):
             base_url=base_url,
             retry_if_failed=retry_if_failed,
         )
-        self._extract_dir = pooch_registry.path
+        self._extract_base_dir = pooch_registry.path
         self._source_path = source_path.resolve().joinpath(*prefix.split("/"), version)
         super().__init__(files)
 
-    @cache  # noqa: B019
-    def get_path(self, name: str) -> Path:
+    def _fetch(self, name: str, extractor: Any) -> list[str] | str:
         """Get the path to a file in the registry."""
         try:
             entry = self._files[name]
@@ -238,24 +293,24 @@ class LocalRegistry(Registry):
 
         _check_hash(name, path, entry)
 
-        if self._needs_unzip(name):
-            return Path(
-                _expect_single_unzipped(
-                    self._unzip_processor(os.fspath(path), "download", None), path
-                )
-            )
-        return path
+        if extractor is not None:
+            return extractor(os.fspath(path), "download", None)
+        return os.fspath(path)
 
     def _local_path(self, name: str) -> Path:
         # Split on "/" because `name` is always a POSIX-style path, but the return
         # value is a system path, i.e., it can be a Windows-style path.
         return self._source_path.joinpath(*name.split("/"))
 
-    @property
-    def _unzip_processor(self) -> Any:
+    def _extract_dir(self, name: str) -> Path:
+        return self._extract_base_dir / name
+
+    def _extractor_processor(self, name: str) -> Any:
         # Create a new processor on demand because reusing the same processor would
         # reuse the same output path for every file.
-        return _import_pooch().Unzip(self._extract_dir)
+        if (cls := self._extractor_processor_type(name=name)) is not None:
+            return cls(extract_dir=self._extract_dir(name))
+        return None
 
 
 def _import_pooch() -> Any:
@@ -288,19 +343,30 @@ def _create_pooch(
     )
 
 
-def _pooch_unzip_processor(extract_dir: Path) -> Any:
+def _pooch_unzip_processor_class() -> Any:
     try:
         import pooch
     except ImportError:
         raise ImportError("You need to install Pooch to unzip files.") from None
 
-    return pooch.processors.Unzip(extract_dir=os.fspath(extract_dir))
+    return pooch.processors.Unzip
 
 
-def _expect_single_unzipped(paths: list[str], archive: str | os.PathLike) -> str:
+def _pooch_untar_processor_class() -> Any:
+    try:
+        import pooch
+    except ImportError:
+        raise ImportError("You need to install Pooch to untar files.") from None
+
+    return pooch.processors.Untar
+
+
+def _expect_single(paths: list[str] | str, archive: str | os.PathLike) -> str:
+    if isinstance(paths, str):
+        return paths
     if len(paths) != 1:
         raise ValueError(
-            f"Expected exactly one file to unzip, got {len(paths)} in "
+            f"Expected exactly one extracted file, got {len(paths)} in "
             f"'{os.fspath(archive)}'."
         )
     return paths[0]
