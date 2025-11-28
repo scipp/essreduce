@@ -41,6 +41,7 @@ class TestNormalizeByMonitorHistogram:
             sc.array(dims=['w'], values=[0, 10, 30], unit='counts'),
             coords={'w': sc.arange('w', 3.0, unit='Å')},
         ).bin(w=sc.array(dims=['w'], values=[0.0, 2, 3], unit='Å'))
+        del detector.bins.coords['w']
         monitor = sc.DataArray(
             sc.array(dims=['w'], values=[5.0, 6.0], unit='counts'),
             coords={'w': sc.array(dims=['w'], values=[0.0, 2, 3], unit='Å')},
@@ -55,6 +56,7 @@ class TestNormalizeByMonitorHistogram:
             sc.array(dims=['w'], values=[0.0, 4, 5], unit='counts'),
             coords={'w': sc.arange('w', 3.0, unit='Å')},
         ).bin(w=sc.array(dims=['w'], values=[0.0, 2, 3], unit='Å'))
+        del expected.bins.coords['w']
 
         sc.testing.assert_identical(normalized, expected)
 
@@ -561,6 +563,47 @@ class TestNormalizeByMonitorHistogram:
             .assign_masks(
                 _monitor_mask=sc.array(dims=['w'], values=[True, True, False])
             )
+        )
+
+        sc.testing.assert_allclose(normalized, expected)
+
+    def test_different_dims_dense(self) -> None:
+        detector = sc.DataArray(
+            sc.array(  # sizes={'x': 3, 'y': 2}
+                dims=['x', 'y'], values=[[11.0, 10], [9, 8], [7, 6]], unit='counts'
+            ),
+            coords={
+                'x': sc.array(dims=['x'], values=[0.0, 1, 2, 3], unit='m'),
+                'y': sc.array(dims=['y'], values=[-5, -1, 4], unit='kg'),
+                'w': sc.array(  # bin edges in x
+                    dims=['x', 'y'], values=[[1.0, 2], [2, 3], [4, 5], [5, 3]], unit='Å'
+                ),
+            },
+        )
+        monitor = sc.DataArray(
+            sc.array(dims=['w'], values=[3.0, 5, 7], unit='counts'),
+            coords={'w': sc.array(dims=['w'], values=[0.0, 2, 4, 6], unit='Å')},
+            masks={'M': sc.array(dims=['w'], values=[False, True, False])},
+        )
+        normalized = normalize_by_monitor_histogram(
+            detector,
+            monitor=monitor,
+            uncertainty_broadcast_mode=UncertaintyBroadcastMode.fail,
+        )
+
+        expected = sc.DataArray(
+            sc.array(
+                dims=['x', 'y'],
+                values=[[22 / 3, np.nan], [np.nan, 16 / 7], [2.0, 12 / 7]],
+                unit='counts',
+            ),
+            coords=detector.coords,
+            masks={
+                '_monitor_mask': sc.array(
+                    dims=['x', 'y'],
+                    values=[[False, True], [True, False], [False, False]],
+                ),
+            },
         )
 
         sc.testing.assert_allclose(normalized, expected)
