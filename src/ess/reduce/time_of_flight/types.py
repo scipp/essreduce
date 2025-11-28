@@ -3,7 +3,7 @@
 
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import NewType
+from typing import Any, NewType
 
 import sciline as sl
 import scipp as sc
@@ -41,6 +41,10 @@ class TimeOfFlightLookupTable:
     def save_hdf5(self, filename: str | Path) -> None:
         """Save the lookup table to an HDF5 file."""
         sc.DataGroup(asdict(self)).save_hdf5(filename)
+
+    def plot(self, *args, **kwargs) -> Any:
+        """Plot the data array of the lookup table."""
+        return self.array.plot(*args, **kwargs)
 
 
 PulseStrideOffset = NewType("PulseStrideOffset", int | None)
