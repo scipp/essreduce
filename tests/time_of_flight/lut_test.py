@@ -28,15 +28,15 @@ def test_lut_workflow_computes_table():
 
     table = wf.compute(time_of_flight.TimeOfFlightLookupTable)
 
-    assert table['data'].coords['distance'].min() < lmin
-    assert table['data'].coords['distance'].max() > lmax
-    assert table['data'].coords['event_time_offset'].max() == sc.scalar(
+    assert table.array.coords['distance'].min() < lmin
+    assert table.array.coords['distance'].max() > lmax
+    assert table.array.coords['event_time_offset'].max() == sc.scalar(
         1 / 14, unit='s'
-    ).to(unit=table['data'].coords['event_time_offset'].unit)
-    assert sc.isclose(table['distance_resolution'], dres)
+    ).to(unit=table.array.coords['event_time_offset'].unit)
+    assert sc.isclose(table.distance_resolution, dres)
     # Note that the time resolution is not exactly preserved since we want the table to
     # span exactly the frame period.
-    assert sc.isclose(table['time_resolution'], tres, rtol=sc.scalar(0.01))
+    assert sc.isclose(table.time_resolution, tres, rtol=sc.scalar(0.01))
 
 
 def test_lut_workflow_computes_table_in_chunks():
@@ -58,15 +58,15 @@ def test_lut_workflow_computes_table_in_chunks():
 
     table = wf.compute(time_of_flight.TimeOfFlightLookupTable)
 
-    assert table['data'].coords['distance'].min() < lmin
-    assert table['data'].coords['distance'].max() > lmax
-    assert table['data'].coords['event_time_offset'].max() == sc.scalar(
+    assert table.array.coords['distance'].min() < lmin
+    assert table.array.coords['distance'].max() > lmax
+    assert table.array.coords['event_time_offset'].max() == sc.scalar(
         1 / 14, unit='s'
-    ).to(unit=table['data'].coords['event_time_offset'].unit)
-    assert sc.isclose(table['distance_resolution'], dres)
+    ).to(unit=table.array.coords['event_time_offset'].unit)
+    assert sc.isclose(table.distance_resolution, dres)
     # Note that the time resolution is not exactly preserved since we want the table to
     # span exactly the frame period.
-    assert sc.isclose(table['time_resolution'], tres, rtol=sc.scalar(0.01))
+    assert sc.isclose(table.time_resolution, tres, rtol=sc.scalar(0.01))
 
 
 def test_lut_workflow_pulse_skipping():
@@ -87,9 +87,9 @@ def test_lut_workflow_pulse_skipping():
 
     table = wf.compute(time_of_flight.TimeOfFlightLookupTable)
 
-    assert table['data'].coords['event_time_offset'].max() == 2 * sc.scalar(
+    assert table.array.coords['event_time_offset'].max() == 2 * sc.scalar(
         1 / 14, unit='s'
-    ).to(unit=table['data'].coords['event_time_offset'].unit)
+    ).to(unit=table.array.coords['event_time_offset'].unit)
 
 
 def test_lut_workflow_non_exact_distance_range():
@@ -110,6 +110,6 @@ def test_lut_workflow_non_exact_distance_range():
 
     table = wf.compute(time_of_flight.TimeOfFlightLookupTable)
 
-    assert table['data'].coords['distance'].min() < lmin
-    assert table['data'].coords['distance'].max() > lmax
-    assert sc.isclose(table['distance_resolution'], dres)
+    assert table.array.coords['distance'].min() < lmin
+    assert table.array.coords['distance'].max() > lmax
+    assert sc.isclose(table.distance_resolution, dres)

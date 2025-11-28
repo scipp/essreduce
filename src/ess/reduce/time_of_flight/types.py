@@ -38,9 +38,9 @@ class TimeOfFlightLookupTable:
     """Chopper parameters used when generating the lookup table, if any. This is made
     optional so we can still support old lookup tables without chopper info."""
 
-    def save_hdf5(self, path: str | Path) -> None:
+    def save_hdf5(self, filename: str | Path) -> None:
         """Save the lookup table to an HDF5 file."""
-        sc.DataGroup(asdict(self)).save_hdf5(path)
+        sc.DataGroup(asdict(self)).save_hdf5(filename)
 
 
 PulseStrideOffset = NewType("PulseStrideOffset", int | None)

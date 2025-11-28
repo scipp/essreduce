@@ -373,7 +373,7 @@ def make_tof_lookup_table(
     _mask_large_uncertainty(table, error_threshold)
 
     out = {
-        "data": table,
+        "array": table,
         "pulse_period": pulse_period,
         "pulse_stride": pulse_stride,
         "distance_resolution": table.coords["distance"][1]

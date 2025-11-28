@@ -22,7 +22,7 @@ def load_tof_lookup_table(
 
     # Support old format where the metadata were stored as coordinates of the DataArray.
     # Note that no chopper info was saved in the old format.
-    if "array" not in table:
+    if isinstance(table, sc.DataArray):
         table = {
             "array": table.drop_coords(
                 [
@@ -40,7 +40,7 @@ def load_tof_lookup_table(
             "error_threshold": table.coords["error_threshold"].value,
         }
 
-    return TimeOfFlightLookupTable(**sc.io.load_hdf5(filename))
+    return TimeOfFlightLookupTable(**table)
 
 
 def GenericTofWorkflow(
