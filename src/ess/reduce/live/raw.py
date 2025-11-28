@@ -434,7 +434,9 @@ class RollingDetectorView(Detector):
             indices = sc.cumsum(indices, mode='exclusive')
             if self._projection is not None:
                 indices = self._projection(indices)
-        return roi.ROIFilter(indices=indices, norm=norm)
+        return roi.ROIFilter(
+            indices=indices, norm=norm, spatial_dims=self._detector_number.dims
+        )
 
     def transform_weights(
         self,

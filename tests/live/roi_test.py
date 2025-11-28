@@ -154,7 +154,9 @@ def logical_view(da: sc.DataArray) -> sc.DataArray:
 def roi_filter() -> roi.ROIFilter:
     indices = sc.ones(sizes={'detector_number': 24}, dtype='int32', unit=None)
     indices = sc.cumsum(indices, mode='exclusive')
-    return roi.ROIFilter(logical_view(indices))
+    # indices after logical_view have shape (x, y) but values reference full (x, y, z)
+    # detector space, so spatial_dims must be the full detector dims
+    return roi.ROIFilter(logical_view(indices), spatial_dims=('x', 'y', 'z'))
 
 
 def test_ROIFilter_defaults_to_empty_roi(roi_filter: roi.ROIFilter):
@@ -189,3 +191,77 @@ def test_ROIFilter_applies_roi_to_2d_data(roi_filter: roi.ROIFilter):
             dims=['detector_number'], values=[13.0, 15.0, 21.0, 23.0], unit='counts'
         ),
     )
+
+
+@pytest.fixture
+def roi_filter_2d() -> roi.ROIFilter:
+    """ROI filter with 2D indices matching (x, y) spatial dims."""
+    # indices shape (x=3, y=4), values 0..11
+    indices = sc.arange('detector_number', 12, dtype='int32', unit=None).fold(
+        dim='detector_number', sizes={'x': 3, 'y': 4}
+    )
+    return roi.ROIFilter(indices)
+
+
+def test_ROIFilter_applies_roi_to_dense_data_preserves_time(
+    roi_filter_2d: roi.ROIFilter,
+):
+    """Dense data (time, x, y) should preserve time dim, only flatten spatial dims."""
+    roi_filter_2d.set_roi_from_intervals(sc.DataGroup(x=(1, 3), y=(2, 4)))
+    # Dense data shape (time=5, x=3, y=4)
+    data = sc.arange('flat', 60, dtype='float64', unit='counts').fold(
+        dim='flat', sizes={'time': 5, 'x': 3, 'y': 4}
+    )
+    result, _ = roi_filter_2d.apply(data)
+    # Should have shape (time=5, detector_number=4) - 4 pixels selected
+    assert result.dims == ('time', 'detector_number')
+    assert result.sizes == {'time': 5, 'detector_number': 4}
+    # Selected indices are: x=1,y=2 -> 6, x=1,y=3 -> 7, x=2,y=2 -> 10, x=2,y=3 -> 11
+    # For time=0: values at flat indices 6,7,10,11
+    expected_time0 = sc.array(
+        dims=['detector_number'], values=[6.0, 7.0, 10.0, 11.0], unit='counts'
+    )
+    assert sc.identical(result['time', 0], expected_time0)
+
+
+def test_ROIFilter_dense_data_scale_is_broadcast_compatible(
+    roi_filter_2d: roi.ROIFilter,
+):
+    """Scale factor should work with preserved time dimension."""
+    roi_filter_2d.set_roi_from_intervals(sc.DataGroup(x=(0, 2), y=(0, 2)))
+    data = sc.ones(sizes={'time': 3, 'x': 3, 'y': 4}, unit='counts')
+    result, scale = roi_filter_2d.apply(data)
+    # Should be able to multiply result * scale without broadcast issues
+    weighted = result * scale
+    assert weighted.dims == ('time', 'detector_number')
+
+
+def test_ROIFilter_dense_data_empty_roi(roi_filter_2d: roi.ROIFilter):
+    """Empty ROI should return empty result but preserve time dim."""
+    # Default ROI is empty
+    data = sc.ones(sizes={'time': 3, 'x': 3, 'y': 4}, unit='counts')
+    result, _ = roi_filter_2d.apply(data)
+    assert result.dims == ('time', 'detector_number')
+    assert result.sizes == {'time': 3, 'detector_number': 0}
+
+
+def test_ROIFilter_dense_data_full_roi(roi_filter_2d: roi.ROIFilter):
+    """Selecting all pixels should return all data."""
+    roi_filter_2d.set_roi_from_intervals(sc.DataGroup(x=(0, 3), y=(0, 4)))
+    data = sc.arange('flat', 60, dtype='float64', unit='counts').fold(
+        dim='flat', sizes={'time': 5, 'x': 3, 'y': 4}
+    )
+    result, _ = roi_filter_2d.apply(data)
+    assert result.sizes == {'time': 5, 'detector_number': 12}
+
+
+def test_ROIFilter_dense_data_single_pixel(roi_filter_2d: roi.ROIFilter):
+    """Selecting a single pixel should work."""
+    roi_filter_2d.set_roi_from_intervals(sc.DataGroup(x=(1, 2), y=(2, 3)))
+    data = sc.arange('flat', 60, dtype='float64', unit='counts').fold(
+        dim='flat', sizes={'time': 5, 'x': 3, 'y': 4}
+    )
+    result, _ = roi_filter_2d.apply(data)
+    assert result.sizes == {'time': 5, 'detector_number': 1}
+    # x=1, y=2 -> index 6, so time=0 value is 6.0
+    assert result['time', 0].values[0] == 6.0
