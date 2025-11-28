@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
+from dataclasses import asdict, dataclass
+from pathlib import Path
 from typing import NewType
 
 import sciline as sl
@@ -12,10 +14,33 @@ TimeOfFlightLookupTableFilename = NewType("TimeOfFlightLookupTableFilename", str
 """Filename of the time-of-flight lookup table."""
 
 
-TimeOfFlightLookupTable = NewType("TimeOfFlightLookupTable", sc.DataGroup)
-"""
-Lookup table giving time-of-flight as a function of distance and time of arrival.
-"""
+@dataclass
+class TimeOfFlightLookupTable:
+    """
+    Lookup table giving time-of-flight as a function of distance and time of arrival.
+    """
+
+    array: sc.DataArray
+    """The lookup table data array that maps (distance, time_of_arrival) to
+    time_of_flight."""
+    pulse_period: sc.Variable
+    """Pulse period of the neutron source."""
+    pulse_stride: int
+    """Pulse stride used when generating the lookup table."""
+    distance_resolution: sc.Variable
+    """Resolution of the distance coordinate in the lookup table."""
+    time_resolution: sc.Variable
+    """Resolution of the time_of_arrival coordinate in the lookup table."""
+    error_threshold: float
+    """The table is masked with NaNs in regions where the standard deviation of the
+    time-of-flight is above this threshold."""
+    choppers: sc.DataGroup | None = None
+    """Chopper parameters used when generating the lookup table, if any. This is made
+    optional so we can still support old lookup tables without chopper info."""
+
+    def save_hdf5(self, path: str | Path) -> None:
+        """Save the lookup table to an HDF5 file."""
+        sc.DataGroup(asdict(self)).save_hdf5(path)
 
 
 PulseStrideOffset = NewType("PulseStrideOffset", int | None)

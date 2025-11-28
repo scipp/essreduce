@@ -366,38 +366,29 @@ def make_tof_lookup_table(
                 [table.coords["event_time_offset"], frame_period],
                 dim='event_time_offset',
             ),
-            "pulse_period": pulse_period,
-            "pulse_stride": sc.scalar(pulse_stride, unit=None),
-            "distance_resolution": table.coords["distance"][1]
-            - table.coords["distance"][0],
-            "time_resolution": table.coords["event_time_offset"][1]
-            - table.coords["event_time_offset"][0],
-            "error_threshold": sc.scalar(error_threshold),
         },
     )
 
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
 
-    out = sc.DataGroup(
-        {
-            "data": table,
-            "pulse_period": pulse_period,
-            "pulse_stride": sc.scalar(pulse_stride, unit=None),
-            "distance_resolution": table.coords["distance"][1]
-            - table.coords["distance"][0],
-            "time_resolution": table.coords["event_time_offset"][1]
-            - table.coords["event_time_offset"][0],
-            "error_threshold": sc.scalar(error_threshold),
-        }
-    )
+    out = {
+        "data": table,
+        "pulse_period": pulse_period,
+        "pulse_stride": pulse_stride,
+        "distance_resolution": table.coords["distance"][1]
+        - table.coords["distance"][0],
+        "time_resolution": table.coords["event_time_offset"][1]
+        - table.coords["event_time_offset"][0],
+        "error_threshold": error_threshold,
+    }
 
     if simulation.choppers is not None:
         out['choppers'] = sc.DataGroup(
             {k: sc.DataGroup(ch.as_dict()) for k, ch in simulation.choppers.items()}
         )
 
-    return TimeOfFlightLookupTable(out)
+    return TimeOfFlightLookupTable(**out)
 
 
 def simulate_chopper_cascade_using_tof(
