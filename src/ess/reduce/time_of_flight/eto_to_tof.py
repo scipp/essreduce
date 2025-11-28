@@ -96,14 +96,14 @@ class TofInterpolator:
 
 
 def _time_of_flight_data_histogram(
-    da: sc.DataArray, lookup: sc.DataArray, ltotal: sc.Variable
+    da: sc.DataArray, lookup: TimeOfFlightLookupTable, ltotal: sc.Variable
 ) -> sc.DataArray:
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
     # it may be called 'tof' or 'frame_time'.
     key = next(iter(set(da.coords.keys()) & {"time_of_flight", "tof", "frame_time"}))
     raw_eto = da.coords[key].to(dtype=float, copy=False)
     eto_unit = raw_eto.unit
-    pulse_period = lookup.coords["pulse_period"].to(unit=eto_unit)
+    pulse_period = lookup.pulse_period.to(unit=eto_unit)
 
     # In histogram mode, because there is a wrap around at the end of the pulse, we
     # need to insert a bin edge at that exact location to avoid having the last bin
@@ -117,7 +117,9 @@ def _time_of_flight_data_histogram(
     etos = rebinned.coords[key]
 
     # Create linear interpolator
-    interp = TofInterpolator(lookup, distance_unit=ltotal.unit, time_unit=eto_unit)
+    interp = TofInterpolator(
+        lookup.array, distance_unit=ltotal.unit, time_unit=eto_unit
+    )
 
     # Compute time-of-flight of the bin edges using the interpolator
     tofs = interp(
@@ -199,7 +201,7 @@ def _guess_pulse_stride_offset(
 
 def _prepare_tof_interpolation_inputs(
     da: sc.DataArray,
-    lookup: sc.DataArray,
+    lookup: TimeOfFlightLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int | None,
 ) -> dict:
@@ -227,15 +229,17 @@ def _prepare_tof_interpolation_inputs(
     eto_unit = elem_unit(etos)
 
     # Create linear interpolator
-    interp = TofInterpolator(lookup, distance_unit=ltotal.unit, time_unit=eto_unit)
+    interp = TofInterpolator(
+        lookup.array, distance_unit=ltotal.unit, time_unit=eto_unit
+    )
 
     # Operate on events (broadcast distances to all events)
     ltotal = sc.bins_like(etos, ltotal).bins.constituents["data"]
     etos = etos.bins.constituents["data"]
 
     pulse_index = None
-    pulse_period = lookup.coords["pulse_period"].to(unit=eto_unit)
-    pulse_stride = lookup.coords["pulse_stride"].value
+    pulse_period = lookup.pulse_period.to(unit=eto_unit)
+    pulse_stride = lookup.pulse_stride
 
     if pulse_stride > 1:
         # Compute a pulse index for every event: it is the index of the pulse within a
@@ -291,7 +295,7 @@ def _prepare_tof_interpolation_inputs(
 
 def _time_of_flight_data_events(
     da: sc.DataArray,
-    lookup: sc.DataArray,
+    lookup: TimeOfFlightLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int | None,
 ) -> sc.DataArray:
@@ -375,7 +379,7 @@ def monitor_ltotal_from_straight_line_approximation(
 
 def _compute_tof_data(
     da: sc.DataArray,
-    lookup: sc.DataArray,
+    lookup: TimeOfFlightLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
@@ -503,7 +507,7 @@ def detector_time_of_arrival_data(
     result = detector_data.bins.assign_coords(
         toa=sc.bins(**parts, validate_indices=False)
     )
-    return result
+    return ToaDetector[RunType](result)
 
 
 def providers() -> tuple[Callable]:

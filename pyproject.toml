@@ -32,7 +32,7 @@ requires-python = ">=3.11"
 dependencies = [
     "sciline>=25.11.0",
     "scipp>=25.04.0",
-    "scippneutron>=25.02.0",
+    "scippneutron>=25.11.1",
     "scippnexus>=25.06.0",
 ]
 
@@ -45,7 +45,7 @@ test = [
     "pooch>=1.5",
     "pytest>=7.0",
     "scipy>=1.14",
-    "tof>=25.05.0",
+    "tof>=25.11.1",
 ]
 
 [project.scripts]
