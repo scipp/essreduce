@@ -2,7 +2,11 @@
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 """Normalization routines for neutron data reduction."""
 
+from __future__ import annotations
+
+import enum
 import functools
+import warnings
 
 import scipp as sc
 
@@ -14,6 +18,7 @@ def normalize_by_monitor_histogram(
     *,
     monitor: sc.DataArray,
     uncertainty_broadcast_mode: UncertaintyBroadcastMode,
+    skip_range_check: bool = False,
 ) -> sc.DataArray:
     """Normalize detector data by a normalized histogrammed monitor.
 
@@ -47,6 +52,10 @@ def normalize_by_monitor_histogram(
         Must be one-dimensional and have a dimension coordinate, typically "wavelength".
     uncertainty_broadcast_mode:
         Choose how uncertainties of the monitor are broadcast to the sample data.
+    skip_range_check:
+        If false (default), the detector data must be within the range of the monitor
+        coordinate. Set this to true to disable the check.
+        The value of out-of-range bins / events is undefined in that case.
 
     Returns
     -------
@@ -60,22 +69,44 @@ def normalize_by_monitor_histogram(
     normalize_by_monitor_integrated:
         Normalize by an integrated monitor.
     """
-    _check_monitor_range_contains_detector(monitor=monitor, detector=detector)
+    if not skip_range_check:
+        _check_monitor_range_contains_detector(monitor=monitor, detector=detector)
 
     dim = monitor.dim
 
-    if detector.bins is None:
-        monitor = monitor.rebin({dim: detector.coords[dim]})
-    detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
-    coord = monitor.coords[dim]
-    delta_w = sc.DataArray(coord[1:] - coord[:-1], masks=monitor.masks)
-    norm = broadcast_uncertainties(
-        monitor / delta_w, prototype=detector, mode=uncertainty_broadcast_mode
-    )
+    match _HistogramNormalizationMode.deduce(detector, dim):
+        case _HistogramNormalizationMode.Events:
+            detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
+            norm = _histogram_monitor_term(
+                monitor,
+                dim,
+                broadcast_to=detector,
+                uncertainty_broadcast_mode=uncertainty_broadcast_mode,
+            )
+            if dim in detector.bins.coords:
+                return detector.bins / sc.lookup(norm, dim=dim)
+            else:
+                return detector / norm
 
-    if detector.bins is None:
-        return detector / norm.rebin({dim: detector.coords[dim]})
-    return detector.bins / sc.lookup(norm, dim=dim)
+        case _HistogramNormalizationMode.BinsMatchingDim:
+            monitor = monitor.rebin({dim: detector.coords[dim]})
+            detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
+            norm = _histogram_monitor_term(
+                monitor,
+                dim,
+                broadcast_to=detector,
+                uncertainty_broadcast_mode=uncertainty_broadcast_mode,
+            )
+            return detector / norm
+
+        case _HistogramNormalizationMode.BinsDifferentDim:
+            detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
+            norm = _histogram_monitor_term(
+                monitor,
+                dim,
+                uncertainty_broadcast_mode=uncertainty_broadcast_mode,
+            )
+            return detector / sc.lookup(norm)[_coord_midpoints(detector, dim)]
 
 
 def normalize_by_monitor_integrated(
@@ -83,6 +114,7 @@ def normalize_by_monitor_integrated(
     *,
     monitor: sc.DataArray,
     uncertainty_broadcast_mode: UncertaintyBroadcastMode,
+    skip_range_check: bool = False,
 ) -> sc.DataArray:
     """Normalize detector data by an integrated monitor.
 
@@ -113,6 +145,10 @@ def normalize_by_monitor_integrated(
         Must be one-dimensional and have a dimension coordinate, typically "wavelength".
     uncertainty_broadcast_mode:
         Choose how uncertainties of the monitor are broadcast to the sample data.
+    skip_range_check:
+        If false (default), the detector data must be within the range of the monitor
+        coordinate. Set this to true to disable the check.
+        The value of out-of-range bins / events is undefined in that case.
 
     Returns
     -------
@@ -126,7 +162,8 @@ def normalize_by_monitor_integrated(
     normalize_by_monitor_histogram:
         Normalize by a monitor histogram.
     """
-    _check_monitor_range_contains_detector(monitor=monitor, detector=detector)
+    if not skip_range_check:
+        _check_monitor_range_contains_detector(monitor=monitor, detector=detector)
     detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
     norm = monitor.nansum().data
     norm = broadcast_uncertainties(
@@ -149,15 +186,15 @@ def _check_monitor_range_contains_detector(
     # monitor range that is less than the detector bins which is fine for the events,
     # but would be wrong if the detector was subsequently histogrammed.
     if (det_coord := detector.coords.get(dim)) is not None:
-        lo = det_coord[dim, :-1].nanmin()
-        hi = det_coord[dim, 1:].nanmax()
+        ...
     elif (det_coord := detector.bins.coords.get(dim)) is not None:
-        lo = det_coord.nanmin()
-        hi = det_coord.nanmax()
+        ...
     else:
         raise sc.CoordError(
             f"Missing '{dim}' coordinate in detector for monitor normalization."
         )
+    lo = det_coord.nanmin()
+    hi = det_coord.nanmax()
 
     if monitor.coords[dim].min() > lo or monitor.coords[dim].max() < hi:
         raise ValueError(
@@ -181,13 +218,17 @@ def _mask_detector_for_norm(
     if (monitor_mask := _monitor_mask(monitor)) is None:
         return detector
 
-    if (detector_coord := detector.coords.get(monitor.dim)) is not None:
+    if (detector_coord := detector.coords.get(dim)) is not None:
         # Apply the mask to the bins or a dense detector.
-        # Use rebin to reshape the mask to the detector.
-        mask = sc.DataArray(monitor_mask, coords={dim: monitor.coords[dim]}).rebin(
-            {dim: detector_coord}
-        ).data != sc.scalar(0, unit=None)
-        return detector.assign_masks({"_monitor_mask": mask})
+        mask_da = sc.DataArray(monitor_mask, coords={dim: monitor.coords[dim]})
+        if dim in detector_coord.dims:
+            # Use rebin to reshape the mask to the detector.
+            mask = mask_da.rebin({dim: detector_coord}).data != sc.scalar(0, unit=None)
+            return detector.assign_masks(_monitor_mask=mask)
+        # else: need to use lookup to apply mask at matching coord elements
+        return detector.assign_masks(
+            _monitor_mask=sc.lookup(mask_da)[_coord_midpoints(detector, dim)]
+        )
 
     # else: Apply the mask to the events.
     if dim not in detector.bins.coords:
@@ -197,7 +238,7 @@ def _mask_detector_for_norm(
     event_mask = sc.lookup(
         sc.DataArray(monitor_mask, coords={dim: monitor.coords[dim]})
     )[detector.bins.coords[dim]]
-    return detector.bins.assign_masks({"_monitor_mask": event_mask})
+    return detector.bins.assign_masks(_monitor_mask=event_mask)
 
 
 def _monitor_mask(monitor: sc.DataArray) -> sc.Variable | None:
@@ -213,3 +254,62 @@ def _monitor_mask(monitor: sc.DataArray) -> sc.Variable | None:
     if not masks:
         return None
     return functools.reduce(sc.logical_or, masks)
+
+
+def _histogram_monitor_term(
+    monitor: sc.DataArray,
+    dim: str,
+    *,
+    broadcast_to: sc.DataArray | None = None,
+    uncertainty_broadcast_mode: UncertaintyBroadcastMode,
+) -> sc.DataArray:
+    if not monitor.coords.is_edges(dim, dim):
+        raise sc.CoordError(
+            f"Monitor coordinage {dim} must be bin-edges for normalization."
+        )
+    coord = monitor.coords[dim]
+    delta_w = sc.DataArray(coord[1:] - coord[:-1], masks=monitor.masks)
+    norm = monitor / delta_w
+
+    if broadcast_to is not None:
+        return broadcast_uncertainties(
+            norm, prototype=broadcast_to, mode=uncertainty_broadcast_mode
+        )
+
+    match uncertainty_broadcast_mode:
+        case UncertaintyBroadcastMode.fail:
+            return norm
+        case UncertaintyBroadcastMode.drop:
+            return sc.values(norm)
+        case _:
+            warnings.warn(
+                "Cannot broadcast uncertainties in this case.",
+                UserWarning,
+                stacklevel=3,
+            )
+            return norm
+
+
+class _HistogramNormalizationMode(enum.Enum):
+    Events = enum.auto()
+    BinsMatchingDim = enum.auto()
+    BinsDifferentDim = enum.auto()
+
+    @classmethod
+    def deduce(cls, detector: sc.DataArray, dim: str) -> _HistogramNormalizationMode:
+        if detector.bins is not None:
+            if dim in detector.bins.coords:
+                return _HistogramNormalizationMode.Events
+
+        det_coord = detector.coords[dim]
+        if dim in det_coord.dims:
+            return _HistogramNormalizationMode.BinsMatchingDim
+        return _HistogramNormalizationMode.BinsDifferentDim
+
+
+def _coord_midpoints(da: sc.DataArray, name: str) -> sc.Variable:
+    coord = da.coords[name]
+    for dim in coord.dims:
+        if da.coords.is_edges(name, dim):
+            coord = sc.midpoints(coord, dim=dim)
+    return coord
