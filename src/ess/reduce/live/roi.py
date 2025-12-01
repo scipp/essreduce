@@ -86,9 +86,9 @@ def select_indices_in_polygon(
     # Convert bin-edge coordinates to bin centers if needed
     a_coords = indices.coords[coord_a]
     b_coords = indices.coords[coord_b]
-    if a_coords.sizes.get(coord_a) == indices.sizes[coord_a] + 1:
+    if indices.coords.is_edges(coord_a):
         a_coords = sc.midpoints(a_coords, dim=coord_a)
-    if b_coords.sizes.get(coord_b) == indices.sizes[coord_b] + 1:
+    if indices.coords.is_edges(coord_b):
         b_coords = sc.midpoints(b_coords, dim=coord_b)
 
     # Broadcast coordinates to match indices shape and flatten
