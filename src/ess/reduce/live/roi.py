@@ -8,6 +8,7 @@ from typing import TypeVar
 
 import numpy as np
 import scipp as sc
+from matplotlib.path import Path
 
 
 def select_indices_in_intervals(
@@ -38,6 +39,70 @@ def select_indices_in_intervals(
         return indices
     indices = indices.bins.concat().value
     return indices.rename_dims({indices.dim: out_dim})
+
+
+def select_indices_in_polygon(
+    polygon: dict[str, sc.Variable],
+    indices: sc.DataArray,
+) -> sc.Variable:
+    """
+    Return subset of indices that fall within the polygon.
+
+    Parameters
+    ----------
+    polygon:
+        Polygon vertices as a dict mapping coordinate names to 1-D arrays of vertex
+        positions. Must contain exactly two entries. The coordinate names must match
+        coordinates on the indices DataArray.
+    indices:
+        DataArray with indices to select from. Must have coordinates matching the
+        keys in the polygon dict.
+
+    Returns
+    -------
+    :
+        Variable with selected indices.
+    """
+    out_dim = 'index'
+
+    if not isinstance(indices, sc.DataArray):
+        raise TypeError(
+            "Polygon selection requires indices to be a DataArray with coordinates"
+        )
+
+    if len(polygon) != 2:
+        raise ValueError(
+            f"Polygon must have exactly two coordinate arrays, got {len(polygon)}"
+        )
+
+    # Get the two coordinate names from the polygon dict
+    coord_names = list(polygon.keys())
+    coord_a, coord_b = coord_names
+
+    # Extract polygon vertices as 2D array
+    vertices_2d = np.column_stack([polygon[coord_a].values, polygon[coord_b].values])
+
+    # Get coordinates for each pixel from the indices
+    a_coords = indices.coords[coord_a]
+    b_coords = indices.coords[coord_b]
+
+    # Broadcast coordinates to match indices shape and flatten
+    a_flat = sc.broadcast(a_coords, sizes=indices.sizes).values.flatten()
+    b_flat = sc.broadcast(b_coords, sizes=indices.sizes).values.flatten()
+    points = np.column_stack([a_flat, b_flat])
+
+    # Use matplotlib Path for point-in-polygon test
+    polygon_path = Path(vertices_2d)
+    mask = polygon_path.contains_points(points)
+
+    # Get indices that are inside the polygon
+    all_indices = indices.data.flatten(to=out_dim)
+    if all_indices.bins is not None:
+        all_indices = all_indices.bins.concat().value
+        all_indices = all_indices.rename_dims({all_indices.dim: out_dim})
+
+    selected_values = all_indices.values[mask]
+    return sc.array(dims=[out_dim], values=selected_values, dtype='int32')
 
 
 T = TypeVar('T', sc.DataArray, sc.Variable)
@@ -116,6 +181,26 @@ class ROIFilter:
     def set_roi_from_intervals(self, intervals: sc.DataGroup) -> None:
         """Set the ROI from (typically 1 or 2) intervals."""
         self._selection = select_indices_in_intervals(intervals, self._indices)
+
+    def set_roi_from_polygon(self, polygon: dict[str, sc.Variable]) -> None:
+        """
+        Set the ROI from polygon vertices.
+
+        Parameters
+        ----------
+        polygon:
+            Polygon vertices as a dict mapping coordinate names to 1-D arrays of
+            vertex positions. Must contain exactly two entries. The coordinate names
+            must match coordinates on the indices DataArray.
+        """
+        if not isinstance(self._indices, sc.DataArray):
+            raise TypeError(
+                "Polygon ROI requires indices to be a DataArray with coordinates"
+            )
+        self._selection = select_indices_in_polygon(
+            polygon=polygon,
+            indices=self._indices,
+        )
 
     @property
     def spatial_dims(self) -> tuple[str, ...]:

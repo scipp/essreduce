@@ -265,3 +265,176 @@ def test_ROIFilter_dense_data_single_pixel(roi_filter_2d: roi.ROIFilter):
     assert result.sizes == {'time': 5, 'detector_number': 1}
     # x=1, y=2 -> index 6, so time=0 value is 6.0
     assert result['time', 0].values[0] == 6.0
+
+
+# Tests for polygon ROI selection
+
+
+@pytest.fixture
+def grid_indices_with_coords() -> sc.DataArray:
+    """Create a 5x5 grid of indices with x, y coordinates at pixel centers."""
+    # Indices 0-24 arranged in a 5x5 grid
+    indices = sc.arange('detector_number', 25, dtype='int32', unit=None).fold(
+        dim='detector_number', sizes={'x': 5, 'y': 5}
+    )
+    # Coordinates at pixel centers: 0.5, 1.5, 2.5, 3.5, 4.5
+    x_coords = sc.arange('x', 0.5, 5.5, unit='m')
+    y_coords = sc.arange('y', 0.5, 5.5, unit='m')
+    return sc.DataArray(indices, coords={'x': x_coords, 'y': y_coords})
+
+
+def test_select_indices_in_polygon_triangle(grid_indices_with_coords):
+    """Select indices inside a triangular polygon."""
+    # Triangle with vertices at (0, 0), (3, 0), (1.5, 3) in meters
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[0.0, 3.0, 1.5], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[0.0, 0.0, 3.0], unit='m'),
+    }
+    selected = roi.select_indices_in_polygon(
+        polygon=polygon,
+        indices=grid_indices_with_coords,
+    )
+    assert selected.dim == 'index'
+    assert selected.sizes['index'] > 0
+    # Check that selected indices are valid
+    assert all(0 <= v < 25 for v in selected.values)
+
+
+def test_select_indices_in_polygon_rectangle(grid_indices_with_coords):
+    """A rectangular polygon should select a rectangular region."""
+    # Rectangle from (1, 1) to (3, 3)
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0], unit='m'),
+    }
+    selected = roi.select_indices_in_polygon(
+        polygon=polygon,
+        indices=grid_indices_with_coords,
+    )
+    # Pixels at (1.5, 1.5), (1.5, 2.5), (2.5, 1.5), (2.5, 2.5) should be selected
+    # These are indices 6, 7, 11, 12 in the 5x5 grid (row-major: index = x*5 + y)
+    assert set(selected.values) == {6, 7, 11, 12}
+
+
+def test_select_indices_in_polygon_empty_selection(grid_indices_with_coords):
+    """Polygon outside all points should return empty selection."""
+    # Polygon far outside the grid
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[10.0, 12.0, 11.0], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[10.0, 10.0, 12.0], unit='m'),
+    }
+    selected = roi.select_indices_in_polygon(
+        polygon=polygon,
+        indices=grid_indices_with_coords,
+    )
+    assert selected.sizes['index'] == 0
+
+
+def test_select_indices_in_polygon_all_points(grid_indices_with_coords):
+    """Large polygon should select all points."""
+    # Polygon that covers entire grid
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[-1.0, 6.0, 6.0, -1.0], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[-1.0, -1.0, 6.0, 6.0], unit='m'),
+    }
+    selected = roi.select_indices_in_polygon(
+        polygon=polygon,
+        indices=grid_indices_with_coords,
+    )
+    assert selected.sizes['index'] == 25
+
+
+def test_select_indices_in_polygon_requires_exactly_two_coords():
+    """Polygon must have exactly two coordinate arrays."""
+    indices = sc.DataArray(
+        sc.arange('x', 10, dtype='int32'),
+        coords={'x': sc.arange('x', 0.5, 10.5, unit='m')},
+    )
+    polygon_one = {'x': sc.array(dims=['vertex'], values=[0.0, 1.0, 0.5], unit='m')}
+    with pytest.raises(ValueError, match="exactly two"):
+        roi.select_indices_in_polygon(polygon=polygon_one, indices=indices)
+
+    polygon_three = {
+        'x': sc.array(dims=['vertex'], values=[0.0, 1.0, 0.5], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[0.0, 0.0, 1.0], unit='m'),
+        'z': sc.array(dims=['vertex'], values=[0.0, 0.0, 0.0], unit='m'),
+    }
+    with pytest.raises(ValueError, match="exactly two"):
+        roi.select_indices_in_polygon(polygon=polygon_three, indices=indices)
+
+
+def test_select_indices_in_polygon_requires_coords_on_indices():
+    """Polygon selection requires matching coordinates on the indices."""
+    indices = sc.DataArray(
+        sc.arange('x', 10, dtype='int32'),
+        coords={'x': sc.arange('x', 0.5, 10.5, unit='m')},
+    )
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[0.0, 1.0, 0.5], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[0.0, 0.0, 1.0], unit='m'),
+    }
+    with pytest.raises(KeyError):
+        roi.select_indices_in_polygon(polygon=polygon, indices=indices)
+
+
+def test_select_indices_in_polygon_requires_dataarray():
+    """Polygon selection requires indices to be a DataArray."""
+    indices = sc.arange('x', 10, dtype='int32', unit=None)
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[0.0, 1.0, 0.5], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[0.0, 0.0, 1.0], unit='m'),
+    }
+    with pytest.raises(TypeError, match="DataArray"):
+        roi.select_indices_in_polygon(polygon=polygon, indices=indices)
+
+
+def test_select_indices_in_polygon_with_unitless_coords():
+    """Polygon works with unitless coordinates."""
+    indices = sc.arange('detector_number', 25, dtype='int32', unit=None).fold(
+        dim='detector_number', sizes={'x': 5, 'y': 5}
+    )
+    indices = sc.DataArray(
+        indices,
+        coords={
+            'x': sc.arange('x', 0.5, 5.5),
+            'y': sc.arange('y', 0.5, 5.5),
+        },
+    )
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0]),
+        'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0]),
+    }
+    selected = roi.select_indices_in_polygon(polygon=polygon, indices=indices)
+    assert set(selected.values) == {6, 7, 11, 12}
+
+
+def test_ROIFilter_set_roi_from_polygon(grid_indices_with_coords):
+    """ROIFilter should support setting ROI from polygon vertices."""
+    roi_filter = roi.ROIFilter(grid_indices_with_coords)
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0], unit='m'),
+    }
+    roi_filter.set_roi_from_polygon(polygon)
+
+    data = sc.arange('detector_number', 25, dtype='float64', unit='counts')
+    result, _ = roi_filter.apply(data)
+    assert set(result.values) == {6.0, 7.0, 11.0, 12.0}
+
+
+def test_ROIFilter_polygon_preserves_time_dimension(grid_indices_with_coords):
+    """Polygon ROI should preserve non-spatial dimensions like time."""
+    roi_filter = roi.ROIFilter(grid_indices_with_coords)
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0], unit='m'),
+    }
+    roi_filter.set_roi_from_polygon(polygon)
+
+    # Dense data with time dimension
+    data = sc.arange('flat', 75, dtype='float64', unit='counts').fold(
+        dim='flat', sizes={'time': 3, 'x': 5, 'y': 5}
+    )
+    result, _ = roi_filter.apply(data)
+    assert result.dims == ('time', 'detector_number')
+    assert result.sizes == {'time': 3, 'detector_number': 4}
