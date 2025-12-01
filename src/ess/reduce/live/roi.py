@@ -102,12 +102,16 @@ def select_indices_in_polygon(
 
     # Get indices that are inside the polygon
     all_indices = indices.data.flatten(to=out_dim)
-    if all_indices.bins is not None:
-        all_indices = all_indices.bins.concat().value
-        all_indices = all_indices.rename_dims({all_indices.dim: out_dim})
 
-    selected_values = all_indices.values[mask]
-    return sc.array(dims=[out_dim], values=selected_values, dtype='int32')
+    # Apply mask first, then concat if binned (mask is per-bin, not per-index)
+    sc_mask = sc.array(dims=[out_dim], values=mask)
+    selected = all_indices[sc_mask]
+
+    if selected.bins is not None:
+        selected = selected.bins.concat().value
+        selected = selected.rename_dims({selected.dim: out_dim})
+
+    return sc.array(dims=[out_dim], values=selected.values, dtype='int32')
 
 
 T = TypeVar('T', sc.DataArray, sc.Variable)

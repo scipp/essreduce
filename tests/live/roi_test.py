@@ -487,3 +487,35 @@ def test_ROIFilter_polygon_with_bin_edge_coords(grid_indices_with_bin_edge_coord
     data = sc.arange('detector_number', 25, dtype='float64', unit='counts')
     result, _ = roi_filter.apply(data)
     assert set(result.values) == {6.0, 7.0, 11.0, 12.0}
+
+
+def test_select_indices_in_polygon_with_binned_data(binned_indices):
+    """Polygon selection should work with binned indices."""
+    # binned_indices has bin-edge coords from binning, shape (x=4, y=5)
+    # Select a rectangular region
+    x_min, x_max = (
+        binned_indices.coords['x'].min().value,
+        binned_indices.coords['x'].max().value,
+    )
+    y_min, y_max = (
+        binned_indices.coords['y'].min().value,
+        binned_indices.coords['y'].max().value,
+    )
+    # Polygon covering roughly the center of the grid
+    polygon = {
+        'x': sc.array(
+            dims=['vertex'],
+            values=[x_min + 0.3, x_max - 0.3, x_max - 0.3, x_min + 0.3],
+            unit='m',
+        ),
+        'y': sc.array(
+            dims=['vertex'],
+            values=[y_min + 0.3, y_min + 0.3, y_max - 0.3, y_max - 0.3],
+            unit='m',
+        ),
+    }
+    selected = roi.select_indices_in_polygon(polygon=polygon, indices=binned_indices)
+    assert selected.dim == 'index'
+    # Should select some but not all indices
+    total_indices = binned_indices.bins.size().sum().value
+    assert 0 < selected.sizes['index'] < total_indices
