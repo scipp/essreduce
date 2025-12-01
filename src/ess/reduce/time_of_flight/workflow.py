@@ -17,7 +17,30 @@ from .types import (
 def load_tof_lookup_table(
     filename: TimeOfFlightLookupTableFilename,
 ) -> TimeOfFlightLookupTable:
-    return TimeOfFlightLookupTable(sc.io.load_hdf5(filename))
+    """Load a time-of-flight lookup table from an HDF5 file."""
+    table = sc.io.load_hdf5(filename)
+
+    # Support old format where the metadata were stored as coordinates of the DataArray.
+    # Note that no chopper info was saved in the old format.
+    if isinstance(table, sc.DataArray):
+        table = {
+            "array": table.drop_coords(
+                [
+                    "pulse_period",
+                    "pulse_stride",
+                    "distance_resolution",
+                    "time_resolution",
+                    "error_threshold",
+                ]
+            ),
+            "pulse_period": table.coords["pulse_period"],
+            "pulse_stride": table.coords["pulse_stride"].value,
+            "distance_resolution": table.coords["distance_resolution"],
+            "time_resolution": table.coords["time_resolution"],
+            "error_threshold": table.coords["error_threshold"].value,
+        }
+
+    return TimeOfFlightLookupTable(**table)
 
 
 def GenericTofWorkflow(

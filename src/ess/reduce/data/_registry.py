@@ -134,7 +134,7 @@ class Entry:
         if self.extractor is not None and unzip:
             raise TypeError("Set either the 'unzip' argument or 'extractor', not both.")
         if self.extractor is None and unzip:
-            super().__setattr__("extractor", "unzip")
+            object.__setattr__(self, "extractor", "unzip")
 
     @classmethod
     def from_pooch_string(cls, pooch_string: str) -> Entry:
