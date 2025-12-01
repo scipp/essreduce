@@ -83,8 +83,13 @@ def select_indices_in_polygon(
     vertices_2d = np.column_stack([polygon[coord_a].values, polygon[coord_b].values])
 
     # Get coordinates for each pixel from the indices
+    # Convert bin-edge coordinates to bin centers if needed
     a_coords = indices.coords[coord_a]
     b_coords = indices.coords[coord_b]
+    if a_coords.sizes.get(coord_a) == indices.sizes[coord_a] + 1:
+        a_coords = sc.midpoints(a_coords, dim=coord_a)
+    if b_coords.sizes.get(coord_b) == indices.sizes[coord_b] + 1:
+        b_coords = sc.midpoints(b_coords, dim=coord_b)
 
     # Broadcast coordinates to match indices shape and flatten
     a_flat = sc.broadcast(a_coords, sizes=indices.sizes).values.flatten()

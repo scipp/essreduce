@@ -438,3 +438,52 @@ def test_ROIFilter_polygon_preserves_time_dimension(grid_indices_with_coords):
     result, _ = roi_filter.apply(data)
     assert result.dims == ('time', 'detector_number')
     assert result.sizes == {'time': 3, 'detector_number': 4}
+
+
+@pytest.fixture
+def grid_indices_with_bin_edge_coords() -> sc.DataArray:
+    """Create a 5x5 grid of indices with bin-edge x, y coordinates."""
+    # Indices 0-24 arranged in a 5x5 grid
+    indices = sc.arange('detector_number', 25, dtype='int32', unit=None).fold(
+        dim='detector_number', sizes={'x': 5, 'y': 5}
+    )
+    # Bin-edge coordinates: 6 values for 5 bins (edges at 0, 1, 2, 3, 4, 5)
+    # Pixel centers would be at 0.5, 1.5, 2.5, 3.5, 4.5
+    x_coords = sc.arange('x', 0.0, 6.0, unit='m')
+    y_coords = sc.arange('y', 0.0, 6.0, unit='m')
+    return sc.DataArray(indices, coords={'x': x_coords, 'y': y_coords})
+
+
+def test_select_indices_in_polygon_with_bin_edge_coords(
+    grid_indices_with_bin_edge_coords,
+):
+    """Polygon selection should work with bin-edge coordinates."""
+    # Rectangle from (1, 1) to (3, 3)
+    # Pixel centers at 1.5 and 2.5 should be selected for both x and y
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0], unit='m'),
+    }
+    selected = roi.select_indices_in_polygon(
+        polygon=polygon,
+        indices=grid_indices_with_bin_edge_coords,
+    )
+    # Pixel centers at x=1.5 (x-idx=1), x=2.5 (x-idx=2) and y=1.5 (y-idx=1),
+    # y=2.5 (y-idx=2)
+    # In a 5x5 grid with row-major indexing (index = x*5 + y):
+    # (1,1)->6, (1,2)->7, (2,1)->11, (2,2)->12
+    assert set(selected.values) == {6, 7, 11, 12}
+
+
+def test_ROIFilter_polygon_with_bin_edge_coords(grid_indices_with_bin_edge_coords):
+    """ROIFilter polygon should work with bin-edge coordinates."""
+    roi_filter = roi.ROIFilter(grid_indices_with_bin_edge_coords)
+    polygon = {
+        'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0], unit='m'),
+        'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0], unit='m'),
+    }
+    roi_filter.set_roi_from_polygon(polygon)
+
+    data = sc.arange('detector_number', 25, dtype='float64', unit='counts')
+    result, _ = roi_filter.apply(data)
+    assert set(result.values) == {6.0, 7.0, 11.0, 12.0}
