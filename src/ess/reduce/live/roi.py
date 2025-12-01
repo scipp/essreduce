@@ -44,7 +44,11 @@ T = TypeVar('T', sc.DataArray, sc.Variable)
 
 
 def apply_selection(
-    data: T, *, selection: sc.Variable, norm: float = 1.0
+    data: T,
+    *,
+    selection: sc.Variable,
+    norm: float = 1.0,
+    spatial_dims: tuple[str, ...] | None = None,
 ) -> tuple[T, sc.Variable]:
     """
     Apply selection to data.
@@ -58,6 +62,9 @@ def apply_selection(
     norm:
         Normalization factor to apply to the selected data. This is used for cases where
         indices may be selected multiple times.
+    spatial_dims:
+        Dimensions to flatten into 'detector_number'. If None, all dims are flattened.
+        For dense data like (time, x, y), pass ('x', 'y') to preserve time.
 
     Returns
     -------
@@ -65,16 +72,25 @@ def apply_selection(
         Filtered data and scale factor.
     """
     indices, counts = np.unique(selection.values, return_counts=True)
-    if data.ndim != 1:
-        data = data.flatten(to='detector_number')
-    scale = sc.array(dims=[data.dim], values=counts) / norm
-    return data[indices], scale
+    if spatial_dims is None:
+        dims_to_flatten = data.dims
+    else:
+        dims_to_flatten = tuple(d for d in data.dims if d in spatial_dims)
+    if len(dims_to_flatten) > 0 and data.dims != ('detector_number',):
+        data = data.flatten(dims=dims_to_flatten, to='detector_number')
+    scale = sc.array(dims=['detector_number'], values=counts) / norm
+    return data['detector_number', indices], scale
 
 
 class ROIFilter:
     """Filter for selecting a region of interest (ROI)."""
 
-    def __init__(self, indices: sc.Variable | sc.DataArray, norm: float = 1.0) -> None:
+    def __init__(
+        self,
+        indices: sc.Variable | sc.DataArray,
+        norm: float = 1.0,
+        spatial_dims: tuple[str, ...] | None = None,
+    ) -> None:
         """
         Create a new ROI filter.
 
@@ -86,14 +102,25 @@ class ROIFilter:
             2-D array. Each element in the array may correspond to a single index (when
             there is no projection) or a list of indices that were projected into an
             output pixel.
+        spatial_dims:
+            Dimensions of the detector that should be flattened when applying the
+            filter. If None, defaults to indices.dims. For projections where indices
+            represent a subset of the detector, this should be set to the full
+            detector dimensions.
         """
         self._indices = indices
         self._selection = sc.array(dims=['index'], values=[])
         self._norm = norm
+        self._spatial_dims = spatial_dims if spatial_dims is not None else indices.dims
 
     def set_roi_from_intervals(self, intervals: sc.DataGroup) -> None:
         """Set the ROI from (typically 1 or 2) intervals."""
         self._selection = select_indices_in_intervals(intervals, self._indices)
+
+    @property
+    def spatial_dims(self) -> tuple[str, ...]:
+        """Dimensions that define the spatial extent of the ROI."""
+        return self._spatial_dims
 
     def apply(self, data: T) -> tuple[T, sc.Variable]:
         """
@@ -113,4 +140,9 @@ class ROIFilter:
         :
             Filtered data and scale factor.
         """
-        return apply_selection(data, selection=self._selection, norm=self._norm)
+        return apply_selection(
+            data,
+            selection=self._selection,
+            norm=self._norm,
+            spatial_dims=self.spatial_dims,
+        )
