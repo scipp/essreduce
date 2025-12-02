@@ -4,11 +4,16 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TypeVar
 
 import numpy as np
 import scipp as sc
 from matplotlib.path import Path
+
+# Type for polygon vertices: either scipp Variable (coord-based) or sequence of
+# floats (index-based)
+PolygonVertices = sc.Variable | Sequence[float]
 
 
 def select_indices_in_intervals(
@@ -41,8 +46,61 @@ def select_indices_in_intervals(
     return indices.rename_dims({indices.dim: out_dim})
 
 
+def _get_polygon_axis_data(
+    axis_name: str,
+    vertices: PolygonVertices,
+    indices: sc.DataArray,
+) -> tuple[np.ndarray, sc.Variable]:
+    """
+    Get polygon vertices and corresponding coordinates for one axis.
+
+    Parameters
+    ----------
+    axis_name:
+        Name of the axis (dimension or coordinate name).
+    vertices:
+        Polygon vertices for this axis - either a scipp Variable (coord-based)
+        or a sequence of floats (index-based).
+    indices:
+        DataArray with indices to select from.
+
+    Returns
+    -------
+    :
+        Tuple of (polygon_vertices_array, coordinate_values).
+    """
+    if isinstance(vertices, sc.Variable):
+        # Coord-based: use named coordinate from indices
+        if axis_name not in indices.coords:
+            raise KeyError(
+                f"Coordinate '{axis_name}' not found in indices. "
+                f"Available coordinates: {list(indices.coords.keys())}"
+            )
+        coords = indices.coords[axis_name]
+        if indices.coords.is_edges(axis_name):
+            coords = sc.midpoints(coords, dim=axis_name)
+        # Validate units match
+        if vertices.unit != coords.unit:
+            raise sc.UnitError(
+                f"Unit mismatch for '{axis_name}': "
+                f"polygon has unit '{vertices.unit}' "
+                f"but coordinates have unit '{coords.unit}'"
+            )
+        return vertices.values, coords
+    else:
+        # Index-based: use dimension indices as coordinates
+        if axis_name not in indices.sizes:
+            raise KeyError(
+                f"Dimension '{axis_name}' not found in indices. "
+                f"Available dimensions: {list(indices.dims)}"
+            )
+        # Create coordinate from dimension indices
+        coords = sc.arange(axis_name, indices.sizes[axis_name], dtype='float64')
+        return np.asarray(vertices, dtype='float64'), coords
+
+
 def select_indices_in_polygon(
-    polygon: dict[str, sc.Variable],
+    polygon: dict[str, PolygonVertices],
     indices: sc.DataArray,
 ) -> sc.Variable:
     """
@@ -51,12 +109,17 @@ def select_indices_in_polygon(
     Parameters
     ----------
     polygon:
-        Polygon vertices as a dict mapping coordinate names to 1-D arrays of vertex
-        positions. Must contain exactly two entries. The coordinate names must match
-        coordinates on the indices DataArray.
+        Polygon vertices as a dict mapping axis names to 1-D arrays of vertex
+        positions. Must contain exactly two entries. Each entry can be either:
+        - A scipp Variable for coordinate-based selection (uses named coordinates
+          from the indices DataArray, with unit validation)
+        - A sequence of floats for index-based selection (uses dimension indices
+          as coordinates, no unit handling)
+        The two axes can independently use either mode.
     indices:
-        DataArray with indices to select from. Must have coordinates matching the
-        keys in the polygon dict.
+        DataArray with indices to select from. For coordinate-based axes, must have
+        coordinates matching the axis names. For index-based axes, must have
+        dimensions matching the axis names.
 
     Returns
     -------
@@ -70,34 +133,15 @@ def select_indices_in_polygon(
             f"Polygon must have exactly two coordinate arrays, got {len(polygon)}"
         )
 
-    # Get the two coordinate names from the polygon dict
-    coord_a, coord_b = polygon.keys()
+    # Get the two axis names from the polygon dict
+    axis_a, axis_b = polygon.keys()
 
-    # Get coordinates for each pixel from the indices
-    # Convert bin-edge coordinates to bin centers if needed
-    a_coords = indices.coords[coord_a]
-    b_coords = indices.coords[coord_b]
-    if indices.coords.is_edges(coord_a):
-        a_coords = sc.midpoints(a_coords, dim=coord_a)
-    if indices.coords.is_edges(coord_b):
-        b_coords = sc.midpoints(b_coords, dim=coord_b)
-
-    # Validate units match (no automatic conversion)
-    if polygon[coord_a].unit != a_coords.unit:
-        raise sc.UnitError(
-            f"Unit mismatch for '{coord_a}': "
-            f"polygon has unit '{polygon[coord_a].unit}' "
-            f"but coordinates have unit '{a_coords.unit}'"
-        )
-    if polygon[coord_b].unit != b_coords.unit:
-        raise sc.UnitError(
-            f"Unit mismatch for '{coord_b}': "
-            f"polygon has unit '{polygon[coord_b].unit}' "
-            f"but coordinates have unit '{b_coords.unit}'"
-        )
+    # Get polygon vertices and coordinates for each axis
+    poly_a, a_coords = _get_polygon_axis_data(axis_a, polygon[axis_a], indices)
+    poly_b, b_coords = _get_polygon_axis_data(axis_b, polygon[axis_b], indices)
 
     # Extract polygon vertices as 2D array
-    vertices_2d = np.column_stack([polygon[coord_a].values, polygon[coord_b].values])
+    vertices_2d = np.column_stack([poly_a, poly_b])
 
     # Broadcast coordinates to match indices shape and flatten
     a_flat = sc.broadcast(a_coords, sizes=indices.sizes).values.flatten()
@@ -199,21 +243,23 @@ class ROIFilter:
         """Set the ROI from (typically 1 or 2) intervals."""
         self._selection = select_indices_in_intervals(intervals, self._indices)
 
-    def set_roi_from_polygon(self, polygon: dict[str, sc.Variable]) -> None:
+    def set_roi_from_polygon(self, polygon: dict[str, PolygonVertices]) -> None:
         """
         Set the ROI from polygon vertices.
 
         Parameters
         ----------
         polygon:
-            Polygon vertices as a dict mapping coordinate names to 1-D arrays of
-            vertex positions. Must contain exactly two entries. The coordinate names
-            must match coordinates on the indices DataArray.
+            Polygon vertices as a dict mapping axis names to 1-D arrays of vertex
+            positions. Must contain exactly two entries. Each entry can be either:
+            - A scipp Variable for coordinate-based selection (uses named coordinates
+              from the indices DataArray, with unit validation)
+            - A sequence of floats for index-based selection (uses dimension indices
+              as coordinates, no unit handling)
+            The two axes can independently use either mode.
         """
         if not isinstance(self._indices, sc.DataArray):
-            raise TypeError(
-                "Polygon ROI requires indices to be a DataArray with coordinates"
-            )
+            raise TypeError("Polygon ROI requires indices to be a DataArray")
         self._selection = select_indices_in_polygon(
             polygon=polygon,
             indices=self._indices,

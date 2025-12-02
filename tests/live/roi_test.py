@@ -550,3 +550,137 @@ class TestROIFilterPolygon:
         data = sc.arange('detector_number', 25, dtype='float64', unit='counts')
         result, _ = roi_filter.apply(data)
         assert set(result.values) == {6.0, 7.0, 11.0, 12.0}
+
+
+class TestSelectIndicesInPolygonIndexBased:
+    """Tests for select_indices_in_polygon with index-based vertices."""
+
+    @pytest.fixture
+    def grid_indices_with_coords(self) -> sc.DataArray:
+        """Create a 5x5 grid of indices with x, y coordinates."""
+        indices = sc.arange('detector_number', 25, dtype='int32', unit=None).fold(
+            dim='detector_number', sizes={'x': 5, 'y': 5}
+        )
+        x_coords = sc.arange('x', 0.5, 5.5, unit='m')
+        y_coords = sc.arange('y', 0.5, 5.5, unit='m')
+        return sc.DataArray(indices, coords={'x': x_coords, 'y': y_coords})
+
+    @pytest.fixture
+    def grid_indices_no_coords(self) -> sc.DataArray:
+        """Create a 5x5 grid of indices without coordinates."""
+        indices = sc.arange('detector_number', 25, dtype='int32', unit=None).fold(
+            dim='detector_number', sizes={'x': 5, 'y': 5}
+        )
+        return sc.DataArray(indices)
+
+    def test_both_axes_index_based(self, grid_indices_no_coords):
+        """Polygon with both axes using index-based vertices."""
+        # Rectangle from (0.9, 0.9) to (2.1, 2.1) in index space
+        # Pixel centers are at integer positions (0, 1, 2, 3, 4)
+        # Should select indices at x=1,2 and y=1,2
+        polygon = {
+            'x': [0.9, 2.1, 2.1, 0.9],
+            'y': [0.9, 0.9, 2.1, 2.1],
+        }
+        selected = roi.select_indices_in_polygon(
+            polygon=polygon,
+            indices=grid_indices_no_coords,
+        )
+        # In a 5x5 grid with row-major indexing (index = x*5 + y):
+        # (1,1)->6, (1,2)->7, (2,1)->11, (2,2)->12
+        assert set(selected.values) == {6, 7, 11, 12}
+
+    def test_mixed_coord_and_index_based(self, grid_indices_with_coords):
+        """Polygon with one axis coord-based and one axis index-based."""
+        # x-axis: coordinate-based (unit='m'), pixel centers at 0.5, 1.5, 2.5, 3.5, 4.5
+        # y-axis: index-based, pixel centers at 0, 1, 2, 3, 4
+        # Select x from 1.0 to 3.0 -> x indices 1, 2 (centers at 1.5, 2.5)
+        # Select y indices from 0.9 to 2.1 -> y indices 1, 2
+        polygon = {
+            'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0], unit='m'),
+            'y': [0.9, 0.9, 2.1, 2.1],
+        }
+        selected = roi.select_indices_in_polygon(
+            polygon=polygon,
+            indices=grid_indices_with_coords,
+        )
+        assert set(selected.values) == {6, 7, 11, 12}
+
+    def test_index_based_with_floats(self, grid_indices_no_coords):
+        """Index-based polygon vertices can be floats for sub-pixel precision."""
+        # Triangle with vertices at (0.5, 0.5), (2.5, 0.5), (1.5, 2.5)
+        polygon = {
+            'x': [0.5, 2.5, 1.5],
+            'y': [0.5, 0.5, 2.5],
+        }
+        selected = roi.select_indices_in_polygon(
+            polygon=polygon,
+            indices=grid_indices_no_coords,
+        )
+        # Pixel centers are at integer coords (0, 1, 2, ...)
+        # Points inside: (1,1) -> index 6
+        assert selected.sizes['index'] > 0
+
+    def test_index_based_empty_selection(self, grid_indices_no_coords):
+        """Index-based polygon outside grid returns empty selection."""
+        polygon = {
+            'x': [10.0, 12.0, 11.0],
+            'y': [10.0, 10.0, 12.0],
+        }
+        selected = roi.select_indices_in_polygon(
+            polygon=polygon,
+            indices=grid_indices_no_coords,
+        )
+        assert selected.sizes['index'] == 0
+
+    def test_index_based_all_points(self, grid_indices_no_coords):
+        """Large index-based polygon selects all points."""
+        polygon = {
+            'x': [-1.0, 6.0, 6.0, -1.0],
+            'y': [-1.0, -1.0, 6.0, 6.0],
+        }
+        selected = roi.select_indices_in_polygon(
+            polygon=polygon,
+            indices=grid_indices_no_coords,
+        )
+        assert selected.sizes['index'] == 25
+
+    def test_index_based_requires_valid_dimension(self, grid_indices_no_coords):
+        """Index-based polygon axis must correspond to a valid dimension."""
+        polygon = {
+            'x': [1.0, 3.0, 2.0],
+            'invalid_dim': [1.0, 1.0, 3.0],
+        }
+        with pytest.raises(KeyError):
+            roi.select_indices_in_polygon(
+                polygon=polygon,
+                indices=grid_indices_no_coords,
+            )
+
+    def test_mixed_index_based_first_coord_based_second(self, grid_indices_with_coords):
+        """Mixed mode with index-based first, coord-based second."""
+        # x-axis: index-based, pixel centers at 0, 1, 2, 3, 4
+        # y-axis: coordinate-based (unit='m'), pixel centers at 0.5, 1.5, 2.5, 3.5, 4.5
+        polygon = {
+            'x': [0.9, 2.1, 2.1, 0.9],
+            'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0], unit='m'),
+        }
+        selected = roi.select_indices_in_polygon(
+            polygon=polygon,
+            indices=grid_indices_with_coords,
+        )
+        assert set(selected.values) == {6, 7, 11, 12}
+
+    def test_numpy_array_as_index_based_vertices(self, grid_indices_no_coords):
+        """Numpy arrays should work as index-based vertices."""
+        import numpy as np
+
+        polygon = {
+            'x': np.array([0.9, 2.1, 2.1, 0.9]),
+            'y': np.array([0.9, 0.9, 2.1, 2.1]),
+        }
+        selected = roi.select_indices_in_polygon(
+            polygon=polygon,
+            indices=grid_indices_no_coords,
+        )
+        assert set(selected.values) == {6, 7, 11, 12}
