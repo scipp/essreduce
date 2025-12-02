@@ -254,10 +254,12 @@ class ROIFilter:
         polygon:
             Polygon vertices as a dict mapping axis names to 1-D arrays of vertex
             positions. Must contain exactly two entries. Each entry can be either:
+
             - A scipp Variable for coordinate-based selection (uses named coordinates
               from the indices DataArray, with unit validation)
             - A sequence of floats for index-based selection (uses dimension indices
               as coordinates, no unit handling)
+
             The two axes can independently use either mode.
         """
         if not isinstance(self._indices, sc.DataArray):
