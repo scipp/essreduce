@@ -28,9 +28,12 @@ def normalize_by_monitor_histogram(
     - For *event* detectors, the monitor values are mapped to the detector
       using :func:`scipp.lookup`. That is, for detector event :math:`d_i`,
       :math:`m_i` is the monitor bin value at the same coordinate.
-    - For *histogram* detectors, the monitor is rebinned using to the detector
+    - For *histogram* detectors, the monitor is generally rebinned using the detector
       binning using :func:`scipp.rebin`. Thus, detector value :math:`d_i` and
       monitor value :math:`m_i` correspond to the same bin.
+
+        - In case the detector coordinate does not have a dimension in common with the
+          monitor, :func:`scipp.lookup` is used as in the event case.
 
     In both cases, let :math:`x_i` be the lower bound of monitor bin :math:`i`
     and let :math:`\\Delta x_i = x_{i+1} - x_i` be the width of that bin.
@@ -88,7 +91,7 @@ def normalize_by_monitor_histogram(
             else:
                 return detector / norm
 
-        case _HistogramNormalizationMode.BinsMatchingDim:
+        case _HistogramNormalizationMode.BinsCommonDim:
             monitor = monitor.rebin({dim: detector.coords[dim]})
             detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
             norm = _histogram_monitor_term(
@@ -101,12 +104,13 @@ def normalize_by_monitor_histogram(
 
         case _HistogramNormalizationMode.BinsDifferentDim:
             detector = _mask_detector_for_norm(detector=detector, monitor=monitor)
+            # No broadcast here because there are no common dims, use lookup instead.
             norm = _histogram_monitor_term(
                 monitor,
                 dim,
                 uncertainty_broadcast_mode=uncertainty_broadcast_mode,
             )
-            return detector / sc.lookup(norm)[_coord_midpoints(detector, dim)]
+            return detector / sc.lookup(norm)[_compute_bin_centers(detector, dim)]
 
 
 def normalize_by_monitor_integrated(
@@ -227,7 +231,7 @@ def _mask_detector_for_norm(
             return detector.assign_masks(_monitor_mask=mask)
         # else: need to use lookup to apply mask at matching coord elements
         return detector.assign_masks(
-            _monitor_mask=sc.lookup(mask_da)[_coord_midpoints(detector, dim)]
+            _monitor_mask=sc.lookup(mask_da)[_compute_bin_centers(detector, dim)]
         )
 
     # else: Apply the mask to the events.
@@ -292,22 +296,34 @@ def _histogram_monitor_term(
 
 class _HistogramNormalizationMode(enum.Enum):
     Events = enum.auto()
-    BinsMatchingDim = enum.auto()
+    """Use an event coordinate to lookup monitor values."""
+    BinsCommonDim = enum.auto()
+    """Use a bin coordinate which contains the monitor dimension.
+
+    The coordinate may be multi-dimensional but one dimension matches
+    the dimension of the monitor.
+    """
     BinsDifferentDim = enum.auto()
+    """Use a bin coordinate which does not contain the monitor dimension.
+
+    The coordinate may be multi-dimensions, e.g., in the DREAM powder workflow
+    where it has dims (two_theta, dspacing [bin-edges]).
+    """
 
     @classmethod
     def deduce(cls, detector: sc.DataArray, dim: str) -> _HistogramNormalizationMode:
-        if detector.bins is not None:
-            if dim in detector.bins.coords:
-                return _HistogramNormalizationMode.Events
+        # Use an event-coord when available:
+        if detector.bins is not None and dim in detector.bins.coords:
+            return _HistogramNormalizationMode.Events
+        # else: use a bin-coord.
 
         det_coord = detector.coords[dim]
         if dim in det_coord.dims:
-            return _HistogramNormalizationMode.BinsMatchingDim
+            return _HistogramNormalizationMode.BinsCommonDim
         return _HistogramNormalizationMode.BinsDifferentDim
 
 
-def _coord_midpoints(da: sc.DataArray, name: str) -> sc.Variable:
+def _compute_bin_centers(da: sc.DataArray, name: str) -> sc.Variable:
     coord = da.coords[name]
     for dim in coord.dims:
         if da.coords.is_edges(name, dim):
