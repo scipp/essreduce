@@ -73,9 +73,6 @@ def select_indices_in_polygon(
     # Get the two coordinate names from the polygon dict
     coord_a, coord_b = polygon.keys()
 
-    # Extract polygon vertices as 2D array
-    vertices_2d = np.column_stack([polygon[coord_a].values, polygon[coord_b].values])
-
     # Get coordinates for each pixel from the indices
     # Convert bin-edge coordinates to bin centers if needed
     a_coords = indices.coords[coord_a]
@@ -84,6 +81,23 @@ def select_indices_in_polygon(
         a_coords = sc.midpoints(a_coords, dim=coord_a)
     if indices.coords.is_edges(coord_b):
         b_coords = sc.midpoints(b_coords, dim=coord_b)
+
+    # Validate units match (no automatic conversion)
+    if polygon[coord_a].unit != a_coords.unit:
+        raise sc.UnitError(
+            f"Unit mismatch for '{coord_a}': "
+            f"polygon has unit '{polygon[coord_a].unit}' "
+            f"but coordinates have unit '{a_coords.unit}'"
+        )
+    if polygon[coord_b].unit != b_coords.unit:
+        raise sc.UnitError(
+            f"Unit mismatch for '{coord_b}': "
+            f"polygon has unit '{polygon[coord_b].unit}' "
+            f"but coordinates have unit '{b_coords.unit}'"
+        )
+
+    # Extract polygon vertices as 2D array
+    vertices_2d = np.column_stack([polygon[coord_a].values, polygon[coord_b].values])
 
     # Broadcast coordinates to match indices shape and flatten
     a_flat = sc.broadcast(a_coords, sizes=indices.sizes).values.flatten()

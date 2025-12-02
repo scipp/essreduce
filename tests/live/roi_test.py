@@ -375,6 +375,52 @@ class TestSelectIndicesInPolygon:
         with pytest.raises(KeyError):
             roi.select_indices_in_polygon(polygon=polygon, indices=indices)
 
+    def test_raises_on_unit_mismatch(self, grid_indices_with_coords):
+        """Polygon with different units than coords should raise."""
+        # Coords have unit='m', polygon has unit='cm'
+        polygon = {
+            'x': sc.array(
+                dims=['vertex'], values=[100.0, 300.0, 300.0, 100.0], unit='cm'
+            ),
+            'y': sc.array(
+                dims=['vertex'], values=[100.0, 100.0, 300.0, 300.0], unit='cm'
+            ),
+        }
+        with pytest.raises(sc.UnitError):
+            roi.select_indices_in_polygon(
+                polygon=polygon, indices=grid_indices_with_coords
+            )
+
+    def test_raises_on_polygon_units_coords_unitless(self):
+        """Polygon with units but unitless coords should raise."""
+        indices = sc.arange('detector_number', 25, dtype='int32', unit=None).fold(
+            dim='detector_number', sizes={'x': 5, 'y': 5}
+        )
+        indices = sc.DataArray(
+            indices,
+            coords={
+                'x': sc.arange('x', 0.5, 5.5),  # unitless
+                'y': sc.arange('y', 0.5, 5.5),  # unitless
+            },
+        )
+        polygon = {
+            'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0], unit='m'),
+            'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0], unit='m'),
+        }
+        with pytest.raises(sc.UnitError):
+            roi.select_indices_in_polygon(polygon=polygon, indices=indices)
+
+    def test_raises_on_polygon_unitless_coords_units(self, grid_indices_with_coords):
+        """Unitless polygon but coords with units should raise."""
+        polygon = {
+            'x': sc.array(dims=['vertex'], values=[1.0, 3.0, 3.0, 1.0]),
+            'y': sc.array(dims=['vertex'], values=[1.0, 1.0, 3.0, 3.0]),
+        }
+        with pytest.raises(sc.UnitError):
+            roi.select_indices_in_polygon(
+                polygon=polygon, indices=grid_indices_with_coords
+            )
+
     def test_with_unitless_coords(self):
         """Polygon works with unitless coordinates."""
         indices = sc.arange('detector_number', 25, dtype='int32', unit=None).fold(
