@@ -76,8 +76,7 @@ def select_indices_in_polygon(
         )
 
     # Get the two coordinate names from the polygon dict
-    coord_names = list(polygon.keys())
-    coord_a, coord_b = coord_names
+    coord_a, coord_b = polygon.keys()
 
     # Extract polygon vertices as 2D array
     vertices_2d = np.column_stack([polygon[coord_a].values, polygon[coord_b].values])
@@ -111,7 +110,7 @@ def select_indices_in_polygon(
         selected = selected.bins.concat().value
         selected = selected.rename_dims({selected.dim: out_dim})
 
-    return sc.array(dims=[out_dim], values=selected.values, dtype='int32')
+    return sc.array(dims=[out_dim], values=selected.values, dtype='int32', unit=None)
 
 
 T = TypeVar('T', sc.DataArray, sc.Variable)
