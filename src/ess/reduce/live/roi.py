@@ -65,11 +65,6 @@ def select_indices_in_polygon(
     """
     out_dim = 'index'
 
-    if not isinstance(indices, sc.DataArray):
-        raise TypeError(
-            "Polygon selection requires indices to be a DataArray with coordinates"
-        )
-
     if len(polygon) != 2:
         raise ValueError(
             f"Polygon must have exactly two coordinate arrays, got {len(polygon)}"

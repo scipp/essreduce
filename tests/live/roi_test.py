@@ -377,17 +377,6 @@ def test_select_indices_in_polygon_requires_coords_on_indices():
         roi.select_indices_in_polygon(polygon=polygon, indices=indices)
 
 
-def test_select_indices_in_polygon_requires_dataarray():
-    """Polygon selection requires indices to be a DataArray."""
-    indices = sc.arange('x', 10, dtype='int32', unit=None)
-    polygon = {
-        'x': sc.array(dims=['vertex'], values=[0.0, 1.0, 0.5], unit='m'),
-        'y': sc.array(dims=['vertex'], values=[0.0, 0.0, 1.0], unit='m'),
-    }
-    with pytest.raises(TypeError, match="DataArray"):
-        roi.select_indices_in_polygon(polygon=polygon, indices=indices)
-
-
 def test_select_indices_in_polygon_with_unitless_coords():
     """Polygon works with unitless coordinates."""
     indices = sc.arange('detector_number', 25, dtype='int32', unit=None).fold(
