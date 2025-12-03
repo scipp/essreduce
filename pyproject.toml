@@ -41,6 +41,7 @@ dynamic = ["version"]
 [project.optional-dependencies]
 test = [
     "ipywidgets>=8.1",
+    "matplotlib>=3.10.7",
     "numba>=0.59",
     "pooch>=1.5",
     "pytest>=7.0",
