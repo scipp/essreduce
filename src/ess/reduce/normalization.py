@@ -60,6 +60,12 @@ def normalize_by_monitor_histogram(
         coordinate. Set this to true to disable the check.
         The value of out-of-range bins / events is undefined in that case.
 
+        This is useful when the detector contains data outside the monitor range, and it
+        is difficult or impossible to slice the detector without also removing in-range
+        data. In this case, the caller can mask those data points and skip the range
+        check. ``normalize_by_monitor_histogram`` does not take masks into account when
+        checking ranges as that is expensive to implement in a general case.
+
     Returns
     -------
     :
@@ -153,6 +159,12 @@ def normalize_by_monitor_integrated(
         If false (default), the detector data must be within the range of the monitor
         coordinate. Set this to true to disable the check.
         The value of out-of-range bins / events is undefined in that case.
+
+        This is useful when the detector contains data outside the monitor range, and it
+        is difficult or impossible to slice the detector without also removing in-range
+        data. In this case, the caller can mask those data points and skip the range
+        check. ``normalize_by_monitor_histogram`` does not take masks into account when
+        checking ranges as that is expensive to implement in a general case.
 
     Returns
     -------
