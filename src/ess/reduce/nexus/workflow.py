@@ -453,25 +453,6 @@ def get_calibrated_monitor(
     source_position:
         Position of the neutron source.
     """
-    # monitor = nexus.compute_component_position(monitor)
-
-    # # Note: We apply offset as early as possible, i.e., right in this function
-    # # the detector array from the raw loader NeXus group, to prevent a source of bugs.
-    # # If the NXdetector in the file is not 1-D, we want to match the order of dims.
-    # # zip_pixel_offsets otherwise yields a vector with dimensions in the order given
-    # # by the x/y/z offsets.
-    # offsets = snx.zip_pixel_offsets(monitor.coords)
-    # # Get the dims in the order of the detector data array, but filter out dims that
-    # # don't exist in the offsets (e.g. the detector data may have a 'time' dimension).
-    # dims = [dim for dim in da.dims if dim in offsets.dims]
-    # offsets = offsets.transpose(dims).copy()
-    # # We use the unit of the offsets as this is likely what the user expects.
-    # if transform.value.unit is not None and transform.value.unit != '':
-    #     transform_value = transform.value.to(unit=offsets.unit)
-    # else:
-    #     transform_value = transform.value
-    # position = transform_value * offsets
-
     return EmptyMonitor[RunType, MonitorType](
         nexus.extract_signal_data_array(monitor).assign_coords(
             position=transform.value * offset.to(unit=transform.value.unit),
