@@ -503,6 +503,9 @@ def test_get_calibrated_monitor_extracts_data_field_from_nexus_monitor(
         nexus_monitor,
         offset=workflow.no_offset,
         source_position=sc.vector([0.0, 0.0, -10.0], unit='m'),
+        transform=NeXusTransformation.from_chain(
+            workflow.get_transformation_chain(nexus_monitor),
+        ),
     )
     assert_identical(
         monitor.drop_coords(('position', 'source_position')),
@@ -518,6 +521,9 @@ def test_get_calibrated_monitor_subtracts_offset_from_position(
         nexus_monitor,
         offset=offset,
         source_position=sc.vector([0.0, 0.0, -10.0], unit='m'),
+        transform=NeXusTransformation.from_chain(
+            workflow.get_transformation_chain(nexus_monitor),
+        ),
     )
     assert_identical(monitor.coords['position'], sc.vector([1.1, 2.2, 3.3], unit='m'))
 
