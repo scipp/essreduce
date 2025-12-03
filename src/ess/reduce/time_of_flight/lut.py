@@ -43,6 +43,8 @@ class SimulationResults:
         For a ``tof`` simulation, this is just the position of the detector where the
         events are recorded. For a ``McStas`` simulation, this is the distance between
         the source and the event monitor.
+    choppers:
+        The parameters of the choppers used in the simulation (if any).
     """
 
     time_of_arrival: sc.Variable
@@ -50,6 +52,7 @@ class SimulationResults:
     wavelength: sc.Variable
     weight: sc.Variable
     distance: sc.Variable
+    choppers: DiskChoppers[AnyRun] | None = None
 
 
 NumberOfSimulatedNeutrons = NewType("NumberOfSimulatedNeutrons", int)
@@ -363,20 +366,26 @@ def make_tof_lookup_table(
                 [table.coords["event_time_offset"], frame_period],
                 dim='event_time_offset',
             ),
-            "pulse_period": pulse_period,
-            "pulse_stride": sc.scalar(pulse_stride, unit=None),
-            "distance_resolution": table.coords["distance"][1]
-            - table.coords["distance"][0],
-            "time_resolution": table.coords["event_time_offset"][1]
-            - table.coords["event_time_offset"][0],
-            "error_threshold": sc.scalar(error_threshold),
         },
     )
 
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
 
-    return TimeOfFlightLookupTable(table)
+    return TimeOfFlightLookupTable(
+        array=table,
+        pulse_period=pulse_period,
+        pulse_stride=pulse_stride,
+        distance_resolution=table.coords["distance"][1] - table.coords["distance"][0],
+        time_resolution=table.coords["event_time_offset"][1]
+        - table.coords["event_time_offset"][0],
+        error_threshold=error_threshold,
+        choppers=sc.DataGroup(
+            {k: sc.DataGroup(ch.as_dict()) for k, ch in simulation.choppers.items()}
+        )
+        if simulation.choppers is not None
+        else None,
+    )
 
 
 def simulate_chopper_cascade_using_tof(
@@ -412,22 +421,14 @@ def simulate_chopper_cascade_using_tof(
     """
     import tof
 
-    tof_choppers = [
-        tof.Chopper(
-            frequency=abs(ch.frequency),
-            direction=tof.AntiClockwise
-            if (ch.frequency.value > 0.0)
-            else tof.Clockwise,
-            open=ch.slit_begin,
-            close=ch.slit_end,
-            phase=ch.phase if ch.frequency.value > 0.0 else -ch.phase,
-            distance=sc.norm(
-                ch.axle_position - source_position.to(unit=ch.axle_position.unit)
-            ),
-            name=name,
+    tof_choppers = []
+    for name, ch in choppers.items():
+        chop = tof.Chopper.from_diskchopper(ch, name=name)
+        chop.distance = sc.norm(
+            ch.axle_position - source_position.to(unit=ch.axle_position.unit)
         )
-        for name, ch in choppers.items()
-    ]
+        tof_choppers.append(chop)
+
     source = tof.Source(
         facility=facility, neutrons=neutrons, pulses=pulse_stride, seed=seed
     )
@@ -454,6 +455,7 @@ def simulate_chopper_cascade_using_tof(
         wavelength=events.coords["wavelength"],
         weight=events.data,
         distance=furthest_chopper.distance,
+        choppers=choppers,
     )
 
 
