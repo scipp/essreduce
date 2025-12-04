@@ -370,6 +370,8 @@ def get_calibrated_detector(
     ----------
     detector:
         NeXus detector group.
+    transform:
+        Transformation matrix for the detector.
     offset:
         Offset to add to the detector position.
     bank_sizes:
@@ -430,6 +432,7 @@ def assemble_detector_data(
 
 def get_calibrated_monitor(
     monitor: NeXusComponent[MonitorType, RunType],
+    transform: NeXusTransformation[MonitorType, RunType],
     offset: MonitorPositionOffset[RunType, MonitorType],
     source_position: Position[snx.NXsource, RunType],
 ) -> EmptyMonitor[RunType, MonitorType]:
@@ -443,15 +446,18 @@ def get_calibrated_monitor(
     ----------
     monitor:
         NeXus monitor group.
+    transform:
+        Transformation matrix for the monitor.
     offset:
         Offset to add to the monitor position.
     source_position:
         Position of the neutron source.
     """
-    monitor = nexus.compute_component_position(monitor)
+    transform_unit = transform.value.unit
     return EmptyMonitor[RunType, MonitorType](
         nexus.extract_signal_data_array(monitor).assign_coords(
-            position=monitor['position'] + offset.to(unit=monitor['position'].unit),
+            position=transform.value * sc.vector([0, 0, 0], unit=transform_unit)
+            + offset.to(unit=transform_unit),
             source_position=source_position,
         )
     )

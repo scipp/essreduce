@@ -336,6 +336,79 @@ def test_get_calibrated_detector_forwards_masks(
     assert 'mymask' in detector.masks
 
 
+def test_get_calibrated_detector_with_time_dependent_transformation(
+    time_dependent_depends_on: snx.TransformationChain,
+) -> None:
+    """Test that get_calibrated_detector works with time-dependent transformations.
+
+    This test verifies that when a transformation is time-dependent and resolved
+    to a specific time interval, the detector positions are correctly computed
+    using the transformation value at that time.
+    """
+    # Create a simple detector with pixel offsets
+    detector_number = sc.arange('detector_number', 4, unit=None)
+    data = sc.DataArray(
+        sc.empty_like(detector_number),
+        coords={
+            'detector_number': detector_number,
+            'x_pixel_offset': sc.array(
+                dims=['detector_number'], values=[0.0, 0.1, 0.2, 0.3], unit='m'
+            ),
+            'y_pixel_offset': sc.zeros(dims=['detector_number'], shape=[4], unit='m'),
+            'z_pixel_offset': sc.zeros(dims=['detector_number'], shape=[4], unit='m'),
+        },
+    )
+    nexus_detector = workflow.NeXusComponent[snx.NXdetector, SampleRun](
+        sc.DataGroup(
+            data=data,
+            depends_on=time_dependent_depends_on,
+            nexus_component_name='detector1',
+        )
+    )
+
+    # Resolve the time-dependent transformation to a specific time interval
+    # Using the middle time bin (time index 1): translation of (1, 2, 0) m
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(1, 2)),
+    )
+
+    # Get the calibrated detector
+    detector = workflow.get_calibrated_detector(
+        nexus_detector, offset=workflow.no_offset, bank_sizes={}, transform=transform
+    )
+
+    # Verify the detector has the correct structure
+    assert detector.sizes == {'detector_number': 4}
+    assert 'position' in detector.coords
+    assert detector.coords['position'].sizes == {'detector_number': 4}
+
+    # Verify the positions are correctly computed
+    # The transformation: translate (1, 0, 0) then translate (0, 2, 0)
+    # Combined with pixel offsets in x: [0.0, 0.1, 0.2, 0.3]
+    # Expected positions:
+    # [(1.0, 2.0, 0.0), (1.1, 2.0, 0.0), (1.2, 2.0, 0.0), (1.3, 2.0, 0.0)]
+    expected_x = sc.array(
+        dims=['detector_number'], values=[1.0, 1.1, 1.2, 1.3], unit='m'
+    )
+    expected_y = sc.array(
+        dims=['detector_number'], values=[2.0, 2.0, 2.0, 2.0], unit='m'
+    )
+    expected_z = sc.array(
+        dims=['detector_number'], values=[0.0, 0.0, 0.0, 0.0], unit='m'
+    )
+
+    assert sc.allclose(
+        detector.coords['position'].fields.x, expected_x, rtol=sc.scalar(1e-10)
+    )
+    assert sc.allclose(
+        detector.coords['position'].fields.y, expected_y, rtol=sc.scalar(1e-10)
+    )
+    assert sc.allclose(
+        detector.coords['position'].fields.z, expected_z, rtol=sc.scalar(1e-10)
+    )
+
+
 @pytest.fixture
 def calibrated_detector() -> workflow.EmptyDetector[SampleRun]:
     detector_number = sc.arange('detector_number', 6, unit=None)
@@ -430,6 +503,9 @@ def test_get_calibrated_monitor_extracts_data_field_from_nexus_monitor(
         nexus_monitor,
         offset=workflow.no_offset,
         source_position=sc.vector([0.0, 0.0, -10.0], unit='m'),
+        transform=NeXusTransformation.from_chain(
+            workflow.get_transformation_chain(nexus_monitor),
+        ),
     )
     assert_identical(
         monitor.drop_coords(('position', 'source_position')),
@@ -445,8 +521,58 @@ def test_get_calibrated_monitor_subtracts_offset_from_position(
         nexus_monitor,
         offset=offset,
         source_position=sc.vector([0.0, 0.0, -10.0], unit='m'),
+        transform=NeXusTransformation.from_chain(
+            workflow.get_transformation_chain(nexus_monitor),
+        ),
     )
     assert_identical(monitor.coords['position'], sc.vector([1.1, 2.2, 3.3], unit='m'))
+
+
+def test_get_calibrated_monitor_with_time_dependent_transformation(
+    time_dependent_depends_on: snx.TransformationChain,
+) -> None:
+    """Test that get_calibrated_monitor works with time-dependent transformations.
+
+    This test verifies that when a transformation is time-dependent and resolved
+    to a specific time interval, the monitor position is correctly computed using
+    the transformation value at that time.
+    """
+    # Create a simple monitor
+    data = sc.DataArray(sc.scalar(1.2), coords={'something': sc.scalar(13)})
+    nexus_monitor = workflow.NeXusComponent[FrameMonitor1, SampleRun](
+        sc.DataGroup(data=data, depends_on=time_dependent_depends_on)
+    )
+
+    # Resolve the time-dependent transformation to a specific time interval
+    # Using the middle time bin (time index 1): translation of (1, 2, 0) m
+    transform = workflow.to_transformation(
+        time_dependent_depends_on,
+        TimeInterval(slice(1, 2)),
+    )
+
+    # Get the calibrated monitor
+    source_position = sc.vector([0.0, 0.0, -10.0], unit='m')
+    monitor = workflow.get_calibrated_monitor(
+        nexus_monitor,
+        transform=transform,
+        offset=workflow.no_offset,
+        source_position=source_position,
+    )
+
+    # Verify the monitor has the correct structure
+    assert 'position' in monitor.coords
+    assert 'source_position' in monitor.coords
+
+    # Verify the position is correctly computed
+    # The transformation: translate (1, 0, 0) then translate (0, 2, 0)
+    # Applied to origin gives position (1, 2, 0)
+    expected_position = sc.vector([1.0, 2.0, 0.0], unit='m')
+    assert sc.allclose(
+        monitor.coords['position'], expected_position, rtol=sc.scalar(1e-10)
+    )
+
+    # Verify source position is preserved
+    assert_identical(monitor.coords['source_position'], source_position)
 
 
 @pytest.fixture
