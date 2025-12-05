@@ -889,9 +889,9 @@ def test_generic_nexus_workflow_includes_only_given_monitor_types() -> None:
 
 
 def assert_not_contains_type_arg(node: object, excluded: set[type]) -> None:
-    assert not any(arg in excluded for arg in getattr(node, "__args__", ())), (
-        f"Node {node} contains one of {excluded!r}"
-    )
+    assert not any(
+        arg in excluded for arg in getattr(node, "__args__", ())
+    ), f"Node {node} contains one of {excluded!r}"
 
 
 def test_generic_nexus_workflow_load_custom_field_user_affiliation(
