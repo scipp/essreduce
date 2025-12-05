@@ -434,7 +434,6 @@ def get_calibrated_monitor(
     monitor: NeXusComponent[MonitorType, RunType],
     transform: NeXusTransformation[MonitorType, RunType],
     offset: MonitorPositionOffset[RunType, MonitorType],
-    source_position: Position[snx.NXsource, RunType],
 ) -> EmptyMonitor[RunType, MonitorType]:
     """
     Extract the data array corresponding to a monitor's signal field.
@@ -450,15 +449,12 @@ def get_calibrated_monitor(
         Transformation matrix for the monitor.
     offset:
         Offset to add to the monitor position.
-    source_position:
-        Position of the neutron source.
     """
     transform_unit = transform.value.unit
     return EmptyMonitor[RunType, MonitorType](
         nexus.extract_signal_data_array(monitor).assign_coords(
             position=transform.value * sc.vector([0, 0, 0], unit=transform_unit)
             + offset.to(unit=transform_unit),
-            source_position=source_position,
         )
     )
 
