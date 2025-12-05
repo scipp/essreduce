@@ -502,13 +502,12 @@ def test_get_calibrated_monitor_extracts_data_field_from_nexus_monitor(
     monitor = workflow.get_calibrated_monitor(
         nexus_monitor,
         offset=workflow.no_offset,
-        source_position=sc.vector([0.0, 0.0, -10.0], unit='m'),
         transform=NeXusTransformation.from_chain(
             workflow.get_transformation_chain(nexus_monitor),
         ),
     )
     assert_identical(
-        monitor.drop_coords(('position', 'source_position')),
+        monitor.drop_coords('position'),
         compute_component_position(nexus_monitor)['data'],
     )
 
@@ -520,7 +519,6 @@ def test_get_calibrated_monitor_subtracts_offset_from_position(
     monitor = workflow.get_calibrated_monitor(
         nexus_monitor,
         offset=offset,
-        source_position=sc.vector([0.0, 0.0, -10.0], unit='m'),
         transform=NeXusTransformation.from_chain(
             workflow.get_transformation_chain(nexus_monitor),
         ),
@@ -551,17 +549,12 @@ def test_get_calibrated_monitor_with_time_dependent_transformation(
     )
 
     # Get the calibrated monitor
-    source_position = sc.vector([0.0, 0.0, -10.0], unit='m')
     monitor = workflow.get_calibrated_monitor(
-        nexus_monitor,
-        transform=transform,
-        offset=workflow.no_offset,
-        source_position=source_position,
+        nexus_monitor, transform=transform, offset=workflow.no_offset
     )
 
     # Verify the monitor has the correct structure
     assert 'position' in monitor.coords
-    assert 'source_position' in monitor.coords
 
     # Verify the position is correctly computed
     # The transformation: translate (1, 0, 0) then translate (0, 2, 0)
@@ -570,9 +563,6 @@ def test_get_calibrated_monitor_with_time_dependent_transformation(
     assert sc.allclose(
         monitor.coords['position'], expected_position, rtol=sc.scalar(1e-10)
     )
-
-    # Verify source position is preserved
-    assert_identical(monitor.coords['source_position'], source_position)
 
 
 @pytest.fixture
@@ -685,7 +675,6 @@ def test_load_event_monitor_workflow(loki_tutorial_sample_run_60250: Path) -> No
     wf[NeXusName[FrameMonitor1]] = 'monitor_1'
     da = wf.compute(RawMonitor[SampleRun, FrameMonitor1])
     assert 'position' in da.coords
-    assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('event_time_zero',)
     assert da.bins.constituents['data'].variances is not None
@@ -697,7 +686,6 @@ def test_load_histogram_monitor_workflow(dream_coda_test_file: Path) -> None:
     wf[NeXusName[FrameMonitor1]] = 'monitor_bunker'
     da = wf.compute(RawMonitor[SampleRun, FrameMonitor1])
     assert 'position' in da.coords
-    assert 'source_position' in da.coords
     assert da.bins is None
     assert set(da.dims) == {'time', 'frame_time'}
     assert 'time' in da.coords.keys()
@@ -755,7 +743,6 @@ def test_generic_nexus_workflow(
     assert da.dims == ('detector_number',)
     da = wf.compute(RawMonitor[SampleRun, FrameMonitor1])
     assert 'position' in da.coords
-    assert 'source_position' in da.coords
     assert da.bins is not None
     assert da.dims == ('event_time_zero',)
 
