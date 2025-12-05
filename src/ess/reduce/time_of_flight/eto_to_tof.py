@@ -317,7 +317,19 @@ def _time_of_flight_data_events(
     parts = da.bins.constituents
     parts["data"] = tofs
     result = da.bins.assign_coords(tof=sc.bins(**parts, validate_indices=False))
-    return result.bins.drop_coords("event_time_offset")
+    out = result.bins.drop_coords("event_time_offset")
+
+    # The result may still have an 'event_time_zero' dimension (in the case of an
+    # event monitor where events were not grouped by pixel).
+    if "event_time_zero" in out.dims:
+        if ("event_time_zero" in out.coords) and (
+            "event_time_zero" not in out.bins.coords
+        ):
+            out.bins.coords["event_time_zero"] = sc.bins_like(
+                out, out.coords["event_time_zero"]
+            )
+        out = out.bins.concat("event_time_zero")
+    return out
 
 
 def detector_ltotal_from_straight_line_approximation(
@@ -357,6 +369,7 @@ def detector_ltotal_from_straight_line_approximation(
 
 def monitor_ltotal_from_straight_line_approximation(
     monitor_beamline: EmptyMonitor[RunType, MonitorType],
+    source_position: Position[snx.NXsource, RunType],
 ) -> MonitorLtotal[RunType, MonitorType]:
     """
     Compute Ltotal for the monitor.
@@ -369,7 +382,10 @@ def monitor_ltotal_from_straight_line_approximation(
         Beamline data for the monitor that contains the positions necessary to compute
         the straight-line approximation to Ltotal (source and monitor positions).
     """
-    graph = scn.conversion.graph.beamline.beamline(scatter=False)
+    graph = {
+        **scn.conversion.graph.beamline.beamline(scatter=False),
+        'source_position': lambda: source_position,
+    }
     return MonitorLtotal[RunType, MonitorType](
         monitor_beamline.transform_coords(
             "Ltotal", graph=graph, keep_intermediate=False
