@@ -398,13 +398,13 @@ def simulate_chopper_cascade_using_tof(
 ) -> SimulationResults:
     """
     Simulate a pulse of neutrons propagating through a chopper cascade using the
-    ``tof`` package (https://tof.readthedocs.io).
+    ``tof`` package (https://scipp.github.io/tof).
 
     Parameters
     ----------
     choppers:
         A dict of DiskChopper objects representing the choppers in the beamline. See
-        https://scipp.github.io/scippneutron/user-guide/chopper/processing-nexus-choppers.html#Build-DiskChopper
+        https://scipp.github.io/scippneutron/user-guide/chopper/processing-nexus-choppers.html
         for more information.
     source_position:
         A scalar variable with ``dtype=vector3`` that defines the source position.
