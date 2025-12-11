@@ -70,7 +70,7 @@ def test_TofLookupTableWorkflow_can_compute_tof_lut():
         sc.scalar(100.0, unit="m"),
     )
     wf[time_of_flight.SourcePosition] = fakes.source_position()
-    lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    lut = wf.compute(time_of_flight.TofLookupTable)
     assert lut.array is not None
     assert lut.distance_resolution is not None
     assert lut.time_resolution is not None
@@ -95,7 +95,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
     _ = wf.compute(RawDetector[SampleRun])
     # By default, the workflow tries to load the LUT from file
     with pytest.raises(sciline.UnsatisfiedRequirement):
-        _ = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+        _ = wf.compute(time_of_flight.TofLookupTable)
     with pytest.raises(sciline.UnsatisfiedRequirement):
         _ = wf.compute(time_of_flight.TofDetector[SampleRun])
 
@@ -107,9 +107,9 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
         sc.scalar(100.0, unit="m"),
     )
     lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    table = lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    table = lut_wf.compute(time_of_flight.TofLookupTable)
 
-    wf[time_of_flight.TimeOfFlightLookupTable] = table
+    wf[time_of_flight.TofLookupTable] = table
     # Should now be able to compute DetectorData with chopper and simulation params
     detector = wf.compute(time_of_flight.TofDetector[SampleRun])
     assert 'tof' in detector.bins.coords
@@ -128,20 +128,20 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
         sc.scalar(100.0, unit="m"),
     )
     lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    lut = lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    lut = lut_wf.compute(time_of_flight.TofLookupTable)
     lut.save_hdf5(filename=tmp_path / "lut.h5")
 
     wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[EmptyDetector[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
-    wf[time_of_flight.TimeOfFlightLookupTableFilename] = (
+    wf[time_of_flight.TofLookupTableFilename] = (
         tmp_path / "lut.h5"
     ).as_posix()
     # Unused because calibrated_beamline contains Ltotal but needed by wf structure
     wf[Position[snx.NXsample, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
     wf[Position[snx.NXsource, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
 
-    loaded_lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    loaded_lut = wf.compute(time_of_flight.TofLookupTable)
     assert_identical(lut.array, loaded_lut.array)
     assert_identical(lut.pulse_period, loaded_lut.pulse_period)
     assert lut.pulse_stride == loaded_lut.pulse_stride
@@ -167,7 +167,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_file_old_format(
         sc.scalar(100.0, unit="m"),
     )
     lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    lut = lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    lut = lut_wf.compute(time_of_flight.TofLookupTable)
     old_lut = sc.DataArray(
         data=lut.array.data,
         coords={
@@ -185,14 +185,14 @@ def test_GenericTofWorkflow_with_tof_lut_from_file_old_format(
     wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[EmptyDetector[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
-    wf[time_of_flight.TimeOfFlightLookupTableFilename] = (
+    wf[time_of_flight.TofLookupTableFilename] = (
         tmp_path / "lut.h5"
     ).as_posix()
     # Unused because calibrated_beamline contains Ltotal but needed by wf structure
     wf[Position[snx.NXsample, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
     wf[Position[snx.NXsource, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
 
-    loaded_lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    loaded_lut = wf.compute(time_of_flight.TofLookupTable)
     assert_identical(lut.array, loaded_lut.array)
     assert_identical(lut.pulse_period, loaded_lut.pulse_period)
     assert lut.pulse_stride == loaded_lut.pulse_stride
