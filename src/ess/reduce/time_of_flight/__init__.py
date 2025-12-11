@@ -30,6 +30,8 @@ from .types import (
     TimeOfFlightLookupTableFilename,
     ToaDetector,
     TofDetector,
+    TofLookupTable,
+    TofLookupTableFilename,
     TofMonitor,
 )
 from .workflow import GenericTofWorkflow
@@ -54,6 +56,8 @@ __all__ = [
     "TimeResolution",
     "ToaDetector",
     "TofDetector",
+    "TofLookupTable",
+    "TofLookupTableFilename",
     "TofLookupTableWorkflow",
     "TofMonitor",
     "providers",

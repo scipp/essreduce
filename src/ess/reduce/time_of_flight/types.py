@@ -10,12 +10,15 @@ import scipp as sc
 
 from ..nexus.types import MonitorType, RunType
 
-TimeOfFlightLookupTableFilename = NewType("TimeOfFlightLookupTableFilename", str)
+TofLookupTableFilename = NewType("TofLookupTableFilename", str)
 """Filename of the time-of-flight lookup table."""
+
+TimeOfFlightLookupTableFilename = TofLookupTableFilename
+"""Filename of the time-of-flight lookup table (alias)."""
 
 
 @dataclass
-class TimeOfFlightLookupTable:
+class TofLookupTable:
     """
     Lookup table giving time-of-flight as a function of distance and time of arrival.
     """
@@ -46,6 +49,10 @@ class TimeOfFlightLookupTable:
         """Plot the data array of the lookup table."""
         return self.array.plot(*args, **kwargs)
 
+
+TimeOfFlightLookupTable = TofLookupTable
+"""Lookup table giving time-of-flight as a function of distance and time of arrival
+(alias)."""
 
 PulseStrideOffset = NewType("PulseStrideOffset", int | None)
 """

@@ -35,9 +35,9 @@ from .types import (
     DetectorLtotal,
     MonitorLtotal,
     PulseStrideOffset,
-    TimeOfFlightLookupTable,
     ToaDetector,
     TofDetector,
+    TofLookupTable,
     TofMonitor,
 )
 
@@ -96,7 +96,7 @@ class TofInterpolator:
 
 
 def _time_of_flight_data_histogram(
-    da: sc.DataArray, lookup: TimeOfFlightLookupTable, ltotal: sc.Variable
+    da: sc.DataArray, lookup: TofLookupTable, ltotal: sc.Variable
 ) -> sc.DataArray:
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
     # it may be called 'tof' or 'frame_time'.
@@ -201,7 +201,7 @@ def _guess_pulse_stride_offset(
 
 def _prepare_tof_interpolation_inputs(
     da: sc.DataArray,
-    lookup: TimeOfFlightLookupTable,
+    lookup: TofLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int | None,
 ) -> dict:
@@ -295,7 +295,7 @@ def _prepare_tof_interpolation_inputs(
 
 def _time_of_flight_data_events(
     da: sc.DataArray,
-    lookup: TimeOfFlightLookupTable,
+    lookup: TofLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int | None,
 ) -> sc.DataArray:
@@ -395,7 +395,7 @@ def monitor_ltotal_from_straight_line_approximation(
 
 def _compute_tof_data(
     da: sc.DataArray,
-    lookup: TimeOfFlightLookupTable,
+    lookup: TofLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
@@ -413,7 +413,7 @@ def _compute_tof_data(
 
 def detector_time_of_flight_data(
     detector_data: RawDetector[RunType],
-    lookup: TimeOfFlightLookupTable,
+    lookup: TofLookupTable,
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofDetector[RunType]:
@@ -447,7 +447,7 @@ def detector_time_of_flight_data(
 
 def monitor_time_of_flight_data(
     monitor_data: RawMonitor[RunType, MonitorType],
-    lookup: TimeOfFlightLookupTable,
+    lookup: TofLookupTable,
     ltotal: MonitorLtotal[RunType, MonitorType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofMonitor[RunType, MonitorType]:
@@ -481,7 +481,7 @@ def monitor_time_of_flight_data(
 
 def detector_time_of_arrival_data(
     detector_data: RawDetector[RunType],
-    lookup: TimeOfFlightLookupTable,
+    lookup: TofLookupTable,
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> ToaDetector[RunType]:
