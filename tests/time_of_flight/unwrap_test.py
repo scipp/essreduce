@@ -75,9 +75,7 @@ def _make_workflow_event_mode(
     lut_wf[time_of_flight.LtotalRange] = distance, distance
     lut_wf[time_of_flight.LookupTableRelativeErrorThreshold] = error_threshold
 
-    pl[time_of_flight.TofLookupTable] = lut_wf.compute(
-        time_of_flight.TofLookupTable
-    )
+    pl[time_of_flight.TofLookupTable] = lut_wf.compute(time_of_flight.TofLookupTable)
 
     return pl, ref
 
@@ -104,9 +102,7 @@ def _make_workflow_histogram_mode(dim, distance, choppers, lut_workflow, seed):
     lut_wf = lut_workflow.copy()
     lut_wf[time_of_flight.LtotalRange] = distance, distance
 
-    pl[time_of_flight.TofLookupTable] = lut_wf.compute(
-        time_of_flight.TofLookupTable
-    )
+    pl[time_of_flight.TofLookupTable] = lut_wf.compute(time_of_flight.TofLookupTable)
 
     return pl, ref
 
@@ -340,9 +336,7 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing() -> No
     pl[RawDetector[SampleRun]] = a.bins.concat('event_time_zero')
     pl[time_of_flight.DetectorLtotal[SampleRun]] = distance
 
-    pl[time_of_flight.TofLookupTable] = lut_wf.compute(
-        time_of_flight.TofLookupTable
-    )
+    pl[time_of_flight.TofLookupTable] = lut_wf.compute(time_of_flight.TofLookupTable)
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
 
     tofs = pl.compute(time_of_flight.TofDetector[SampleRun])

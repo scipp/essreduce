@@ -134,9 +134,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[EmptyDetector[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
-    wf[time_of_flight.TofLookupTableFilename] = (
-        tmp_path / "lut.h5"
-    ).as_posix()
+    wf[time_of_flight.TofLookupTableFilename] = (tmp_path / "lut.h5").as_posix()
     # Unused because calibrated_beamline contains Ltotal but needed by wf structure
     wf[Position[snx.NXsample, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
     wf[Position[snx.NXsource, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
@@ -185,9 +183,7 @@ def test_GenericTofWorkflow_with_tof_lut_from_file_old_format(
     wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[EmptyDetector[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
-    wf[time_of_flight.TofLookupTableFilename] = (
-        tmp_path / "lut.h5"
-    ).as_posix()
+    wf[time_of_flight.TofLookupTableFilename] = (tmp_path / "lut.h5").as_posix()
     # Unused because calibrated_beamline contains Ltotal but needed by wf structure
     wf[Position[snx.NXsample, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
     wf[Position[snx.NXsource, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
@@ -200,6 +196,75 @@ def test_GenericTofWorkflow_with_tof_lut_from_file_old_format(
     assert_identical(lut.time_resolution, loaded_lut.time_resolution)
     assert lut.error_threshold == loaded_lut.error_threshold
     assert loaded_lut.choppers is None  # No chopper info in old format
+
+    detector = wf.compute(time_of_flight.TofDetector[SampleRun])
+    assert 'tof' in detector.bins.coords
+
+
+def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation_using_alias(
+    calibrated_beamline: sc.DataArray, nexus_data: sc.DataArray
+):
+    wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf[EmptyDetector[SampleRun]] = calibrated_beamline
+    wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
+    # Unused because calibrated_beamline contains Ltotal but needed by wf structure
+    wf[Position[snx.NXsample, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
+    wf[Position[snx.NXsource, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
+
+    # Should be able to compute DetectorData without chopper and simulation params
+    # This contains event_time_offset (time-of-arrival).
+    _ = wf.compute(RawDetector[SampleRun])
+
+    lut_wf = TofLookupTableWorkflow()
+    lut_wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
+    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
+    lut_wf[time_of_flight.LtotalRange] = (
+        sc.scalar(0.0, unit="m"),
+        sc.scalar(100.0, unit="m"),
+    )
+    lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
+    table = lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
+
+    wf[time_of_flight.TimeOfFlightLookupTable] = table
+    # Should now be able to compute DetectorData with chopper and simulation params
+    detector = wf.compute(time_of_flight.TofDetector[SampleRun])
+    assert 'tof' in detector.bins.coords
+
+
+def test_GenericTofWorkflow_with_tof_lut_from_file_using_alias(
+    calibrated_beamline: sc.DataArray,
+    nexus_data: sc.DataArray,
+    tmp_path: pytest.TempPathFactory,
+):
+    lut_wf = TofLookupTableWorkflow()
+    lut_wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
+    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
+    lut_wf[time_of_flight.LtotalRange] = (
+        sc.scalar(0.0, unit="m"),
+        sc.scalar(100.0, unit="m"),
+    )
+    lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
+    lut = lut_wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    lut.save_hdf5(filename=tmp_path / "lut.h5")
+
+    wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
+    wf[EmptyDetector[SampleRun]] = calibrated_beamline
+    wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
+    wf[time_of_flight.TimeOfFlightLookupTableFilename] = (
+        tmp_path / "lut.h5"
+    ).as_posix()
+    # Unused because calibrated_beamline contains Ltotal but needed by wf structure
+    wf[Position[snx.NXsample, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
+    wf[Position[snx.NXsource, SampleRun]] = sc.vector([1e10, 1e10, 1e10], unit='m')
+
+    loaded_lut = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    assert_identical(lut.array, loaded_lut.array)
+    assert_identical(lut.pulse_period, loaded_lut.pulse_period)
+    assert lut.pulse_stride == loaded_lut.pulse_stride
+    assert_identical(lut.distance_resolution, loaded_lut.distance_resolution)
+    assert_identical(lut.time_resolution, loaded_lut.time_resolution)
+    assert lut.error_threshold == loaded_lut.error_threshold
+    assert_identical(lut.choppers, loaded_lut.choppers)
 
     detector = wf.compute(time_of_flight.TofDetector[SampleRun])
     assert 'tof' in detector.bins.coords

@@ -137,9 +137,7 @@ def setup_workflow(
     lut_wf[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
     lut_wf[time_of_flight.LookupTableRelativeErrorThreshold] = error_threshold
 
-    pl[time_of_flight.TofLookupTable] = lut_wf.compute(
-        time_of_flight.TofLookupTable
-    )
+    pl[time_of_flight.TofLookupTable] = lut_wf.compute(time_of_flight.TofLookupTable)
     return pl
 
 
