@@ -9,14 +9,14 @@ from ..nexus import GenericNeXusWorkflow
 from . import eto_to_tof
 from .types import (
     PulseStrideOffset,
-    TimeOfFlightLookupTable,
-    TimeOfFlightLookupTableFilename,
+    TofLookupTable,
+    TofLookupTableFilename,
 )
 
 
 def load_tof_lookup_table(
-    filename: TimeOfFlightLookupTableFilename,
-) -> TimeOfFlightLookupTable:
+    filename: TofLookupTableFilename,
+) -> TofLookupTable:
     """Load a time-of-flight lookup table from an HDF5 file."""
     table = sc.io.load_hdf5(filename)
 
@@ -40,7 +40,7 @@ def load_tof_lookup_table(
             "error_threshold": table.coords["error_threshold"].value,
         }
 
-    return TimeOfFlightLookupTable(**table)
+    return TofLookupTable(**table)
 
 
 def GenericTofWorkflow(

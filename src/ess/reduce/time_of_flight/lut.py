@@ -13,7 +13,7 @@ import sciline as sl
 import scipp as sc
 
 from ..nexus.types import AnyRun, DiskChoppers
-from .types import TimeOfFlightLookupTable
+from .types import TofLookupTable
 
 
 @dataclass
@@ -230,7 +230,7 @@ def make_tof_lookup_table(
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
     error_threshold: LookupTableRelativeErrorThreshold,
-) -> TimeOfFlightLookupTable:
+) -> TofLookupTable:
     """
     Compute a lookup table for time-of-flight as a function of distance and
     time-of-arrival.
@@ -372,7 +372,7 @@ def make_tof_lookup_table(
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
 
-    return TimeOfFlightLookupTable(
+    return TofLookupTable(
         array=table,
         pulse_period=pulse_period,
         pulse_stride=pulse_stride,

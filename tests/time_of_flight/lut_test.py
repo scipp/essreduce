@@ -26,7 +26,7 @@ def test_lut_workflow_computes_table():
     wf[time_of_flight.DistanceResolution] = dres
     wf[time_of_flight.TimeResolution] = tres
 
-    table = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    table = wf.compute(time_of_flight.TofLookupTable)
 
     assert table.array.coords['distance'].min() < lmin
     assert table.array.coords['distance'].max() > lmax
@@ -56,7 +56,7 @@ def test_lut_workflow_computes_table_in_chunks():
     wf[time_of_flight.DistanceResolution] = dres
     wf[time_of_flight.TimeResolution] = tres
 
-    table = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    table = wf.compute(time_of_flight.TofLookupTable)
 
     assert table.array.coords['distance'].min() < lmin
     assert table.array.coords['distance'].max() > lmax
@@ -85,7 +85,7 @@ def test_lut_workflow_pulse_skipping():
     wf[time_of_flight.DistanceResolution] = dres
     wf[time_of_flight.TimeResolution] = tres
 
-    table = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    table = wf.compute(time_of_flight.TofLookupTable)
 
     assert table.array.coords['event_time_offset'].max() == 2 * sc.scalar(
         1 / 14, unit='s'
@@ -108,7 +108,7 @@ def test_lut_workflow_non_exact_distance_range():
     wf[time_of_flight.DistanceResolution] = dres
     wf[time_of_flight.TimeResolution] = tres
 
-    table = wf.compute(time_of_flight.TimeOfFlightLookupTable)
+    table = wf.compute(time_of_flight.TofLookupTable)
 
     assert table.array.coords['distance'].min() < lmin
     assert table.array.coords['distance'].max() > lmax
