@@ -133,16 +133,12 @@ class _DimensionSelector(ipw.VBox):
 
     def set_dims(self, new_dims: tuple[str, ...], h_dim: str, v_dim: str) -> None:
         options = {dim.capitalize(): dim for dim in new_dims}
-        old_h = self._horizontal_buttons.value
-        old_v = self._vertical_buttons.value
         if self._horizontal_buttons.options != options:
             self._lock = True
             self._horizontal_buttons.options = options
             self._vertical_buttons.options = options
-            if old_h not in new_dims:
-                self._horizontal_buttons.value = h_dim
-            if old_v not in new_dims:
-                self._vertical_buttons.value = v_dim
+            self._horizontal_buttons.value = h_dim
+            self._vertical_buttons.value = v_dim
             self._lock = False
 
     @property
