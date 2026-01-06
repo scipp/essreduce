@@ -13,7 +13,7 @@ import sciline as sl
 import scipp as sc
 
 from ..nexus.types import AnyRun, DiskChoppers
-from .types import TofLookupTable
+from .types import WavelengthLookupTable
 
 
 @dataclass
@@ -61,14 +61,29 @@ Number of neutrons simulated in the simulation that is used to create the lookup
 This is typically a large number, e.g., 1e6 or 1e7.
 """
 
-LtotalRange = NewType("LtotalRange", tuple[sc.Variable, sc.Variable])
+# LtotalRange = NewType("LtotalRange", tuple[sc.Variable, sc.Variable])
+# """
+# Range (min, max) of the total length of the flight path from the source to the detector.
+# This is used to create the lookup table to compute the neutron time-of-flight.
+# Note that the resulting table will extend slightly beyond this range, as the supplied
+# range is not necessarily a multiple of the distance resolution.
+
+# Note also that the range of total flight paths is supplied manually to the workflow
+# instead of being read from the input data, as it allows us to compute the expensive part
+# of the workflow in advance (the lookup table) and does not need to be repeated for each
+# run, or for new data coming in in the case of live data collection.
+# """
+
+DistanceFromSampleRange = NewType(
+    "DistanceFromSampleRange", tuple[sc.Variable, sc.Variable]
+)
 """
-Range (min, max) of the total length of the flight path from the source to the detector.
-This is used to create the lookup table to compute the neutron time-of-flight.
+Range (min, max) of the distance from the sample.
+This is used to create the lookup table to compute the neutron wavelength.
 Note that the resulting table will extend slightly beyond this range, as the supplied
 range is not necessarily a multiple of the distance resolution.
 
-Note also that the range of total flight paths is supplied manually to the workflow
+Note also that the range of distances is supplied manually to the workflow
 instead of being read from the input data, as it allows us to compute the expensive part
 of the workflow in advance (the lookup table) and does not need to be repeated for each
 run, or for new data coming in in the case of live data collection.
@@ -177,13 +192,20 @@ def _compute_mean_wavelength_in_distance_range(
         Half width of the time bins in the event_time_offset axis.
     """
     # simulation_distance = simulation.position.fields.z.to(unit=distance_unit)
-    distances = sc.midpoints(distance_bins) + sc.norm(
-        sample_position - simulation.position.to(unit=sample_position.unit)
-    ).to(unit=distance_unit)
+    distances = sc.midpoints(distance_bins)
+    # + sc.norm(
+    #     sample_position - simulation.position.to(unit=sample_position.unit)
+    # ).to(unit=distance_unit)
     # Compute arrival and flight times for all neutrons
-    toas = simulation.time_of_arrival + (distances / simulation.speed).to(
-        unit=time_unit, copy=False
-    )
+    toas = simulation.time_of_arrival + (
+        (
+            distances
+            + sc.norm(
+                sample_position - simulation.position.to(unit=sample_position.unit)
+            ).to(unit=distance_unit)
+        )
+        / simulation.speed
+    ).to(unit=time_unit, copy=False)
     # dist = distances + simulation_distance
     # tofs = dist * (sc.constants.m_n / sc.constants.h) * simulation.wavelength
 
@@ -192,7 +214,7 @@ def _compute_mean_wavelength_in_distance_range(
         coords={
             "toa": toas,
             "wavelength": simulation.wavelength,
-            "distance": dist,
+            "distance_from_sample": distances,
         },
     ).flatten(to="event")
 
@@ -208,32 +230,30 @@ def _compute_mean_wavelength_in_distance_range(
     # data.coords['event_time_offset'] %= pulse_period - time_bins_half_width
     data.coords['event_time_offset'] %= frame_period - time_bins_half_width
 
-    binned = data.bin(
-        distance=distance_bins + simulation_distance, event_time_offset=time_bins
-    )
+    binned = data.bin(distance_from_sample=distance_bins, event_time_offset=time_bins)
 
-    # Weighted mean of tof inside each bin
-    mean_tof = (
-        binned.bins.data * binned.bins.coords["tof"]
+    # Weighted mean of wavelength inside each bin
+    mean_wavelength = (
+        binned.bins.data * binned.bins.coords["wavelength"]
     ).bins.sum() / binned.bins.sum()
-    # Compute the variance of the tofs to track regions with large uncertainty
+    # Compute the variance of the wavelengths to track regions with large uncertainty
     variance = (
-        binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
+        binned.bins.data * (binned.bins.coords["wavelength"] - mean_wavelength) ** 2
     ).bins.sum() / binned.bins.sum()
 
-    mean_tof.variances = variance.values
-    return mean_tof
+    mean_wavelength.variances = variance.values
+    return mean_wavelength
 
 
-def make_tof_lookup_table(
+def make_wavelength_lookup_table(
     simulation: SimulationResults,
-    ltotal_range: LtotalRange,
+    distance_from_sample_range: DistanceFromSampleRange,
     distance_resolution: DistanceResolution,
     time_resolution: TimeResolution,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
     error_threshold: LookupTableRelativeErrorThreshold,
-) -> TofLookupTable:
+) -> WavelengthLookupTable:
     """
     Compute a lookup table for time-of-flight as a function of distance and
     time-of-arrival.
@@ -244,8 +264,10 @@ def make_tof_lookup_table(
         Results of a time-of-flight simulation used to create a lookup table.
         The results should be a flat table with columns for time-of-arrival, speed,
         wavelength, and weight.
-    ltotal_range:
-        Range of total flight path lengths from the source to the detector.
+    distance_range:
+        Range of distances away from the sample (min, max). Note that values can be
+        negative, as they represent distances in the direction opposite to the
+        detector (typically for monitors before the sample).
     distance_resolution:
         Resolution of the distance axis in the lookup table.
     time_resolution:
@@ -302,10 +324,10 @@ def make_tof_lookup_table(
     pulse_period = pulse_period.to(unit=time_unit)
     frame_period = pulse_period * pulse_stride
 
-    min_dist, max_dist = (
-        x.to(unit=distance_unit) - simulation.distance.to(unit=distance_unit)
-        for x in ltotal_range
-    )
+    # min_dist, max_dist = (
+    #     x.to(unit=distance_unit) - simulation.distance.to(unit=distance_unit)
+    #     for x in ltotal_range
+    # )
     # We need to bin the data below, to compute the weighted mean of the wavelength.
     # This results in data with bin edges.
     # However, the 2d interpolator expects bin centers.
@@ -317,7 +339,12 @@ def make_tof_lookup_table(
     # ensure that the last bin is not cut off. We want the upper edge to be higher than
     # the maximum distance, hence we pad with an additional 1.5 x resolution.
     pad = 2.0 * res
-    distance_bins = sc.arange('distance', min_dist - pad, max_dist + pad, res)
+    distance_bins = sc.arange(
+        'distance_from_sample',
+        distance_from_sample_range[0].to(unit=distance_unit) - pad,
+        distance_from_sample_range[1].to(unit=distance_unit) + pad,
+        res,
+    )
 
     # Create some time bins for event_time_offset.
     # We want our final table to strictly cover the range [0, frame_period].
@@ -343,7 +370,7 @@ def make_tof_lookup_table(
     for i in range(nchunks):
         dist_edges = distance_bins[i * chunk_size : (i + 1) * chunk_size + 1]
         pieces.append(
-            _compute_mean_tof_in_distance_range(
+            _compute_mean_wavelength_in_distance_range(
                 simulation=simulation,
                 distance_bins=dist_edges,
                 time_bins=time_bins,
@@ -354,8 +381,10 @@ def make_tof_lookup_table(
             )
         )
 
-    table = sc.concat(pieces, 'distance')
-    table.coords["distance"] = sc.midpoints(table.coords["distance"])
+    table = sc.concat(pieces, 'distance_from_sample')
+    table.coords["distance_from_sample"] = sc.midpoints(
+        table.coords["distance_from_sample"]
+    )
     table.coords["event_time_offset"] = sc.midpoints(table.coords["event_time_offset"])
 
     # Copy the left edge to the right to create periodic boundary conditions
@@ -364,7 +393,7 @@ def make_tof_lookup_table(
             [table.data, table.data['event_time_offset', 0]], dim='event_time_offset'
         ),
         coords={
-            "distance": table.coords["distance"],
+            "distance_from_sample": table.coords["distance_from_sample"],
             "event_time_offset": sc.concat(
                 [table.coords["event_time_offset"], frame_period],
                 dim='event_time_offset',
@@ -375,11 +404,12 @@ def make_tof_lookup_table(
     # In-place masking for better performance
     _mask_large_uncertainty(table, error_threshold)
 
-    return TofLookupTable(
+    return WavelengthLookupTable(
         array=table,
         pulse_period=pulse_period,
         pulse_stride=pulse_stride,
-        distance_resolution=table.coords["distance"][1] - table.coords["distance"][0],
+        distance_resolution=table.coords["distance_from_sample"][1]
+        - table.coords["distance_from_sample"][0],
         time_resolution=table.coords["event_time_offset"][1]
         - table.coords["event_time_offset"][0],
         error_threshold=error_threshold,
@@ -464,13 +494,13 @@ def simulate_chopper_cascade_using_tof(
     )
 
 
-def TofLookupTableWorkflow():
+def WavelengthLookupTableWorkflow():
     """
-    Create a workflow for computing a time-of-flight lookup table from a
+    Create a workflow for computing a wavelength lookup table from a
     simulation of neutrons propagating through a chopper cascade.
     """
     wf = sl.Pipeline(
-        (make_tof_lookup_table, simulate_chopper_cascade_using_tof),
+        (make_wavelength_lookup_table, simulate_chopper_cascade_using_tof),
         params={
             PulsePeriod: 1.0 / sc.scalar(14.0, unit="Hz"),
             PulseStride: 1,

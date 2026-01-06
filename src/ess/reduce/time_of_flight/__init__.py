@@ -7,11 +7,12 @@ neutron time-of-arrival at the detectors.
 """
 
 from ..nexus.types import DiskChoppers
-from .eto_to_tof import providers
+
+# from .eto_to_tof import providers
 from .lut import (
+    DistanceFromSampleRange,
     DistanceResolution,
     LookupTableRelativeErrorThreshold,
-    LtotalRange,
     NumberOfSimulatedNeutrons,
     PulsePeriod,
     PulseStride,
@@ -19,30 +20,29 @@ from .lut import (
     SimulationSeed,
     SourcePosition,
     TimeResolution,
-    TofLookupTableWorkflow,
+    WavelengthLookupTableWorkflow,
     simulate_chopper_cascade_using_tof,
 )
 from .types import (
     DetectorLtotal,
     MonitorLtotal,
     PulseStrideOffset,
-    TimeOfFlightLookupTable,
-    TimeOfFlightLookupTableFilename,
     ToaDetector,
     TofDetector,
-    TofLookupTable,
-    TofLookupTableFilename,
     TofMonitor,
+    WavelengthLookupTable,
+    WavelengthLookupTableFilename,
 )
-from .workflow import GenericTofWorkflow
+
+# from .workflow import GenericTofWorkflow
 
 __all__ = [
     "DetectorLtotal",
     "DiskChoppers",
     "DistanceResolution",
-    "GenericTofWorkflow",
+    "DistanceFromSampleRange",
+    # "GenericTofWorkflow",
     "LookupTableRelativeErrorThreshold",
-    "LtotalRange",
     "MonitorLtotal",
     "NumberOfSimulatedNeutrons",
     "PulsePeriod",
@@ -51,15 +51,14 @@ __all__ = [
     "SimulationResults",
     "SimulationSeed",
     "SourcePosition",
-    "TimeOfFlightLookupTable",
-    "TimeOfFlightLookupTableFilename",
+    "WavelengthLookupTable",
+    "WavelengthLookupTableFilename",
     "TimeResolution",
     "ToaDetector",
     "TofDetector",
-    "TofLookupTable",
-    "TofLookupTableFilename",
-    "TofLookupTableWorkflow",
     "TofMonitor",
-    "providers",
+    # "WavelengthLookupTableWorkflow",
+    "WavelengthLookupTable",
+    # "providers",
     "simulate_chopper_cascade_using_tof",
 ]
