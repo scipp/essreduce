@@ -36,13 +36,13 @@ from .types import (
     MonitorLtotal,
     PulseStrideOffset,
     ToaDetector,
-    TofDetector,
-    TofLookupTable,
-    TofMonitor,
+    WavelengthDetector,
+    WavelengthLookupTable,
+    WavelengthMonitor,
 )
 
 
-class TofInterpolator:
+class WavelengthInterpolator:
     def __init__(self, lookup: sc.DataArray, distance_unit: str, time_unit: str):
         self._distance_unit = distance_unit
         self._time_unit = time_unit
@@ -53,7 +53,9 @@ class TofInterpolator:
             .values
         )
         self._distance_edges = (
-            lookup.coords["distance"].to(unit=distance_unit, copy=False).values
+            lookup.coords["distance_from_sample"]
+            .to(unit=distance_unit, copy=False)
+            .values
         )
 
         self._interpolator = InterpolatorImpl(
@@ -64,15 +66,15 @@ class TofInterpolator:
 
     def __call__(
         self,
-        ltotal: sc.Variable,
+        distance: sc.Variable,
         event_time_offset: sc.Variable,
         pulse_period: sc.Variable,
         pulse_index: sc.Variable | None = None,
     ) -> sc.Variable:
-        if ltotal.unit != self._distance_unit:
+        if distance.unit != self._distance_unit:
             raise sc.UnitError(
-                f"ltotal must have unit: {self._distance_unit}, "
-                f"but got unit: {ltotal.unit}."
+                f"distance must have unit: {self._distance_unit}, "
+                f"but got unit: {distance.unit}."
             )
         if event_time_offset.unit != self._time_unit:
             raise sc.UnitError(
@@ -80,14 +82,14 @@ class TofInterpolator:
                 f"but got unit: {event_time_offset.unit}."
             )
         out_dims = event_time_offset.dims
-        ltotal = ltotal.values
+        distance = distance.values
         event_time_offset = event_time_offset.values
 
         return sc.array(
             dims=out_dims,
             values=self._interpolator(
                 times=event_time_offset,
-                distances=ltotal,
+                distances=distance,
                 pulse_index=pulse_index.values if pulse_index is not None else None,
                 pulse_period=pulse_period.value,
             ),
@@ -95,8 +97,8 @@ class TofInterpolator:
         )
 
 
-def _time_of_flight_data_histogram(
-    da: sc.DataArray, lookup: TofLookupTable, ltotal: sc.Variable
+def _wavelength_data_histogram(
+    da: sc.DataArray, lookup: WavelengthLookupTable, distance: sc.Variable
 ) -> sc.DataArray:
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
     # it may be called 'tof' or 'frame_time'.

@@ -61,16 +61,18 @@ zero but can be a small integer < pulse_stride. If None, a guess is made.
 """
 
 
-class DetectorLtotal(sl.Scope[RunType, sc.Variable], sc.Variable):
-    """Total path length of neutrons from source to detector (L1 + L2)."""
+class DetectorDistanceFromSample(sl.Scope[RunType, sc.Variable], sc.Variable):
+    """Distance from sample to detector (L2)."""
 
 
-class MonitorLtotal(sl.Scope[RunType, MonitorType, sc.Variable], sc.Variable):
-    """Total path length of neutrons from source to monitor."""
+class MonitorDistanceFromSample(
+    sl.Scope[RunType, MonitorType, sc.Variable], sc.Variable
+):
+    """Distance from sample to monitor (can be negative)."""
 
 
-class TofDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
-    """Detector data with time-of-flight coordinate."""
+class WavelengthDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
+    """Detector data with wavelength coordinate."""
 
 
 class ToaDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
@@ -85,5 +87,5 @@ class ToaDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
     """
 
 
-class TofMonitor(sl.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
-    """Monitor data with time-of-flight coordinate."""
+class WavelengthMonitor(sl.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
+    """Monitor data with wavelength coordinate."""

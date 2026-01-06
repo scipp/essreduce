@@ -125,6 +125,10 @@ PulseStride = NewType("PulseStride", int)
 Stride of used pulses. Usually 1, but may be a small integer when pulse-skipping.
 """
 
+
+SamplePosition = NewType("SamplePosition", sc.Variable)
+"""Position of the sample in the coordinate system of the choppers."""
+
 SourcePosition = NewType("SourcePosition", sc.Variable)
 """
 Position of the neutron source in the coordinate system of the choppers.
@@ -253,6 +257,7 @@ def make_wavelength_lookup_table(
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
     error_threshold: LookupTableRelativeErrorThreshold,
+    sample_position: SamplePosition,
 ) -> WavelengthLookupTable:
     """
     Compute a lookup table for time-of-flight as a function of distance and
@@ -378,6 +383,7 @@ def make_wavelength_lookup_table(
                 time_unit=time_unit,
                 frame_period=frame_period,
                 time_bins_half_width=time_bins_half_width,
+                sample_position=sample_position,
             )
         )
 
