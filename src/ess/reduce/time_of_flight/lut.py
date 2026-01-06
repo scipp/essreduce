@@ -51,7 +51,7 @@ class SimulationResults:
     speed: sc.Variable
     wavelength: sc.Variable
     weight: sc.Variable
-    distance: sc.Variable
+    position: sc.Variable
     choppers: DiskChoppers[AnyRun] | None = None
 
 
@@ -145,7 +145,7 @@ def _mask_large_uncertainty(table: sc.DataArray, error_threshold: float):
     table.values[mask.values] = np.nan
 
 
-def _compute_mean_tof_in_distance_range(
+def _compute_mean_wavelength_in_distance_range(
     simulation: SimulationResults,
     distance_bins: sc.Variable,
     time_bins: sc.Variable,
@@ -153,6 +153,7 @@ def _compute_mean_tof_in_distance_range(
     time_unit: str,
     frame_period: sc.Variable,
     time_bins_half_width: sc.Variable,
+    sample_position: sc.Variable,
 ) -> sc.DataArray:
     """
     Compute the mean time-of-flight inside event_time_offset bins for a given range of
@@ -163,7 +164,7 @@ def _compute_mean_tof_in_distance_range(
     simulation:
         Results of a time-of-flight simulation used to create a lookup table.
     distance_bins:
-        Bin edges for the distance axis in the lookup table.
+        Bin edges for the distance-from-sample axis in the lookup table.
     time_bins:
         Bin edges for the event_time_offset axis in the lookup table.
     distance_unit:
@@ -175,20 +176,22 @@ def _compute_mean_tof_in_distance_range(
     time_bins_half_width:
         Half width of the time bins in the event_time_offset axis.
     """
-    simulation_distance = simulation.distance.to(unit=distance_unit)
-    distances = sc.midpoints(distance_bins)
+    # simulation_distance = simulation.position.fields.z.to(unit=distance_unit)
+    distances = sc.midpoints(distance_bins) + sc.norm(
+        sample_position - simulation.position.to(unit=sample_position.unit)
+    ).to(unit=distance_unit)
     # Compute arrival and flight times for all neutrons
     toas = simulation.time_of_arrival + (distances / simulation.speed).to(
         unit=time_unit, copy=False
     )
-    dist = distances + simulation_distance
-    tofs = dist * (sc.constants.m_n / sc.constants.h) * simulation.wavelength
+    # dist = distances + simulation_distance
+    # tofs = dist * (sc.constants.m_n / sc.constants.h) * simulation.wavelength
 
     data = sc.DataArray(
         data=sc.broadcast(simulation.weight, sizes=toas.sizes),
         coords={
             "toa": toas,
-            "tof": tofs.to(unit=time_unit, copy=False),
+            "wavelength": simulation.wavelength,
             "distance": dist,
         },
     ).flatten(to="event")
@@ -454,7 +457,9 @@ def simulate_chopper_cascade_using_tof(
         speed=events.coords["speed"],
         wavelength=events.coords["wavelength"],
         weight=events.data,
-        distance=furthest_chopper.distance,
+        position=sc.vector(
+            [0, 0, furthest_chopper.distance.value], unit=furthest_chopper.distance.unit
+        ),
         choppers=choppers,
     )
 
