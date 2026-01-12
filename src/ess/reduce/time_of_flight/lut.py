@@ -30,9 +30,6 @@ class SimulationResults:
     time_of_arrival:
         Time of arrival of the neutrons at the position where the events were recorded
         (1d array of size N).
-    speed:
-        Speed of the neutrons, typically derived from the wavelength of the neutrons
-        (1d array of size N).
     wavelength:
         Wavelength of the neutrons (1d array of size N).
     weight:
@@ -48,11 +45,13 @@ class SimulationResults:
     """
 
     time_of_arrival: sc.Variable
-    speed: sc.Variable
     wavelength: sc.Variable
     weight: sc.Variable
     distance: sc.Variable
     choppers: DiskChoppers[AnyRun] | None = None
+
+    def __post_init__(self):
+        self.speed = (sc.constants.h / sc.constants.m_n) / self.wavelength
 
 
 NumberOfSimulatedNeutrons = NewType("NumberOfSimulatedNeutrons", int)
@@ -239,7 +238,7 @@ def make_tof_lookup_table(
     ----------
     simulation:
         Results of a time-of-flight simulation used to create a lookup table.
-        The results should be a flat table with columns for time-of-arrival, speed,
+        The results should be a flat table with columns for time-of-arrival,
         wavelength, and weight.
     ltotal_range:
         Range of total flight path lengths from the source to the detector.
@@ -436,7 +435,6 @@ def simulate_chopper_cascade_using_tof(
         events = source.data.squeeze().flatten(to='event')
         return SimulationResults(
             time_of_arrival=events.coords["birth_time"],
-            speed=events.coords["speed"],
             wavelength=events.coords["wavelength"],
             weight=events.data,
             distance=0.0 * sc.units.m,
@@ -451,7 +449,6 @@ def simulate_chopper_cascade_using_tof(
     ]
     return SimulationResults(
         time_of_arrival=events.coords["toa"],
-        speed=events.coords["speed"],
         wavelength=events.coords["wavelength"],
         weight=events.data,
         distance=furthest_chopper.distance,
