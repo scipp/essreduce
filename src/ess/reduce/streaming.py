@@ -430,6 +430,9 @@ class StreamProcessor:
             needs_recompute |= self._context_key_to_cached_context_nodes_map[key]
         for key, value in context.items():
             self._context_workflow[key] = value
+            # Propagate context values to finalize workflow so providers that depend
+            # on context keys receive the updated values during finalize().
+            self._finalize_workflow[key] = value
         results = self._context_workflow.compute(needs_recompute)
         for key, value in results.items():
             if key in self._target_keys:

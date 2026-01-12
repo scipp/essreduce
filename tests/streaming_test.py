@@ -991,3 +991,49 @@ def test_on_finalize_can_clear_accumulator_for_window_behavior() -> None:
     result = streaming_wf.finalize()
     # AccumA was cleared, now 2*3 = 6, AccumB accumulated to 9+6 = 15
     assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 15.0))
+
+
+def test_StreamProcessor_finalize_provider_uses_context_directly() -> None:
+    """Test that finalize-time providers can access context keys directly.
+
+    This covers the case where a provider that runs during finalize() (i.e., one
+    that depends on accumulated values) also needs access to a context key.
+    The context value must be propagated to the finalize workflow.
+    """
+    Streamed = NewType('Streamed', int)
+    Context = NewType('Context', int)
+    Accumulated = NewType('Accumulated', int)
+    Output = NewType('Output', int)
+
+    def accumulate(streamed: Streamed) -> Accumulated:
+        return Accumulated(streamed)
+
+    def make_output(accumulated: Accumulated, context: Context) -> Output:
+        # This provider runs at finalize time (depends on Accumulated)
+        # and needs direct access to Context
+        return Output(accumulated + context)
+
+    wf = sciline.Pipeline((accumulate, make_output))
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=wf,
+        dynamic_keys=(Streamed,),
+        context_keys=(Context,),
+        target_keys=(Output,),
+        accumulators=(Accumulated,),
+    )
+
+    streaming_wf.set_context({Context: sc.scalar(100)})
+    streaming_wf.accumulate({Streamed: sc.scalar(1)})
+    streaming_wf.accumulate({Streamed: sc.scalar(2)})
+    result = streaming_wf.finalize()
+
+    # Accumulated = 1 + 2 = 3, Context = 100, Output = 3 + 100 = 103
+    assert sc.identical(result[Output], sc.scalar(103))
+
+    # Update context and verify finalize sees the new value
+    streaming_wf.set_context({Context: sc.scalar(200)})
+    streaming_wf.accumulate({Streamed: sc.scalar(4)})
+    result = streaming_wf.finalize()
+
+    # Accumulated = 3 + 4 = 7, Context = 200, Output = 7 + 200 = 207
+    assert sc.identical(result[Output], sc.scalar(207))
