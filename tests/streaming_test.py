@@ -908,3 +908,86 @@ def test_StreamProcessor_rejects_context_keys_depending_on_dynamic_keys() -> Non
             target_keys=(Output,),
             accumulators=(Output,),
         )
+
+
+def test_StreamProcessor_calls_on_finalize_after_finalize() -> None:
+    """Test that on_finalize hook is called on accumulators after finalize."""
+
+    class TrackingAccumulator(streaming.EternalAccumulator[sc.Variable]):
+        def __init__(self) -> None:
+            super().__init__()
+            self.finalize_count = 0
+
+        def on_finalize(self) -> None:
+            self.finalize_count += 1
+
+    base_workflow = sciline.Pipeline(
+        (make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+
+    accum_a = TrackingAccumulator()
+    accum_b = TrackingAccumulator()
+
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators={AccumA: accum_a, AccumB: accum_b},
+    )
+
+    assert accum_a.finalize_count == 0
+    assert accum_b.finalize_count == 0
+
+    streaming_wf.accumulate({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+
+    assert accum_a.finalize_count == 1
+    assert accum_b.finalize_count == 1
+
+    streaming_wf.accumulate({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    result = streaming_wf.finalize()
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 9.0))
+
+    assert accum_a.finalize_count == 2
+    assert accum_b.finalize_count == 2
+
+
+def test_on_finalize_can_clear_accumulator_for_window_behavior() -> None:
+    """Test that on_finalize can be used to create windowed accumulators."""
+
+    class WindowAccumulator(streaming.EternalAccumulator[sc.Variable]):
+        """Accumulator that clears after each finalize cycle."""
+
+        def on_finalize(self) -> None:
+            self.clear()
+
+    base_workflow = sciline.Pipeline(
+        (make_static_a, make_accum_a, make_accum_b, make_target)
+    )
+
+    # Use windowed accumulator for AccumA, eternal for AccumB
+    streaming_wf = streaming.StreamProcessor(
+        base_workflow=base_workflow,
+        dynamic_keys=(DynamicA, DynamicB),
+        target_keys=(Target,),
+        accumulators={
+            AccumA: WindowAccumulator(),
+            AccumB: streaming.EternalAccumulator(),
+        },
+    )
+
+    streaming_wf.accumulate({DynamicA: sc.scalar(1), DynamicB: sc.scalar(4)})
+    result = streaming_wf.finalize()
+    # AccumA = 2*1 = 2, AccumB = 4
+    assert sc.identical(result[Target], sc.scalar(2 * 1.0 / 4.0))
+
+    streaming_wf.accumulate({DynamicA: sc.scalar(2), DynamicB: sc.scalar(5)})
+    result = streaming_wf.finalize()
+    # AccumA was cleared, now 2*2 = 4, AccumB accumulated to 4+5 = 9
+    assert sc.identical(result[Target], sc.scalar(2 * 2.0 / 9.0))
+
+    streaming_wf.accumulate({DynamicA: sc.scalar(3), DynamicB: sc.scalar(6)})
+    result = streaming_wf.finalize()
+    # AccumA was cleared, now 2*3 = 6, AccumB accumulated to 9+6 = 15
+    assert sc.identical(result[Target], sc.scalar(2 * 3.0 / 15.0))
