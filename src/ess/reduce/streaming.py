@@ -108,6 +108,14 @@ class Accumulator(ABC, Generic[T]):
         Clear the accumulator, resetting it to its initial state.
         """
 
+    def on_finalize(self) -> None:
+        """
+        Called after finalize retrieves value.
+
+        Override this method to perform custom cleanup after each finalize cycle.
+        The default implementation does nothing.
+        """
+
 
 class EternalAccumulator(Accumulator[T]):
     """
@@ -505,7 +513,10 @@ class StreamProcessor:
         """
         for key in self._accumulators:
             self._finalize_workflow[key] = self._accumulators[key].value
-        return self._finalize_workflow.compute(self._target_keys)
+        result = self._finalize_workflow.compute(self._target_keys)
+        for acc in self._accumulators.values():
+            acc.on_finalize()
+        return result
 
     def clear(self) -> None:
         """
