@@ -537,6 +537,59 @@ class StreamProcessor:
         for accumulator in self._accumulators.values():
             accumulator.clear()
 
+    def _classify_nodes(self, graph: nx.DiGraph) -> dict[str, set[Any]]:
+        """
+        Classify all nodes in the graph for visualization.
+
+        Node categories:
+
+        - static: Pre-computed once, not dependent on dynamic or context keys
+        - dynamic_keys: Input entry points for chunk data
+        - dynamic_nodes: Downstream of dynamic keys, recomputed per chunk
+          (excludes nodes downstream of accumulators, which are computed in finalize)
+        - context_keys: Input entry points for context data
+        - context_dependent: Downstream of context keys but not dynamic keys
+        - accumulator_keys: Where values are aggregated across chunks
+        - target_keys: Final outputs computed in finalize()
+        - finalize_nodes: Downstream of accumulators, computed in finalize()
+        """
+        all_nodes = set(graph.nodes)
+        accumulator_keys = set(self._accumulators.keys())
+        target_keys = set(self._target_keys)
+
+        # Compute derived classifications
+        dynamic_descendants = _find_descendants(graph, self._dynamic_keys)
+        context_descendants = _find_descendants(graph, self._context_keys)
+
+        # Nodes downstream of accumulators are computed in finalize(), not per-chunk
+        accumulator_descendants = _find_descendants(graph, accumulator_keys)
+        finalize_nodes = accumulator_descendants - accumulator_keys
+
+        # Dynamic nodes: downstream of dynamic keys but NOT downstream of accumulators
+        # These are recomputed for each chunk
+        dynamic_nodes = (
+            dynamic_descendants - self._dynamic_keys - accumulator_descendants
+        )
+
+        # Context-dependent nodes: downstream of context but not of dynamic
+        context_dependent = (
+            context_descendants - dynamic_descendants - self._context_keys
+        )
+
+        # Static nodes: not dependent on dynamic or context
+        static_nodes = all_nodes - dynamic_descendants - context_descendants
+
+        return {
+            'static': static_nodes,
+            'dynamic_keys': self._dynamic_keys & all_nodes,
+            'dynamic_nodes': dynamic_nodes,
+            'context_keys': self._context_keys & all_nodes,
+            'context_dependent': context_dependent,
+            'accumulator_keys': accumulator_keys & all_nodes,
+            'target_keys': target_keys & all_nodes,
+            'finalize_nodes': finalize_nodes,
+        }
+
     def visualize(
         self,
         compact: bool = False,
@@ -594,7 +647,7 @@ class StreamProcessor:
 
         # Classify nodes
         graph = workflow.underlying_graph
-        classifications = _classify_nodes_for_visualization(self, graph)
+        classifications = self._classify_nodes(graph)
 
         # Build a mapping from formatted names to original keys
         key_to_formatted: dict[Any, str] = {}
@@ -616,13 +669,17 @@ class StreamProcessor:
 
 
 def _find_descendants(
-    workflow: sciline.Pipeline, keys: tuple[sciline.typing.Key, ...]
+    source: sciline.Pipeline | nx.DiGraph,
+    keys: set[sciline.typing.Key] | tuple[sciline.typing.Key, ...],
 ) -> set[sciline.typing.Key]:
-    graph = workflow.underlying_graph
+    """Find all descendants of any key in keys, including the keys themselves."""
+    graph = source.underlying_graph if hasattr(source, 'underlying_graph') else source
+    keys_set = set(keys)
     descendants = set()
-    for key in keys:
-        descendants |= nx.descendants(graph, key)
-    return descendants | set(keys)
+    for key in keys_set:
+        if key in graph:
+            descendants |= nx.descendants(graph, key)
+    return descendants | (keys_set & set(graph.nodes))
 
 
 def _find_parents(
@@ -706,69 +763,6 @@ def _format_key_for_graphviz(key: Any) -> str:
         return f'{get_base(origin)}[{", ".join(params)}]'
     else:
         return get_base(key)
-
-
-def _find_graph_descendants(graph: nx.DiGraph, keys: set[Any]) -> set[Any]:
-    """Find all nodes that are descendants of any key in keys."""
-    descendants = set()
-    for key in keys:
-        if key in graph:
-            descendants |= nx.descendants(graph, key)
-    return descendants | (keys & set(graph.nodes))
-
-
-def _classify_nodes_for_visualization(
-    processor: StreamProcessor,
-    graph: nx.DiGraph,
-) -> dict[str, set[Any]]:
-    """
-    Classify all nodes in the graph for visualization.
-
-    Node categories:
-    - static: Pre-computed once, not dependent on dynamic or context keys
-    - dynamic_keys: Input entry points for chunk data
-    - dynamic_nodes: Downstream of dynamic keys, recomputed per chunk
-      (excludes nodes downstream of accumulators, which are computed in finalize)
-    - context_keys: Input entry points for context data
-    - context_dependent: Downstream of context keys but not dynamic keys
-    - accumulator_keys: Where values are aggregated across chunks
-    - target_keys: Final outputs computed in finalize()
-    - finalize_nodes: Downstream of accumulators, computed in finalize()
-    """
-    all_nodes = set(graph.nodes)
-    dynamic_keys = processor._dynamic_keys
-    context_keys = processor._context_keys
-    accumulator_keys = set(processor._accumulators.keys())
-    target_keys = set(processor._target_keys)
-
-    # Compute derived classifications
-    dynamic_descendants = _find_graph_descendants(graph, dynamic_keys)
-    context_descendants = _find_graph_descendants(graph, context_keys)
-
-    # Nodes downstream of accumulators are computed in finalize(), not per-chunk
-    accumulator_descendants = _find_graph_descendants(graph, accumulator_keys)
-    finalize_nodes = accumulator_descendants - accumulator_keys
-
-    # Dynamic nodes: downstream of dynamic keys but NOT downstream of accumulators
-    # These are recomputed for each chunk
-    dynamic_nodes = dynamic_descendants - dynamic_keys - accumulator_descendants
-
-    # Context-dependent nodes: downstream of context but not of dynamic
-    context_dependent = context_descendants - dynamic_descendants - context_keys
-
-    # Static nodes: not dependent on dynamic or context
-    static_nodes = all_nodes - dynamic_descendants - context_descendants
-
-    return {
-        'static': static_nodes,
-        'dynamic_keys': dynamic_keys & all_nodes,
-        'dynamic_nodes': dynamic_nodes,
-        'context_keys': context_keys & all_nodes,
-        'context_dependent': context_dependent,
-        'accumulator_keys': accumulator_keys & all_nodes,
-        'target_keys': target_keys & all_nodes,
-        'finalize_nodes': finalize_nodes,
-    }
 
 
 def _get_node_style(key: Any, classifications: dict[str, set[Any]]) -> dict[str, str]:
