@@ -5,11 +5,14 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, get_args, get_origin
 
 import networkx as nx
 import sciline
 import scipp as sc
+
+if TYPE_CHECKING:
+    import graphviz
 
 T = TypeVar('T')
 
@@ -332,6 +335,9 @@ class StreamProcessor:
         self._dynamic_keys = set(dynamic_keys)
         self._context_keys = set(context_keys)
 
+        # Store the base workflow for visualization (before any modifications)
+        self._base_workflow = base_workflow
+
         # Validate that dynamic and context keys do not overlap
         overlap = self._dynamic_keys & self._context_keys
         if overlap:
@@ -531,6 +537,83 @@ class StreamProcessor:
         for accumulator in self._accumulators.values():
             accumulator.clear()
 
+    def visualize(
+        self,
+        compact: bool = False,
+        mode: Literal['data', 'task', 'both'] = 'data',
+        cluster_generics: bool = True,
+        cluster_color: str | None = '#f0f0ff',
+        show_legend: bool = True,
+        **kwargs: Any,
+    ) -> 'graphviz.Digraph':
+        """
+        Visualize the workflow with node classification styling.
+
+        This post-processes sciline's visualization to add styling that highlights:
+
+        - Static nodes (gray): Pre-computed once, cached
+        - Dynamic keys (green, thick border): Input entry points for chunks
+        - Dynamic nodes (light green): Recomputed for each chunk
+        - Context keys (blue, thick border): Input entry points for context
+        - Context-dependent nodes (light blue): Cached until context changes
+        - Accumulator keys (orange cylinder): Aggregation points
+        - Finalize nodes (lavender): Computed from accumulators during finalize
+        - Target keys (double border): Final outputs
+
+        Parameters
+        ----------
+        compact:
+            If True, parameter-table-dependent branches are collapsed.
+        mode:
+            'data' shows only data nodes, 'task' shows task nodes, 'both' shows all.
+        cluster_generics:
+            If True, generic products are grouped into clusters.
+        cluster_color:
+            Background color of clusters. If None, clusters are dotted.
+        show_legend:
+            If True, add a legend explaining the node styles.
+        **kwargs:
+            Additional arguments passed to graphviz.Digraph.
+
+        Returns
+        -------
+        :
+            A graphviz.Digraph with styled nodes.
+        """
+        # Use the stored base workflow to show the full graph
+        workflow = self._base_workflow
+
+        # Get base visualization from sciline
+        dot = workflow.visualize(
+            compact=compact,
+            mode=mode,
+            cluster_generics=cluster_generics,
+            cluster_color=cluster_color,
+            **kwargs,
+        )
+
+        # Classify nodes
+        graph = workflow.underlying_graph
+        classifications = _classify_nodes_for_visualization(self, graph)
+
+        # Build a mapping from formatted names to original keys
+        key_to_formatted: dict[Any, str] = {}
+        for key in graph.nodes:
+            formatted = _format_key_for_graphviz(key)
+            key_to_formatted[key] = formatted
+
+        # Apply styles by re-adding nodes with updated attributes
+        for key, formatted_name in key_to_formatted.items():
+            style = _get_node_style(key, classifications)
+            if style:
+                dot.node(formatted_name, **style)
+
+        # Add legend
+        if show_legend:
+            _add_legend(dot)
+
+        return dot
+
 
 def _find_descendants(
     workflow: sciline.Pipeline, keys: tuple[sciline.typing.Key, ...]
@@ -550,3 +633,232 @@ def _find_parents(
     for key in keys:
         parents |= set(graph.predecessors(key))
     return parents
+
+
+# =============================================================================
+# Visualization helpers
+# =============================================================================
+
+# Style definitions for each node category
+# Priority order for overlapping categories (higher = takes precedence for fill)
+_VIZ_STYLES = {
+    'static': {
+        'fillcolor': '#e8e8e8',  # Gray
+        'style': 'filled',
+        'priority': 0,
+    },
+    'context_dependent': {
+        'fillcolor': '#d4e8f4',  # Light blue
+        'style': 'filled',
+        'priority': 1,
+    },
+    'context_keys': {
+        'fillcolor': '#87CEEB',  # Sky blue
+        'style': 'filled',
+        'penwidth': '2.5',
+        'color': 'black',  # Override sciline's red for unsatisfied
+        'fontcolor': 'black',
+        'priority': 2,
+    },
+    'dynamic_nodes': {
+        'fillcolor': '#d4f4d4',  # Light green
+        'style': 'filled',
+        'priority': 3,
+    },
+    'dynamic_keys': {
+        'fillcolor': '#90EE90',  # Light green (stronger)
+        'style': 'filled',
+        'penwidth': '2.5',
+        'color': 'black',  # Override sciline's red for unsatisfied
+        'fontcolor': 'black',
+        'priority': 4,
+    },
+    'accumulator_keys': {
+        'fillcolor': '#FFB347',  # Orange
+        'style': 'filled',
+        'shape': 'cylinder',
+        'priority': 5,
+    },
+    'finalize_nodes': {
+        'fillcolor': '#E6E6FA',  # Lavender
+        'style': 'filled',
+        'priority': 6,
+    },
+    'target_keys': {
+        'peripheries': '2',  # Double border
+        'priority': 7,
+    },
+}
+
+
+def _format_key_for_graphviz(key: Any) -> str:
+    """
+    Format a key to match sciline's node naming convention.
+
+    This replicates sciline's _format_type logic to create matching node names.
+    """
+
+    def get_base(tp: Any) -> str:
+        return str(tp.__name__) if hasattr(tp, '__name__') else str(tp).split('.')[-1]
+
+    if (origin := get_origin(key)) is not None:
+        params = [_format_key_for_graphviz(param) for param in get_args(key)]
+        return f'{get_base(origin)}[{", ".join(params)}]'
+    else:
+        return get_base(key)
+
+
+def _find_graph_descendants(graph: nx.DiGraph, keys: set[Any]) -> set[Any]:
+    """Find all nodes that are descendants of any key in keys."""
+    descendants = set()
+    for key in keys:
+        if key in graph:
+            descendants |= nx.descendants(graph, key)
+    return descendants | (keys & set(graph.nodes))
+
+
+def _classify_nodes_for_visualization(
+    processor: StreamProcessor,
+    graph: nx.DiGraph,
+) -> dict[str, set[Any]]:
+    """
+    Classify all nodes in the graph for visualization.
+
+    Node categories:
+    - static: Pre-computed once, not dependent on dynamic or context keys
+    - dynamic_keys: Input entry points for chunk data
+    - dynamic_nodes: Downstream of dynamic keys, recomputed per chunk
+      (excludes nodes downstream of accumulators, which are computed in finalize)
+    - context_keys: Input entry points for context data
+    - context_dependent: Downstream of context keys but not dynamic keys
+    - accumulator_keys: Where values are aggregated across chunks
+    - target_keys: Final outputs computed in finalize()
+    - finalize_nodes: Downstream of accumulators, computed in finalize()
+    """
+    all_nodes = set(graph.nodes)
+    dynamic_keys = processor._dynamic_keys
+    context_keys = processor._context_keys
+    accumulator_keys = set(processor._accumulators.keys())
+    target_keys = set(processor._target_keys)
+
+    # Compute derived classifications
+    dynamic_descendants = _find_graph_descendants(graph, dynamic_keys)
+    context_descendants = _find_graph_descendants(graph, context_keys)
+
+    # Nodes downstream of accumulators are computed in finalize(), not per-chunk
+    accumulator_descendants = _find_graph_descendants(graph, accumulator_keys)
+    finalize_nodes = accumulator_descendants - accumulator_keys
+
+    # Dynamic nodes: downstream of dynamic keys but NOT downstream of accumulators
+    # These are recomputed for each chunk
+    dynamic_nodes = dynamic_descendants - dynamic_keys - accumulator_descendants
+
+    # Context-dependent nodes: downstream of context but not of dynamic
+    context_dependent = context_descendants - dynamic_descendants - context_keys
+
+    # Static nodes: not dependent on dynamic or context
+    static_nodes = all_nodes - dynamic_descendants - context_descendants
+
+    return {
+        'static': static_nodes,
+        'dynamic_keys': dynamic_keys & all_nodes,
+        'dynamic_nodes': dynamic_nodes,
+        'context_keys': context_keys & all_nodes,
+        'context_dependent': context_dependent,
+        'accumulator_keys': accumulator_keys & all_nodes,
+        'target_keys': target_keys & all_nodes,
+        'finalize_nodes': finalize_nodes,
+    }
+
+
+def _get_node_style(key: Any, classifications: dict[str, set[Any]]) -> dict[str, str]:
+    """
+    Determine the style for a node based on its classifications.
+
+    A node can belong to multiple categories. We combine styles with
+    higher priority categories taking precedence for conflicting attributes.
+    """
+    applicable = []
+    for category, keys in classifications.items():
+        if key in keys:
+            applicable.append((_VIZ_STYLES[category]['priority'], category))
+
+    if not applicable:
+        return {}
+
+    # Sort by priority and merge styles
+    applicable.sort()
+    merged: dict[str, str] = {}
+    for _, category in applicable:
+        style = _VIZ_STYLES[category].copy()
+        style.pop('priority')
+        merged.update(style)
+
+    return merged
+
+
+def _add_legend(dot: 'graphviz.Digraph') -> None:
+    """Add a legend subgraph explaining the node styles."""
+    with dot.subgraph(name='cluster_legend') as legend:
+        legend.attr(label='Legend', fontsize='14', style='rounded')
+        legend.attr('node', shape='rectangle', width='1.5', height='0.3')
+
+        legend.node(
+            'legend_static',
+            'Static (cached)',
+            fillcolor='#e8e8e8',
+            style='filled',
+        )
+        legend.node(
+            'legend_context_key',
+            'Context key (input)',
+            fillcolor='#87CEEB',
+            style='filled',
+            penwidth='2.5',
+        )
+        legend.node(
+            'legend_context_dep',
+            'Context-dependent',
+            fillcolor='#d4e8f4',
+            style='filled',
+        )
+        legend.node(
+            'legend_dynamic_key',
+            'Dynamic key (input)',
+            fillcolor='#90EE90',
+            style='filled',
+            penwidth='2.5',
+        )
+        legend.node(
+            'legend_dynamic_node',
+            'Dynamic (per chunk)',
+            fillcolor='#d4f4d4',
+            style='filled',
+        )
+        legend.node(
+            'legend_accumulator',
+            'Accumulator',
+            fillcolor='#FFB347',
+            style='filled',
+            shape='cylinder',
+        )
+        legend.node(
+            'legend_finalize',
+            'Finalize (from accum.)',
+            fillcolor='#E6E6FA',
+            style='filled',
+        )
+        legend.node(
+            'legend_target',
+            'Target (output)',
+            peripheries='2',
+        )
+
+        # Invisible edges to order legend items vertically
+        legend.edge('legend_static', 'legend_context_key', style='invis')
+        legend.edge('legend_context_key', 'legend_context_dep', style='invis')
+        legend.edge('legend_context_dep', 'legend_dynamic_key', style='invis')
+        legend.edge('legend_dynamic_key', 'legend_dynamic_node', style='invis')
+        legend.edge('legend_dynamic_node', 'legend_accumulator', style='invis')
+        legend.edge('legend_accumulator', 'legend_finalize', style='invis')
+        legend.edge('legend_finalize', 'legend_target', style='invis')
