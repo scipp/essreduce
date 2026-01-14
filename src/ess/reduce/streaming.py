@@ -335,9 +335,6 @@ class StreamProcessor:
         self._dynamic_keys = set(dynamic_keys)
         self._context_keys = set(context_keys)
 
-        # Store the base workflow for visualization (before any modifications)
-        self._base_workflow = base_workflow
-
         # Validate that dynamic and context keys do not overlap
         overlap = self._dynamic_keys & self._context_keys
         if overlap:
@@ -365,6 +362,20 @@ class StreamProcessor:
             workflow[key] = None  # hack to prune branches
         for key in context_keys:
             workflow[key] = None
+
+        # Store for visualization: target subgraphs with relevant input keys set to
+        # None to prune their ancestors. Only input keys that are in the graph.
+        viz_workflow = sciline.Pipeline()
+        for key in target_keys:
+            viz_workflow[key] = base_workflow[key]
+        viz_graph = viz_workflow.underlying_graph
+        for key in dynamic_keys:
+            if key in viz_graph:
+                viz_workflow[key] = None
+        for key in context_keys:
+            if key in viz_graph:
+                viz_workflow[key] = None
+        self._viz_workflow = viz_workflow
 
         # Find and pre-compute static nodes as far down the graph as possible
         nodes = _find_descendants(workflow, dynamic_keys + context_keys)
@@ -633,11 +644,9 @@ class StreamProcessor:
         :
             A graphviz.Digraph with styled nodes.
         """
-        # Use the stored base workflow to show the full graph
-        workflow = self._base_workflow
+        graph = self._viz_workflow.underlying_graph
 
-        # Get base visualization from sciline
-        dot = workflow.visualize(
+        dot = self._viz_workflow.visualize(
             compact=compact,
             mode=mode,
             cluster_generics=cluster_generics,
@@ -645,8 +654,6 @@ class StreamProcessor:
             **kwargs,
         )
 
-        # Classify nodes
-        graph = workflow.underlying_graph
         classifications = self._classify_nodes(graph)
 
         # Build a mapping from formatted names to original keys

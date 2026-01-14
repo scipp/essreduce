@@ -442,3 +442,71 @@ class TestVisualize:
         # Test that compact mode is passed through
         result = processor.visualize(compact=True)
         assert isinstance(result, graphviz.Digraph)
+
+    def test_excludes_nodes_unreachable_from_targets(self) -> None:
+        """Visualization should only show nodes that are ancestors of target_keys."""
+        # Create a workflow with two independent branches
+        # Branch 1: StaticA -> StaticB -> Intermediate -> AccumA -> Target
+        # Branch 2: DynamicB -> AccumB (not used if we only target AccumA)
+        workflow = sciline.Pipeline(
+            (
+                make_static_a,
+                make_static_b,
+                make_intermediate,
+                make_accum_a,
+                make_accum_b,  # This creates an independent branch via DynamicB
+            )
+        )
+        workflow[DynamicA] = None
+        workflow[DynamicB] = None
+
+        # Only target AccumA - AccumB and DynamicB should NOT appear
+        processor = streaming.StreamProcessor(
+            base_workflow=workflow,
+            dynamic_keys=(DynamicA, DynamicB),
+            target_keys=(AccumA,),
+            accumulators=(AccumA,),
+        )
+
+        result = processor.visualize()
+        source = result.source
+
+        # Nodes in the path to AccumA should be present
+        assert 'AccumA' in source
+        assert 'Intermediate' in source
+        assert 'DynamicA' in source
+        assert 'StaticA' in source
+        assert 'StaticB' in source
+
+        # Nodes NOT in the path to AccumA should be excluded
+        assert 'AccumB' not in source
+        assert 'DynamicB' not in source
+
+    def test_excludes_ancestors_of_input_keys(self) -> None:
+        """Ancestors of dynamic/context keys should not appear in visualization."""
+        # Create a workflow where dynamic key has an ancestor
+        UpstreamOfDynamic = NewType('UpstreamOfDynamic', float)
+
+        def make_dynamic_from_upstream(u: UpstreamOfDynamic) -> DynamicA:
+            return DynamicA(u)
+
+        workflow = sciline.Pipeline(
+            (make_dynamic_from_upstream, make_intermediate, make_accum_a)
+        )
+        workflow[UpstreamOfDynamic] = 1.0
+        workflow[StaticB] = StaticB(2.0)
+
+        processor = streaming.StreamProcessor(
+            base_workflow=workflow,
+            dynamic_keys=(DynamicA,),
+            target_keys=(AccumA,),
+            accumulators=(AccumA,),
+        )
+
+        result = processor.visualize()
+        source = result.source
+
+        # DynamicA should appear (it's an input key)
+        assert 'DynamicA' in source
+        # But UpstreamOfDynamic should NOT appear (it's upstream of an input key)
+        assert 'UpstreamOfDynamic' not in source
