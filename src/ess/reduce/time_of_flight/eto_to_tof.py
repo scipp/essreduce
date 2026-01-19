@@ -32,6 +32,7 @@ from ..nexus.types import (
 )
 from .resample import rebin_strictly_increasing
 from .types import (
+    CoordTransformGraph,
     DetectorLtotal,
     MonitorLtotal,
     PulseStrideOffset,
@@ -39,6 +40,8 @@ from .types import (
     TofDetector,
     TofLookupTable,
     TofMonitor,
+    WavelengthDetector,
+    WavelengthMonitor,
 )
 
 
@@ -526,6 +529,50 @@ def detector_time_of_arrival_data(
     return ToaDetector[RunType](result)
 
 
+def detector_wavalength_data(
+    detector_data: TofDetector[RunType],
+    ltotal: DetectorLtotal[RunType],
+    graph: CoordTransformGraph,
+) -> WavelengthDetector[RunType]:
+    """
+    Convert time-of-flight data to wavelength data.
+
+    Parameters
+    ----------
+    da:
+        Detector data with time-of-flight coordinate.
+    ltotal:
+        Total length of the flight path from the source to the detector.
+    """
+    return WavelengthDetector[RunType](
+        detector_data.assign_coords(Ltotal=ltotal).transform_coords(
+            "wavelength", graph=graph
+        )
+    )
+
+
+def monitor_wavalength_data(
+    monitor_data: TofMonitor[RunType, MonitorType],
+    ltotal: MonitorLtotal[RunType, MonitorType],
+    graph: CoordTransformGraph,
+) -> WavelengthMonitor[RunType, MonitorType]:
+    """
+    Convert time-of-flight data to wavelength data.
+
+    Parameters
+    ----------
+    da:
+        Monitor data with time-of-flight coordinate.
+    ltotal:
+        Total length of the flight path from the source to the monitor.
+    """
+    return WavelengthMonitor[RunType, MonitorType](
+        monitor_data.assign_coords(Ltotal=ltotal).transform_coords(
+            "wavelength", graph=graph
+        )
+    )
+
+
 def providers() -> tuple[Callable]:
     """
     Providers of the time-of-flight workflow.
@@ -536,4 +583,6 @@ def providers() -> tuple[Callable]:
         detector_ltotal_from_straight_line_approximation,
         monitor_ltotal_from_straight_line_approximation,
         detector_time_of_arrival_data,
+        detector_wavalength_data,
+        monitor_wavalength_data,
     )
