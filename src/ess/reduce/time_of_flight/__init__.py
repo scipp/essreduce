@@ -33,6 +33,8 @@ from .types import (
     TofLookupTable,
     TofLookupTableFilename,
     TofMonitor,
+    WavelengthDetector,
+    WavelengthMonitor,
 )
 from .workflow import GenericTofWorkflow
 
@@ -60,6 +62,8 @@ __all__ = [
     "TofLookupTableFilename",
     "TofLookupTableWorkflow",
     "TofMonitor",
+    "WavelengthDetector",
+    "WavelengthMonitor",
     "providers",
     "simulate_chopper_cascade_using_tof",
 ]

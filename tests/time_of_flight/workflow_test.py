@@ -80,8 +80,9 @@ def test_TofLookupTableWorkflow_can_compute_tof_lut():
     assert lut.choppers is not None
 
 
+@pytest.mark.parametrize("coord", ["tof", "wavelength"])
 def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
-    calibrated_beamline: sc.DataArray, nexus_data: sc.DataArray
+    calibrated_beamline: sc.DataArray, nexus_data: sc.DataArray, coord: str
 ):
     wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[EmptyDetector[SampleRun]] = calibrated_beamline
@@ -110,15 +111,21 @@ def test_GenericTofWorkflow_with_tof_lut_from_tof_simulation(
     table = lut_wf.compute(time_of_flight.TofLookupTable)
 
     wf[time_of_flight.TofLookupTable] = table
-    # Should now be able to compute DetectorData with chopper and simulation params
-    detector = wf.compute(time_of_flight.TofDetector[SampleRun])
-    assert 'tof' in detector.bins.coords
+
+    if coord == "tof":
+        detector = wf.compute(time_of_flight.TofDetector[SampleRun])
+        assert 'tof' in detector.bins.coords
+    else:
+        detector = wf.compute(time_of_flight.WavelengthDetector[SampleRun])
+        assert 'wavelength' in detector.bins.coords
 
 
+@pytest.mark.parametrize("coord", ["tof", "wavelength"])
 def test_GenericTofWorkflow_with_tof_lut_from_file(
     calibrated_beamline: sc.DataArray,
     nexus_data: sc.DataArray,
     tmp_path: pytest.TempPathFactory,
+    coord: str,
 ):
     lut_wf = TofLookupTableWorkflow()
     lut_wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
@@ -148,8 +155,12 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     assert lut.error_threshold == loaded_lut.error_threshold
     assert_identical(lut.choppers, loaded_lut.choppers)
 
-    detector = wf.compute(time_of_flight.TofDetector[SampleRun])
-    assert 'tof' in detector.bins.coords
+    if coord == "tof":
+        detector = wf.compute(time_of_flight.TofDetector[SampleRun])
+        assert 'tof' in detector.bins.coords
+    else:
+        detector = wf.compute(time_of_flight.WavelengthDetector[SampleRun])
+        assert 'wavelength' in detector.bins.coords
 
 
 def test_GenericTofWorkflow_with_tof_lut_from_file_old_format(
