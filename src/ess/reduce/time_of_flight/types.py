@@ -17,11 +17,6 @@ TimeOfFlightLookupTableFilename = TofLookupTableFilename
 """Filename of the time-of-flight lookup table (alias)."""
 
 
-CoordTransformGraph = NewType("CoordTransformGraph", dict)
-"""Coordinate transform graph used to compute wavelength from time-of-flight and
-Ltotal."""
-
-
 @dataclass
 class TofLookupTable:
     """

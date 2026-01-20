@@ -32,7 +32,6 @@ from ..nexus.types import (
 )
 from .resample import rebin_strictly_increasing
 from .types import (
-    CoordTransformGraph,
     DetectorLtotal,
     MonitorLtotal,
     PulseStrideOffset,
@@ -529,10 +528,18 @@ def detector_time_of_arrival_data(
     return ToaDetector[RunType](result)
 
 
-def detector_wavalength_data(
-    detector_data: TofDetector[RunType],
-    ltotal: DetectorLtotal[RunType],
-    graph: CoordTransformGraph,
+def _tof_to_wavelength(da: sc.DataArray, ltotal: sc.Variable) -> sc.DataArray:
+    def _to_wavelength(tof: sc.Variable, Ltotal: sc.Variable) -> sc.Variable:
+        out = tof * (sc.constants.h / sc.constants.m_n)
+        out /= Ltotal
+        return out.to(unit='angstrom', copy=False)
+
+    graph = {'Ltotal': lambda: ltotal, 'wavelength': _to_wavelength}
+    return da.transform_coords('wavelength', graph=graph, keep_intermediate=False)
+
+
+def detector_wavelength_data(
+    detector_data: TofDetector[RunType], ltotal: DetectorLtotal[RunType]
 ) -> WavelengthDetector[RunType]:
     """
     Convert time-of-flight data to wavelength data.
@@ -545,16 +552,13 @@ def detector_wavalength_data(
         Total length of the flight path from the source to the detector.
     """
     return WavelengthDetector[RunType](
-        detector_data.assign_coords(Ltotal=ltotal).transform_coords(
-            "wavelength", graph=graph
-        )
+        _tof_to_wavelength(da=detector_data, ltotal=ltotal)
     )
 
 
-def monitor_wavalength_data(
+def monitor_wavelength_data(
     monitor_data: TofMonitor[RunType, MonitorType],
     ltotal: MonitorLtotal[RunType, MonitorType],
-    graph: CoordTransformGraph,
 ) -> WavelengthMonitor[RunType, MonitorType]:
     """
     Convert time-of-flight data to wavelength data.
@@ -567,9 +571,7 @@ def monitor_wavalength_data(
         Total length of the flight path from the source to the monitor.
     """
     return WavelengthMonitor[RunType, MonitorType](
-        monitor_data.assign_coords(Ltotal=ltotal).transform_coords(
-            "wavelength", graph=graph
-        )
+        _tof_to_wavelength(da=monitor_data, ltotal=ltotal)
     )
 
 
@@ -583,6 +585,6 @@ def providers() -> tuple[Callable]:
         detector_ltotal_from_straight_line_approximation,
         monitor_ltotal_from_straight_line_approximation,
         detector_time_of_arrival_data,
-        detector_wavalength_data,
-        monitor_wavalength_data,
+        detector_wavelength_data,
+        monitor_wavelength_data,
     )

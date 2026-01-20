@@ -4,16 +4,10 @@ from collections.abc import Iterable
 
 import sciline
 import scipp as sc
-from scippneutron.conversion.graph.tof import elastic
 
 from ..nexus import GenericNeXusWorkflow
 from . import eto_to_tof
-from .types import (
-    CoordTransformGraph,
-    PulseStrideOffset,
-    TofLookupTable,
-    TofLookupTableFilename,
-)
+from .types import PulseStrideOffset, TofLookupTable, TofLookupTableFilename
 
 
 def load_tof_lookup_table(
@@ -93,6 +87,5 @@ def GenericTofWorkflow(
 
     # Default parameters
     wf[PulseStrideOffset] = None
-    wf[CoordTransformGraph] = elastic("tof")
 
     return wf
