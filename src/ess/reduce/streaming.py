@@ -5,11 +5,12 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar
 
 import networkx as nx
 import sciline
 import scipp as sc
+from sciline.visualize import _format_type as _sciline_format_type
 
 if TYPE_CHECKING:
     import graphviz
@@ -363,19 +364,8 @@ class StreamProcessor:
         for key in context_keys:
             workflow[key] = None
 
-        # Store for visualization: target subgraphs with relevant input keys set to
-        # None to prune their ancestors. Only input keys that are in the graph.
-        viz_workflow = sciline.Pipeline()
-        for key in target_keys:
-            viz_workflow[key] = base_workflow[key]
-        viz_graph = viz_workflow.underlying_graph
-        for key in dynamic_keys:
-            if key in viz_graph:
-                viz_workflow[key] = None
-        for key in context_keys:
-            if key in viz_graph:
-                viz_workflow[key] = None
-        self._viz_workflow = viz_workflow
+        # Store for visualization (copy in case caller modifies base_workflow later)
+        self._base_workflow_for_viz = base_workflow.copy()
 
         # Find and pre-compute static nodes as far down the graph as possible
         nodes = _find_descendants(workflow, dynamic_keys + context_keys)
@@ -549,6 +539,20 @@ class StreamProcessor:
         for accumulator in self._accumulators.values():
             accumulator.clear()
 
+    def _get_viz_workflow(self) -> sciline.Pipeline:
+        """Create the workflow used for visualization."""
+        viz_workflow = sciline.Pipeline()
+        for key in self._target_keys:
+            viz_workflow[key] = self._base_workflow_for_viz[key]
+        viz_graph = viz_workflow.underlying_graph
+        for key in self._dynamic_keys:
+            if key in viz_graph:
+                viz_workflow[key] = None
+        for key in self._context_keys:
+            if key in viz_graph:
+                viz_workflow[key] = None
+        return viz_workflow
+
     def _classify_nodes(self, graph: nx.DiGraph) -> dict[str, set[Any]]:
         """
         Classify all nodes in the graph for visualization.
@@ -652,7 +656,7 @@ class StreamProcessor:
         :
             A graphviz.Digraph with styled nodes.
         """
-        viz_workflow = self._viz_workflow
+        viz_workflow = self._get_viz_workflow()
         if not show_static_dependencies:
             # Create a pruned workflow that hides ancestors of cached nodes
             viz_workflow = viz_workflow.copy()
@@ -675,8 +679,7 @@ class StreamProcessor:
         # Build a mapping from formatted names to original keys
         key_to_formatted: dict[Any, str] = {}
         for key in graph.nodes:
-            formatted = _format_key_for_graphviz(key)
-            key_to_formatted[key] = formatted
+            key_to_formatted[key] = _format_key_for_graphviz(key)
 
         # Apply styles by re-adding nodes with updated attributes
         for key, formatted_name in key_to_formatted.items():
@@ -778,20 +781,8 @@ _VIZ_STYLES = {
 
 
 def _format_key_for_graphviz(key: Any) -> str:
-    """
-    Format a key to match sciline's node naming convention.
-
-    This replicates sciline's _format_type logic to create matching node names.
-    """
-
-    def get_base(tp: Any) -> str:
-        return str(tp.__name__) if hasattr(tp, '__name__') else str(tp).split('.')[-1]
-
-    if (origin := get_origin(key)) is not None:
-        params = [_format_key_for_graphviz(param) for param in get_args(key)]
-        return f'{get_base(origin)}[{", ".join(params)}]'
-    else:
-        return get_base(key)
+    """Format a key to match sciline's node naming convention."""
+    return _sciline_format_type(key).name
 
 
 def _get_node_style(key: Any, classifications: dict[str, set[Any]]) -> dict[str, str]:
