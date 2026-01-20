@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar
 import networkx as nx
 import sciline
 import scipp as sc
-from sciline.visualize import _format_type as _sciline_format_type
 
 if TYPE_CHECKING:
     import graphviz
@@ -782,7 +781,9 @@ _VIZ_STYLES = {
 
 def _format_key_for_graphviz(key: Any) -> str:
     """Format a key to match sciline's node naming convention."""
-    return _sciline_format_type(key).name
+    from sciline.visualize import _format_type
+
+    return _format_type(key).name
 
 
 def _get_node_style(key: Any, classifications: dict[str, set[Any]]) -> dict[str, str]:
