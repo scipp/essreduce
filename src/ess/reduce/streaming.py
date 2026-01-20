@@ -382,6 +382,7 @@ class StreamProcessor:
         last_static = _find_parents(workflow, nodes) - nodes
         for key, value in base_workflow.compute(last_static).items():
             workflow[key] = value
+        self._cached_keys = last_static  # Store for visualization
 
         # Nodes that may need updating on context change but should be cached otherwise.
         dynamic_nodes = _find_descendants(workflow, dynamic_keys)
@@ -555,6 +556,7 @@ class StreamProcessor:
         Node categories:
 
         - static: Pre-computed once, not dependent on dynamic or context keys
+        - cached_keys: Subset of static nodes that are actually cached (last_static)
         - dynamic_keys: Input entry points for chunk data
         - dynamic_nodes: Downstream of dynamic keys, recomputed per chunk
           (excludes nodes downstream of accumulators, which are computed in finalize)
@@ -592,6 +594,7 @@ class StreamProcessor:
 
         return {
             'static': static_nodes,
+            'cached_keys': self._cached_keys & all_nodes,
             'dynamic_keys': self._dynamic_keys & all_nodes,
             'dynamic_nodes': dynamic_nodes,
             'context_keys': self._context_keys & all_nodes,
@@ -615,13 +618,14 @@ class StreamProcessor:
 
         This post-processes sciline's visualization to add styling that highlights:
 
-        - Static nodes (gray): Pre-computed once, cached
+        - Static nodes (gray): Pre-computed once, dependencies of cached nodes
+        - Static cached nodes (gray, thick border): Pre-computed and cached
         - Dynamic keys (green, thick border): Input entry points for chunks
         - Dynamic nodes (light green): Recomputed for each chunk
         - Context keys (blue, thick border): Input entry points for context
         - Context-dependent nodes (light blue): Cached until context changes
         - Accumulator keys (orange cylinder): Aggregation points
-        - Finalize nodes (lavender): Computed from accumulators during finalize
+        - Finalize nodes (plum): Computed from accumulators during finalize
         - Target keys (double border): Final outputs
 
         Parameters
@@ -711,10 +715,16 @@ _VIZ_STYLES = {
         'style': 'filled',
         'priority': 0,
     },
+    'cached_keys': {
+        'fillcolor': '#e8e8e8',  # Gray (same as static)
+        'style': 'filled',
+        'penwidth': '2.5',  # Thick border to distinguish from dependencies
+        'priority': 1,
+    },
     'context_dependent': {
         'fillcolor': '#d4e8f4',  # Light blue
         'style': 'filled',
-        'priority': 1,
+        'priority': 2,
     },
     'context_keys': {
         'fillcolor': '#87CEEB',  # Sky blue
@@ -722,12 +732,12 @@ _VIZ_STYLES = {
         'penwidth': '2.5',
         'color': 'black',  # Override sciline's red for unsatisfied
         'fontcolor': 'black',
-        'priority': 2,
+        'priority': 3,
     },
     'dynamic_nodes': {
         'fillcolor': '#d4f4d4',  # Light green
         'style': 'filled',
-        'priority': 3,
+        'priority': 4,
     },
     'dynamic_keys': {
         'fillcolor': '#90EE90',  # Light green (stronger)
@@ -735,22 +745,22 @@ _VIZ_STYLES = {
         'penwidth': '2.5',
         'color': 'black',  # Override sciline's red for unsatisfied
         'fontcolor': 'black',
-        'priority': 4,
+        'priority': 5,
     },
     'accumulator_keys': {
         'fillcolor': '#FFB347',  # Orange
         'style': 'filled',
         'shape': 'cylinder',
-        'priority': 5,
+        'priority': 6,
     },
     'finalize_nodes': {
-        'fillcolor': '#E6E6FA',  # Lavender
+        'fillcolor': '#DDA0DD',  # Plum (more distinct from cluster color)
         'style': 'filled',
-        'priority': 6,
+        'priority': 7,
     },
     'target_keys': {
         'peripheries': '2',  # Double border
-        'priority': 7,
+        'priority': 8,
     },
 }
 
@@ -806,9 +816,16 @@ def _add_legend(dot: 'graphviz.Digraph') -> None:
 
         legend.node(
             'legend_static',
+            'Static',
+            fillcolor='#e8e8e8',
+            style='filled',
+        )
+        legend.node(
+            'legend_cached',
             'Static (cached)',
             fillcolor='#e8e8e8',
             style='filled',
+            penwidth='2.5',
         )
         legend.node(
             'legend_context_key',
@@ -846,7 +863,7 @@ def _add_legend(dot: 'graphviz.Digraph') -> None:
         legend.node(
             'legend_finalize',
             'Finalize (from accum.)',
-            fillcolor='#E6E6FA',
+            fillcolor='#DDA0DD',
             style='filled',
         )
         legend.node(
@@ -856,7 +873,8 @@ def _add_legend(dot: 'graphviz.Digraph') -> None:
         )
 
         # Invisible edges to order legend items vertically
-        legend.edge('legend_static', 'legend_context_key', style='invis')
+        legend.edge('legend_static', 'legend_cached', style='invis')
+        legend.edge('legend_cached', 'legend_context_key', style='invis')
         legend.edge('legend_context_key', 'legend_context_dep', style='invis')
         legend.edge('legend_context_dep', 'legend_dynamic_key', style='invis')
         legend.edge('legend_dynamic_key', 'legend_dynamic_node', style='invis')

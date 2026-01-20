@@ -249,6 +249,32 @@ class TestClassifyNodes:
         # DynamicA is not in the graph, so it shouldn't appear
         assert DynamicA not in classifications['dynamic_keys']
 
+    def test_cached_keys_are_subset_of_static_at_dynamic_boundary(self) -> None:
+        """Cached keys are the static nodes directly feeding into dynamic nodes."""
+        workflow = sciline.Pipeline(
+            (make_static_a, make_static_b, make_intermediate, make_accum_a, make_target)
+        )
+        workflow[DynamicA] = None
+        workflow[AccumB] = None
+
+        processor = streaming.StreamProcessor(
+            base_workflow=workflow,
+            dynamic_keys=(DynamicA,),
+            target_keys=(Target,),
+            accumulators=(AccumA,),
+        )
+
+        graph = workflow.underlying_graph
+        classifications = processor._classify_nodes(graph)
+
+        # StaticB is cached because it's directly upstream of the dynamic node
+        assert StaticB in classifications['cached_keys']
+        # StaticA is NOT cached - it's a dependency of StaticB but not at the boundary
+        assert StaticA not in classifications['cached_keys']
+        # Both are still static
+        assert StaticA in classifications['static']
+        assert StaticB in classifications['static']
+
 
 class TestFormatKeyForGraphviz:
     """Tests for the _format_key_for_graphviz helper."""
@@ -285,6 +311,7 @@ class TestGetNodeStyle:
     def test_returns_empty_for_unclassified_node(self) -> None:
         classifications = {
             'static': set(),
+            'cached_keys': set(),
             'dynamic_keys': set(),
             'dynamic_nodes': set(),
             'context_keys': set(),
@@ -299,6 +326,7 @@ class TestGetNodeStyle:
     def test_returns_style_for_static_node(self) -> None:
         classifications = {
             'static': {StaticA},
+            'cached_keys': set(),
             'dynamic_keys': set(),
             'dynamic_nodes': set(),
             'context_keys': set(),
@@ -315,6 +343,7 @@ class TestGetNodeStyle:
         # A node that is both an accumulator and a target
         classifications = {
             'static': set(),
+            'cached_keys': set(),
             'dynamic_keys': set(),
             'dynamic_nodes': set(),
             'context_keys': set(),
@@ -334,6 +363,7 @@ class TestGetNodeStyle:
         # Dynamic key takes precedence over static for fill color
         classifications = {
             'static': {DynamicA},  # Lower priority
+            'cached_keys': set(),
             'dynamic_keys': {DynamicA},  # Higher priority
             'dynamic_nodes': set(),
             'context_keys': set(),
@@ -345,6 +375,24 @@ class TestGetNodeStyle:
         result = streaming._get_node_style(DynamicA, classifications)
         # Dynamic key color should win
         assert result['fillcolor'] == '#90EE90'
+
+    def test_cached_keys_have_thick_border(self) -> None:
+        classifications = {
+            'static': {StaticB},
+            'cached_keys': {StaticB},  # StaticB is cached
+            'dynamic_keys': set(),
+            'dynamic_nodes': set(),
+            'context_keys': set(),
+            'context_dependent': set(),
+            'accumulator_keys': set(),
+            'target_keys': set(),
+            'finalize_nodes': set(),
+        }
+        result = streaming._get_node_style(StaticB, classifications)
+        # Should have gray fill (from static/cached)
+        assert result['fillcolor'] == '#e8e8e8'
+        # Should have thick border (from cached_keys)
+        assert result['penwidth'] == '2.5'
 
 
 class TestVisualize:
