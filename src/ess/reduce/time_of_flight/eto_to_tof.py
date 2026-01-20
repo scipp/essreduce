@@ -542,7 +542,7 @@ def detector_wavelength_data(
     detector_data: TofDetector[RunType], ltotal: DetectorLtotal[RunType]
 ) -> WavelengthDetector[RunType]:
     """
-    Convert time-of-flight data to wavelength data.
+    Convert time-of-flight detector data to wavelength data.
 
     Parameters
     ----------
@@ -561,7 +561,7 @@ def monitor_wavelength_data(
     ltotal: MonitorLtotal[RunType, MonitorType],
 ) -> WavelengthMonitor[RunType, MonitorType]:
     """
-    Convert time-of-flight data to wavelength data.
+    Convert time-of-flight monitor data to wavelength data.
 
     Parameters
     ----------
