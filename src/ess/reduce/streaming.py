@@ -5,12 +5,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from copy import deepcopy
-from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, get_args, get_origin
 
 import networkx as nx
 import sciline
 import scipp as sc
-from sciline.visualize import _format_type as _sciline_format_type
 
 if TYPE_CHECKING:
     import graphviz
@@ -781,8 +780,21 @@ _VIZ_STYLES = {
 
 
 def _format_key_for_graphviz(key: Any) -> str:
-    """Format a key to match sciline's node naming convention."""
-    return _sciline_format_type(key).name
+    """
+    Format a key to match sciline's node naming convention.
+
+    This is a copy of the core logic from sciline.visualize._format_type.
+    We cannot import that function directly because it pulls in graphviz,
+    which would make graphviz a required dependency for the streaming module.
+    """
+
+    def get_base(tp: Any) -> str:
+        return str(tp.__name__) if hasattr(tp, '__name__') else str(tp).split('.')[-1]
+
+    if (origin := get_origin(key)) is not None:
+        params = [_format_key_for_graphviz(param) for param in get_args(key)]
+        return f'{get_base(origin)}[{", ".join(params)}]'
+    return get_base(key)
 
 
 def _get_node_style(key: Any, classifications: dict[str, set[Any]]) -> dict[str, str]:
