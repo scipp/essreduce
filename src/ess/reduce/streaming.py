@@ -611,6 +611,7 @@ class StreamProcessor:
         cluster_generics: bool = True,
         cluster_color: str | None = '#f0f0ff',
         show_legend: bool = True,
+        show_static_dependencies: bool = True,
         **kwargs: Any,
     ) -> 'graphviz.Digraph':
         """
@@ -640,6 +641,9 @@ class StreamProcessor:
             Background color of clusters. If None, clusters are dotted.
         show_legend:
             If True, add a legend explaining the node styles.
+        show_static_dependencies:
+            If True (default), show all static nodes including dependencies of cached
+            nodes. If False, hide the ancestors of cached nodes to simplify the graph.
         **kwargs:
             Additional arguments passed to graphviz.Digraph.
 
@@ -648,9 +652,17 @@ class StreamProcessor:
         :
             A graphviz.Digraph with styled nodes.
         """
-        graph = self._viz_workflow.underlying_graph
+        viz_workflow = self._viz_workflow
+        if not show_static_dependencies:
+            # Create a pruned workflow that hides ancestors of cached nodes
+            viz_workflow = viz_workflow.copy()
+            for key in self._cached_keys:
+                if key in viz_workflow.underlying_graph:
+                    viz_workflow[key] = None
 
-        dot = self._viz_workflow.visualize(
+        graph = viz_workflow.underlying_graph
+
+        dot = viz_workflow.visualize(
             compact=compact,
             mode=mode,
             cluster_generics=cluster_generics,
@@ -674,7 +686,7 @@ class StreamProcessor:
 
         # Add legend
         if show_legend:
-            _add_legend(dot)
+            _add_legend(dot, show_static_dependencies=show_static_dependencies)
 
         return dot
 
@@ -808,18 +820,26 @@ def _get_node_style(key: Any, classifications: dict[str, set[Any]]) -> dict[str,
     return merged
 
 
-def _add_legend(dot: 'graphviz.Digraph') -> None:
+def _add_legend(
+    dot: 'graphviz.Digraph', *, show_static_dependencies: bool = True
+) -> None:
     """Add a legend subgraph explaining the node styles."""
     with dot.subgraph(name='cluster_legend') as legend:
         legend.attr(label='Legend', fontsize='14', style='rounded')
         legend.attr('node', shape='rectangle', width='1.5', height='0.3')
 
-        legend.node(
-            'legend_static',
-            'Static',
-            fillcolor='#e8e8e8',
-            style='filled',
-        )
+        # Track first node for edge chaining
+        prev_node = None
+
+        if show_static_dependencies:
+            legend.node(
+                'legend_static',
+                'Static',
+                fillcolor='#e8e8e8',
+                style='filled',
+            )
+            prev_node = 'legend_static'
+
         legend.node(
             'legend_cached',
             'Static (cached)',
@@ -827,6 +847,10 @@ def _add_legend(dot: 'graphviz.Digraph') -> None:
             style='filled',
             penwidth='2.5',
         )
+        if prev_node:
+            legend.edge(prev_node, 'legend_cached', style='invis')
+        prev_node = 'legend_cached'
+
         legend.node(
             'legend_context_key',
             'Context key (input)',
@@ -834,12 +858,18 @@ def _add_legend(dot: 'graphviz.Digraph') -> None:
             style='filled',
             penwidth='2.5',
         )
+        legend.edge(prev_node, 'legend_context_key', style='invis')
+        prev_node = 'legend_context_key'
+
         legend.node(
             'legend_context_dep',
             'Context-dependent',
             fillcolor='#d4e8f4',
             style='filled',
         )
+        legend.edge(prev_node, 'legend_context_dep', style='invis')
+        prev_node = 'legend_context_dep'
+
         legend.node(
             'legend_dynamic_key',
             'Dynamic key (input)',
@@ -847,12 +877,18 @@ def _add_legend(dot: 'graphviz.Digraph') -> None:
             style='filled',
             penwidth='2.5',
         )
+        legend.edge(prev_node, 'legend_dynamic_key', style='invis')
+        prev_node = 'legend_dynamic_key'
+
         legend.node(
             'legend_dynamic_node',
             'Dynamic (per chunk)',
             fillcolor='#d4f4d4',
             style='filled',
         )
+        legend.edge(prev_node, 'legend_dynamic_node', style='invis')
+        prev_node = 'legend_dynamic_node'
+
         legend.node(
             'legend_accumulator',
             'Accumulator',
@@ -860,24 +896,21 @@ def _add_legend(dot: 'graphviz.Digraph') -> None:
             style='filled',
             shape='cylinder',
         )
+        legend.edge(prev_node, 'legend_accumulator', style='invis')
+        prev_node = 'legend_accumulator'
+
         legend.node(
             'legend_finalize',
             'Finalize (from accum.)',
             fillcolor='#DDA0DD',
             style='filled',
         )
+        legend.edge(prev_node, 'legend_finalize', style='invis')
+        prev_node = 'legend_finalize'
+
         legend.node(
             'legend_target',
             'Target (output)',
             peripheries='2',
         )
-
-        # Invisible edges to order legend items vertically
-        legend.edge('legend_static', 'legend_cached', style='invis')
-        legend.edge('legend_cached', 'legend_context_key', style='invis')
-        legend.edge('legend_context_key', 'legend_context_dep', style='invis')
-        legend.edge('legend_context_dep', 'legend_dynamic_key', style='invis')
-        legend.edge('legend_dynamic_key', 'legend_dynamic_node', style='invis')
-        legend.edge('legend_dynamic_node', 'legend_accumulator', style='invis')
-        legend.edge('legend_accumulator', 'legend_finalize', style='invis')
-        legend.edge('legend_finalize', 'legend_target', style='invis')
+        legend.edge(prev_node, 'legend_target', style='invis')

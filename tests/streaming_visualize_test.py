@@ -558,3 +558,47 @@ class TestVisualize:
         assert 'DynamicA' in source
         # But UpstreamOfDynamic should NOT appear (it's upstream of an input key)
         assert 'UpstreamOfDynamic' not in source
+
+    def test_show_static_dependencies_false_hides_ancestors_of_cached(self) -> None:
+        """Setting show_static_dependencies=False hides ancestors of cached nodes."""
+        workflow = sciline.Pipeline(
+            (make_static_a, make_static_b, make_intermediate, make_accum_a, make_target)
+        )
+        workflow[DynamicA] = None
+        workflow[AccumB] = None
+
+        processor = streaming.StreamProcessor(
+            base_workflow=workflow,
+            dynamic_keys=(DynamicA,),
+            target_keys=(Target,),
+            accumulators=(AccumA,),
+        )
+
+        # With show_static_dependencies=True (default), StaticA should appear
+        result_with = processor.visualize(show_static_dependencies=True)
+        assert 'StaticA' in result_with.source
+
+        # With show_static_dependencies=False, StaticA should be hidden
+        result_without = processor.visualize(show_static_dependencies=False)
+        assert 'StaticA' not in result_without.source
+        # But StaticB (the cached node) should still appear
+        assert 'StaticB' in result_without.source
+
+    def test_show_static_dependencies_false_updates_legend(self) -> None:
+        """Legend should not show 'Static' entry when show_static_dependencies=False."""
+        workflow = sciline.Pipeline((make_static_a,))
+
+        processor = streaming.StreamProcessor(
+            base_workflow=workflow,
+            dynamic_keys=(),
+            target_keys=(StaticA,),
+            accumulators=(),
+        )
+
+        result = processor.visualize(show_static_dependencies=False)
+        source = result.source
+
+        # Should have 'Static (cached)' but not standalone 'Static'
+        assert 'Static (cached)' in source
+        # The legend_static node should not be present
+        assert 'legend_static' not in source
