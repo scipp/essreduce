@@ -422,8 +422,9 @@ def detector_time_of_flight_data(
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofDetector[RunType]:
     """
-    Convert the time-of-arrival data to time-of-flight data using a lookup table.
-    The output data will have a time-of-flight coordinate.
+    Convert the time-of-arrival (event_time_offset) data to time-of-flight data using a
+    lookup table.
+    The output data will have two new coordinates: time-of-flight and Ltotal.
 
     Parameters
     ----------
@@ -456,8 +457,9 @@ def monitor_time_of_flight_data(
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofMonitor[RunType, MonitorType]:
     """
-    Convert the time-of-arrival data to time-of-flight data using a lookup table.
-    The output data will have a time-of-flight coordinate.
+    Convert the time-of-arrival (event_time_offset) data to time-of-flight data using a
+    lookup table.
+    The output data will have two new coordinates: time-of-flight and Ltotal.
 
     Parameters
     ----------
@@ -547,7 +549,7 @@ def detector_wavelength_data(
     detector_data: TofDetector[RunType],
 ) -> WavelengthDetector[RunType]:
     """
-    Convert time-of-flight detector data to wavelength data.
+    Convert time-of-flight coordinate of the detector data to wavelength.
 
     Parameters
     ----------
@@ -561,7 +563,7 @@ def monitor_wavelength_data(
     monitor_data: TofMonitor[RunType, MonitorType],
 ) -> WavelengthMonitor[RunType, MonitorType]:
     """
-    Convert time-of-flight monitor data to wavelength data.
+    Convert time-of-flight coordinate of the monitor data to wavelength.
 
     Parameters
     ----------
