@@ -14,6 +14,7 @@ import scipp as sc
 import scippneutron as scn
 import scippnexus as snx
 from scippneutron._utils import elem_unit
+from scippneutron.conversion.tof import wavelength_from_tof
 
 try:
     from .interpolator_numba import Interpolator as InterpolatorImpl
@@ -39,6 +40,8 @@ from .types import (
     TofDetector,
     TofLookupTable,
     TofMonitor,
+    WavelengthDetector,
+    WavelengthMonitor,
 )
 
 
@@ -401,14 +404,15 @@ def _compute_tof_data(
 ) -> sc.DataArray:
     if da.bins is None:
         data = _time_of_flight_data_histogram(da=da, lookup=lookup, ltotal=ltotal)
-        return rebin_strictly_increasing(data, dim='tof')
+        out = rebin_strictly_increasing(data, dim='tof')
     else:
-        return _time_of_flight_data_events(
+        out = _time_of_flight_data_events(
             da=da,
             lookup=lookup,
             ltotal=ltotal,
             pulse_stride_offset=pulse_stride_offset,
         )
+    return out.assign_coords(Ltotal=ltotal)
 
 
 def detector_time_of_flight_data(
@@ -418,8 +422,9 @@ def detector_time_of_flight_data(
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofDetector[RunType]:
     """
-    Convert the time-of-arrival data to time-of-flight data using a lookup table.
-    The output data will have a time-of-flight coordinate.
+    Convert the time-of-arrival (event_time_offset) data to time-of-flight data using a
+    lookup table.
+    The output data will have two new coordinates: time-of-flight and Ltotal.
 
     Parameters
     ----------
@@ -452,8 +457,9 @@ def monitor_time_of_flight_data(
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofMonitor[RunType, MonitorType]:
     """
-    Convert the time-of-arrival data to time-of-flight data using a lookup table.
-    The output data will have a time-of-flight coordinate.
+    Convert the time-of-arrival (event_time_offset) data to time-of-flight data using a
+    lookup table.
+    The output data will have two new coordinates: time-of-flight and Ltotal.
 
     Parameters
     ----------
@@ -526,6 +532,47 @@ def detector_time_of_arrival_data(
     return ToaDetector[RunType](result)
 
 
+def _tof_to_wavelength(da: sc.DataArray) -> sc.DataArray:
+    """
+    Convert time-of-flight data to wavelength data.
+
+    Here we assume that the input data contains a Ltotal coordinate, which is required
+    for the conversion.
+    This coordinate is assigned in the ``_compute_tof_data`` function.
+    """
+    return da.transform_coords(
+        'wavelength', graph={"wavelength": wavelength_from_tof}, keep_intermediate=False
+    )
+
+
+def detector_wavelength_data(
+    detector_data: TofDetector[RunType],
+) -> WavelengthDetector[RunType]:
+    """
+    Convert time-of-flight coordinate of the detector data to wavelength.
+
+    Parameters
+    ----------
+    da:
+        Detector data with time-of-flight coordinate.
+    """
+    return WavelengthDetector[RunType](_tof_to_wavelength(detector_data))
+
+
+def monitor_wavelength_data(
+    monitor_data: TofMonitor[RunType, MonitorType],
+) -> WavelengthMonitor[RunType, MonitorType]:
+    """
+    Convert time-of-flight coordinate of the monitor data to wavelength.
+
+    Parameters
+    ----------
+    da:
+        Monitor data with time-of-flight coordinate.
+    """
+    return WavelengthMonitor[RunType, MonitorType](_tof_to_wavelength(monitor_data))
+
+
 def providers() -> tuple[Callable]:
     """
     Providers of the time-of-flight workflow.
@@ -536,4 +583,6 @@ def providers() -> tuple[Callable]:
         detector_ltotal_from_straight_line_approximation,
         monitor_ltotal_from_straight_line_approximation,
         detector_time_of_arrival_data,
+        detector_wavelength_data,
+        monitor_wavelength_data,
     )

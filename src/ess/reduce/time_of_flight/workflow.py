@@ -7,11 +7,7 @@ import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
 from . import eto_to_tof
-from .types import (
-    PulseStrideOffset,
-    TofLookupTable,
-    TofLookupTableFilename,
-)
+from .types import PulseStrideOffset, TofLookupTable, TofLookupTableFilename
 
 
 def load_tof_lookup_table(

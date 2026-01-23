@@ -87,3 +87,11 @@ class ToaDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
 
 class TofMonitor(sl.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
     """Monitor data with time-of-flight coordinate."""
+
+
+class WavelengthDetector(sl.Scope[RunType, sc.DataArray], sc.DataArray):
+    """Detector data with wavelength coordinate."""
+
+
+class WavelengthMonitor(sl.Scope[RunType, MonitorType, sc.DataArray], sc.DataArray):
+    """Monitor data with wavelength coordinate."""
