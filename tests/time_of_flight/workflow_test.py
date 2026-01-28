@@ -245,30 +245,3 @@ def test_GenericTofWorkflow_with_tof_lut_from_file_using_alias(
 
     detector = workflow.compute(time_of_flight.TofDetector[SampleRun])
     assert 'tof' in detector.bins.coords
-
-
-'''
-@pytest.mark.parametrize("coord", ["tof", "wavelength"])
-def test_GenericTofWorkflow_assigns_Ltotal_coordinate(workflow, coord):
-    raw = workflow.compute(RawDetector[SampleRun])
-
-    assert "Ltotal" not in raw.coords
-
-    lut_wf = TofLookupTableWorkflow()
-    lut_wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
-    lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
-    lut_wf[time_of_flight.LtotalRange] = (
-        sc.scalar(0.0, unit="m"),
-        sc.scalar(100.0, unit="m"),
-    )
-    lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
-    table = lut_wf.compute(time_of_flight.TofLookupTable)
-    workflow[time_of_flight.TofLookupTable] = table
-
-    if coord == "tof":
-        result = workflow.compute(time_of_flight.TofDetector[SampleRun])
-    else:
-        result = workflow.compute(time_of_flight.WavelengthDetector[SampleRun])
-
-    assert "Ltotal" in result.coords
-'''
