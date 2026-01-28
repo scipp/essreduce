@@ -412,7 +412,7 @@ def _compute_tof_data(
             ltotal=ltotal,
             pulse_stride_offset=pulse_stride_offset,
         )
-    return out.assign_coords(Ltotal=ltotal)
+    return out
 
 
 def detector_time_of_flight_data(
