@@ -475,7 +475,7 @@ def make_tof_lookup_table(
     #     )
 
     table = sc.concat(pieces, 'distance')
-    table.coords["distance"] = distances  # sc.midpoints(table.coords["distance"])
+    # table.coords["distance"] = distances  # sc.midpoints(table.coords["distance"])
     table.coords["event_time_offset"] = sc.midpoints(table.coords["event_time_offset"])
 
     # Copy the left edge to the right to create periodic boundary conditions
@@ -484,7 +484,7 @@ def make_tof_lookup_table(
             [table.data, table.data['event_time_offset', 0]], dim='event_time_offset'
         ),
         coords={
-            "distance": table.coords["distance"],
+            "distance": distances,
             "event_time_offset": sc.concat(
                 [table.coords["event_time_offset"], frame_period],
                 dim='event_time_offset',
