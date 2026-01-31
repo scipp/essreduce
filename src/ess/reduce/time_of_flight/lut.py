@@ -257,6 +257,9 @@ def _compute_mean_tof(
     time_bins_half_width:
         Half width of the time bins in the event_time_offset axis.
     """
+    # print("============================")
+    # print(simulation)
+    # print("============================")
     # simulation_distance = simulation.distance.to(unit=distance.unit)
     # distances = sc.midpoints(distance_bins)
     travel_length = distance - simulation.distance.to(unit=distance.unit)
@@ -436,7 +439,7 @@ def make_tof_lookup_table(
                 "It is likely lower than the simulation reading closest to the source."
             )
 
-        print(dist, simulation_reading)
+        # print(dist, simulation_reading)
 
         pieces.append(
             _compute_mean_tof(
@@ -519,9 +522,7 @@ def _to_component_reading(component):
     events = events[sel]
     # If the component is a source, use 'birth_time' as 'toa'
     toa = (
-        events.coords["birth_time"]
-        if "birth_time" in events.coords
-        else events.coords["toa"]
+        events.coords["toa"] if "toa" in events.coords else events.coords["birth_time"]
     )
     return BeamlineComponentReading(
         time_of_arrival=toa,
