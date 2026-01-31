@@ -4,7 +4,6 @@
 Utilities for computing time-of-flight lookup tables from neutron simulations.
 """
 
-import math
 from dataclasses import dataclass
 from typing import NewType
 
