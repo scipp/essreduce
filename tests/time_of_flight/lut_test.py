@@ -188,10 +188,6 @@ def test_lut_workflow_computes_table_with_choppers_full_beamline_range():
     wf[time_of_flight.SimulationSeed] = 64
     wf[time_of_flight.PulseStride] = 1
 
-    # lmin, lmax = sc.scalar(5.0, unit='m'), sc.scalar(65.0, unit='m')
-    # dres = sc.scalar(0.1, unit='m')
-    # tres = sc.scalar(250.0, unit='us')
-
     wf[time_of_flight.LtotalRange] = (
         sc.scalar(5.0, unit='m'),
         sc.scalar(65.0, unit='m'),
