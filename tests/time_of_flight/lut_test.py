@@ -153,13 +153,12 @@ def test_lut_workflow_computes_table_with_choppers():
     wf[time_of_flight.SimulationSeed] = 64
     wf[time_of_flight.PulseStride] = 1
 
-    lmin, lmax = sc.scalar(35.0, unit='m'), sc.scalar(65.0, unit='m')
-    dres = sc.scalar(0.1, unit='m')
-    tres = sc.scalar(250.0, unit='us')
-
-    wf[time_of_flight.LtotalRange] = lmin, lmax
-    wf[time_of_flight.DistanceResolution] = dres
-    wf[time_of_flight.TimeResolution] = tres
+    wf[time_of_flight.LtotalRange] = (
+        sc.scalar(35.0, unit='m'),
+        sc.scalar(65.0, unit='m'),
+    )
+    wf[time_of_flight.DistanceResolution] = sc.scalar(0.1, unit='m')
+    wf[time_of_flight.TimeResolution] = sc.scalar(250.0, unit='us')
     wf[time_of_flight.LookupTableRelativeErrorThreshold] = 2e3
 
     table = wf.compute(time_of_flight.TofLookupTable)
@@ -189,13 +188,16 @@ def test_lut_workflow_computes_table_with_choppers_full_beamline_range():
     wf[time_of_flight.SimulationSeed] = 64
     wf[time_of_flight.PulseStride] = 1
 
-    lmin, lmax = sc.scalar(5.0, unit='m'), sc.scalar(65.0, unit='m')
-    dres = sc.scalar(0.1, unit='m')
-    tres = sc.scalar(250.0, unit='us')
+    # lmin, lmax = sc.scalar(5.0, unit='m'), sc.scalar(65.0, unit='m')
+    # dres = sc.scalar(0.1, unit='m')
+    # tres = sc.scalar(250.0, unit='us')
 
-    wf[time_of_flight.LtotalRange] = lmin, lmax
-    wf[time_of_flight.DistanceResolution] = dres
-    wf[time_of_flight.TimeResolution] = tres
+    wf[time_of_flight.LtotalRange] = (
+        sc.scalar(5.0, unit='m'),
+        sc.scalar(65.0, unit='m'),
+    )
+    wf[time_of_flight.DistanceResolution] = sc.scalar(0.1, unit='m')
+    wf[time_of_flight.TimeResolution] = sc.scalar(250.0, unit='us')
     wf[time_of_flight.LookupTableRelativeErrorThreshold] = 2e3
 
     table = wf.compute(time_of_flight.TofLookupTable)
@@ -231,3 +233,24 @@ def test_lut_workflow_computes_table_with_choppers_full_beamline_range():
     assert eto.min() < sc.scalar(2.2e4, unit="us").to(unit=eto.unit)
     assert eto.max() > sc.scalar(6.4e4, unit="us").to(unit=eto.unit)
     assert eto.max() < sc.scalar(6.9e4, unit="us").to(unit=eto.unit)
+
+
+def test_lut_workflow_raises_for_distance_before_source():
+    wf = TofLookupTableWorkflow()
+    wf[time_of_flight.DiskChoppers[AnyRun]] = {}
+    wf[time_of_flight.SourcePosition] = sc.vector([0, 0, 10], unit='m')
+    wf[time_of_flight.NumberOfSimulatedNeutrons] = 100_000
+    wf[time_of_flight.SimulationSeed] = 65
+    wf[time_of_flight.PulseStride] = 1
+
+    # Setting the starting point at zero will make a table that would cover a range
+    # from -0.2m to 65.0m
+    wf[time_of_flight.LtotalRange] = (
+        sc.scalar(0.0, unit='m'),
+        sc.scalar(65.0, unit='m'),
+    )
+    wf[time_of_flight.DistanceResolution] = sc.scalar(0.1, unit='m')
+    wf[time_of_flight.TimeResolution] = sc.scalar(250.0, unit='us')
+
+    with pytest.raises(ValueError, match="No simulation reading found for distance"):
+        _ = wf.compute(time_of_flight.TofLookupTable)
