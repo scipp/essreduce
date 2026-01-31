@@ -256,7 +256,7 @@ def test_GenericTofWorkflow_assigns_Ltotal_coordinate(workflow, coord):
     lut_wf[DiskChoppers[AnyRun]] = fakes.psc_choppers()
     lut_wf[time_of_flight.NumberOfSimulatedNeutrons] = 10_000
     lut_wf[time_of_flight.LtotalRange] = (
-        sc.scalar(0.0, unit="m"),
+        sc.scalar(20.0, unit="m"),
         sc.scalar(100.0, unit="m"),
     )
     lut_wf[time_of_flight.SourcePosition] = fakes.source_position()
