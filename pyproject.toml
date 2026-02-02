@@ -34,9 +34,6 @@ dependencies = [
     "scipp>=25.04.0",
     "scippneutron>=25.11.1",
     "scippnexus>=25.06.0",
-    # Numba has an upper pin and pip-compile-multi will
-    # always complain about solving envs with different numpy pins.
-    "numpy<2.4",
 ]
 
 dynamic = ["version"]
