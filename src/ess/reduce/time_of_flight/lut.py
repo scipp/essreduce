@@ -4,7 +4,6 @@
 Utilities for computing time-of-flight lookup tables from neutron simulations.
 """
 
-import math
 from dataclasses import dataclass
 from typing import NewType
 
@@ -17,11 +16,10 @@ from .types import TofLookupTable
 
 
 @dataclass
-class SimulationResults:
+class BeamlineComponentReading:
     """
-    Results of a time-of-flight simulation used to create a lookup table.
-
-    The results (apart from ``distance``) should be flat lists (1d arrays) of length N
+    Reading at a given position along the beamline from a time-of-flight simulation.
+    The data (apart from ``distance``) should be flat lists (1d arrays) of length N
     where N is the number of neutrons, containing the properties of the neutrons in the
     simulation.
 
@@ -40,18 +38,40 @@ class SimulationResults:
         For a ``tof`` simulation, this is just the position of the detector where the
         events are recorded. For a ``McStas`` simulation, this is the distance between
         the source and the event monitor.
-    choppers:
-        The parameters of the choppers used in the simulation (if any).
     """
 
     time_of_arrival: sc.Variable
     wavelength: sc.Variable
     weight: sc.Variable
     distance: sc.Variable
-    choppers: DiskChoppers[AnyRun] | None = None
 
     def __post_init__(self):
         self.speed = (sc.constants.h / sc.constants.m_n) / self.wavelength
+
+
+@dataclass
+class SimulationResults:
+    """
+    Results of a time-of-flight simulation used to create a lookup table.
+    It should contain readings at various positions along the beamline, e.g., at
+    the source and after each chopper.
+    It also contains the chopper parameters used in the simulation, so it can be
+    determined if this simulation is compatible with a given experiment.
+
+    Parameters
+    ----------
+    readings:
+        A dict of :class:`BeamlineComponentReading` objects representing the readings at
+        various positions along the beamline. The keys in the dict should correspond to
+        the names of the components (e.g., 'source', 'chopper1', etc.).
+    choppers:
+        The chopper parameters used in the simulation (if any). These are used to verify
+        that the simulation is compatible with a given experiment (comparing chopper
+        openings, frequencies, phases, etc.).
+    """
+
+    readings: dict[str, BeamlineComponentReading]
+    choppers: DiskChoppers[AnyRun] | None = None
 
 
 NumberOfSimulatedNeutrons = NewType("NumberOfSimulatedNeutrons", int)
@@ -144,11 +164,10 @@ def _mask_large_uncertainty(table: sc.DataArray, error_threshold: float):
     table.values[mask.values] = np.nan
 
 
-def _compute_mean_tof_in_distance_range(
-    simulation: SimulationResults,
-    distance_bins: sc.Variable,
+def _compute_mean_tof(
+    simulation: BeamlineComponentReading,
+    distance: sc.Variable,
     time_bins: sc.Variable,
-    distance_unit: str,
     time_unit: str,
     frame_period: sc.Variable,
     time_bins_half_width: sc.Variable,
@@ -161,12 +180,10 @@ def _compute_mean_tof_in_distance_range(
     ----------
     simulation:
         Results of a time-of-flight simulation used to create a lookup table.
-    distance_bins:
-        Bin edges for the distance axis in the lookup table.
+    distance:
+        Distance where table is computed.
     time_bins:
         Bin edges for the event_time_offset axis in the lookup table.
-    distance_unit:
-        Unit of the distance axis.
     time_unit:
         Unit of the event_time_offset axis.
     frame_period:
@@ -174,23 +191,17 @@ def _compute_mean_tof_in_distance_range(
     time_bins_half_width:
         Half width of the time bins in the event_time_offset axis.
     """
-    simulation_distance = simulation.distance.to(unit=distance_unit)
-    distances = sc.midpoints(distance_bins)
+    travel_length = distance - simulation.distance.to(unit=distance.unit)
     # Compute arrival and flight times for all neutrons
-    toas = simulation.time_of_arrival + (distances / simulation.speed).to(
+    toas = simulation.time_of_arrival + (travel_length / simulation.speed).to(
         unit=time_unit, copy=False
     )
-    dist = distances + simulation_distance
-    tofs = dist * (sc.constants.m_n / sc.constants.h) * simulation.wavelength
+    tofs = distance / simulation.speed
 
     data = sc.DataArray(
-        data=sc.broadcast(simulation.weight, sizes=toas.sizes),
-        coords={
-            "toa": toas,
-            "tof": tofs.to(unit=time_unit, copy=False),
-            "distance": dist,
-        },
-    ).flatten(to="event")
+        data=simulation.weight,
+        coords={"toa": toas, "tof": tofs.to(unit=time_unit, copy=False)},
+    )
 
     # Add the event_time_offset coordinate, wrapped to the frame_period
     data.coords['event_time_offset'] = data.coords['toa'] % frame_period
@@ -204,18 +215,14 @@ def _compute_mean_tof_in_distance_range(
     # data.coords['event_time_offset'] %= pulse_period - time_bins_half_width
     data.coords['event_time_offset'] %= frame_period - time_bins_half_width
 
-    binned = data.bin(
-        distance=distance_bins + simulation_distance, event_time_offset=time_bins
-    )
-
+    binned = data.bin(event_time_offset=time_bins)
+    binned_sum = binned.bins.sum()
     # Weighted mean of tof inside each bin
-    mean_tof = (
-        binned.bins.data * binned.bins.coords["tof"]
-    ).bins.sum() / binned.bins.sum()
+    mean_tof = (binned.bins.data * binned.bins.coords["tof"]).bins.sum() / binned_sum
     # Compute the variance of the tofs to track regions with large uncertainty
     variance = (
         binned.bins.data * (binned.bins.coords["tof"] - mean_tof) ** 2
-    ).bins.sum() / binned.bins.sum()
+    ).bins.sum() / binned_sum
 
     mean_tof.variances = variance.values
     return mean_tof
@@ -293,15 +300,14 @@ def make_tof_lookup_table(
     left edge.
     """
     distance_unit = "m"
-    time_unit = simulation.time_of_arrival.unit
+    time_unit = "us"
     res = distance_resolution.to(unit=distance_unit)
     pulse_period = pulse_period.to(unit=time_unit)
     frame_period = pulse_period * pulse_stride
 
-    min_dist, max_dist = (
-        x.to(unit=distance_unit) - simulation.distance.to(unit=distance_unit)
-        for x in ltotal_range
-    )
+    min_dist = ltotal_range[0].to(unit=distance_unit)
+    max_dist = ltotal_range[1].to(unit=distance_unit)
+
     # We need to bin the data below, to compute the weighted mean of the wavelength.
     # This results in data with bin edges.
     # However, the 2d interpolator expects bin centers.
@@ -313,7 +319,7 @@ def make_tof_lookup_table(
     # ensure that the last bin is not cut off. We want the upper edge to be higher than
     # the maximum distance, hence we pad with an additional 1.5 x resolution.
     pad = 2.0 * res
-    distance_bins = sc.arange('distance', min_dist - pad, max_dist + pad, res)
+    distances = sc.arange('distance', min_dist - pad, max_dist + pad, res)
 
     # Create some time bins for event_time_offset.
     # We want our final table to strictly cover the range [0, frame_period].
@@ -328,22 +334,36 @@ def make_tof_lookup_table(
     time_bins_half_width = 0.5 * (time_bins[1] - time_bins[0])
     time_bins -= time_bins_half_width
 
-    # To avoid a too large RAM usage, we compute the table in chunks, and piece them
-    # together at the end.
-    ndist = len(distance_bins) - 1
-    max_size = 2e7
-    total_size = ndist * len(simulation.time_of_arrival)
-    nchunks = math.ceil(total_size / max_size)
-    chunk_size = math.ceil(ndist / nchunks)
+    # Sort simulation readings by reverse distance
+    sorted_simulation_results = sorted(
+        simulation.readings.values(), key=lambda x: x.distance.value, reverse=True
+    )
+
     pieces = []
-    for i in range(nchunks):
-        dist_edges = distance_bins[i * chunk_size : (i + 1) * chunk_size + 1]
+    # To avoid large RAM usage, and having to split the distances into chunks
+    # according to which component reading to use, we simply loop over distances one
+    # by one here.
+    for dist in distances:
+        # Find the correct simulation reading
+        simulation_reading = None
+        for reading in sorted_simulation_results:
+            if dist.value >= reading.distance.to(unit=dist.unit).value:
+                simulation_reading = reading
+                break
+        if simulation_reading is None:
+            closest = sorted_simulation_results[-1]
+            raise ValueError(
+                "Building the Tof lookup table failed: the requested position "
+                f"{dist.value} {dist.unit} is before the component with the lowest "
+                "distance in the simulation. The first component in the beamline "
+                f"has distance {closest.distance.value} {closest.distance.unit}."
+            )
+
         pieces.append(
-            _compute_mean_tof_in_distance_range(
-                simulation=simulation,
-                distance_bins=dist_edges,
+            _compute_mean_tof(
+                simulation=simulation_reading,
+                distance=dist,
                 time_bins=time_bins,
-                distance_unit=distance_unit,
                 time_unit=time_unit,
                 frame_period=frame_period,
                 time_bins_half_width=time_bins_half_width,
@@ -351,7 +371,6 @@ def make_tof_lookup_table(
         )
 
     table = sc.concat(pieces, 'distance')
-    table.coords["distance"] = sc.midpoints(table.coords["distance"])
     table.coords["event_time_offset"] = sc.midpoints(table.coords["event_time_offset"])
 
     # Copy the left edge to the right to create periodic boundary conditions
@@ -360,7 +379,7 @@ def make_tof_lookup_table(
             [table.data, table.data['event_time_offset', 0]], dim='event_time_offset'
         ),
         coords={
-            "distance": table.coords["distance"],
+            "distance": distances,
             "event_time_offset": sc.concat(
                 [table.coords["event_time_offset"], frame_period],
                 dim='event_time_offset',
@@ -384,6 +403,24 @@ def make_tof_lookup_table(
         )
         if simulation.choppers is not None
         else None,
+    )
+
+
+def _to_component_reading(component):
+    events = component.data.squeeze().flatten(to='event')
+    sel = sc.full(value=True, sizes=events.sizes)
+    for key in {'blocked_by_others', 'blocked_by_me'} & set(events.masks.keys()):
+        sel &= ~events.masks[key]
+    events = events[sel]
+    # If the component is a source, use 'birth_time' as 'toa'
+    toa = (
+        events.coords["toa"] if "toa" in events.coords else events.coords["birth_time"]
+    )
+    return BeamlineComponentReading(
+        time_of_arrival=toa,
+        wavelength=events.coords["wavelength"],
+        weight=events.data,
+        distance=component.distance,
     )
 
 
@@ -431,29 +468,14 @@ def simulate_chopper_cascade_using_tof(
     source = tof.Source(
         facility=facility, neutrons=neutrons, pulses=pulse_stride, seed=seed
     )
+    sim_readings = {"source": _to_component_reading(source)}
     if not tof_choppers:
-        events = source.data.squeeze().flatten(to='event')
-        return SimulationResults(
-            time_of_arrival=events.coords["birth_time"],
-            wavelength=events.coords["wavelength"],
-            weight=events.data,
-            distance=0.0 * sc.units.m,
-        )
+        return SimulationResults(readings=sim_readings, choppers=None)
     model = tof.Model(source=source, choppers=tof_choppers)
     results = model.run()
-    # Find name of the furthest chopper in tof_choppers
-    furthest_chopper = max(tof_choppers, key=lambda c: c.distance)
-    events = results[furthest_chopper.name].data.squeeze().flatten(to='event')
-    events = events[
-        ~(events.masks["blocked_by_others"] | events.masks["blocked_by_me"])
-    ]
-    return SimulationResults(
-        time_of_arrival=events.coords["toa"],
-        wavelength=events.coords["wavelength"],
-        weight=events.data,
-        distance=furthest_chopper.distance,
-        choppers=choppers,
-    )
+    for name, ch in results.choppers.items():
+        sim_readings[name] = _to_component_reading(ch)
+    return SimulationResults(readings=sim_readings, choppers=choppers)
 
 
 def TofLookupTableWorkflow():
