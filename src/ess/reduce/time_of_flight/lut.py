@@ -62,9 +62,12 @@ class SimulationResults:
     ----------
     readings:
         A dict of :class:`BeamlineComponentReading` objects representing the readings at
-        various positions along the beamline.
+        various positions along the beamline. The keys in the dict should correspond to
+        the names of the components (e.g., 'source', 'chopper1', etc.).
     choppers:
-        The chopper parameters used in the simulation (if any).
+        The chopper parameters used in the simulation (if any). These are used to verify
+        that the simulation is compatible with a given experiment (comparing chopper
+        openings, frequencies, phases, etc.).
     """
 
     readings: dict[str, BeamlineComponentReading]
@@ -348,10 +351,12 @@ def make_tof_lookup_table(
                 simulation_reading = reading
                 break
         if simulation_reading is None:
+            closest = sorted_simulation_results[-1]
             raise ValueError(
-                "No simulation reading found for distance "
-                f"{dist.value} {dist.unit}. "
-                "It is likely lower than the simulation reading closest to the source."
+                "Building the Tof lookup table failed: the requested position "
+                f"{dist.value} {dist.unit} is before the component with the lowest "
+                "distance in the simulation. The first component in the beamline "
+                f"has distance {closest.distance.value} {closest.distance.unit}."
             )
 
         pieces.append(

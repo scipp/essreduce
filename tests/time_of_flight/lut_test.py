@@ -248,5 +248,5 @@ def test_lut_workflow_raises_for_distance_before_source():
     wf[time_of_flight.DistanceResolution] = sc.scalar(0.1, unit='m')
     wf[time_of_flight.TimeResolution] = sc.scalar(250.0, unit='us')
 
-    with pytest.raises(ValueError, match="No simulation reading found for distance"):
+    with pytest.raises(ValueError, match="Building the Tof lookup table failed"):
         _ = wf.compute(time_of_flight.TofLookupTable)
