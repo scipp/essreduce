@@ -12,5 +12,5 @@ mypy==1.19.1
     # via -r mypy.in
 mypy-extensions==1.1.0
     # via mypy
-pathspec==1.0.3
+pathspec==1.0.4
     # via mypy

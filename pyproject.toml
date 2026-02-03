@@ -47,7 +47,7 @@ test = [
     "pooch>=1.5",
     "pytest>=7.0",
     "scipy>=1.14",
-    "tof>=25.11.1",
+    "tof>=25.12.0",
 ]
 
 [project.scripts]
