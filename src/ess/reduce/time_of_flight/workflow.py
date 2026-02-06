@@ -15,9 +15,7 @@ from .types import (
 )
 
 
-def load_tof_lookup_table(
-    filename: TofLookupTableFilename,
-) -> TofLookupTable:
+def load_tof_lookup_table(filename: TofLookupTableFilename) -> TofLookupTable:
     """Load a time-of-flight lookup table from an HDF5 file."""
     table = sc.io.load_hdf5(filename)
 
