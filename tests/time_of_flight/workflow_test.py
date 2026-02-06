@@ -86,7 +86,6 @@ def test_TofLookupTableWorkflow_can_compute_tof_lut():
     assert lut.time_resolution is not None
     assert lut.pulse_stride is not None
     assert lut.pulse_period is not None
-    assert lut.error_threshold is not None
     assert lut.choppers is not None
 
 
@@ -144,7 +143,6 @@ def test_GenericTofWorkflow_with_tof_lut_from_file(
     assert lut.pulse_stride == loaded_lut.pulse_stride
     assert_identical(lut.distance_resolution, loaded_lut.distance_resolution)
     assert_identical(lut.time_resolution, loaded_lut.time_resolution)
-    assert lut.error_threshold == loaded_lut.error_threshold
     assert_identical(lut.choppers, loaded_lut.choppers)
 
     if coord == "tof":
@@ -176,7 +174,6 @@ def test_GenericTofWorkflow_with_tof_lut_from_file_old_format(
             "pulse_stride": sc.scalar(lut.pulse_stride, unit=None),
             "distance_resolution": lut.distance_resolution,
             "time_resolution": lut.time_resolution,
-            "error_threshold": sc.scalar(lut.error_threshold, unit=None),
         },
     )
     old_lut.save_hdf5(filename=tmp_path / "lut.h5")
@@ -188,7 +185,6 @@ def test_GenericTofWorkflow_with_tof_lut_from_file_old_format(
     assert lut.pulse_stride == loaded_lut.pulse_stride
     assert_identical(lut.distance_resolution, loaded_lut.distance_resolution)
     assert_identical(lut.time_resolution, loaded_lut.time_resolution)
-    assert lut.error_threshold == loaded_lut.error_threshold
     assert loaded_lut.choppers is None  # No chopper info in old format
 
     detector = workflow.compute(time_of_flight.TofDetector[SampleRun])
@@ -239,7 +235,6 @@ def test_GenericTofWorkflow_with_tof_lut_from_file_using_alias(
     assert lut.pulse_stride == loaded_lut.pulse_stride
     assert_identical(lut.distance_resolution, loaded_lut.distance_resolution)
     assert_identical(lut.time_resolution, loaded_lut.time_resolution)
-    assert lut.error_threshold == loaded_lut.error_threshold
     assert_identical(lut.choppers, loaded_lut.choppers)
 
     detector = workflow.compute(time_of_flight.TofDetector[SampleRun])

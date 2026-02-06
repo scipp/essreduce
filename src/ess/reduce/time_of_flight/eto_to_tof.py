@@ -8,6 +8,7 @@ event_time_offset coordinates to data with a time-of-flight coordinate.
 """
 
 from collections.abc import Callable
+from dataclasses import asdict
 
 import numpy as np
 import scipp as sc
@@ -34,6 +35,8 @@ from ..nexus.types import (
 from .resample import rebin_strictly_increasing
 from .types import (
     DetectorLtotal,
+    ErrorLimitedTofLookupTable,
+    LookupTableRelativeErrorThreshold,
     MonitorLtotal,
     PulseStrideOffset,
     ToaDetector,
@@ -99,7 +102,7 @@ class TofInterpolator:
 
 
 def _time_of_flight_data_histogram(
-    da: sc.DataArray, lookup: TofLookupTable, ltotal: sc.Variable
+    da: sc.DataArray, lookup: ErrorLimitedTofLookupTable, ltotal: sc.Variable
 ) -> sc.DataArray:
     # In NeXus, 'time_of_flight' is the canonical name in NXmonitor, but in some files,
     # it may be called 'tof' or 'frame_time'.
@@ -204,7 +207,7 @@ def _guess_pulse_stride_offset(
 
 def _prepare_tof_interpolation_inputs(
     da: sc.DataArray,
-    lookup: TofLookupTable,
+    lookup: ErrorLimitedTofLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int | None,
 ) -> dict:
@@ -298,7 +301,7 @@ def _prepare_tof_interpolation_inputs(
 
 def _time_of_flight_data_events(
     da: sc.DataArray,
-    lookup: TofLookupTable,
+    lookup: ErrorLimitedTofLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int | None,
 ) -> sc.DataArray:
@@ -396,9 +399,36 @@ def monitor_ltotal_from_straight_line_approximation(
     )
 
 
+def mask_large_uncertainty_in_lut(
+    table: TofLookupTable, error_threshold: LookupTableRelativeErrorThreshold
+) -> ErrorLimitedTofLookupTable:
+    """
+    Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
+
+    Parameters
+    ----------
+    table:
+        Lookup table with time-of-flight as a function of distance and time-of-arrival.
+    error_threshold:
+        Threshold for the relative standard deviation (coefficient of variation) of the
+        projected time-of-flight above which values are masked.
+    """
+    # TODO: The error threshold could be made dependent on the time-of-flight or
+    # distance, instead of being a single value for the whole table.
+    da = table.array
+    relative_error = sc.stddevs(da.data) / sc.values(da.data)
+    mask = relative_error > sc.scalar(error_threshold)
+    return ErrorLimitedTofLookupTable(
+        **{
+            **asdict(table),
+            "array": sc.where(mask, sc.scalar(np.nan, unit=da.unit), da),
+        }
+    )
+
+
 def _compute_tof_data(
     da: sc.DataArray,
-    lookup: TofLookupTable,
+    lookup: ErrorLimitedTofLookupTable,
     ltotal: sc.Variable,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
@@ -417,7 +447,7 @@ def _compute_tof_data(
 
 def detector_time_of_flight_data(
     detector_data: RawDetector[RunType],
-    lookup: TofLookupTable,
+    lookup: ErrorLimitedTofLookupTable,
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofDetector[RunType]:
@@ -452,7 +482,7 @@ def detector_time_of_flight_data(
 
 def monitor_time_of_flight_data(
     monitor_data: RawMonitor[RunType, MonitorType],
-    lookup: TofLookupTable,
+    lookup: ErrorLimitedTofLookupTable,
     ltotal: MonitorLtotal[RunType, MonitorType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofMonitor[RunType, MonitorType]:
@@ -487,7 +517,7 @@ def monitor_time_of_flight_data(
 
 def detector_time_of_arrival_data(
     detector_data: RawDetector[RunType],
-    lookup: TofLookupTable,
+    lookup: ErrorLimitedTofLookupTable,
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> ToaDetector[RunType]:
@@ -585,4 +615,5 @@ def providers() -> tuple[Callable]:
         detector_time_of_arrival_data,
         detector_wavelength_data,
         monitor_wavelength_data,
+        mask_large_uncertainty_in_lut,
     )

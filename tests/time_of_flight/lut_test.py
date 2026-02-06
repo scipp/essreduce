@@ -159,7 +159,6 @@ def test_lut_workflow_computes_table_with_choppers():
     )
     wf[time_of_flight.DistanceResolution] = sc.scalar(0.1, unit='m')
     wf[time_of_flight.TimeResolution] = sc.scalar(250.0, unit='us')
-    wf[time_of_flight.LookupTableRelativeErrorThreshold] = 2e3
 
     table = wf.compute(time_of_flight.TofLookupTable)
 
@@ -194,7 +193,6 @@ def test_lut_workflow_computes_table_with_choppers_full_beamline_range():
     )
     wf[time_of_flight.DistanceResolution] = sc.scalar(0.1, unit='m')
     wf[time_of_flight.TimeResolution] = sc.scalar(250.0, unit='us')
-    wf[time_of_flight.LookupTableRelativeErrorThreshold] = 2e3
 
     table = wf.compute(time_of_flight.TofLookupTable)
 

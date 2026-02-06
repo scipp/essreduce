@@ -132,10 +132,10 @@ def setup_workflow(
     pl = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     pl[RawDetector[SampleRun]] = raw_data
     pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
+    pl[time_of_flight.LookupTableRelativeErrorThreshold] = error_threshold
 
     lut_wf = lut_workflow.copy()
     lut_wf[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()
-    lut_wf[time_of_flight.LookupTableRelativeErrorThreshold] = error_threshold
 
     pl[time_of_flight.TofLookupTable] = lut_wf.compute(time_of_flight.TofLookupTable)
     return pl

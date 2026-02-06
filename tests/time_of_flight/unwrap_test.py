@@ -70,10 +70,10 @@ def _make_workflow_event_mode(
     pl[RawDetector[SampleRun]] = mon
     pl[time_of_flight.DetectorLtotal[SampleRun]] = distance
     pl[time_of_flight.PulseStrideOffset] = pulse_stride_offset
+    pl[time_of_flight.LookupTableRelativeErrorThreshold] = error_threshold
 
     lut_wf = lut_workflow.copy()
     lut_wf[time_of_flight.LtotalRange] = distance, distance
-    lut_wf[time_of_flight.LookupTableRelativeErrorThreshold] = error_threshold
 
     pl[time_of_flight.TofLookupTable] = lut_wf.compute(time_of_flight.TofLookupTable)
 
