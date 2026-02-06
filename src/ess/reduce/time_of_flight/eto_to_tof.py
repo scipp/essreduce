@@ -415,7 +415,6 @@ def mask_large_uncertainty_in_lut(
     """
     # TODO: The error threshold could be made dependent on the time-of-flight or
     # distance, instead of being a single value for the whole table.
-    # masked_table = copy.copy(table)
     da = table.array
     relative_error = sc.stddevs(da.data) / sc.values(da.data)
     mask = relative_error > sc.scalar(error_threshold)
