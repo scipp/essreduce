@@ -7,7 +7,6 @@ Utilities for computing time-of-flight lookup tables from neutron simulations.
 from dataclasses import dataclass
 from typing import NewType
 
-import numpy as np
 import sciline as sl
 import scipp as sc
 
@@ -111,13 +110,6 @@ Since the event_time_offset range needs to span exactly one pulse period, the fi
 resolution in the lookup table will be at least the supplied value here, but may be
 smaller if the pulse period is not an integer multiple of the time resolution.
 """
-
-
-# LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
-# """
-# Threshold for the relative standard deviation (coefficient of variation) of the
-# projected time-of-flight above which values are masked.
-# """
 
 PulsePeriod = NewType("PulsePeriod", sc.Variable)
 """

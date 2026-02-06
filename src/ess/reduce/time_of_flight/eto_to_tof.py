@@ -7,7 +7,6 @@ This workflow is used to convert raw detector data with event_time_zero and
 event_time_offset coordinates to data with a time-of-flight coordinate.
 """
 
-import copy
 from collections.abc import Callable
 from dataclasses import asdict
 
