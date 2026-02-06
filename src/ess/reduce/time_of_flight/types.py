@@ -34,9 +34,6 @@ class TofLookupTable:
     """Resolution of the distance coordinate in the lookup table."""
     time_resolution: sc.Variable
     """Resolution of the time_of_arrival coordinate in the lookup table."""
-    error_threshold: float
-    """The table is masked with NaNs in regions where the standard deviation of the
-    time-of-flight is above this threshold."""
     choppers: sc.DataGroup | None = None
     """Chopper parameters used when generating the lookup table, if any. This is made
     optional so we can still support old lookup tables without chopper info."""
@@ -54,10 +51,22 @@ TimeOfFlightLookupTable = TofLookupTable
 """Lookup table giving time-of-flight as a function of distance and time of arrival
 (alias)."""
 
+
+class ErrorLimitedTofLookupTable(TofLookupTable):
+    """Lookup table that is masked with NaNs in regions where the standard deviation of
+    the time-of-flight is above a certain threshold."""
+
+
 PulseStrideOffset = NewType("PulseStrideOffset", int | None)
 """
 When pulse-skipping, the offset of the first pulse in the stride. This is typically
 zero but can be a small integer < pulse_stride. If None, a guess is made.
+"""
+
+LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
+"""
+Threshold for the relative standard deviation (coefficient of variation) of the
+projected time-of-flight above which values are masked.
 """
 
 

@@ -113,11 +113,11 @@ smaller if the pulse period is not an integer multiple of the time resolution.
 """
 
 
-LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
-"""
-Threshold for the relative standard deviation (coefficient of variation) of the
-projected time-of-flight above which values are masked.
-"""
+# LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
+# """
+# Threshold for the relative standard deviation (coefficient of variation) of the
+# projected time-of-flight above which values are masked.
+# """
 
 PulsePeriod = NewType("PulsePeriod", sc.Variable)
 """
@@ -142,26 +142,6 @@ SimulationFacility = NewType("SimulationFacility", str)
 """
 Facility where the experiment is performed, e.g., 'ess'.
 """
-
-
-def _mask_large_uncertainty(table: sc.DataArray, error_threshold: float):
-    """
-    Mask regions with large uncertainty with NaNs.
-    The values are modified in place in the input table.
-
-    Parameters
-    ----------
-    table:
-        Lookup table with time-of-flight as a function of distance and time-of-arrival.
-    error_threshold:
-        Threshold for the relative standard deviation (coefficient of variation) of the
-        projected time-of-flight above which values are masked.
-    """
-    # Finally, mask regions with large uncertainty with NaNs.
-    relative_error = sc.stddevs(table.data) / sc.values(table.data)
-    mask = relative_error > sc.scalar(error_threshold)
-    # Use numpy for indexing as table is 2D
-    table.values[mask.values] = np.nan
 
 
 def _compute_mean_tof(
@@ -235,7 +215,6 @@ def make_tof_lookup_table(
     time_resolution: TimeResolution,
     pulse_period: PulsePeriod,
     pulse_stride: PulseStride,
-    error_threshold: LookupTableRelativeErrorThreshold,
 ) -> TofLookupTable:
     """
     Compute a lookup table for time-of-flight as a function of distance and
@@ -258,9 +237,6 @@ def make_tof_lookup_table(
     pulse_stride:
         Stride of used pulses. Usually 1, but may be a small integer when
         pulse-skipping.
-    error_threshold:
-        Threshold for the relative standard deviation (coefficient of variation) of the
-        projected time-of-flight above which values are masked.
 
     Notes
     -----
@@ -387,9 +363,6 @@ def make_tof_lookup_table(
         },
     )
 
-    # In-place masking for better performance
-    _mask_large_uncertainty(table, error_threshold)
-
     return TofLookupTable(
         array=table,
         pulse_period=pulse_period,
@@ -397,7 +370,6 @@ def make_tof_lookup_table(
         distance_resolution=table.coords["distance"][1] - table.coords["distance"][0],
         time_resolution=table.coords["event_time_offset"][1]
         - table.coords["event_time_offset"][0],
-        error_threshold=error_threshold,
         choppers=sc.DataGroup(
             {k: sc.DataGroup(ch.as_dict()) for k, ch in simulation.choppers.items()}
         )
@@ -490,7 +462,6 @@ def TofLookupTableWorkflow():
             PulseStride: 1,
             DistanceResolution: sc.scalar(0.1, unit="m"),
             TimeResolution: sc.scalar(250.0, unit='us'),
-            LookupTableRelativeErrorThreshold: 0.1,
             NumberOfSimulatedNeutrons: 1_000_000,
             SimulationSeed: None,
             SimulationFacility: 'ess',

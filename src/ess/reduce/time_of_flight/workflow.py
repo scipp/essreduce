@@ -7,7 +7,12 @@ import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
 from . import eto_to_tof
-from .types import PulseStrideOffset, TofLookupTable, TofLookupTableFilename
+from .types import (
+    LookupTableRelativeErrorThreshold,
+    PulseStrideOffset,
+    TofLookupTable,
+    TofLookupTableFilename,
+)
 
 
 def load_tof_lookup_table(
@@ -87,5 +92,6 @@ def GenericTofWorkflow(
 
     # Default parameters
     wf[PulseStrideOffset] = None
+    wf[LookupTableRelativeErrorThreshold] = 1.0
 
     return wf
