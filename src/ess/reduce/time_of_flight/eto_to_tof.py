@@ -403,8 +403,7 @@ def mask_large_uncertainty_in_lut(
     table: TofLookupTable, error_threshold: LookupTableRelativeErrorThreshold
 ) -> ErrorLimitedTofLookupTable:
     """
-    Mask regions with large uncertainty with NaNs.
-    The values are modified in place in the input table.
+    Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
 
     Parameters
     ----------
