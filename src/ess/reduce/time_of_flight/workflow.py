@@ -88,6 +88,6 @@ def GenericTofWorkflow(
 
     # Default parameters
     wf[PulseStrideOffset] = None
-    wf[LookupTableRelativeErrorThreshold] = 1.0
+    wf[LookupTableRelativeErrorThreshold] = float('inf')
 
     return wf
