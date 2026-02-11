@@ -7,33 +7,34 @@ import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
 from . import eto_to_tof
-from .types import PulseStrideOffset, TofLookupTable, TofLookupTableFilename
+from .types import (
+    LookupTableRelativeErrorThreshold,
+    PulseStrideOffset,
+    TofLookupTable,
+    TofLookupTableFilename,
+)
 
 
-def load_tof_lookup_table(
-    filename: TofLookupTableFilename,
-) -> TofLookupTable:
+def load_tof_lookup_table(filename: TofLookupTableFilename) -> TofLookupTable:
     """Load a time-of-flight lookup table from an HDF5 file."""
     table = sc.io.load_hdf5(filename)
 
     # Support old format where the metadata were stored as coordinates of the DataArray.
     # Note that no chopper info was saved in the old format.
     if isinstance(table, sc.DataArray):
+        to_be_dropped = {
+            "pulse_period",
+            "pulse_stride",
+            "distance_resolution",
+            "time_resolution",
+            "error_threshold",
+        } & set(table.coords)
         table = {
-            "array": table.drop_coords(
-                [
-                    "pulse_period",
-                    "pulse_stride",
-                    "distance_resolution",
-                    "time_resolution",
-                    "error_threshold",
-                ]
-            ),
+            "array": table.drop_coords(to_be_dropped),
             "pulse_period": table.coords["pulse_period"],
             "pulse_stride": table.coords["pulse_stride"].value,
             "distance_resolution": table.coords["distance_resolution"],
             "time_resolution": table.coords["time_resolution"],
-            "error_threshold": table.coords["error_threshold"].value,
         }
 
     return TofLookupTable(**table)
@@ -87,5 +88,6 @@ def GenericTofWorkflow(
 
     # Default parameters
     wf[PulseStrideOffset] = None
+    wf[LookupTableRelativeErrorThreshold] = float('inf')
 
     return wf

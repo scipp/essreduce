@@ -10,7 +10,6 @@ from ..nexus.types import DiskChoppers
 from .eto_to_tof import providers
 from .lut import (
     DistanceResolution,
-    LookupTableRelativeErrorThreshold,
     LtotalRange,
     NumberOfSimulatedNeutrons,
     PulsePeriod,
@@ -24,6 +23,8 @@ from .lut import (
 )
 from .types import (
     DetectorLtotal,
+    ErrorLimitedTofLookupTable,
+    LookupTableRelativeErrorThreshold,
     MonitorLtotal,
     PulseStrideOffset,
     TimeOfFlightLookupTable,
@@ -42,6 +43,7 @@ __all__ = [
     "DetectorLtotal",
     "DiskChoppers",
     "DistanceResolution",
+    "ErrorLimitedTofLookupTable",
     "GenericTofWorkflow",
     "LookupTableRelativeErrorThreshold",
     "LtotalRange",
