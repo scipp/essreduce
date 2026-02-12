@@ -37,6 +37,12 @@ def load_tof_lookup_table(filename: TofLookupTableFilename) -> TofLookupTable:
             "time_resolution": table.coords["time_resolution"],
         }
 
+    # Some old tables have the error_threshold stored as an entry in the data group.
+    # The masking based on uncertainty is now done later, as part of the tof workflow,
+    # so we need to remove this entry if it exists.
+    if "error_threshold" in table:
+        del table["error_threshold"]
+
     return TofLookupTable(**table)
 
 
