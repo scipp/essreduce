@@ -9,6 +9,7 @@ neutron time-of-arrival at the detectors.
 from ..nexus.types import DiskChoppers
 from .eto_to_tof import providers
 from .lut import (
+    BeamlineComponentReading,
     DistanceResolution,
     LtotalRange,
     NumberOfSimulatedNeutrons,
@@ -40,6 +41,7 @@ from .types import (
 from .workflow import GenericTofWorkflow
 
 __all__ = [
+    "BeamlineComponentReading",
     "DetectorLtotal",
     "DiskChoppers",
     "DistanceResolution",
