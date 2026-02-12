@@ -10,8 +10,8 @@
 graphviz>=0.20
 ipywidgets>=8.1
 matplotlib>=3.10.7
-numba>=0.59
-pooch>=1.5
+numba>=0.63
+pooch>=1.9.0
 pytest>=7.0
 scipy>=1.14
 tof>=25.12.0
