@@ -1,0 +1,945 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ess.reduce.normalization &#8212; ESSreduce</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=de9f5bbb"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/ess/reduce/normalization';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.svg"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="26.2.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ESSreduce - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ESSreduce - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ess.reduce.normalization</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for ess.reduce.normalization</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2025 Scipp contributors (https://github.com/scipp)</span>
+<span class="sd">&quot;&quot;&quot;Normalization routines for neutron data reduction.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">enum</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.uncertainty</span><span class="w"> </span><span class="kn">import</span> <span class="n">UncertaintyBroadcastMode</span><span class="p">,</span> <span class="n">broadcast_uncertainties</span>
+
+
+<div class="viewcode-block" id="normalize_by_monitor_histogram">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.normalization.normalize_by_monitor_histogram.html#ess.reduce.normalization.normalize_by_monitor_histogram">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_by_monitor_histogram</span><span class="p">(</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">monitor</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">uncertainty_broadcast_mode</span><span class="p">:</span> <span class="n">UncertaintyBroadcastMode</span><span class="p">,</span>
+    <span class="n">skip_range_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize detector data by a normalized histogrammed monitor.</span>
+
+<span class="sd">    This normalization accounts for both the (wavelength) profile of the incident beam</span>
+<span class="sd">    and the integrated neutron flux, meaning measurement duration and source strength.</span>
+
+<span class="sd">    - For *event* detectors, the monitor values are mapped to the detector</span>
+<span class="sd">      using :func:`scipp.lookup`. That is, for detector event :math:`d_i`,</span>
+<span class="sd">      :math:`m_i` is the monitor bin value at the same coordinate.</span>
+<span class="sd">    - For *histogram* detectors, the monitor is generally rebinned using the detector</span>
+<span class="sd">      binning using :func:`scipp.rebin`. Thus, detector value :math:`d_i` and</span>
+<span class="sd">      monitor value :math:`m_i` correspond to the same bin.</span>
+
+<span class="sd">        - In case the detector coordinate does not have a dimension in common with the</span>
+<span class="sd">          monitor, :func:`scipp.lookup` is used as in the event case.</span>
+
+<span class="sd">    In both cases, let :math:`x_i` be the lower bound of monitor bin :math:`i`</span>
+<span class="sd">    and let :math:`\\Delta x_i = x_{i+1} - x_i` be the width of that bin.</span>
+
+<span class="sd">    The detector is normalized according to</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        d_i^\\text{Norm} = \\frac{d_i}{m_i} \\Delta x_i</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    detector:</span>
+<span class="sd">        Input detector data.</span>
+<span class="sd">        Must have a coordinate named ``monitor.dim``, that is, the single</span>
+<span class="sd">        dimension name of the **monitor**.</span>
+<span class="sd">    monitor:</span>
+<span class="sd">        A histogrammed monitor.</span>
+<span class="sd">        Must be one-dimensional and have a dimension coordinate, typically &quot;wavelength&quot;.</span>
+<span class="sd">    uncertainty_broadcast_mode:</span>
+<span class="sd">        Choose how uncertainties of the monitor are broadcast to the sample data.</span>
+<span class="sd">    skip_range_check:</span>
+<span class="sd">        If false (default), the detector data must be within the range of the monitor</span>
+<span class="sd">        coordinate. Set this to true to disable the check.</span>
+<span class="sd">        The value of out-of-range bins / events is undefined in that case.</span>
+
+<span class="sd">        This is useful when the detector contains data outside the monitor range, and it</span>
+<span class="sd">        is difficult or impossible to slice the detector without also removing in-range</span>
+<span class="sd">        data. In this case, the caller can mask those data points and skip the range</span>
+<span class="sd">        check. ``normalize_by_monitor_histogram`` does not take masks into account when</span>
+<span class="sd">        checking ranges as that is expensive to implement in a general case.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        ``detector`` normalized by ``monitor``.</span>
+<span class="sd">        If the monitor has masks or contains non-finite values, the output has a mask</span>
+<span class="sd">        called &#39;_monitor_mask&#39; constructed from the monitor masks and non-finite values.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    normalize_by_monitor_integrated:</span>
+<span class="sd">        Normalize by an integrated monitor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_range_check</span><span class="p">:</span>
+        <span class="n">_check_monitor_range_contains_detector</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">monitor</span><span class="p">,</span> <span class="n">detector</span><span class="o">=</span><span class="n">detector</span><span class="p">)</span>
+
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">dim</span>
+
+    <span class="k">match</span> <span class="n">_HistogramNormalizationMode</span><span class="o">.</span><span class="n">deduce</span><span class="p">(</span><span class="n">detector</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="k">case</span> <span class="n">_HistogramNormalizationMode</span><span class="o">.</span><span class="n">Events</span><span class="p">:</span>
+            <span class="n">detector</span> <span class="o">=</span> <span class="n">_mask_detector_for_norm</span><span class="p">(</span><span class="n">detector</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="n">monitor</span><span class="p">)</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">_histogram_monitor_term</span><span class="p">(</span>
+                <span class="n">monitor</span><span class="p">,</span>
+                <span class="n">dim</span><span class="p">,</span>
+                <span class="n">broadcast_to</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span>
+                <span class="n">uncertainty_broadcast_mode</span><span class="o">=</span><span class="n">uncertainty_broadcast_mode</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">detector</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">detector</span><span class="o">.</span><span class="n">bins</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">norm</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">detector</span> <span class="o">/</span> <span class="n">norm</span>
+
+        <span class="k">case</span> <span class="n">_HistogramNormalizationMode</span><span class="o">.</span><span class="n">BinsCommonDim</span><span class="p">:</span>
+            <span class="n">monitor</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">rebin</span><span class="p">({</span><span class="n">dim</span><span class="p">:</span> <span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]})</span>
+            <span class="n">detector</span> <span class="o">=</span> <span class="n">_mask_detector_for_norm</span><span class="p">(</span><span class="n">detector</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="n">monitor</span><span class="p">)</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">_histogram_monitor_term</span><span class="p">(</span>
+                <span class="n">monitor</span><span class="p">,</span>
+                <span class="n">dim</span><span class="p">,</span>
+                <span class="n">broadcast_to</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span>
+                <span class="n">uncertainty_broadcast_mode</span><span class="o">=</span><span class="n">uncertainty_broadcast_mode</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">detector</span> <span class="o">/</span> <span class="n">norm</span>
+
+        <span class="k">case</span> <span class="n">_HistogramNormalizationMode</span><span class="o">.</span><span class="n">BinsDifferentDim</span><span class="p">:</span>
+            <span class="n">detector</span> <span class="o">=</span> <span class="n">_mask_detector_for_norm</span><span class="p">(</span><span class="n">detector</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="n">monitor</span><span class="p">)</span>
+            <span class="c1"># No broadcast here because there are no common dims, use lookup instead.</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">_histogram_monitor_term</span><span class="p">(</span>
+                <span class="n">monitor</span><span class="p">,</span>
+                <span class="n">dim</span><span class="p">,</span>
+                <span class="n">uncertainty_broadcast_mode</span><span class="o">=</span><span class="n">uncertainty_broadcast_mode</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">detector</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">norm</span><span class="p">)[</span><span class="n">_compute_bin_centers</span><span class="p">(</span><span class="n">detector</span><span class="p">,</span> <span class="n">dim</span><span class="p">)]</span></div>
+
+
+
+<div class="viewcode-block" id="normalize_by_monitor_integrated">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.normalization.normalize_by_monitor_integrated.html#ess.reduce.normalization.normalize_by_monitor_integrated">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize_by_monitor_integrated</span><span class="p">(</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">monitor</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">uncertainty_broadcast_mode</span><span class="p">:</span> <span class="n">UncertaintyBroadcastMode</span><span class="p">,</span>
+    <span class="n">skip_range_check</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize detector data by an integrated monitor.</span>
+
+<span class="sd">    This normalization accounts only for the integrated neutron flux,</span>
+<span class="sd">    meaning measurement duration and source strength.</span>
+<span class="sd">    It does *not* account for the (wavelength) profile of the incident beam.</span>
+<span class="sd">    For that, see :func:`normalize_by_monitor_histogram`.</span>
+
+<span class="sd">    Let :math:`d_i` be a detector event or the counts in a detector bin.</span>
+<span class="sd">    The normalized detector is</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        d_i^\\text{Norm} = \\frac{d_i}{\\sum_j\\, m_j}</span>
+
+<span class="sd">    where :math:`m_j` is the monitor counts in bin :math:`j`.</span>
+<span class="sd">    Note that this is not a true integral but only a sum over monitor events.</span>
+
+<span class="sd">    The result depends on the range of the monitor but not its</span>
+<span class="sd">    binning within that range.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    detector:</span>
+<span class="sd">        Input detector data.</span>
+<span class="sd">    monitor:</span>
+<span class="sd">        A histogrammed monitor.</span>
+<span class="sd">        Must be one-dimensional and have a dimension coordinate, typically &quot;wavelength&quot;.</span>
+<span class="sd">    uncertainty_broadcast_mode:</span>
+<span class="sd">        Choose how uncertainties of the monitor are broadcast to the sample data.</span>
+<span class="sd">    skip_range_check:</span>
+<span class="sd">        If false (default), the detector data must be within the range of the monitor</span>
+<span class="sd">        coordinate. Set this to true to disable the check.</span>
+<span class="sd">        The value of out-of-range bins / events is undefined in that case.</span>
+
+<span class="sd">        This is useful when the detector contains data outside the monitor range, and it</span>
+<span class="sd">        is difficult or impossible to slice the detector without also removing in-range</span>
+<span class="sd">        data. In this case, the caller can mask those data points and skip the range</span>
+<span class="sd">        check. ``normalize_by_monitor_histogram`` does not take masks into account when</span>
+<span class="sd">        checking ranges as that is expensive to implement in a general case.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        `detector` normalized by a monitor.</span>
+<span class="sd">        If the monitor has masks or contains non-finite values, the output has a mask</span>
+<span class="sd">        called &#39;_monitor_mask&#39; constructed from the monitor masks and non-finite values.</span>
+
+<span class="sd">    See also</span>
+<span class="sd">    --------</span>
+<span class="sd">    normalize_by_monitor_histogram:</span>
+<span class="sd">        Normalize by a monitor histogram.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_range_check</span><span class="p">:</span>
+        <span class="n">_check_monitor_range_contains_detector</span><span class="p">(</span><span class="n">monitor</span><span class="o">=</span><span class="n">monitor</span><span class="p">,</span> <span class="n">detector</span><span class="o">=</span><span class="n">detector</span><span class="p">)</span>
+    <span class="n">detector</span> <span class="o">=</span> <span class="n">_mask_detector_for_norm</span><span class="p">(</span><span class="n">detector</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span> <span class="n">monitor</span><span class="o">=</span><span class="n">monitor</span><span class="p">)</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">nansum</span><span class="p">()</span><span class="o">.</span><span class="n">data</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">broadcast_uncertainties</span><span class="p">(</span>
+        <span class="n">norm</span><span class="p">,</span> <span class="n">prototype</span><span class="o">=</span><span class="n">detector</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">uncertainty_broadcast_mode</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">detector</span> <span class="o">/</span> <span class="n">norm</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_monitor_range_contains_detector</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">monitor</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">detector</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">dim</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">is_edges</span><span class="p">(</span><span class="n">dim</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">CoordError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Monitor coordinate &#39;</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">&#39; must be bin-edges to integrate the monitor.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Prefer a bin coord over an event coord because this makes the behavior for binned</span>
+    <span class="c1"># and histogrammed data consistent. If we used an event coord, we might allow a</span>
+    <span class="c1"># monitor range that is less than the detector bins which is fine for the events,</span>
+    <span class="c1"># but would be wrong if the detector was subsequently histogrammed.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">det_coord</span> <span class="o">:=</span> <span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="o">...</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">det_coord</span> <span class="o">:=</span> <span class="n">detector</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="o">...</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">CoordError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Missing &#39;</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">&#39; coordinate in detector for monitor normalization.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">det_coord</span><span class="o">.</span><span class="n">nanmin</span><span class="p">()</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="n">det_coord</span><span class="o">.</span><span class="n">nanmax</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">lo</span> <span class="ow">or</span> <span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">hi</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Cannot normalize by monitor: The </span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2"> range of the monitor &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">c</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">c</span><span class="si">}</span><span class="s2">) &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;is smaller than the range of the detector (</span><span class="si">{</span><span class="n">lo</span><span class="si">:</span><span class="s2">c</span><span class="si">}</span><span class="s2"> to </span><span class="si">{</span><span class="n">hi</span><span class="si">:</span><span class="s2">c</span><span class="si">}</span><span class="s2">).&quot;</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mask_detector_for_norm</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">detector</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">monitor</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mask the detector where the monitor is masked.</span>
+
+<span class="sd">    For performance, this applies the monitor mask to the detector bins.</span>
+<span class="sd">    This can lead to masking more events than strictly necessary if we</span>
+<span class="sd">    used an event mask.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dim</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">dim</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">monitor_mask</span> <span class="o">:=</span> <span class="n">_monitor_mask</span><span class="p">(</span><span class="n">monitor</span><span class="p">))</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">detector</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">detector_coord</span> <span class="o">:=</span> <span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="c1"># Apply the mask to the bins or a dense detector.</span>
+        <span class="n">mask_da</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">monitor_mask</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]})</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">detector_coord</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="c1"># Use rebin to reshape the mask to the detector.</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask_da</span><span class="o">.</span><span class="n">rebin</span><span class="p">({</span><span class="n">dim</span><span class="p">:</span> <span class="n">detector_coord</span><span class="p">})</span><span class="o">.</span><span class="n">data</span> <span class="o">!=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">detector</span><span class="o">.</span><span class="n">assign_masks</span><span class="p">(</span><span class="n">_monitor_mask</span><span class="o">=</span><span class="n">mask</span><span class="p">)</span>
+        <span class="c1"># else: need to use lookup to apply mask at matching coord elements</span>
+        <span class="k">return</span> <span class="n">detector</span><span class="o">.</span><span class="n">assign_masks</span><span class="p">(</span>
+            <span class="n">_monitor_mask</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span><span class="n">mask_da</span><span class="p">)[</span><span class="n">_compute_bin_centers</span><span class="p">(</span><span class="n">detector</span><span class="p">,</span> <span class="n">dim</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+    <span class="c1"># else: Apply the mask to the events.</span>
+    <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">detector</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">CoordError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Detector must have coordinate &#39;</span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">&#39; to mask by monitor.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">event_mask</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">lookup</span><span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">monitor_mask</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]})</span>
+    <span class="p">)[</span><span class="n">detector</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">detector</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">assign_masks</span><span class="p">(</span><span class="n">_monitor_mask</span><span class="o">=</span><span class="n">event_mask</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_monitor_mask</span><span class="p">(</span><span class="n">monitor</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Mask nonfinite and zero monitor values and combine all masks.&quot;&quot;&quot;</span>
+    <span class="n">masks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">masks</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="n">finite</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">nonzero</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">data</span> <span class="o">!=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">monitor</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="n">valid</span> <span class="o">=</span> <span class="n">finite</span> <span class="o">&amp;</span> <span class="n">nonzero</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">~</span><span class="n">valid</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">masks</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">functools</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">logical_or</span><span class="p">,</span> <span class="n">masks</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_histogram_monitor_term</span><span class="p">(</span>
+    <span class="n">monitor</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">dim</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">broadcast_to</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">uncertainty_broadcast_mode</span><span class="p">:</span> <span class="n">UncertaintyBroadcastMode</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">is_edges</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">CoordError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Monitor coordinage </span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2"> must be bin-edges for normalization.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+    <span class="n">delta_w</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">coord</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">masks</span><span class="o">=</span><span class="n">monitor</span><span class="o">.</span><span class="n">masks</span><span class="p">)</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">monitor</span> <span class="o">/</span> <span class="n">delta_w</span>
+
+    <span class="k">if</span> <span class="n">broadcast_to</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">broadcast_uncertainties</span><span class="p">(</span>
+            <span class="n">norm</span><span class="p">,</span> <span class="n">prototype</span><span class="o">=</span><span class="n">broadcast_to</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">uncertainty_broadcast_mode</span>
+        <span class="p">)</span>
+
+    <span class="k">match</span> <span class="n">uncertainty_broadcast_mode</span><span class="p">:</span>
+        <span class="k">case</span> <span class="n">UncertaintyBroadcastMode</span><span class="o">.</span><span class="n">fail</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">norm</span>
+        <span class="k">case</span> <span class="n">UncertaintyBroadcastMode</span><span class="o">.</span><span class="n">drop</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">norm</span><span class="p">)</span>
+        <span class="k">case</span><span class="w"> </span><span class="k">_</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;Cannot broadcast uncertainties in this case.&quot;</span><span class="p">,</span>
+                <span class="ne">UserWarning</span><span class="p">,</span>
+                <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">norm</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_HistogramNormalizationMode</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">Events</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use an event coordinate to lookup monitor values.&quot;&quot;&quot;</span>
+    <span class="n">BinsCommonDim</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use a bin coordinate which contains the monitor dimension.</span>
+
+<span class="sd">    The coordinate may be multi-dimensional but one dimension matches</span>
+<span class="sd">    the dimension of the monitor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">BinsDifferentDim</span> <span class="o">=</span> <span class="n">enum</span><span class="o">.</span><span class="n">auto</span><span class="p">()</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use a bin coordinate which does not contain the monitor dimension.</span>
+
+<span class="sd">    The coordinate may be multi-dimensions, e.g., in the DREAM powder workflow</span>
+<span class="sd">    where it has dims (two_theta, dspacing [bin-edges]).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">deduce</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">detector</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_HistogramNormalizationMode</span><span class="p">:</span>
+        <span class="c1"># Use an event-coord when available:</span>
+        <span class="k">if</span> <span class="n">detector</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">detector</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_HistogramNormalizationMode</span><span class="o">.</span><span class="n">Events</span>
+        <span class="c1"># else: use a bin-coord.</span>
+
+        <span class="n">det_coord</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">det_coord</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_HistogramNormalizationMode</span><span class="o">.</span><span class="n">BinsCommonDim</span>
+        <span class="k">return</span> <span class="n">_HistogramNormalizationMode</span><span class="o">.</span><span class="n">BinsDifferentDim</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_bin_centers</span><span class="p">(</span><span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="n">coord</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">coord</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">is_edges</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+            <span class="n">coord</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">midpoints</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">coord</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ESSreduce version: 26.2.2 (<a href="https://github.com/scipp/essreduce/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

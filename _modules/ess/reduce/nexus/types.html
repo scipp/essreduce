@@ -1,0 +1,998 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ess.reduce.nexus.types &#8212; ESSreduce</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=de9f5bbb"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/ess/reduce/nexus/types';</script>
+    <script src="../../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../../_static/favicon.svg"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="26.2.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo.svg" class="logo__image only-light" alt="ESSreduce - Home"/>
+    <img src="../../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ESSreduce - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ess.reduce.nexus.types</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for ess.reduce.nexus.types</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Domain types for use with Sciline, parametrized by run- and monitor-type.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">NewType</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">sciline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scippnexus</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">snx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron</span><span class="w"> </span><span class="kn">import</span> <span class="n">metadata</span> <span class="k">as</span> <span class="n">scn_meta</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.chopper</span><span class="w"> </span><span class="kn">import</span> <span class="n">DiskChopper</span>
+
+<span class="n">FilePath</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;FilePath&#39;</span><span class="p">,</span> <span class="n">Path</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Full path to a NeXus file on disk.&quot;&quot;&quot;</span>
+<span class="n">NeXusFile</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;NeXusFile&#39;</span><span class="p">,</span> <span class="n">BinaryIO</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;An open NeXus file.</span>
+
+<span class="sd">Can be any file handle for reading binary data.</span>
+
+<span class="sd">Note that this cannot be used as a parameter in Sciline as there are no</span>
+<span class="sd">concrete implementations of ``BinaryIO``.</span>
+<span class="sd">The type alias is provided for callers of load functions outside of pipelines.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">NeXusGroup</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;NeXusGroup&#39;</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;A ScippNexus group in an open file.&quot;&quot;&quot;</span>
+
+<span class="n">NeXusEntryName</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;NeXusEntryName&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Name of an entry in a NeXus file.&quot;&quot;&quot;</span>
+<span class="n">NeXusSourceName</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;NeXusSourceName&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Name of a source in a NeXus file.&quot;&quot;&quot;</span>
+
+<span class="n">DetectorBankSizes</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s2">&quot;DetectorBankSizes&quot;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Any</span><span class="p">]])</span>
+
+<span class="n">GravityVector</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;GravityVector&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+
+<span class="n">PreopenNeXusFile</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PreopenNeXusFile&#39;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Whether to preopen NeXus files before passing them to the rest of the workflow.&quot;&quot;&quot;</span>
+
+
+<span class="c1"># 1  TypeVars used to parametrize the generic parts of the workflow</span>
+
+<span class="c1"># 1.1  Run types</span>
+
+<span class="n">AnyRun</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s2">&quot;AnyRun&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;RunType that does not represent a specific measurement run.</span>
+
+<span class="sd">This can be used in cases where it makes no sense to use an &#39;actual&#39; run type</span>
+<span class="sd">like ``SampleRun`` or ``BackgroundRun``.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">BackgroundRun</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;BackgroundRun&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Background run such as a run with only a solvent which the sample is placed in.&quot;&quot;&quot;</span>
+<span class="n">EmptyBeamRun</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;EmptyBeamRun&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Run with empty sample holder, sometimes called &#39;direct run&#39;.</span>
+
+<span class="sd">It is used for reading the data from the transmission monitor.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">SampleRun</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;SampleRun&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Sample run.&quot;&quot;&quot;</span>
+<span class="n">VanadiumRun</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;VanadiumRun&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Vanadium run.&quot;&quot;&quot;</span>
+
+<span class="n">ScatteringRunType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span>
+    <span class="s1">&#39;ScatteringRunType&#39;</span><span class="p">,</span>
+    <span class="n">BackgroundRun</span><span class="p">,</span>
+    <span class="n">SampleRun</span><span class="p">,</span>
+    <span class="n">VanadiumRun</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="TransmissionRun">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.TransmissionRun.html#ess.reduce.nexus.types.TransmissionRun">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TransmissionRun</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">ScatteringRunType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mapping between ScatteringRunType and transmission run.</span>
+
+<span class="sd">    In the case where no transmission run is provided, the transmission run should be</span>
+<span class="sd">    the same as the measurement (sample or background) run.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<span class="n">RunType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;RunType&#39;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;TypeVar for specifying what run some data belongs to.</span>
+
+<span class="sd">This type must be constrained when used in a Sciline pipeline.</span>
+<span class="sd">E.g., by passing ``run_types`` to :class:`ess.reduce.nexus.GenericNeXusWorkflow`.</span>
+
+<span class="sd">ESSreduce provides the following but custom types can be used:</span>
+
+<span class="sd">- :class:`BackgroundRun`</span>
+<span class="sd">- :class:`EmptyBeamRun`</span>
+<span class="sd">- :class:`SampleRun`</span>
+<span class="sd">- :class:`TransmissionRun`</span>
+<span class="sd">- :class:`VanadiumRun`</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="c1"># 1.2  Monitor types</span>
+<span class="n">IncidentMonitor</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;IncidentMonitor&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Incident monitor&quot;&quot;&quot;</span>
+<span class="n">TransmissionMonitor</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;TransmissionMonitor&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Transmission monitor&quot;&quot;&quot;</span>
+<span class="n">FrameMonitor0</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;FrameMonitor0&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Frame monitor number 0&quot;&quot;&quot;</span>
+<span class="n">FrameMonitor1</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;FrameMonitor1&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Frame monitor number 1&quot;&quot;&quot;</span>
+<span class="n">FrameMonitor2</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;FrameMonitor2&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Frame monitor number 2&quot;&quot;&quot;</span>
+<span class="n">FrameMonitor3</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;FrameMonitor3&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Frame monitor number 3&quot;&quot;&quot;</span>
+<span class="n">CaveMonitor</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;CaveMonitor&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;A monitor located in the instrument cave&quot;&quot;&quot;</span>
+<span class="n">MonitorType</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;MonitorType&#39;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;TypeVar for specifying what monitor some data belongs to.</span>
+
+<span class="sd">This type must be constrained when used in a Sciline pipeline.</span>
+<span class="sd">E.g., by passing ``monitor_types`` to :class:`ess.reduce.nexus.GenericNeXusWorkflow`.</span>
+
+<span class="sd">ESSreduce provides the following but custom types can be used:</span>
+
+<span class="sd">- :class:`IncidentMonitor`</span>
+<span class="sd">- :class:`TransmissionMonitor`</span>
+<span class="sd">- :class:`FrameMonitor0`</span>
+<span class="sd">- :class:`FrameMonitor1`</span>
+<span class="sd">- :class:`FrameMonitor2`</span>
+<span class="sd">- :class:`FrameMonitor3`</span>
+<span class="sd">- :class:`CaveMonitor`</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="n">Component</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;Component&#39;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;A beamline component in a neXus file.&quot;&quot;&quot;</span>
+<span class="n">COMPONENT_CONSTRAINTS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span>
+    <span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">,</span>
+    <span class="n">snx</span><span class="o">.</span><span class="n">NXsource</span><span class="p">,</span>
+    <span class="n">snx</span><span class="o">.</span><span class="n">NXdisk_chopper</span><span class="p">,</span>
+    <span class="n">snx</span><span class="o">.</span><span class="n">NXcrystal</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Base constraints for the Component type variable.</span>
+
+<span class="sd">This list will be supplemented with monitor types when creating a pipeline.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">UniqueComponent</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;UniqueComponent&#39;</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">NXsource</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Components that can be identified by their type as there will only be one.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="Beamline">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.Beamline.html#ess.reduce.nexus.types.Beamline">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Beamline</span><span class="p">(</span><span class="n">scn_meta</span><span class="o">.</span><span class="n">Beamline</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">RunType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Beamline metadata.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Measurement">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.Measurement.html#ess.reduce.nexus.types.Measurement">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Measurement</span><span class="p">(</span><span class="n">scn_meta</span><span class="o">.</span><span class="n">Measurement</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">RunType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;measurement metadata.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Source">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.Source.html#ess.reduce.nexus.types.Source">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Source</span><span class="p">(</span><span class="n">scn_meta</span><span class="o">.</span><span class="n">Source</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">RunType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neutron source metadata.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusName">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusName.html#ess.reduce.nexus.types.NeXusName">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusName</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Name of a component in a NeXus file.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusClass">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusClass.html#ess.reduce.nexus.types.NeXusClass">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusClass</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="nb">type</span><span class="p">],</span> <span class="nb">type</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;NX_class of a component in a NeXus file.&quot;&quot;&quot;</span></div>
+
+
+
+<span class="n">NeXusDetectorName</span> <span class="o">=</span> <span class="n">NeXusName</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">]</span>
+<span class="sd">&quot;&quot;&quot;Name of a detector (bank) in a NeXus file.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="NeXusComponent">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusComponent.html#ess.reduce.nexus.types.NeXusComponent">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusComponent</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raw data from a NeXus component.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="AllNeXusComponents">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.AllNeXusComponents.html#ess.reduce.nexus.types.AllNeXusComponents">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AllNeXusComponents</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raw data from all NeXus components of one class.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusData">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusData.html#ess.reduce.nexus.types.NeXusData">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusData</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Data array loaded from an NXevent_data or NXdata group.</span>
+
+<span class="sd">    This must be contained in an NXmonitor or NXdetector group.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Position">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.Position.html#ess.reduce.nexus.types.Position">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Position</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Position of a component such as source, sample, monitor, or detector.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="DetectorPositionOffset">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.DetectorPositionOffset.html#ess.reduce.nexus.types.DetectorPositionOffset">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DetectorPositionOffset</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Offset for the detector position, added to base position.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="MonitorPositionOffset">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.MonitorPositionOffset.html#ess.reduce.nexus.types.MonitorPositionOffset">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MonitorPositionOffset</span><span class="p">(</span>
+    <span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Offset for the monitor position, added to base position.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="EmptyDetector">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.EmptyDetector.html#ess.reduce.nexus.types.EmptyDetector">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmptyDetector</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detector without neutron data.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="EmptyMonitor">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.EmptyMonitor.html#ess.reduce.nexus.types.EmptyMonitor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EmptyMonitor</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Monitor without neutron data.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="RawDetector">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.RawDetector.html#ess.reduce.nexus.types.RawDetector">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RawDetector</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calibrated detector merged with neutron event or histogram data.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="RawMonitor">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.RawMonitor.html#ess.reduce.nexus.types.RawMonitor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RawMonitor</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Calibrated monitor merged with neutron event or histogram data.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="Filename">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.Filename.html#ess.reduce.nexus.types.Filename">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Filename</span><span class="p">(</span><span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">Path</span><span class="p">):</span> <span class="o">...</span></div>
+
+
+
+<div class="viewcode-block" id="TimeInterval">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.TimeInterval.html#ess.reduce.nexus.types.TimeInterval">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimeInterval</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">RunType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Range of neutron pulses to load from NXevent_data or NXdata groups.&quot;&quot;&quot;</span>
+
+    <span class="n">value</span><span class="p">:</span> <span class="nb">slice</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusFileSpec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusFileSpec.html#ess.reduce.nexus.types.NeXusFileSpec">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusFileSpec</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">RunType</span><span class="p">]):</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">FilePath</span> <span class="o">|</span> <span class="n">NeXusFile</span> <span class="o">|</span> <span class="n">NeXusGroup</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusLocationSpec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusLocationSpec.html#ess.reduce.nexus.types.NeXusLocationSpec">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusLocationSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    NeXus filename and optional parameters to identify (parts of) a component to load.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">filename</span><span class="p">:</span> <span class="n">FilePath</span> <span class="o">|</span> <span class="n">NeXusFile</span> <span class="o">|</span> <span class="n">NeXusGroup</span>
+    <span class="n">entry_name</span><span class="p">:</span> <span class="n">NeXusEntryName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">component_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">selection</span><span class="p">:</span> <span class="n">snx</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ScippIndex</span> <span class="o">|</span> <span class="nb">slice</span> <span class="o">=</span> <span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusComponentLocationSpec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusComponentLocationSpec.html#ess.reduce.nexus.types.NeXusComponentLocationSpec">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusComponentLocationSpec</span><span class="p">(</span><span class="n">NeXusLocationSpec</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    NeXus filename and optional parameters to identify (parts of) a component to load.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusAllLocationSpec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusAllLocationSpec.html#ess.reduce.nexus.types.NeXusAllLocationSpec">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusAllLocationSpec</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    NeXus parameters to identify all components of a class to load.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">filename</span><span class="p">:</span> <span class="n">FilePath</span> <span class="o">|</span> <span class="n">NeXusFile</span> <span class="o">|</span> <span class="n">NeXusGroup</span>
+    <span class="n">entry_name</span><span class="p">:</span> <span class="n">NeXusEntryName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">selection</span><span class="p">:</span> <span class="n">snx</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ScippIndex</span> <span class="o">|</span> <span class="nb">slice</span> <span class="o">=</span> <span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusAllComponentLocationSpec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusAllComponentLocationSpec.html#ess.reduce.nexus.types.NeXusAllComponentLocationSpec">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusAllComponentLocationSpec</span><span class="p">(</span><span class="n">NeXusAllLocationSpec</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    NeXus parameters to identify all components of a class to load.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusDataLocationSpec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusDataLocationSpec.html#ess.reduce.nexus.types.NeXusDataLocationSpec">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusDataLocationSpec</span><span class="p">(</span><span class="n">NeXusLocationSpec</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;NeXus filename and parameters to identify (parts of) detector data to load.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="NeXusTransformationChain">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusTransformationChain.html#ess.reduce.nexus.types.NeXusTransformationChain">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusTransformationChain</span><span class="p">(</span></div>
+
+    <span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">TransformationChain</span><span class="p">],</span>
+    <span class="n">snx</span><span class="o">.</span><span class="n">TransformationChain</span><span class="p">,</span>
+<span class="p">):</span> <span class="o">...</span>
+
+
+<div class="viewcode-block" id="NeXusTransformation">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusTransformation.html#ess.reduce.nexus.types.NeXusTransformation">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">NeXusTransformation</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]):</span>
+    <span class="n">value</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+
+<div class="viewcode-block" id="NeXusTransformation.from_chain">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.NeXusTransformation.html#ess.reduce.nexus.types.NeXusTransformation.from_chain">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_chain</span><span class="p">(</span>
+        <span class="n">chain</span><span class="p">:</span> <span class="n">NeXusTransformationChain</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;NeXusTransformation[Component, RunType]&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert a transformation chain to a single transformation.</span>
+
+<span class="sd">        As transformation chains may be time-dependent, this method will need to select</span>
+<span class="sd">        a specific time point to convert to a single transformation. This may include</span>
+<span class="sd">        averaging as well as threshold checks. This is not implemented yet and we</span>
+<span class="sd">        therefore currently raise an error if the transformation chain does not compute</span>
+<span class="sd">        to a scalar.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">chain</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">sizes</span> <span class="o">!=</span> <span class="p">{}:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expected scalar transformation, got </span><span class="si">{</span><span class="n">chain</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">transform</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">NeXusTransformation</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">transform</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RawChoppers">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.RawChoppers.html#ess.reduce.nexus.types.RawChoppers">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RawChoppers</span><span class="p">(</span>
+    <span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="n">Any</span><span class="p">]]],</span>
+    <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="n">Any</span><span class="p">]],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;All choppers in a NeXus file.&quot;&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="DiskChoppers">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.types.DiskChoppers.html#ess.reduce.nexus.types.DiskChoppers">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DiskChoppers</span><span class="p">(</span>
+    <span class="n">sciline</span><span class="o">.</span><span class="n">Scope</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="n">DiskChopper</span><span class="p">]],</span>
+    <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="n">DiskChopper</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;All disk choppers parsed from a NeXus file.&quot;&quot;&quot;</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ESSreduce version: 26.2.2 (<a href="https://github.com/scipp/essreduce/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

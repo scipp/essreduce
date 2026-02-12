@@ -1,0 +1,1650 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index &#8212; ESSreduce</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="_static/documentation_options.js?v=de9f5bbb"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <script src="_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="_static/favicon.svg"/>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="26.2.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/logo.svg" class="logo__image only-light" alt="ESSreduce - Home"/>
+    <img src="_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ESSreduce - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#_"><strong>_</strong></a>
+ | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
+ | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#U"><strong>U</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ 
+</div>
+<h2 id="_">_</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.live.raw.Detector.html#ess.reduce.live.raw.Detector.__init__">__init__() (ess.reduce.live.raw.Detector method)</a>
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer.__init__">(ess.reduce.live.raw.Histogrammer method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.live.raw.LogicalView.html#ess.reduce.live.raw.LogicalView.__init__">(ess.reduce.live.raw.LogicalView method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.__init__">(ess.reduce.live.raw.RollingDetectorView method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.live.roi.ROIFilter.html#ess.reduce.live.roi.ROIFilter.__init__">(ess.reduce.live.roi.ROIFilter method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONAttributeManager.html#ess.reduce.nexus.json_nexus.JSONAttributeManager.__init__">(ess.reduce.nexus.json_nexus.JSONAttributeManager method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONAttrID.html#ess.reduce.nexus.json_nexus.JSONAttrID.__init__">(ess.reduce.nexus.json_nexus.JSONAttrID method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONDataset.html#ess.reduce.nexus.json_nexus.JSONDataset.__init__">(ess.reduce.nexus.json_nexus.JSONDataset method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONGroup.html#ess.reduce.nexus.json_nexus.JSONGroup.__init__">(ess.reduce.nexus.json_nexus.JSONGroup method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONNode.html#ess.reduce.nexus.json_nexus.JSONNode.__init__">(ess.reduce.nexus.json_nexus.JSONNode method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONTypeStringID.html#ess.reduce.nexus.json_nexus.JSONTypeStringID.__init__">(ess.reduce.nexus.json_nexus.JSONTypeStringID method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.AllNeXusComponents.html#ess.reduce.nexus.types.AllNeXusComponents.__init__">(ess.reduce.nexus.types.AllNeXusComponents method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.Beamline.html#ess.reduce.nexus.types.Beamline.__init__">(ess.reduce.nexus.types.Beamline method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.DetectorPositionOffset.html#ess.reduce.nexus.types.DetectorPositionOffset.__init__">(ess.reduce.nexus.types.DetectorPositionOffset method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.DiskChoppers.html#ess.reduce.nexus.types.DiskChoppers.__init__">(ess.reduce.nexus.types.DiskChoppers method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.EmptyDetector.html#ess.reduce.nexus.types.EmptyDetector.__init__">(ess.reduce.nexus.types.EmptyDetector method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.EmptyMonitor.html#ess.reduce.nexus.types.EmptyMonitor.__init__">(ess.reduce.nexus.types.EmptyMonitor method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.Filename.html#ess.reduce.nexus.types.Filename.__init__">(ess.reduce.nexus.types.Filename method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.Measurement.html#ess.reduce.nexus.types.Measurement.__init__">(ess.reduce.nexus.types.Measurement method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.MonitorPositionOffset.html#ess.reduce.nexus.types.MonitorPositionOffset.__init__">(ess.reduce.nexus.types.MonitorPositionOffset method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusAllComponentLocationSpec.html#ess.reduce.nexus.types.NeXusAllComponentLocationSpec.__init__">(ess.reduce.nexus.types.NeXusAllComponentLocationSpec method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusAllLocationSpec.html#ess.reduce.nexus.types.NeXusAllLocationSpec.__init__">(ess.reduce.nexus.types.NeXusAllLocationSpec method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusClass.html#ess.reduce.nexus.types.NeXusClass.__init__">(ess.reduce.nexus.types.NeXusClass method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusComponent.html#ess.reduce.nexus.types.NeXusComponent.__init__">(ess.reduce.nexus.types.NeXusComponent method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusComponentLocationSpec.html#ess.reduce.nexus.types.NeXusComponentLocationSpec.__init__">(ess.reduce.nexus.types.NeXusComponentLocationSpec method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusData.html#ess.reduce.nexus.types.NeXusData.__init__">(ess.reduce.nexus.types.NeXusData method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusDataLocationSpec.html#ess.reduce.nexus.types.NeXusDataLocationSpec.__init__">(ess.reduce.nexus.types.NeXusDataLocationSpec method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusFileSpec.html#ess.reduce.nexus.types.NeXusFileSpec.__init__">(ess.reduce.nexus.types.NeXusFileSpec method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusLocationSpec.html#ess.reduce.nexus.types.NeXusLocationSpec.__init__">(ess.reduce.nexus.types.NeXusLocationSpec method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusName.html#ess.reduce.nexus.types.NeXusName.__init__">(ess.reduce.nexus.types.NeXusName method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusTransformation.html#ess.reduce.nexus.types.NeXusTransformation.__init__">(ess.reduce.nexus.types.NeXusTransformation method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.NeXusTransformationChain.html#ess.reduce.nexus.types.NeXusTransformationChain.__init__">(ess.reduce.nexus.types.NeXusTransformationChain method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.Position.html#ess.reduce.nexus.types.Position.__init__">(ess.reduce.nexus.types.Position method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.RawChoppers.html#ess.reduce.nexus.types.RawChoppers.__init__">(ess.reduce.nexus.types.RawChoppers method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.RawDetector.html#ess.reduce.nexus.types.RawDetector.__init__">(ess.reduce.nexus.types.RawDetector method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.RawMonitor.html#ess.reduce.nexus.types.RawMonitor.__init__">(ess.reduce.nexus.types.RawMonitor method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.Source.html#ess.reduce.nexus.types.Source.__init__">(ess.reduce.nexus.types.Source method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.TimeInterval.html#ess.reduce.nexus.types.TimeInterval.__init__">(ess.reduce.nexus.types.TimeInterval method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.TransmissionRun.html#ess.reduce.nexus.types.TransmissionRun.__init__">(ess.reduce.nexus.types.TransmissionRun method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.__init__">(ess.reduce.streaming.Accumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.EternalAccumulator.html#ess.reduce.streaming.EternalAccumulator.__init__">(ess.reduce.streaming.EternalAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.MaxAccumulator.html#ess.reduce.streaming.MaxAccumulator.__init__">(ess.reduce.streaming.MaxAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.MeanAccumulator.html#ess.reduce.streaming.MeanAccumulator.__init__">(ess.reduce.streaming.MeanAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.MinAccumulator.html#ess.reduce.streaming.MinAccumulator.__init__">(ess.reduce.streaming.MinAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.RollingAccumulator.html#ess.reduce.streaming.RollingAccumulator.__init__">(ess.reduce.streaming.RollingAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.__init__">(ess.reduce.streaming.StreamProcessor method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.TofInterpolator.html#ess.reduce.time_of_flight.eto_to_tof.TofInterpolator.__init__">(ess.reduce.time_of_flight.eto_to_tof.TofInterpolator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.fakes.FakeBeamline.html#ess.reduce.time_of_flight.fakes.FakeBeamline.__init__">(ess.reduce.time_of_flight.fakes.FakeBeamline method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_numba.Interpolator.html#ess.reduce.time_of_flight.interpolator_numba.Interpolator.__init__">(ess.reduce.time_of_flight.interpolator_numba.Interpolator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_scipy.Interpolator.html#ess.reduce.time_of_flight.interpolator_scipy.Interpolator.__init__">(ess.reduce.time_of_flight.interpolator_scipy.Interpolator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.lut.BeamlineComponentReading.html#ess.reduce.time_of_flight.lut.BeamlineComponentReading.__init__">(ess.reduce.time_of_flight.lut.BeamlineComponentReading method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.lut.SimulationResults.html#ess.reduce.time_of_flight.lut.SimulationResults.__init__">(ess.reduce.time_of_flight.lut.SimulationResults method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.DetectorLtotal.html#ess.reduce.time_of_flight.types.DetectorLtotal.__init__">(ess.reduce.time_of_flight.types.DetectorLtotal method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.ErrorLimitedTofLookupTable.html#ess.reduce.time_of_flight.types.ErrorLimitedTofLookupTable.__init__">(ess.reduce.time_of_flight.types.ErrorLimitedTofLookupTable method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.MonitorLtotal.html#ess.reduce.time_of_flight.types.MonitorLtotal.__init__">(ess.reduce.time_of_flight.types.MonitorLtotal method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.ToaDetector.html#ess.reduce.time_of_flight.types.ToaDetector.__init__">(ess.reduce.time_of_flight.types.ToaDetector method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofDetector.html#ess.reduce.time_of_flight.types.TofDetector.__init__">(ess.reduce.time_of_flight.types.TofDetector method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.__init__">(ess.reduce.time_of_flight.types.TofLookupTable method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofMonitor.html#ess.reduce.time_of_flight.types.TofMonitor.__init__">(ess.reduce.time_of_flight.types.TofMonitor method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.WavelengthDetector.html#ess.reduce.time_of_flight.types.WavelengthDetector.__init__">(ess.reduce.time_of_flight.types.WavelengthDetector method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.WavelengthMonitor.html#ess.reduce.time_of_flight.types.WavelengthMonitor.__init__">(ess.reduce.time_of_flight.types.WavelengthMonitor method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.ui.OutputSelectionWidget.html#ess.reduce.ui.OutputSelectionWidget.__init__">(ess.reduce.ui.OutputSelectionWidget method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.ui.ParameterBox.html#ess.reduce.ui.ParameterBox.__init__">(ess.reduce.ui.ParameterBox method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.ui.ResultBox.html#ess.reduce.ui.ResultBox.__init__">(ess.reduce.ui.ResultBox method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.ui.WorkflowWidget.html#ess.reduce.ui.WorkflowWidget.__init__">(ess.reduce.ui.WorkflowWidget method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.uncertainty.UncertaintyBroadcastMode.html#ess.reduce.uncertainty.UncertaintyBroadcastMode.__init__">(ess.reduce.uncertainty.UncertaintyBroadcastMode method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.widgets.EssWidget.html#ess.reduce.widgets.EssWidget.__init__">(ess.reduce.widgets.EssWidget method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.accumulate">accumulate() (ess.reduce.streaming.StreamProcessor method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator">Accumulator (class in ess.reduce.streaming)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.add_chunk">add_chunk() (ess.reduce.streaming.StreamProcessor method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.add_counts">add_counts() (ess.reduce.live.raw.RollingDetectorView method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.add_events">add_events() (ess.reduce.live.raw.RollingDetectorView method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.all_component_spec.html#ess.reduce.nexus.workflow.all_component_spec">all_component_spec() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.AllNeXusComponents.html#ess.reduce.nexus.types.AllNeXusComponents">AllNeXusComponents (class in ess.reduce.nexus.types)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.AnyRun.html#ess.reduce.nexus.types.AnyRun">AnyRun (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.roi.ROIFilter.html#ess.reduce.live.roi.ROIFilter.apply">apply() (ess.reduce.live.roi.ROIFilter method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer.apply_full">apply_full() (ess.reduce.live.raw.Histogrammer method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.roi.apply_selection.html#ess.reduce.live.roi.apply_selection">apply_selection() (in module ess.reduce.live.roi)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.array">array (ess.reduce.time_of_flight.types.TofLookupTable attribute)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.assemble_detector_data.html#ess.reduce.nexus.workflow.assemble_detector_data">assemble_detector_data() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.assemble_monitor_data.html#ess.reduce.nexus.workflow.assemble_monitor_data">assemble_monitor_data() (in module ess.reduce.nexus.workflow)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.BackgroundRun.html#ess.reduce.nexus.types.BackgroundRun">BackgroundRun (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.Beamline.html#ess.reduce.nexus.types.Beamline">Beamline (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.BeamlineComponentReading.html#ess.reduce.time_of_flight.lut.BeamlineComponentReading">BeamlineComponentReading (class in ess.reduce.time_of_flight.lut)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.widgets.bin_edges_parameter_widget.html#ess.reduce.widgets.bin_edges_parameter_widget">bin_edges_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.boolean_parameter_widget.html#ess.reduce.widgets.boolean_parameter_widget">boolean_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.uncertainty.broadcast_uncertainties.html#ess.reduce.uncertainty.broadcast_uncertainties">broadcast_uncertainties() (in module ess.reduce.uncertainty)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.uncertainty.broadcast_with_upper_bound_variances.html#ess.reduce.uncertainty.broadcast_with_upper_bound_variances">broadcast_with_upper_bound_variances() (in module ess.reduce.uncertainty)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.CaveMonitor.html#ess.reduce.nexus.types.CaveMonitor">CaveMonitor (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.choppers">choppers (ess.reduce.time_of_flight.types.TofLookupTable attribute)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.clear">clear() (ess.reduce.streaming.Accumulator method)</a>
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.streaming.EternalAccumulator.html#ess.reduce.streaming.EternalAccumulator.clear">(ess.reduce.streaming.EternalAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.MaxAccumulator.html#ess.reduce.streaming.MaxAccumulator.clear">(ess.reduce.streaming.MaxAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.MeanAccumulator.html#ess.reduce.streaming.MeanAccumulator.clear">(ess.reduce.streaming.MeanAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.MinAccumulator.html#ess.reduce.streaming.MinAccumulator.clear">(ess.reduce.streaming.MinAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.RollingAccumulator.html#ess.reduce.streaming.RollingAccumulator.clear">(ess.reduce.streaming.RollingAccumulator method)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.clear">(ess.reduce.streaming.StreamProcessor method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.clear_counts">clear_counts() (ess.reduce.live.raw.RollingDetectorView method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.Component.html#ess.reduce.nexus.types.Component">Component (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.COMPONENT_CONSTRAINTS.html#ess.reduce.nexus.types.COMPONENT_CONSTRAINTS">COMPONENT_CONSTRAINTS (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.component_spec_by_name.html#ess.reduce.nexus.workflow.component_spec_by_name">component_spec_by_name() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.compute_position.html#ess.reduce.nexus.workflow.compute_position">compute_position() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.ui.connect_output_selection_and_parameter_run_button.html#ess.reduce.ui.connect_output_selection_and_parameter_run_button">connect_output_selection_and_parameter_run_button() (in module ess.reduce.ui)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.ui.connect_refresh_button.html#ess.reduce.ui.connect_refresh_button">connect_refresh_button() (in module ess.reduce.ui)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.contains_stream.html#ess.reduce.nexus.json_nexus.contains_stream">contains_stream() (in module ess.reduce.nexus.json_nexus)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.create_parameter_widget.html#ess.reduce.widgets.create_parameter_widget">create_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.data_by_name.html#ess.reduce.nexus.workflow.data_by_name">data_by_name() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.Detector.html#ess.reduce.live.raw.Detector">Detector (class in ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation.html#ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation">detector_ltotal_from_straight_line_approximation() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data.html#ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data">detector_time_of_arrival_data() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_time_of_flight_data.html#ess.reduce.time_of_flight.eto_to_tof.detector_time_of_flight_data">detector_time_of_flight_data() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_wavelength_data.html#ess.reduce.time_of_flight.eto_to_tof.detector_wavelength_data">detector_wavelength_data() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.DetectorLtotal.html#ess.reduce.time_of_flight.types.DetectorLtotal">DetectorLtotal (class in ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.DetectorPositionOffset.html#ess.reduce.nexus.types.DetectorPositionOffset">DetectorPositionOffset (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.DiskChoppers.html#ess.reduce.nexus.types.DiskChoppers">DiskChoppers (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.distance_resolution">distance_resolution (ess.reduce.time_of_flight.types.TofLookupTable attribute)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.DistanceResolution.html#ess.reduce.time_of_flight.lut.DistanceResolution">DistanceResolution (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.uncertainty.UncertaintyBroadcastMode.html#ess.reduce.uncertainty.UncertaintyBroadcastMode.drop">drop (ess.reduce.uncertainty.UncertaintyBroadcastMode attribute)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.uncertainty.drop_variances_if_broadcast.html#ess.reduce.uncertainty.drop_variances_if_broadcast">drop_variances_if_broadcast() (in module ess.reduce.uncertainty)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.EmptyBeamRun.html#ess.reduce.nexus.types.EmptyBeamRun">EmptyBeamRun (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.EmptyDetector.html#ess.reduce.nexus.types.EmptyDetector">EmptyDetector (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.EmptyMonitor.html#ess.reduce.nexus.types.EmptyMonitor">EmptyMonitor (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.ErrorLimitedTofLookupTable.html#ess.reduce.time_of_flight.types.ErrorLimitedTofLookupTable">ErrorLimitedTofLookupTable (class in ess.reduce.time_of_flight.types)</a>
+</li>
+      <li>
+    ess.reduce.live
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.live.html#module-ess.reduce.live">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.live.raw
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.live.raw.html#module-ess.reduce.live.raw">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.live.roi
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.live.roi.html#module-ess.reduce.live.roi">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.logging
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.logging.html#module-ess.reduce.logging">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.nexus
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.nexus.html#module-ess.reduce.nexus">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.nexus.json_generator
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.nexus.json_generator.html#module-ess.reduce.nexus.json_generator">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.nexus.json_nexus
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.html#module-ess.reduce.nexus.json_nexus">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.nexus.types
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.nexus.types.html#module-ess.reduce.nexus.types">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.nexus.workflow
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.nexus.workflow.html#module-ess.reduce.nexus.workflow">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.normalization
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.normalization.html#module-ess.reduce.normalization">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.streaming
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.streaming.html#module-ess.reduce.streaming">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    ess.reduce.time_of_flight
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.html#module-ess.reduce.time_of_flight">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.time_of_flight.eto_to_tof
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.html#module-ess.reduce.time_of_flight.eto_to_tof">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.time_of_flight.fakes
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.fakes.html#module-ess.reduce.time_of_flight.fakes">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.time_of_flight.interpolator_numba
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_numba.html#module-ess.reduce.time_of_flight.interpolator_numba">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.time_of_flight.interpolator_scipy
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_scipy.html#module-ess.reduce.time_of_flight.interpolator_scipy">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.time_of_flight.lut
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.lut.html#module-ess.reduce.time_of_flight.lut">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.time_of_flight.resample
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.resample.html#module-ess.reduce.time_of_flight.resample">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.time_of_flight.types
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.html#module-ess.reduce.time_of_flight.types">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.time_of_flight.workflow
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.workflow.html#module-ess.reduce.time_of_flight.workflow">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.ui
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.ui.html#module-ess.reduce.ui">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.uncertainty
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.uncertainty.html#module-ess.reduce.uncertainty">module</a>
+</li>
+      </ul></li>
+      <li>
+    ess.reduce.widgets
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.widgets.html#module-ess.reduce.widgets">module</a>
+</li>
+      </ul></li>
+      <li><a href="generated/modules/ess.reduce.widgets.EssWidget.html#ess.reduce.widgets.EssWidget">EssWidget (class in ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.EternalAccumulator.html#ess.reduce.streaming.EternalAccumulator">EternalAccumulator (class in ess.reduce.streaming)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_generator.event_data_generator.html#ess.reduce.nexus.json_generator.event_data_generator">event_data_generator() (in module ess.reduce.nexus.json_generator)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.uncertainty.UncertaintyBroadcastMode.html#ess.reduce.uncertainty.UncertaintyBroadcastMode.fail">fail (ess.reduce.uncertainty.UncertaintyBroadcastMode attribute)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.fakes.FakeBeamline.html#ess.reduce.time_of_flight.fakes.FakeBeamline">FakeBeamline (class in ess.reduce.time_of_flight.fakes)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.file_path_to_file_spec.html#ess.reduce.nexus.workflow.file_path_to_file_spec">file_path_to_file_spec() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.Filename.html#ess.reduce.nexus.types.Filename">Filename (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.filename_parameter_widget.html#ess.reduce.widgets.filename_parameter_widget">filename_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.FilePath.html#ess.reduce.nexus.types.FilePath">FilePath (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.finalize">finalize() (ess.reduce.streaming.StreamProcessor method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.resample.find_strictly_increasing_sections.html#ess.reduce.time_of_flight.resample.find_strictly_increasing_sections">find_strictly_increasing_sections() (in module ess.reduce.time_of_flight.resample)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.FrameMonitor0.html#ess.reduce.nexus.types.FrameMonitor0">FrameMonitor0 (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.FrameMonitor1.html#ess.reduce.nexus.types.FrameMonitor1">FrameMonitor1 (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.FrameMonitor2.html#ess.reduce.nexus.types.FrameMonitor2">FrameMonitor2 (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.FrameMonitor3.html#ess.reduce.nexus.types.FrameMonitor3">FrameMonitor3 (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusTransformation.html#ess.reduce.nexus.types.NeXusTransformation.from_chain">from_chain() (ess.reduce.nexus.types.NeXusTransformation static method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer.from_coords">from_coords() (ess.reduce.live.raw.Histogrammer static method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.from_detector_and_histogrammer">from_detector_and_histogrammer() (ess.reduce.live.raw.RollingDetectorView static method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.from_nexus">from_nexus() (ess.reduce.live.raw.RollingDetectorView static method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.full_time_interval.html#ess.reduce.nexus.workflow.full_time_interval">full_time_interval() (in module ess.reduce.nexus.workflow)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.live.raw.gaussian_position_noise.html#ess.reduce.live.raw.gaussian_position_noise">gaussian_position_noise() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.GenericNeXusWorkflow.html#ess.reduce.nexus.workflow.GenericNeXusWorkflow">GenericNeXusWorkflow() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.workflow.GenericTofWorkflow.html#ess.reduce.time_of_flight.workflow.GenericTofWorkflow">GenericTofWorkflow() (in module ess.reduce.time_of_flight.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.get">get() (ess.reduce.live.raw.RollingDetectorView method)</a>
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONAttributeManager.html#ess.reduce.nexus.json_nexus.JSONAttributeManager.get">(ess.reduce.nexus.json_nexus.JSONAttributeManager method)</a>
+</li>
+      </ul></li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.get_calibrated_detector.html#ess.reduce.nexus.workflow.get_calibrated_detector">get_calibrated_detector() (in module ess.reduce.nexus.workflow)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.get_calibrated_monitor.html#ess.reduce.nexus.workflow.get_calibrated_monitor">get_calibrated_monitor() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.logging.get_logger.html#ess.reduce.logging.get_logger">get_logger() (in module ess.reduce.logging)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.resample.get_min_max.html#ess.reduce.time_of_flight.resample.get_min_max">get_min_max() (in module ess.reduce.time_of_flight.resample)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.ui.get_parameter_widget_values.html#ess.reduce.ui.get_parameter_widget_values">get_parameter_widget_values() (in module ess.reduce.ui)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.get_transformation_chain.html#ess.reduce.nexus.workflow.get_transformation_chain">get_transformation_chain() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.gravity_vector_neg_y.html#ess.reduce.nexus.workflow.gravity_vector_neg_y">gravity_vector_neg_y() (in module ess.reduce.nexus.workflow)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer">Histogrammer (class in ess.reduce.live.raw)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="I">I</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.IncidentMonitor.html#ess.reduce.nexus.types.IncidentMonitor">IncidentMonitor (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer.input_indices">input_indices() (ess.reduce.live.raw.Histogrammer method)</a>
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.live.raw.LogicalView.html#ess.reduce.live.raw.LogicalView.input_indices">(ess.reduce.live.raw.LogicalView method)</a>
+</li>
+      </ul></li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_numba.interpolate.html#ess.reduce.time_of_flight.interpolator_numba.interpolate">interpolate() (in module ess.reduce.time_of_flight.interpolator_numba)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_numba.Interpolator.html#ess.reduce.time_of_flight.interpolator_numba.Interpolator">Interpolator (class in ess.reduce.time_of_flight.interpolator_numba)</a>
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_scipy.Interpolator.html#ess.reduce.time_of_flight.interpolator_scipy.Interpolator">(class in ess.reduce.time_of_flight.interpolator_scipy)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.is_empty">is_empty (ess.reduce.streaming.Accumulator property)</a>
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.streaming.EternalAccumulator.html#ess.reduce.streaming.EternalAccumulator.is_empty">(ess.reduce.streaming.EternalAccumulator property)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.MaxAccumulator.html#ess.reduce.streaming.MaxAccumulator.is_empty">(ess.reduce.streaming.MaxAccumulator property)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.MinAccumulator.html#ess.reduce.streaming.MinAccumulator.is_empty">(ess.reduce.streaming.MinAccumulator property)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.RollingAccumulator.html#ess.reduce.streaming.RollingAccumulator.is_empty">(ess.reduce.streaming.RollingAccumulator property)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.json_nexus_group.html#ess.reduce.nexus.json_nexus.json_nexus_group">json_nexus_group() (in module ess.reduce.nexus.json_nexus)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONAttributeManager.html#ess.reduce.nexus.json_nexus.JSONAttributeManager">JSONAttributeManager (class in ess.reduce.nexus.json_nexus)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONAttrID.html#ess.reduce.nexus.json_nexus.JSONAttrID">JSONAttrID (class in ess.reduce.nexus.json_nexus)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONDataset.html#ess.reduce.nexus.json_nexus.JSONDataset">JSONDataset (class in ess.reduce.nexus.json_nexus)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONGroup.html#ess.reduce.nexus.json_nexus.JSONGroup">JSONGroup (class in ess.reduce.nexus.json_nexus)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONNode.html#ess.reduce.nexus.json_nexus.JSONNode">JSONNode (class in ess.reduce.nexus.json_nexus)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.JSONTypeStringID.html#ess.reduce.nexus.json_nexus.JSONTypeStringID">JSONTypeStringID (class in ess.reduce.nexus.json_nexus)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.load_all_nexus_components.html#ess.reduce.nexus.workflow.load_all_nexus_components">load_all_nexus_components() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.load_beamline_metadata_from_nexus.html#ess.reduce.nexus.workflow.load_beamline_metadata_from_nexus">load_beamline_metadata_from_nexus() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.load_measurement_metadata_from_nexus.html#ess.reduce.nexus.workflow.load_measurement_metadata_from_nexus">load_measurement_metadata_from_nexus() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.load_nexus_component.html#ess.reduce.nexus.workflow.load_nexus_component">load_nexus_component() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.load_nexus_data.html#ess.reduce.nexus.workflow.load_nexus_data">load_nexus_data() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.load_nexus_sample.html#ess.reduce.nexus.workflow.load_nexus_sample">load_nexus_sample() (in module ess.reduce.nexus.workflow)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.workflow.load_tof_lookup_table.html#ess.reduce.time_of_flight.workflow.load_tof_lookup_table">load_tof_lookup_table() (in module ess.reduce.time_of_flight.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.LoadDetectorWorkflow.html#ess.reduce.nexus.workflow.LoadDetectorWorkflow">LoadDetectorWorkflow() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.LoadMonitorWorkflow.html#ess.reduce.nexus.workflow.LoadMonitorWorkflow">LoadMonitorWorkflow() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.LogicalView.html#ess.reduce.live.raw.LogicalView">LogicalView (class in ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.LookupTableRelativeErrorThreshold.html#ess.reduce.time_of_flight.types.LookupTableRelativeErrorThreshold">LookupTableRelativeErrorThreshold (in module ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.LtotalRange.html#ess.reduce.time_of_flight.lut.LtotalRange">LtotalRange (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.live.raw.make_cylinder_mantle_coords.html#ess.reduce.live.raw.make_cylinder_mantle_coords">make_cylinder_mantle_coords() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.make_json_attr.html#ess.reduce.nexus.json_nexus.make_json_attr">make_json_attr() (in module ess.reduce.nexus.json_nexus)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.make_json_dataset.html#ess.reduce.nexus.json_nexus.make_json_dataset">make_json_dataset() (in module ess.reduce.nexus.json_nexus)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.resample.make_regular_grid.html#ess.reduce.time_of_flight.resample.make_regular_grid">make_regular_grid() (in module ess.reduce.time_of_flight.resample)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.make_roi_filter">make_roi_filter() (ess.reduce.live.raw.RollingDetectorView method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.make_tof_lookup_table.html#ess.reduce.time_of_flight.lut.make_tof_lookup_table">make_tof_lookup_table() (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.make_xy_plane_coords.html#ess.reduce.live.raw.make_xy_plane_coords">make_xy_plane_coords() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.mask_large_uncertainty_in_lut.html#ess.reduce.time_of_flight.eto_to_tof.mask_large_uncertainty_in_lut">mask_large_uncertainty_in_lut() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.MaxAccumulator.html#ess.reduce.streaming.MaxAccumulator">MaxAccumulator (class in ess.reduce.streaming)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.maybe_hist.html#ess.reduce.streaming.maybe_hist">maybe_hist() (in module ess.reduce.streaming)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.MeanAccumulator.html#ess.reduce.streaming.MeanAccumulator">MeanAccumulator (class in ess.reduce.streaming)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.Measurement.html#ess.reduce.nexus.types.Measurement">Measurement (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.MinAccumulator.html#ess.reduce.streaming.MinAccumulator">MinAccumulator (class in ess.reduce.streaming)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.json_nexus.MissingAttribute.html#ess.reduce.nexus.json_nexus.MissingAttribute">MissingAttribute</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.Beamline.html#ess.reduce.nexus.types.Beamline.model_config">model_config (ess.reduce.nexus.types.Beamline attribute)</a>
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.nexus.types.Measurement.html#ess.reduce.nexus.types.Measurement.model_config">(ess.reduce.nexus.types.Measurement attribute)</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.Source.html#ess.reduce.nexus.types.Source.model_config">(ess.reduce.nexus.types.Source attribute)</a>
+</li>
+      </ul></li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.live.html#module-ess.reduce.live">ess.reduce.live</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.live.raw.html#module-ess.reduce.live.raw">ess.reduce.live.raw</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.live.roi.html#module-ess.reduce.live.roi">ess.reduce.live.roi</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.logging.html#module-ess.reduce.logging">ess.reduce.logging</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.html#module-ess.reduce.nexus">ess.reduce.nexus</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.json_generator.html#module-ess.reduce.nexus.json_generator">ess.reduce.nexus.json_generator</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.json_nexus.html#module-ess.reduce.nexus.json_nexus">ess.reduce.nexus.json_nexus</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.types.html#module-ess.reduce.nexus.types">ess.reduce.nexus.types</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.nexus.workflow.html#module-ess.reduce.nexus.workflow">ess.reduce.nexus.workflow</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.normalization.html#module-ess.reduce.normalization">ess.reduce.normalization</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.streaming.html#module-ess.reduce.streaming">ess.reduce.streaming</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.html#module-ess.reduce.time_of_flight">ess.reduce.time_of_flight</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.html#module-ess.reduce.time_of_flight.eto_to_tof">ess.reduce.time_of_flight.eto_to_tof</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.fakes.html#module-ess.reduce.time_of_flight.fakes">ess.reduce.time_of_flight.fakes</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_numba.html#module-ess.reduce.time_of_flight.interpolator_numba">ess.reduce.time_of_flight.interpolator_numba</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.interpolator_scipy.html#module-ess.reduce.time_of_flight.interpolator_scipy">ess.reduce.time_of_flight.interpolator_scipy</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.lut.html#module-ess.reduce.time_of_flight.lut">ess.reduce.time_of_flight.lut</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.resample.html#module-ess.reduce.time_of_flight.resample">ess.reduce.time_of_flight.resample</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.types.html#module-ess.reduce.time_of_flight.types">ess.reduce.time_of_flight.types</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.time_of_flight.workflow.html#module-ess.reduce.time_of_flight.workflow">ess.reduce.time_of_flight.workflow</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.ui.html#module-ess.reduce.ui">ess.reduce.ui</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.uncertainty.html#module-ess.reduce.uncertainty">ess.reduce.uncertainty</a>
+</li>
+        <li><a href="generated/modules/ess.reduce.widgets.html#module-ess.reduce.widgets">ess.reduce.widgets</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.monitor_ltotal_from_straight_line_approximation.html#ess.reduce.time_of_flight.eto_to_tof.monitor_ltotal_from_straight_line_approximation">monitor_ltotal_from_straight_line_approximation() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.monitor_time_of_flight_data.html#ess.reduce.time_of_flight.eto_to_tof.monitor_time_of_flight_data">monitor_time_of_flight_data() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.monitor_wavelength_data.html#ess.reduce.time_of_flight.eto_to_tof.monitor_wavelength_data">monitor_wavelength_data() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.MonitorLtotal.html#ess.reduce.time_of_flight.types.MonitorLtotal">MonitorLtotal (class in ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.MonitorPositionOffset.html#ess.reduce.nexus.types.MonitorPositionOffset">MonitorPositionOffset (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.MonitorType.html#ess.reduce.nexus.types.MonitorType">MonitorType (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.multi_filename_parameter_widget.html#ess.reduce.widgets.multi_filename_parameter_widget">multi_filename_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.multi_string_parameter_widget.html#ess.reduce.widgets.multi_string_parameter_widget">multi_string_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusAllComponentLocationSpec.html#ess.reduce.nexus.types.NeXusAllComponentLocationSpec">NeXusAllComponentLocationSpec (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusAllLocationSpec.html#ess.reduce.nexus.types.NeXusAllLocationSpec">NeXusAllLocationSpec (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusClass.html#ess.reduce.nexus.types.NeXusClass">NeXusClass (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusComponent.html#ess.reduce.nexus.types.NeXusComponent">NeXusComponent (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusComponentLocationSpec.html#ess.reduce.nexus.types.NeXusComponentLocationSpec">NeXusComponentLocationSpec (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusData.html#ess.reduce.nexus.types.NeXusData">NeXusData (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusDataLocationSpec.html#ess.reduce.nexus.types.NeXusDataLocationSpec">NeXusDataLocationSpec (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusDetectorName.html#ess.reduce.nexus.types.NeXusDetectorName">NeXusDetectorName (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusEntryName.html#ess.reduce.nexus.types.NeXusEntryName">NeXusEntryName (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusFile.html#ess.reduce.nexus.types.NeXusFile">NeXusFile (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusFileSpec.html#ess.reduce.nexus.types.NeXusFileSpec">NeXusFileSpec (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusGroup.html#ess.reduce.nexus.types.NeXusGroup">NeXusGroup (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusLocationSpec.html#ess.reduce.nexus.types.NeXusLocationSpec">NeXusLocationSpec (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusName.html#ess.reduce.nexus.types.NeXusName">NeXusName (class in ess.reduce.nexus.types)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusSourceName.html#ess.reduce.nexus.types.NeXusSourceName">NeXusSourceName (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusTransformation.html#ess.reduce.nexus.types.NeXusTransformation">NeXusTransformation (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.NeXusTransformationChain.html#ess.reduce.nexus.types.NeXusTransformationChain">NeXusTransformationChain (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.no_detector_position_offset.html#ess.reduce.nexus.workflow.no_detector_position_offset">no_detector_position_offset() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.no_monitor_position_offset.html#ess.reduce.nexus.workflow.no_monitor_position_offset">no_monitor_position_offset() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.no_offset.html#ess.reduce.nexus.workflow.no_offset">no_offset (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.normalization.normalize_by_monitor_histogram.html#ess.reduce.normalization.normalize_by_monitor_histogram">normalize_by_monitor_histogram() (in module ess.reduce.normalization)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.normalization.normalize_by_monitor_integrated.html#ess.reduce.normalization.normalize_by_monitor_integrated">normalize_by_monitor_integrated() (in module ess.reduce.normalization)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.NumberOfSimulatedNeutrons.html#ess.reduce.time_of_flight.lut.NumberOfSimulatedNeutrons">NumberOfSimulatedNeutrons (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.nx_class_for_crystal.html#ess.reduce.nexus.workflow.nx_class_for_crystal">nx_class_for_crystal() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.nx_class_for_detector.html#ess.reduce.nexus.workflow.nx_class_for_detector">nx_class_for_detector() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.nx_class_for_disk_chopper.html#ess.reduce.nexus.workflow.nx_class_for_disk_chopper">nx_class_for_disk_chopper() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.nx_class_for_monitor.html#ess.reduce.nexus.workflow.nx_class_for_monitor">nx_class_for_monitor() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.nx_class_for_sample.html#ess.reduce.nexus.workflow.nx_class_for_sample">nx_class_for_sample() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.nx_class_for_source.html#ess.reduce.nexus.workflow.nx_class_for_source">nx_class_for_source() (in module ess.reduce.nexus.workflow)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.on_finalize">on_finalize() (ess.reduce.streaming.Accumulator method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.optional_widget.html#ess.reduce.widgets.optional_widget">optional_widget() (in module ess.reduce.widgets)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.origin.html#ess.reduce.nexus.workflow.origin">origin (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.ui.OutputSelectionWidget.html#ess.reduce.ui.OutputSelectionWidget">OutputSelectionWidget (class in ess.reduce.ui)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.widgets.param_with_bounds_widget.html#ess.reduce.widgets.param_with_bounds_widget">param_with_bounds_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.param_with_option_widget.html#ess.reduce.widgets.param_with_option_widget">param_with_option_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.ui.ParameterBox.html#ess.reduce.ui.ParameterBox">ParameterBox (class in ess.reduce.ui)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.parse_disk_choppers.html#ess.reduce.nexus.workflow.parse_disk_choppers">parse_disk_choppers() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.pixel_cylinder_axis.html#ess.reduce.live.raw.pixel_cylinder_axis">pixel_cylinder_axis() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.pixel_cylinder_radius.html#ess.reduce.live.raw.pixel_cylinder_radius">pixel_cylinder_radius() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.pixel_shape.html#ess.reduce.live.raw.pixel_shape">pixel_shape() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.plot">plot() (ess.reduce.time_of_flight.types.TofLookupTable method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.Position.html#ess.reduce.nexus.types.Position">Position (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.position_noise_for_cylindrical_pixel.html#ess.reduce.live.raw.position_noise_for_cylindrical_pixel">position_noise_for_cylindrical_pixel() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.position_with_noisy_replicas.html#ess.reduce.live.raw.position_with_noisy_replicas">position_with_noisy_replicas() (in module ess.reduce.live.raw)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.PreopenNeXusFile.html#ess.reduce.nexus.types.PreopenNeXusFile">PreopenNeXusFile (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.project_onto_cylinder_z.html#ess.reduce.live.raw.project_onto_cylinder_z">project_onto_cylinder_z() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.project_xy.html#ess.reduce.live.raw.project_xy">project_xy() (in module ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.providers.html#ess.reduce.time_of_flight.eto_to_tof.providers">providers() (in module ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.fakes.psc_choppers.html#ess.reduce.time_of_flight.fakes.psc_choppers">psc_choppers() (in module ess.reduce.time_of_flight.fakes)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.pulse_period">pulse_period (ess.reduce.time_of_flight.types.TofLookupTable attribute)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.fakes.pulse_skipping_choppers.html#ess.reduce.time_of_flight.fakes.pulse_skipping_choppers">pulse_skipping_choppers() (in module ess.reduce.time_of_flight.fakes)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.pulse_stride">pulse_stride (ess.reduce.time_of_flight.types.TofLookupTable attribute)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.PulsePeriod.html#ess.reduce.time_of_flight.lut.PulsePeriod">PulsePeriod (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.PulseStride.html#ess.reduce.time_of_flight.lut.PulseStride">PulseStride (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.PulseStrideOffset.html#ess.reduce.time_of_flight.types.PulseStrideOffset">PulseStrideOffset (in module ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.push">push() (ess.reduce.streaming.Accumulator method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.RawChoppers.html#ess.reduce.nexus.types.RawChoppers">RawChoppers (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.RawDetector.html#ess.reduce.nexus.types.RawDetector">RawDetector (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.RawMonitor.html#ess.reduce.nexus.types.RawMonitor">RawMonitor (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.resample.rebin_strictly_increasing.html#ess.reduce.time_of_flight.resample.rebin_strictly_increasing">rebin_strictly_increasing() (in module ess.reduce.time_of_flight.resample)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.LogicalView.html#ess.reduce.live.raw.LogicalView.replicas">replicas (ess.reduce.live.raw.LogicalView property)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.ui.ResultBox.html#ess.reduce.ui.ResultBox">ResultBox (class in ess.reduce.ui)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.roi.ROIFilter.html#ess.reduce.live.roi.ROIFilter">ROIFilter (class in ess.reduce.live.roi)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.RollingAccumulator.html#ess.reduce.streaming.RollingAccumulator">RollingAccumulator (class in ess.reduce.streaming)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView">RollingDetectorView (class in ess.reduce.live.raw)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.RunType.html#ess.reduce.nexus.types.RunType">RunType (in module ess.reduce.nexus.types)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.SampleRun.html#ess.reduce.nexus.types.SampleRun">SampleRun (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.save_hdf5">save_hdf5() (ess.reduce.time_of_flight.types.TofLookupTable method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.roi.select_indices_in_intervals.html#ess.reduce.live.roi.select_indices_in_intervals">select_indices_in_intervals() (in module ess.reduce.live.roi)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.roi.select_indices_in_polygon.html#ess.reduce.live.roi.select_indices_in_polygon">select_indices_in_polygon() (in module ess.reduce.live.roi)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.set_context">set_context() (ess.reduce.streaming.StreamProcessor method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.ui.set_parameter_widget_values.html#ess.reduce.ui.set_parameter_widget_values">set_parameter_widget_values() (in module ess.reduce.ui)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.roi.ROIFilter.html#ess.reduce.live.roi.ROIFilter.set_roi_from_intervals">set_roi_from_intervals() (ess.reduce.live.roi.ROIFilter method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.roi.ROIFilter.html#ess.reduce.live.roi.ROIFilter.set_roi_from_polygon">set_roi_from_polygon() (ess.reduce.live.roi.ROIFilter method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.simulate_chopper_cascade_using_tof.html#ess.reduce.time_of_flight.lut.simulate_chopper_cascade_using_tof">simulate_chopper_cascade_using_tof() (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.SimulationFacility.html#ess.reduce.time_of_flight.lut.SimulationFacility">SimulationFacility (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.SimulationResults.html#ess.reduce.time_of_flight.lut.SimulationResults">SimulationResults (class in ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.SimulationSeed.html#ess.reduce.time_of_flight.lut.SimulationSeed">SimulationSeed (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.Source.html#ess.reduce.nexus.types.Source">Source (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.fakes.source_position.html#ess.reduce.time_of_flight.fakes.source_position">source_position() (in module ess.reduce.time_of_flight.fakes)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.SourcePosition.html#ess.reduce.time_of_flight.lut.SourcePosition">SourcePosition (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.roi.ROIFilter.html#ess.reduce.live.roi.ROIFilter.spatial_dims">spatial_dims (ess.reduce.live.roi.ROIFilter property)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor">StreamProcessor (class in ess.reduce.streaming)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.string_parameter_widget.html#ess.reduce.widgets.string_parameter_widget">string_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.switchable_widget.html#ess.reduce.widgets.switchable_widget">switchable_widget() (in module ess.reduce.widgets)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable.time_resolution">time_resolution (ess.reduce.time_of_flight.types.TofLookupTable attribute)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.TimeInterval.html#ess.reduce.nexus.types.TimeInterval">TimeInterval (class in ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TimeOfFlightLookupTable.html#ess.reduce.time_of_flight.types.TimeOfFlightLookupTable">TimeOfFlightLookupTable (in module ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TimeOfFlightLookupTableFilename.html#ess.reduce.time_of_flight.types.TimeOfFlightLookupTableFilename">TimeOfFlightLookupTableFilename (in module ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.TimeResolution.html#ess.reduce.time_of_flight.lut.TimeResolution">TimeResolution (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.to_transformation.html#ess.reduce.nexus.workflow.to_transformation">to_transformation() (in module ess.reduce.nexus.workflow)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.ToaDetector.html#ess.reduce.time_of_flight.types.ToaDetector">ToaDetector (class in ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofDetector.html#ess.reduce.time_of_flight.types.TofDetector">TofDetector (class in ess.reduce.time_of_flight.types)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.eto_to_tof.TofInterpolator.html#ess.reduce.time_of_flight.eto_to_tof.TofInterpolator">TofInterpolator (class in ess.reduce.time_of_flight.eto_to_tof)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTable.html#ess.reduce.time_of_flight.types.TofLookupTable">TofLookupTable (class in ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofLookupTableFilename.html#ess.reduce.time_of_flight.types.TofLookupTableFilename">TofLookupTableFilename (in module ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.lut.TofLookupTableWorkflow.html#ess.reduce.time_of_flight.lut.TofLookupTableWorkflow">TofLookupTableWorkflow() (in module ess.reduce.time_of_flight.lut)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.TofMonitor.html#ess.reduce.time_of_flight.types.TofMonitor">TofMonitor (class in ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.transform_weights">transform_weights() (ess.reduce.live.raw.RollingDetectorView method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.TransmissionMonitor.html#ess.reduce.nexus.types.TransmissionMonitor">TransmissionMonitor (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.TransmissionRun.html#ess.reduce.nexus.types.TransmissionRun">TransmissionRun (class in ess.reduce.nexus.types)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="U">U</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.uncertainty.UncertaintyBroadcastMode.html#ess.reduce.uncertainty.UncertaintyBroadcastMode">UncertaintyBroadcastMode (class in ess.reduce.uncertainty)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.nexus.workflow.unique_component_spec.html#ess.reduce.nexus.workflow.unique_component_spec">unique_component_spec() (in module ess.reduce.nexus.workflow)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.nexus.types.UniqueComponent.html#ess.reduce.nexus.types.UniqueComponent">UniqueComponent (in module ess.reduce.nexus.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.uncertainty.UncertaintyBroadcastMode.html#ess.reduce.uncertainty.UncertaintyBroadcastMode.upper_bound">upper_bound (ess.reduce.uncertainty.UncertaintyBroadcastMode attribute)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.value">value (ess.reduce.streaming.Accumulator property)</a>
+
+      <ul>
+        <li><a href="generated/modules/ess.reduce.ui.ParameterBox.html#ess.reduce.ui.ParameterBox.value">(ess.reduce.ui.ParameterBox property)</a>
+</li>
+      </ul></li>
+      <li><a href="generated/modules/ess.reduce.nexus.types.VanadiumRun.html#ess.reduce.nexus.types.VanadiumRun">VanadiumRun (in module ess.reduce.nexus.types)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.widgets.vector_2d_parameter_widget.html#ess.reduce.widgets.vector_2d_parameter_widget">vector_2d_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.widgets.vector_3d_parameter_widget.html#ess.reduce.widgets.vector_3d_parameter_widget">vector_3d_parameter_widget() (in module ess.reduce.widgets)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.visualize">visualize() (ess.reduce.streaming.StreamProcessor method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.WavelengthDetector.html#ess.reduce.time_of_flight.types.WavelengthDetector">WavelengthDetector (class in ess.reduce.time_of_flight.types)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.time_of_flight.types.WavelengthMonitor.html#ess.reduce.time_of_flight.types.WavelengthMonitor">WavelengthMonitor (class in ess.reduce.time_of_flight.types)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.with_logical_view">with_logical_view() (ess.reduce.live.raw.RollingDetectorView static method)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.ui.workflow_widget.html#ess.reduce.ui.workflow_widget">workflow_widget() (in module ess.reduce.ui)</a>
+</li>
+      <li><a href="generated/modules/ess.reduce.ui.WorkflowWidget.html#ess.reduce.ui.WorkflowWidget">WorkflowWidget (class in ess.reduce.ui)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ESSreduce version: 26.2.2 (<a href="https://github.com/scipp/essreduce/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

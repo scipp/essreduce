@@ -1,0 +1,1248 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ess.reduce.time_of_flight.eto_to_tof &#8212; ESSreduce</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=de9f5bbb"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/ess/reduce/time_of_flight/eto_to_tof';</script>
+    <script src="../../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../../_static/favicon.svg"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="26.2.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo.svg" class="logo__image only-light" alt="ESSreduce - Home"/>
+    <img src="../../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ESSreduce - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ess.reduce.time_of_flight.eto_to_tof</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for ess.reduce.time_of_flight.eto_to_tof</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2025 Scipp contributors (https://github.com/scipp)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Time-of-flight workflow for unwrapping the time of arrival of the neutron at the</span>
+<span class="sd">detector.</span>
+<span class="sd">This workflow is used to convert raw detector data with event_time_zero and</span>
+<span class="sd">event_time_offset coordinates to data with a time-of-flight coordinate.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scippneutron</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">scn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scippnexus</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">snx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron._utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">elem_unit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.conversion.tof</span><span class="w"> </span><span class="kn">import</span> <span class="n">wavelength_from_tof</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.interpolator_numba</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpolator</span> <span class="k">as</span> <span class="n">InterpolatorImpl</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">.interpolator_scipy</span><span class="w"> </span><span class="kn">import</span> <span class="n">Interpolator</span> <span class="k">as</span> <span class="n">InterpolatorImpl</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..nexus.types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EmptyDetector</span><span class="p">,</span>
+    <span class="n">EmptyMonitor</span><span class="p">,</span>
+    <span class="n">GravityVector</span><span class="p">,</span>
+    <span class="n">MonitorType</span><span class="p">,</span>
+    <span class="n">Position</span><span class="p">,</span>
+    <span class="n">RawDetector</span><span class="p">,</span>
+    <span class="n">RawMonitor</span><span class="p">,</span>
+    <span class="n">RunType</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.resample</span><span class="w"> </span><span class="kn">import</span> <span class="n">rebin_strictly_increasing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DetectorLtotal</span><span class="p">,</span>
+    <span class="n">ErrorLimitedTofLookupTable</span><span class="p">,</span>
+    <span class="n">LookupTableRelativeErrorThreshold</span><span class="p">,</span>
+    <span class="n">MonitorLtotal</span><span class="p">,</span>
+    <span class="n">PulseStrideOffset</span><span class="p">,</span>
+    <span class="n">ToaDetector</span><span class="p">,</span>
+    <span class="n">TofDetector</span><span class="p">,</span>
+    <span class="n">TofLookupTable</span><span class="p">,</span>
+    <span class="n">TofMonitor</span><span class="p">,</span>
+    <span class="n">WavelengthDetector</span><span class="p">,</span>
+    <span class="n">WavelengthMonitor</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="TofInterpolator">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.TofInterpolator.html#ess.reduce.time_of_flight.eto_to_tof.TofInterpolator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TofInterpolator</span><span class="p">:</span>
+<div class="viewcode-block" id="TofInterpolator.__init__">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.TofInterpolator.html#ess.reduce.time_of_flight.eto_to_tof.TofInterpolator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lookup</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">distance_unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">time_unit</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_distance_unit</span> <span class="o">=</span> <span class="n">distance_unit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_time_unit</span> <span class="o">=</span> <span class="n">time_unit</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_time_edges</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">lookup</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;event_time_offset&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">values</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_distance_edges</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">lookup</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;distance&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">distance_unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_interpolator</span> <span class="o">=</span> <span class="n">InterpolatorImpl</span><span class="p">(</span>
+            <span class="n">time_edges</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_edges</span><span class="p">,</span>
+            <span class="n">distance_edges</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_distance_edges</span><span class="p">,</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">lookup</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">ltotal</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">event_time_offset</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">pulse_period</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">pulse_index</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ltotal</span><span class="o">.</span><span class="n">unit</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_distance_unit</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">UnitError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;ltotal must have unit: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_distance_unit</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;but got unit: </span><span class="si">{</span><span class="n">ltotal</span><span class="o">.</span><span class="n">unit</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">event_time_offset</span><span class="o">.</span><span class="n">unit</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_unit</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">UnitError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;event_time_offset must have unit: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_unit</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;but got unit: </span><span class="si">{</span><span class="n">event_time_offset</span><span class="o">.</span><span class="n">unit</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">out_dims</span> <span class="o">=</span> <span class="n">event_time_offset</span><span class="o">.</span><span class="n">dims</span>
+        <span class="n">ltotal</span> <span class="o">=</span> <span class="n">ltotal</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">event_time_offset</span> <span class="o">=</span> <span class="n">event_time_offset</span><span class="o">.</span><span class="n">values</span>
+
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="n">dims</span><span class="o">=</span><span class="n">out_dims</span><span class="p">,</span>
+            <span class="n">values</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_interpolator</span><span class="p">(</span>
+                <span class="n">times</span><span class="o">=</span><span class="n">event_time_offset</span><span class="p">,</span>
+                <span class="n">distances</span><span class="o">=</span><span class="n">ltotal</span><span class="p">,</span>
+                <span class="n">pulse_index</span><span class="o">=</span><span class="n">pulse_index</span><span class="o">.</span><span class="n">values</span> <span class="k">if</span> <span class="n">pulse_index</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">pulse_period</span><span class="o">=</span><span class="n">pulse_period</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">unit</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_time_unit</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_time_of_flight_data_histogram</span><span class="p">(</span>
+    <span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span> <span class="n">lookup</span><span class="p">:</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">,</span> <span class="n">ltotal</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+    <span class="c1"># In NeXus, &#39;time_of_flight&#39; is the canonical name in NXmonitor, but in some files,</span>
+    <span class="c1"># it may be called &#39;tof&#39; or &#39;frame_time&#39;.</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&amp;</span> <span class="p">{</span><span class="s2">&quot;time_of_flight&quot;</span><span class="p">,</span> <span class="s2">&quot;tof&quot;</span><span class="p">,</span> <span class="s2">&quot;frame_time&quot;</span><span class="p">}))</span>
+    <span class="n">raw_eto</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">eto_unit</span> <span class="o">=</span> <span class="n">raw_eto</span><span class="o">.</span><span class="n">unit</span>
+    <span class="n">pulse_period</span> <span class="o">=</span> <span class="n">lookup</span><span class="o">.</span><span class="n">pulse_period</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">eto_unit</span><span class="p">)</span>
+
+    <span class="c1"># In histogram mode, because there is a wrap around at the end of the pulse, we</span>
+    <span class="c1"># need to insert a bin edge at that exact location to avoid having the last bin</span>
+    <span class="c1"># with one finite left edge and a NaN right edge (it becomes NaN as it would be</span>
+    <span class="c1"># outside the range of the lookup table).</span>
+    <span class="n">new_bins</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">raw_eto</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">eto_unit</span><span class="p">),</span> <span class="n">pulse_period</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="n">key</span><span class="p">),</span>
+        <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">rebinned</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">rebin</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">new_bins</span><span class="p">})</span>
+    <span class="n">etos</span> <span class="o">=</span> <span class="n">rebinned</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="c1"># Create linear interpolator</span>
+    <span class="n">interp</span> <span class="o">=</span> <span class="n">TofInterpolator</span><span class="p">(</span>
+        <span class="n">lookup</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">distance_unit</span><span class="o">=</span><span class="n">ltotal</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="n">eto_unit</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Compute time-of-flight of the bin edges using the interpolator</span>
+    <span class="n">tofs</span> <span class="o">=</span> <span class="n">interp</span><span class="p">(</span>
+        <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="n">etos</span><span class="o">.</span><span class="n">sizes</span><span class="p">),</span>
+        <span class="n">event_time_offset</span><span class="o">=</span><span class="n">etos</span><span class="p">,</span>
+        <span class="n">pulse_period</span><span class="o">=</span><span class="n">pulse_period</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">rebinned</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">tof</span><span class="o">=</span><span class="n">tofs</span><span class="p">)</span><span class="o">.</span><span class="n">drop_coords</span><span class="p">(</span>
+        <span class="nb">list</span><span class="p">({</span><span class="n">key</span><span class="p">}</span> <span class="o">&amp;</span> <span class="p">{</span><span class="s2">&quot;time_of_flight&quot;</span><span class="p">,</span> <span class="s2">&quot;frame_time&quot;</span><span class="p">})</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_guess_pulse_stride_offset</span><span class="p">(</span>
+    <span class="n">pulse_index</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">ltotal</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">event_time_offset</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">pulse_period</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">pulse_stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">interp</span><span class="p">:</span> <span class="n">TofInterpolator</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Using the minimum ``event_time_zero`` to calculate a reference time when computing</span>
+<span class="sd">    the time-of-flight for the neutron events makes the workflow depend on when the</span>
+<span class="sd">    first event was recorded. There is no straightforward way to know if we started</span>
+<span class="sd">    recording at the beginning of a frame, or half-way through a frame, without looking</span>
+<span class="sd">    at the chopper logs. This can be manually corrected using the pulse_stride_offset</span>
+<span class="sd">    parameter, but this makes automatic reduction of the data difficult.</span>
+<span class="sd">    See https://github.com/scipp/essreduce/issues/184.</span>
+
+<span class="sd">    Here, we perform a simple guess for the ``pulse_stride_offset`` if it is not</span>
+<span class="sd">    provided.</span>
+<span class="sd">    We choose a few random events, compute the time-of-flight for every possible value</span>
+<span class="sd">    of pulse_stride_offset, and return the value that yields the least number of NaNs</span>
+<span class="sd">    in the computed time-of-flight.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    pulse_index:</span>
+<span class="sd">        Pulse index for every event.</span>
+<span class="sd">    ltotal:</span>
+<span class="sd">        Total length of the flight path from the source to the detector for each event.</span>
+<span class="sd">    event_time_offset:</span>
+<span class="sd">        Time of arrival of the neutron at the detector for each event.</span>
+<span class="sd">    pulse_period:</span>
+<span class="sd">        Period of the source pulses, i.e., time between consecutive pulse starts.</span>
+<span class="sd">    pulse_stride:</span>
+<span class="sd">        Stride of used pulses.</span>
+<span class="sd">    interp:</span>
+<span class="sd">        Interpolator for the lookup table.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tofs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c1"># Choose a few random events to compute the time-of-flight</span>
+    <span class="n">inds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">event_time_offset</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="mi">5000</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_time_offset</span><span class="p">)),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="n">pulse_index</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="n">pulse_index</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">pulse_index</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">inds</span><span class="p">],</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">pulse_index</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ltotal</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">ltotal</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">ltotal</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">inds</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="n">ltotal</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="n">etos</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+        <span class="n">dims</span><span class="o">=</span><span class="n">event_time_offset</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span>
+        <span class="n">values</span><span class="o">=</span><span class="n">event_time_offset</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">inds</span><span class="p">],</span>
+        <span class="n">unit</span><span class="o">=</span><span class="n">event_time_offset</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">pulse_stride</span><span class="p">):</span>
+        <span class="n">pulse_inds</span> <span class="o">=</span> <span class="p">(</span><span class="n">pulse_index</span> <span class="o">+</span> <span class="n">i</span><span class="p">)</span> <span class="o">%</span> <span class="n">pulse_stride</span>
+        <span class="n">tofs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">interp</span><span class="p">(</span>
+            <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">,</span>
+            <span class="n">event_time_offset</span><span class="o">=</span><span class="n">etos</span><span class="p">,</span>
+            <span class="n">pulse_index</span><span class="o">=</span><span class="n">pulse_inds</span><span class="p">,</span>
+            <span class="n">pulse_period</span><span class="o">=</span><span class="n">pulse_period</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="c1"># Find the entry in the list with the least number of nan values</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">tofs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">tofs</span><span class="p">[</span><span class="n">x</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_prepare_tof_interpolation_inputs</span><span class="p">(</span>
+    <span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">lookup</span><span class="p">:</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">,</span>
+    <span class="n">ltotal</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">pulse_stride_offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prepare the inputs required for the time-of-flight interpolation.</span>
+<span class="sd">    This function is used when computing the time-of-flight for event data, and for</span>
+<span class="sd">    computing the time-of-arrival for event data (as they both require guessing the</span>
+<span class="sd">    pulse_stride_offset if not provided).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        Data array with event data.</span>
+<span class="sd">    lookup:</span>
+<span class="sd">        Lookup table giving time-of-flight as a function of distance and time of</span>
+<span class="sd">        arrival.</span>
+<span class="sd">    ltotal:</span>
+<span class="sd">        Total length of the flight path from the source to the detector.</span>
+<span class="sd">    pulse_stride_offset:</span>
+<span class="sd">        When pulse-skipping, the offset of the first pulse in the stride. This is</span>
+<span class="sd">        typically zero but can be a small integer &lt; pulse_stride.</span>
+<span class="sd">        If None, a guess is made.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">etos</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;event_time_offset&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">eto_unit</span> <span class="o">=</span> <span class="n">elem_unit</span><span class="p">(</span><span class="n">etos</span><span class="p">)</span>
+
+    <span class="c1"># Create linear interpolator</span>
+    <span class="n">interp</span> <span class="o">=</span> <span class="n">TofInterpolator</span><span class="p">(</span>
+        <span class="n">lookup</span><span class="o">.</span><span class="n">array</span><span class="p">,</span> <span class="n">distance_unit</span><span class="o">=</span><span class="n">ltotal</span><span class="o">.</span><span class="n">unit</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="n">eto_unit</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Operate on events (broadcast distances to all events)</span>
+    <span class="n">ltotal</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">bins_like</span><span class="p">(</span><span class="n">etos</span><span class="p">,</span> <span class="n">ltotal</span><span class="p">)</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">constituents</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+    <span class="n">etos</span> <span class="o">=</span> <span class="n">etos</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">constituents</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+
+    <span class="n">pulse_index</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pulse_period</span> <span class="o">=</span> <span class="n">lookup</span><span class="o">.</span><span class="n">pulse_period</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">eto_unit</span><span class="p">)</span>
+    <span class="n">pulse_stride</span> <span class="o">=</span> <span class="n">lookup</span><span class="o">.</span><span class="n">pulse_stride</span>
+
+    <span class="k">if</span> <span class="n">pulse_stride</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="c1"># Compute a pulse index for every event: it is the index of the pulse within a</span>
+        <span class="c1"># frame period. The index ranges from zero to pulse_stride - 1.</span>
+        <span class="n">etz_unit</span> <span class="o">=</span> <span class="s1">&#39;ns&#39;</span>
+        <span class="n">etz</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">da</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;event_time_zero&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">constituents</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">etz_unit</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">pulse_period_ns</span> <span class="o">=</span> <span class="n">pulse_period</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">etz_unit</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="n">frame_period</span> <span class="o">=</span> <span class="n">pulse_period_ns</span> <span class="o">*</span> <span class="n">pulse_stride</span>
+        <span class="c1"># Define a common reference time using epoch as a base, but making sure that it</span>
+        <span class="c1"># is aligned with the pulse_period and the frame_period.</span>
+        <span class="c1"># We need to use a global reference time instead of simply taking the minimum</span>
+        <span class="c1"># event_time_zero because the events may arrive in chunks, and the first event</span>
+        <span class="c1"># may not be the first event of the first pulse for all chunks. This would lead</span>
+        <span class="c1"># to inconsistent pulse indices.</span>
+        <span class="n">epoch</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">etz_unit</span><span class="p">)</span>
+        <span class="n">diff_to_epoch</span> <span class="o">=</span> <span class="p">(</span><span class="n">etz</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">-</span> <span class="n">epoch</span><span class="p">)</span> <span class="o">%</span> <span class="n">pulse_period_ns</span>
+        <span class="c1"># Here we offset the reference by half a pulse period to avoid errors from</span>
+        <span class="c1"># fluctuations in the event_time_zeros in the data. They are triggered by the</span>
+        <span class="c1"># neutron source, and may not always be exactly separated by the pulse period.</span>
+        <span class="c1"># While fluctuations will exist, they will be small, and offsetting the times</span>
+        <span class="c1"># by half a pulse period is a simple enough fix.</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">epoch</span> <span class="o">+</span> <span class="n">diff_to_epoch</span> <span class="o">-</span> <span class="p">(</span><span class="n">pulse_period_ns</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># Use in-place operations to avoid large allocations</span>
+        <span class="n">pulse_index</span> <span class="o">=</span> <span class="n">etz</span> <span class="o">-</span> <span class="n">reference</span>
+        <span class="n">pulse_index</span> <span class="o">%=</span> <span class="n">frame_period</span>
+        <span class="n">pulse_index</span> <span class="o">//=</span> <span class="n">pulse_period_ns</span>
+
+        <span class="c1"># Apply the pulse_stride_offset</span>
+        <span class="k">if</span> <span class="n">pulse_stride_offset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pulse_stride_offset</span> <span class="o">=</span> <span class="n">_guess_pulse_stride_offset</span><span class="p">(</span>
+                <span class="n">pulse_index</span><span class="o">=</span><span class="n">pulse_index</span><span class="p">,</span>
+                <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">,</span>
+                <span class="n">event_time_offset</span><span class="o">=</span><span class="n">etos</span><span class="p">,</span>
+                <span class="n">pulse_period</span><span class="o">=</span><span class="n">pulse_period</span><span class="p">,</span>
+                <span class="n">pulse_stride</span><span class="o">=</span><span class="n">pulse_stride</span><span class="p">,</span>
+                <span class="n">interp</span><span class="o">=</span><span class="n">interp</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">pulse_index</span> <span class="o">+=</span> <span class="n">pulse_stride_offset</span>
+        <span class="n">pulse_index</span> <span class="o">%=</span> <span class="n">pulse_stride</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;eto&quot;</span><span class="p">:</span> <span class="n">etos</span><span class="p">,</span>
+        <span class="s2">&quot;pulse_index&quot;</span><span class="p">:</span> <span class="n">pulse_index</span><span class="p">,</span>
+        <span class="s2">&quot;pulse_period&quot;</span><span class="p">:</span> <span class="n">pulse_period</span><span class="p">,</span>
+        <span class="s2">&quot;interp&quot;</span><span class="p">:</span> <span class="n">interp</span><span class="p">,</span>
+        <span class="s2">&quot;ltotal&quot;</span><span class="p">:</span> <span class="n">ltotal</span><span class="p">,</span>
+    <span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_time_of_flight_data_events</span><span class="p">(</span>
+    <span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">lookup</span><span class="p">:</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">,</span>
+    <span class="n">ltotal</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">pulse_stride_offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">_prepare_tof_interpolation_inputs</span><span class="p">(</span>
+        <span class="n">da</span><span class="o">=</span><span class="n">da</span><span class="p">,</span>
+        <span class="n">lookup</span><span class="o">=</span><span class="n">lookup</span><span class="p">,</span>
+        <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">,</span>
+        <span class="n">pulse_stride_offset</span><span class="o">=</span><span class="n">pulse_stride_offset</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Compute time-of-flight for all neutrons using the interpolator</span>
+    <span class="n">tofs</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;interp&quot;</span><span class="p">](</span>
+        <span class="n">ltotal</span><span class="o">=</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;ltotal&quot;</span><span class="p">],</span>
+        <span class="n">event_time_offset</span><span class="o">=</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;eto&quot;</span><span class="p">],</span>
+        <span class="n">pulse_index</span><span class="o">=</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;pulse_index&quot;</span><span class="p">],</span>
+        <span class="n">pulse_period</span><span class="o">=</span><span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;pulse_period&quot;</span><span class="p">],</span>
+    <span class="p">)</span>
+
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">constituents</span>
+    <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tofs</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">tof</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">bins</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">,</span> <span class="n">validate_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">drop_coords</span><span class="p">(</span><span class="s2">&quot;event_time_offset&quot;</span><span class="p">)</span>
+
+    <span class="c1"># The result may still have an &#39;event_time_zero&#39; dimension (in the case of an</span>
+    <span class="c1"># event monitor where events were not grouped by pixel).</span>
+    <span class="k">if</span> <span class="s2">&quot;event_time_zero&quot;</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">dims</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="s2">&quot;event_time_zero&quot;</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="s2">&quot;event_time_zero&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span>
+        <span class="p">):</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;event_time_zero&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">bins_like</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;event_time_zero&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="s2">&quot;event_time_zero&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<div class="viewcode-block" id="detector_ltotal_from_straight_line_approximation">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation.html#ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">detector_ltotal_from_straight_line_approximation</span><span class="p">(</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="n">EmptyDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+    <span class="n">source_position</span><span class="p">:</span> <span class="n">Position</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsource</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="n">sample_position</span><span class="p">:</span> <span class="n">Position</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="n">gravity</span><span class="p">:</span> <span class="n">GravityVector</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DetectorLtotal</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute Ltotal for the detector pixels.</span>
+
+<span class="sd">    This is a naive straight-line approximation to Ltotal based on basic component</span>
+<span class="sd">    positions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    detector:</span>
+<span class="sd">        Data array with detector positions.</span>
+<span class="sd">    source_position:</span>
+<span class="sd">        Position of the neutron source.</span>
+<span class="sd">    sample_position:</span>
+<span class="sd">        Position of the sample.</span>
+<span class="sd">    gravity:</span>
+<span class="sd">        Gravity vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">scn</span><span class="o">.</span><span class="n">conversion</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">beamline</span><span class="o">.</span><span class="n">beamline</span><span class="p">(</span><span class="n">scatter</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="s1">&#39;source_position&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">source_position</span><span class="p">,</span>
+        <span class="s1">&#39;sample_position&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">sample_position</span><span class="p">,</span>
+        <span class="s1">&#39;gravity&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">gravity</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">DetectorLtotal</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span>
+        <span class="n">detector</span><span class="o">.</span><span class="n">transform_coords</span><span class="p">(</span>
+            <span class="s2">&quot;Ltotal&quot;</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span> <span class="n">keep_intermediate</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;Ltotal&quot;</span><span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="monitor_ltotal_from_straight_line_approximation">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.monitor_ltotal_from_straight_line_approximation.html#ess.reduce.time_of_flight.eto_to_tof.monitor_ltotal_from_straight_line_approximation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">monitor_ltotal_from_straight_line_approximation</span><span class="p">(</span>
+    <span class="n">monitor_beamline</span><span class="p">:</span> <span class="n">EmptyMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">],</span>
+    <span class="n">source_position</span><span class="p">:</span> <span class="n">Position</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsource</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MonitorLtotal</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute Ltotal for the monitor.</span>
+<span class="sd">    This is a naive straight-line approximation to Ltotal based on basic component</span>
+<span class="sd">    positions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    monitor_beamline:</span>
+<span class="sd">        Beamline data for the monitor that contains the positions necessary to compute</span>
+<span class="sd">        the straight-line approximation to Ltotal (source and monitor positions).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">**</span><span class="n">scn</span><span class="o">.</span><span class="n">conversion</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">beamline</span><span class="o">.</span><span class="n">beamline</span><span class="p">(</span><span class="n">scatter</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="s1">&#39;source_position&#39;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">source_position</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">MonitorLtotal</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">](</span>
+        <span class="n">monitor_beamline</span><span class="o">.</span><span class="n">transform_coords</span><span class="p">(</span>
+            <span class="s2">&quot;Ltotal&quot;</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="n">graph</span><span class="p">,</span> <span class="n">keep_intermediate</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s2">&quot;Ltotal&quot;</span><span class="p">]</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="mask_large_uncertainty_in_lut">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.mask_large_uncertainty_in_lut.html#ess.reduce.time_of_flight.eto_to_tof.mask_large_uncertainty_in_lut">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mask_large_uncertainty_in_lut</span><span class="p">(</span>
+    <span class="n">table</span><span class="p">:</span> <span class="n">TofLookupTable</span><span class="p">,</span> <span class="n">error_threshold</span><span class="p">:</span> <span class="n">LookupTableRelativeErrorThreshold</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    table:</span>
+<span class="sd">        Lookup table with time-of-flight as a function of distance and time-of-arrival.</span>
+<span class="sd">    error_threshold:</span>
+<span class="sd">        Threshold for the relative standard deviation (coefficient of variation) of the</span>
+<span class="sd">        projected time-of-flight above which values are masked.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># TODO: The error threshold could be made dependent on the time-of-flight or</span>
+    <span class="c1"># distance, instead of being a single value for the whole table.</span>
+    <span class="n">da</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">array</span>
+    <span class="n">relative_error</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">stddevs</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">values</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">relative_error</span> <span class="o">&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">error_threshold</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">(</span>
+        <span class="o">**</span><span class="p">{</span>
+            <span class="o">**</span><span class="n">asdict</span><span class="p">(</span><span class="n">table</span><span class="p">),</span>
+            <span class="s2">&quot;array&quot;</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="n">da</span><span class="o">.</span><span class="n">unit</span><span class="p">),</span> <span class="n">da</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_tof_data</span><span class="p">(</span>
+    <span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">,</span>
+    <span class="n">lookup</span><span class="p">:</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">,</span>
+    <span class="n">ltotal</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+    <span class="n">pulse_stride_offset</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">_time_of_flight_data_histogram</span><span class="p">(</span><span class="n">da</span><span class="o">=</span><span class="n">da</span><span class="p">,</span> <span class="n">lookup</span><span class="o">=</span><span class="n">lookup</span><span class="p">,</span> <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">rebin_strictly_increasing</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;tof&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">_time_of_flight_data_events</span><span class="p">(</span>
+            <span class="n">da</span><span class="o">=</span><span class="n">da</span><span class="p">,</span>
+            <span class="n">lookup</span><span class="o">=</span><span class="n">lookup</span><span class="p">,</span>
+            <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">,</span>
+            <span class="n">pulse_stride_offset</span><span class="o">=</span><span class="n">pulse_stride_offset</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">Ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="detector_time_of_flight_data">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_time_of_flight_data.html#ess.reduce.time_of_flight.eto_to_tof.detector_time_of_flight_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">detector_time_of_flight_data</span><span class="p">(</span>
+    <span class="n">detector_data</span><span class="p">:</span> <span class="n">RawDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+    <span class="n">lookup</span><span class="p">:</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">,</span>
+    <span class="n">ltotal</span><span class="p">:</span> <span class="n">DetectorLtotal</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+    <span class="n">pulse_stride_offset</span><span class="p">:</span> <span class="n">PulseStrideOffset</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TofDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert the time-of-arrival (event_time_offset) data to time-of-flight data using a</span>
+<span class="sd">    lookup table.</span>
+<span class="sd">    The output data will have two new coordinates: time-of-flight and Ltotal.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        Raw detector data loaded from a NeXus file, e.g., NXdetector containing</span>
+<span class="sd">        NXevent_data.</span>
+<span class="sd">    lookup:</span>
+<span class="sd">        Lookup table giving time-of-flight as a function of distance and time of</span>
+<span class="sd">        arrival.</span>
+<span class="sd">    ltotal:</span>
+<span class="sd">        Total length of the flight path from the source to the detector.</span>
+<span class="sd">    pulse_stride_offset:</span>
+<span class="sd">        When pulse-skipping, the offset of the first pulse in the stride. This is</span>
+<span class="sd">        typically zero but can be a small integer &lt; pulse_stride.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TofDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span>
+        <span class="n">_compute_tof_data</span><span class="p">(</span>
+            <span class="n">da</span><span class="o">=</span><span class="n">detector_data</span><span class="p">,</span>
+            <span class="n">lookup</span><span class="o">=</span><span class="n">lookup</span><span class="p">,</span>
+            <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">,</span>
+            <span class="n">pulse_stride_offset</span><span class="o">=</span><span class="n">pulse_stride_offset</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="monitor_time_of_flight_data">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.monitor_time_of_flight_data.html#ess.reduce.time_of_flight.eto_to_tof.monitor_time_of_flight_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">monitor_time_of_flight_data</span><span class="p">(</span>
+    <span class="n">monitor_data</span><span class="p">:</span> <span class="n">RawMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">],</span>
+    <span class="n">lookup</span><span class="p">:</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">,</span>
+    <span class="n">ltotal</span><span class="p">:</span> <span class="n">MonitorLtotal</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">],</span>
+    <span class="n">pulse_stride_offset</span><span class="p">:</span> <span class="n">PulseStrideOffset</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TofMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert the time-of-arrival (event_time_offset) data to time-of-flight data using a</span>
+<span class="sd">    lookup table.</span>
+<span class="sd">    The output data will have two new coordinates: time-of-flight and Ltotal.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        Raw monitor data loaded from a NeXus file, e.g., NXmonitor containing</span>
+<span class="sd">        NXevent_data.</span>
+<span class="sd">    lookup:</span>
+<span class="sd">        Lookup table giving time-of-flight as a function of distance and time of</span>
+<span class="sd">        arrival.</span>
+<span class="sd">    ltotal:</span>
+<span class="sd">        Total length of the flight path from the source to the monitor.</span>
+<span class="sd">    pulse_stride_offset:</span>
+<span class="sd">        When pulse-skipping, the offset of the first pulse in the stride. This is</span>
+<span class="sd">        typically zero but can be a small integer &lt; pulse_stride.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TofMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">](</span>
+        <span class="n">_compute_tof_data</span><span class="p">(</span>
+            <span class="n">da</span><span class="o">=</span><span class="n">monitor_data</span><span class="p">,</span>
+            <span class="n">lookup</span><span class="o">=</span><span class="n">lookup</span><span class="p">,</span>
+            <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">,</span>
+            <span class="n">pulse_stride_offset</span><span class="o">=</span><span class="n">pulse_stride_offset</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="detector_time_of_arrival_data">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data.html#ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">detector_time_of_arrival_data</span><span class="p">(</span>
+    <span class="n">detector_data</span><span class="p">:</span> <span class="n">RawDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+    <span class="n">lookup</span><span class="p">:</span> <span class="n">ErrorLimitedTofLookupTable</span><span class="p">,</span>
+    <span class="n">ltotal</span><span class="p">:</span> <span class="n">DetectorLtotal</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+    <span class="n">pulse_stride_offset</span><span class="p">:</span> <span class="n">PulseStrideOffset</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ToaDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert the time-of-flight data to time-of-arrival data using a lookup table.</span>
+<span class="sd">    The output data will have a time-of-arrival coordinate.</span>
+<span class="sd">    The time-of-arrival is the time since the neutron was emitted from the source.</span>
+<span class="sd">    It is basically equal to event_time_offset + pulse_index * pulse_period.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        Raw detector data loaded from a NeXus file, e.g., NXdetector containing</span>
+<span class="sd">        NXevent_data.</span>
+<span class="sd">    lookup:</span>
+<span class="sd">        Lookup table giving time-of-flight as a function of distance and time of</span>
+<span class="sd">        arrival.</span>
+<span class="sd">    ltotal:</span>
+<span class="sd">        Total length of the flight path from the source to the detector.</span>
+<span class="sd">    pulse_stride_offset:</span>
+<span class="sd">        When pulse-skipping, the offset of the first pulse in the stride. This is</span>
+<span class="sd">        typically zero but can be a small integer &lt; pulse_stride.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">detector_data</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Computing time-of-arrival in histogram mode is not implemented yet.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">_prepare_tof_interpolation_inputs</span><span class="p">(</span>
+        <span class="n">da</span><span class="o">=</span><span class="n">detector_data</span><span class="p">,</span>
+        <span class="n">lookup</span><span class="o">=</span><span class="n">lookup</span><span class="p">,</span>
+        <span class="n">ltotal</span><span class="o">=</span><span class="n">ltotal</span><span class="p">,</span>
+        <span class="n">pulse_stride_offset</span><span class="o">=</span><span class="n">pulse_stride_offset</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">detector_data</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">constituents</span>
+    <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;eto&quot;</span><span class="p">]</span>
+    <span class="c1"># The pulse index is None if pulse_stride == 1 (i.e., no pulse skipping)</span>
+    <span class="k">if</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;pulse_index&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;pulse_index&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="n">inputs</span><span class="p">[</span><span class="s2">&quot;pulse_period&quot;</span><span class="p">]</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">detector_data</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span>
+        <span class="n">toa</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">bins</span><span class="p">(</span><span class="o">**</span><span class="n">parts</span><span class="p">,</span> <span class="n">validate_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ToaDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span><span class="n">result</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tof_to_wavelength</span><span class="p">(</span><span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert time-of-flight data to wavelength data.</span>
+
+<span class="sd">    Here we assume that the input data contains a Ltotal coordinate, which is required</span>
+<span class="sd">    for the conversion.</span>
+<span class="sd">    This coordinate is assigned in the ``_compute_tof_data`` function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">da</span><span class="o">.</span><span class="n">transform_coords</span><span class="p">(</span>
+        <span class="s1">&#39;wavelength&#39;</span><span class="p">,</span> <span class="n">graph</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;wavelength&quot;</span><span class="p">:</span> <span class="n">wavelength_from_tof</span><span class="p">},</span> <span class="n">keep_intermediate</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="detector_wavelength_data">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_wavelength_data.html#ess.reduce.time_of_flight.eto_to_tof.detector_wavelength_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">detector_wavelength_data</span><span class="p">(</span>
+    <span class="n">detector_data</span><span class="p">:</span> <span class="n">TofDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WavelengthDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert time-of-flight coordinate of the detector data to wavelength.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        Detector data with time-of-flight coordinate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">WavelengthDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span><span class="n">_tof_to_wavelength</span><span class="p">(</span><span class="n">detector_data</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="monitor_wavelength_data">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.monitor_wavelength_data.html#ess.reduce.time_of_flight.eto_to_tof.monitor_wavelength_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">monitor_wavelength_data</span><span class="p">(</span>
+    <span class="n">monitor_data</span><span class="p">:</span> <span class="n">TofMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WavelengthMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert time-of-flight coordinate of the monitor data to wavelength.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    da:</span>
+<span class="sd">        Monitor data with time-of-flight coordinate.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">WavelengthMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">](</span><span class="n">_tof_to_wavelength</span><span class="p">(</span><span class="n">monitor_data</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="providers">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.time_of_flight.eto_to_tof.providers.html#ess.reduce.time_of_flight.eto_to_tof.providers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">providers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Providers of the time-of-flight workflow.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">detector_time_of_flight_data</span><span class="p">,</span>
+        <span class="n">monitor_time_of_flight_data</span><span class="p">,</span>
+        <span class="n">detector_ltotal_from_straight_line_approximation</span><span class="p">,</span>
+        <span class="n">monitor_ltotal_from_straight_line_approximation</span><span class="p">,</span>
+        <span class="n">detector_time_of_arrival_data</span><span class="p">,</span>
+        <span class="n">detector_wavelength_data</span><span class="p">,</span>
+        <span class="n">monitor_wavelength_data</span><span class="p">,</span>
+        <span class="n">mask_large_uncertainty_in_lut</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ESSreduce version: 26.2.2 (<a href="https://github.com/scipp/essreduce/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

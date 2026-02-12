@@ -1,0 +1,1504 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ess.reduce.live.raw &#8212; ESSreduce</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=de9f5bbb"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/ess/reduce/live/raw';</script>
+    <script src="../../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../../_static/favicon.svg"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="26.2.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo.svg" class="logo__image only-light" alt="ESSreduce - Home"/>
+    <img src="../../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ESSreduce - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ess.reduce.live.raw</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for ess.reduce.live.raw</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2024 Scipp contributors (https://github.com/scipp)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Raw count processing and visualization for live data display.</span>
+
+<span class="sd">The main feature of this module if :py:class:`RollingDetectorView`, which provides a</span>
+<span class="sd">rolling view of a detector. This is useful for live data display, where the most recent</span>
+<span class="sd">counts, i.e., from the last N pulses, are of interest.</span>
+
+<span class="sd">As various detector geometries can often not be directly visualized in a useful way,</span>
+<span class="sd">the module also provides a way to project the detector data onto a different coordinate</span>
+<span class="sd">systems. A full set of options is not implemented yet. Currently there are three</span>
+<span class="sd">options:</span>
+
+<span class="sd">- `&#39;xy_plane&#39;`: Project the data onto the x-y plane, i.e., perpendicular to the beam.</span>
+<span class="sd">- `&#39;cylinder_mantle_z&#39;`: Project the data onto the mantle of a cylinder aligned with the</span>
+<span class="sd">   z-axis.</span>
+<span class="sd">- A callable, e.g., to select and flatten dimensions of the data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">ceil</span><span class="p">,</span> <span class="n">prod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">NewType</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scippnexus</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">snx</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">ess.reduce.nexus.types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">EmptyDetector</span><span class="p">,</span>
+    <span class="n">Filename</span><span class="p">,</span>
+    <span class="n">NeXusComponent</span><span class="p">,</span>
+    <span class="n">NeXusDetectorName</span><span class="p">,</span>
+    <span class="n">NeXusTransformation</span><span class="p">,</span>
+    <span class="n">SampleRun</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ess.reduce.nexus.workflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">GenericNeXusWorkflow</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">roi</span>
+
+<span class="n">CalibratedPositionWithNoisyReplicas</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span>
+    <span class="s1">&#39;CalibratedPositionWithNoisyReplicas&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span>
+<span class="p">)</span>
+<span class="n">DetectorViewResolution</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;DetectorViewResolution&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span>
+<span class="n">PixelCylinderAxis</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PixelCylinderAxis&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="n">PixelCylinderRadius</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PixelCylinderRadius&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="n">PixelShape</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PixelShape&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">)</span>
+<span class="n">PositionNoise</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PositionNoise&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="n">PositionNoiseReplicaCount</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PositionNoiseReplicaCount&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+<span class="n">PositionNoiseSigma</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;PositionNoiseSigma&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span>
+<span class="n">ProjectedCoords</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;ProjectedCoords&#39;</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">])</span>
+<span class="n">RollingDetectorViewWindow</span> <span class="o">=</span> <span class="n">NewType</span><span class="p">(</span><span class="s1">&#39;RollingDetectorViewWindow&#39;</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Histogrammer">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Histogrammer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Histogrammer for a detector view.</span>
+
+<span class="sd">    The histogrammer is used to project the detector data onto a different coordinate</span>
+<span class="sd">    system. This class implements the common logic for different projections. For each</span>
+<span class="sd">    concrete projection a setup mechanism computes relevant coordinates. This is done,</span>
+<span class="sd">    e.g., in :py:func:`project_xy` and :py:func:`project_onto_cylinder`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Histogrammer.__init__">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">coords</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span>
+        <span class="n">edges</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_replica_dim</span> <span class="o">=</span> <span class="s1">&#39;replica&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_replicas</span> <span class="o">=</span> <span class="n">coords</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_replica_dim</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_coords</span> <span class="o">=</span> <span class="n">coords</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_edges</span> <span class="o">=</span> <span class="n">edges</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">replicas</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replicas</span>
+
+<div class="viewcode-block" id="Histogrammer.from_coords">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer.from_coords">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_coords</span><span class="p">(</span>
+        <span class="n">coords</span><span class="p">:</span> <span class="n">ProjectedCoords</span><span class="p">,</span> <span class="n">resolution</span><span class="p">:</span> <span class="n">DetectorViewResolution</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Histogrammer</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a histogrammer from coordinates and resolution.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        coords:</span>
+<span class="sd">            Coordinates to use for histogramming. May contain more than the</span>
+<span class="sd">            dimensions used for histogramming.</span>
+<span class="sd">        resolution:</span>
+<span class="sd">            Resolution to use for histogramming. The keys are the dimensions</span>
+<span class="sd">            to histogram, and the values are the number of bins to use. The order</span>
+<span class="sd">            of the dimensions is preserved in the output and thus controls which axis</span>
+<span class="sd">            is which in a plot.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="n">dim</span><span class="p">:</span> <span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">hist</span><span class="p">({</span><span class="n">dim</span><span class="p">:</span> <span class="n">res</span><span class="p">})</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">resolution</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">Histogrammer</span><span class="p">(</span><span class="n">coords</span><span class="o">=</span><span class="n">coords</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="n">edges</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_replica_dim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replicas</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hist</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="n">coords</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">coords</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+        <span class="c1"># If input is multi-dim we need to flatten since those dims cannot be preserved.</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="n">coords</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_edges</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Histogrammer.input_indices">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer.input_indices">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">input_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return an array with input indices corresponding to each histogram bin.&quot;&quot;&quot;</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="s1">&#39;detector_number&#39;</span>
+        <span class="c1"># For some projections one of the coords is a scalar, convert to flat table.</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="o">.</span><span class="n">sizes</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="n">dim</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">ndet</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">coords</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replicas</span><span class="p">)</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">coords</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="n">dim</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int64&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="o">%</span> <span class="n">ndet</span><span class="p">,</span>
+            <span class="n">coords</span><span class="o">=</span><span class="n">coords</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">bin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_edges</span><span class="p">)</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_edges</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Histogrammer.apply_full">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.Histogrammer.html#ess.reduce.live.raw.Histogrammer.apply_full">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_full</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply the histogrammer to a variable using all replicas.</span>
+
+<span class="sd">        This is used for one-off operations where the full data is needed, e.g., for</span>
+<span class="sd">        transforming pixel weights. Compare to :py:meth:`__call__`, which applies the</span>
+<span class="sd">        histogrammer to a single replica for efficiency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">replicated</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">var</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">replicas</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_replica_dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hist</span><span class="p">(</span><span class="n">replicated</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_coords</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">replicas</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="LogicalView">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.LogicalView.html#ess.reduce.live.raw.LogicalView">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LogicalView</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Logical view for detector data.</span>
+
+<span class="sd">    Implements a view by applying a user-defined transform (e.g., fold or slice</span>
+<span class="sd">    operations) optionally followed by reduction (summing) over specified dimensions.</span>
+<span class="sd">    Transformation and reduction must be specified separately for `LogicalView` to</span>
+<span class="sd">    construct a mapping from output indices to input indices. So `transform` must not</span>
+<span class="sd">    perform any reductions.</span>
+
+<span class="sd">    This class provides both data transformation (__call__) and index mapping</span>
+<span class="sd">    (input_indices) using the same transform, ensuring consistency for ROI filtering.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LogicalView.__init__">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.LogicalView.html#ess.reduce.live.raw.LogicalView.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
+        <span class="n">reduction_dim</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_sizes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a logical view.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        transform:</span>
+<span class="sd">            Callable that transforms input data by reshaping or selecting pixels.</span>
+<span class="sd">            Examples:</span>
+<span class="sd">            - Fold: lambda da: da.fold(&#39;x&#39;, {&#39;x&#39;: 512, &#39;x_bin&#39;: 2})</span>
+<span class="sd">            - Slice: lambda da: da[&#39;z&#39;, 0]  (select front layer of volume)</span>
+<span class="sd">            - Combined: lambda da: da.fold(&#39;x&#39;, {&#39;x&#39;: 4, &#39;z&#39;: 8})[&#39;z&#39;, 0]</span>
+<span class="sd">        reduction_dim:</span>
+<span class="sd">            Dimension(s) to sum over after applying transform. If None or empty,</span>
+<span class="sd">            no reduction is performed (pure transform).</span>
+<span class="sd">            Example: &#39;x_bin&#39; or [&#39;x_bin&#39;, &#39;y_bin&#39;]</span>
+<span class="sd">        input_sizes:</span>
+<span class="sd">            Dictionary defining the input dimension sizes.</span>
+<span class="sd">            Required for input_indices().</span>
+<span class="sd">            If not provided, input_indices() will raise an error.</span>
+<span class="sd">            When used with RollingDetectorView, this is automatically</span>
+<span class="sd">            inferred from detector_number.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span> <span class="o">=</span> <span class="n">transform</span>
+        <span class="k">if</span> <span class="n">reduction_dim</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">reduction_dim</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span> <span class="o">=</span> <span class="p">[</span><span class="n">reduction_dim</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span> <span class="o">=</span> <span class="n">reduction_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_sizes</span> <span class="o">=</span> <span class="n">input_sizes</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">replicas</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Number of replicas. Always 1 for LogicalView.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply transform and optionally sum over reduction dimensions.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        da:</span>
+<span class="sd">            Data to downsample.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Transformed (and optionally reduced) data array.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">(</span><span class="n">da</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">transformed</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">transformed</span>
+
+<div class="viewcode-block" id="LogicalView.input_indices">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.LogicalView.html#ess.reduce.live.raw.LogicalView.input_indices">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">input_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create index mapping for ROI filtering.</span>
+
+<span class="sd">        Returns a DataArray mapping output pixels to input indices (as indices into</span>
+<span class="sd">        the flattened input array). If reduction dimensions are specified, returns</span>
+<span class="sd">        binned data where each output pixel contains a list of contributing input</span>
+<span class="sd">        indices. If no reduction, returns dense indices (1:1 mapping).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            DataArray mapping output pixels to input indices.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError:</span>
+<span class="sd">            If input_sizes was not provided during initialization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_sizes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;input_sizes is required for input_indices(). &quot;</span>
+                <span class="s2">&quot;Provide it during LogicalView initialization.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Create sequential indices (0, 1, 2, ...) and fold to input shape</span>
+        <span class="n">total_size</span> <span class="o">=</span> <span class="n">prod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_sizes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="s1">&#39;_temp&#39;</span><span class="p">,</span> <span class="n">total_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int64&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;_temp&#39;</span><span class="p">,</span> <span class="n">sizes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_sizes</span><span class="p">)</span>
+
+        <span class="c1"># Apply transform to get the grouping structure</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">indices</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span><span class="p">:</span>
+            <span class="c1"># No reduction: 1:1 mapping, return dense indices</span>
+            <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">transformed</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># Flatten reduction dimensions to a single dimension.</span>
+        <span class="c1"># First transpose to make reduction dims contiguous at the end.</span>
+        <span class="n">output_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transformed</span><span class="o">.</span><span class="n">dims</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span><span class="p">]</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="n">transformed</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">output_dims</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span><span class="p">)</span>
+        <span class="n">transformed</span> <span class="o">=</span> <span class="n">transformed</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_reduction_dim</span><span class="p">,</span> <span class="n">to</span><span class="o">=</span><span class="s1">&#39;_reduction&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Convert dense array to binned structure where each output pixel</span>
+        <span class="c1"># contains a bin with the indices of contributing input pixels.</span>
+        <span class="n">bin_size</span> <span class="o">=</span> <span class="n">transformed</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="s1">&#39;_reduction&#39;</span><span class="p">]</span>
+        <span class="n">output_shape</span> <span class="o">=</span> <span class="p">[</span><span class="n">transformed</span><span class="o">.</span><span class="n">sizes</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">output_dims</span><span class="p">]</span>
+        <span class="n">data_flat</span> <span class="o">=</span> <span class="n">transformed</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;_flat&#39;</span><span class="p">)</span>
+        <span class="n">begin</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="n">dims</span><span class="o">=</span><span class="n">output_dims</span><span class="p">,</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">data_flat</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">bin_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                <span class="n">output_shape</span>
+            <span class="p">),</span>
+            <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">bins</span><span class="p">(</span><span class="n">begin</span><span class="o">=</span><span class="n">begin</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;_flat&#39;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data_flat</span><span class="p">))</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="Detector">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.Detector.html#ess.reduce.live.raw.Detector">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Detector</span><span class="p">:</span>
+<div class="viewcode-block" id="Detector.__init__">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.Detector.html#ess.reduce.live.raw.Detector.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">detector_number</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="n">detector_number</span><span class="o">.</span><span class="n">sizes</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;counts&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">),</span>
+            <span class="n">coords</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;detector_number&#39;</span><span class="p">:</span> <span class="n">detector_number</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_detector_number</span> <span class="o">=</span> <span class="n">detector_number</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_flat_detector_number</span> <span class="o">=</span> <span class="n">detector_number</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="s1">&#39;event_id&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flat_detector_number</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flat_detector_number</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_size</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flat_detector_number</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sorted</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">issorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flat_detector_number</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;event_id&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_consecutive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detector_number</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detector_number</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">bincount</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sorted</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Detector numbers must be sorted to use `bincount`.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_consecutive</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Detector numbers must be consecutive to use `bincount`.&quot;</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start</span>
+        <span class="c1"># Ignore events with detector numbers outside the range of the detector. This</span>
+        <span class="c1"># should not happen in valid files but for now it is useful until we are sure</span>
+        <span class="c1"># we get only valid files from upstream.</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span><span class="p">[(</span><span class="n">offset</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">offset</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">)]</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">minlength</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_size</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span> <span class="o">*=</span> <span class="mi">0</span></div>
+
+
+
+<div class="viewcode-block" id="RollingDetectorView">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RollingDetectorView</span><span class="p">(</span><span class="n">Detector</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rolling view of a detector.</span>
+
+<span class="sd">    The view keeps a history of counts and allows to access the sum of counts over a</span>
+<span class="sd">    window of the most recent counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RollingDetectorView.__init__">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">detector_number</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">window</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">projection</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a rolling detector view.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        detector_number:</span>
+<span class="sd">            Detector number for each pixel. This is used for mapping event_id to pixel.</span>
+<span class="sd">        window:</span>
+<span class="sd">            Size of the rolling window. This is the maximum window size, smaller windows</span>
+<span class="sd">            can be accessed using the `get` method.</span>
+<span class="sd">        projection:</span>
+<span class="sd">            Optional projection function to apply to the counts before storing them in</span>
+<span class="sd">            the history. This can be used to project the data onto a different</span>
+<span class="sd">            coordinate system or to reduce the dimensionality of the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">detector_number</span><span class="o">=</span><span class="n">detector_number</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span> <span class="o">=</span> <span class="n">projection</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_window</span> <span class="o">=</span> <span class="n">window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cumulative</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear_counts</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="RollingDetectorView.with_logical_view">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.with_logical_view">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">with_logical_view</span><span class="p">(</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">detector_number</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span>
+        <span class="n">window</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">transform</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span>
+        <span class="n">reduction_dim</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RollingDetectorView</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a RollingDetectorView with a LogicalView projection.</span>
+
+<span class="sd">        This factory method creates a LogicalView with input_sizes</span>
+<span class="sd">        automatically inferred from detector_number.sizes.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        detector_number:</span>
+<span class="sd">            Detector number for each pixel.</span>
+<span class="sd">        window:</span>
+<span class="sd">            Size of the rolling window.</span>
+<span class="sd">        transform:</span>
+<span class="sd">            Transform function for the LogicalView.</span>
+<span class="sd">        reduction_dim:</span>
+<span class="sd">            Reduction dimension(s) for the LogicalView. If None or empty,</span>
+<span class="sd">            no reduction is performed (pure transform).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            RollingDetectorView with LogicalView projection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="n">LogicalView</span><span class="p">(</span>
+            <span class="n">transform</span><span class="o">=</span><span class="n">transform</span><span class="p">,</span>
+            <span class="n">reduction_dim</span><span class="o">=</span><span class="n">reduction_dim</span><span class="p">,</span>
+            <span class="n">input_sizes</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">detector_number</span><span class="o">.</span><span class="n">sizes</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">RollingDetectorView</span><span class="p">(</span>
+            <span class="n">detector_number</span><span class="o">=</span><span class="n">detector_number</span><span class="p">,</span>
+            <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+            <span class="n">projection</span><span class="o">=</span><span class="n">view</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">max_window</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cumulative</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cumulative</span>
+
+<div class="viewcode-block" id="RollingDetectorView.clear_counts">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.clear_counts">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear counts.</span>
+
+<span class="sd">        Overrides Detector.clear_counts, to properly clear sliding window history and</span>
+<span class="sd">        cache.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_history</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">broadcast</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;window&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window</span><span class="p">,</span> <span class="o">**</span><span class="n">counts</span><span class="o">.</span><span class="n">sizes</span><span class="p">})</span>
+            <span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s1">&#39;window&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cumulative</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RollingDetectorView.make_roi_filter">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.make_roi_filter">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">make_roi_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">roi</span><span class="o">.</span><span class="n">ROIFilter</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a ROI filter operating via the projection plane of the view.&quot;&quot;&quot;</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="c1"># Use duck typing: check if projection has input_indices method</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="p">,</span> <span class="s1">&#39;input_indices&#39;</span><span class="p">):</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="o">.</span><span class="n">input_indices</span><span class="p">()</span>
+            <span class="c1"># Get replicas property if it exists (Histogrammer has it, default to 1.0)</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="p">,</span> <span class="s1">&#39;replicas&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sizes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+            <span class="n">indices</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;exclusive&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">indices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">roi</span><span class="o">.</span><span class="n">ROIFilter</span><span class="p">(</span>
+            <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span> <span class="n">spatial_dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_detector_number</span><span class="o">.</span><span class="n">dims</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RollingDetectorView.transform_weights">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.transform_weights">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">transform_weights</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">weights</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Transform raw pixel weights to the projection plane.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        weights:</span>
+<span class="sd">            Raw pixel weights to transform. If None, default weights of 1 are used.</span>
+<span class="sd">        threshold:</span>
+<span class="sd">            Threshold for identifying bins with a low weight. If the weight is below the</span>
+<span class="sd">            threshold times the median weight, the bin is marked as invalid. This is</span>
+<span class="sd">            relevant to avoid issues with color scales in plots, where noise in bins</span>
+<span class="sd">            with low weight may dominate the color scale if auto-scaling is used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">weights</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+                <span class="n">sizes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">detector_number</span><span class="o">.</span><span class="n">sizes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;float32&#39;</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">weights</span><span class="o">.</span><span class="n">sizes</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector_number</span><span class="o">.</span><span class="n">sizes</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">DimensionError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;Invalid </span><span class="si">{</span><span class="n">weights</span><span class="o">.</span><span class="n">sizes</span><span class="si">=}</span><span class="s1"> for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">detector_number</span><span class="o">.</span><span class="n">sizes</span><span class="si">=}</span><span class="s1">.&#39;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">det_num</span> <span class="o">:=</span> <span class="n">weights</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;detector_number&#39;</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">sc</span><span class="o">.</span><span class="n">identical</span><span class="p">(</span><span class="n">det_num</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector_number</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="n">sc</span><span class="o">.</span><span class="n">CoordError</span><span class="p">(</span><span class="s2">&quot;Mismatching detector numbers in weights.&quot;</span><span class="p">)</span>
+                <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">data</span>
+        <span class="c1"># Use duck typing: check for apply_full method (Histogrammer)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="p">,</span> <span class="s1">&#39;apply_full&#39;</span><span class="p">):</span>
+            <span class="n">xs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="o">.</span><span class="n">apply_full</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>  <span class="c1"># Use all replicas</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">xs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>  <span class="c1"># LogicalDownsampler or callable</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">xs</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">nonempty</span> <span class="o">=</span> <span class="n">xs</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">xs</span><span class="o">.</span><span class="n">values</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">xs</span><span class="o">.</span><span class="n">values</span> <span class="o">&lt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">nonempty</span><span class="p">)</span>
+        <span class="n">xs</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">return</span> <span class="n">xs</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="k">else</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RollingDetectorView.from_detector_and_histogrammer">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.from_detector_and_histogrammer">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_detector_and_histogrammer</span><span class="p">(</span>
+        <span class="n">detector</span><span class="p">:</span> <span class="n">EmptyDetector</span><span class="p">[</span><span class="n">SampleRun</span><span class="p">],</span>
+        <span class="n">window</span><span class="p">:</span> <span class="n">RollingDetectorViewWindow</span><span class="p">,</span>
+        <span class="n">projection</span><span class="p">:</span> <span class="n">Histogrammer</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RollingDetectorView</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Helper for constructing via a Sciline workflow.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RollingDetectorView</span><span class="p">(</span>
+            <span class="n">detector_number</span><span class="o">=</span><span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_number&#39;</span><span class="p">],</span>
+            <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+            <span class="n">projection</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_detector_with_projection</span><span class="p">(</span>
+        <span class="n">projection</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">EmptyDetector</span><span class="p">[</span><span class="n">SampleRun</span><span class="p">],</span> <span class="n">RollingDetectorViewWindow</span><span class="p">],</span> <span class="n">RollingDetectorView</span>
+    <span class="p">]:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">factory</span><span class="p">(</span>
+            <span class="n">detector</span><span class="p">:</span> <span class="n">EmptyDetector</span><span class="p">[</span><span class="n">SampleRun</span><span class="p">],</span>
+            <span class="n">window</span><span class="p">:</span> <span class="n">RollingDetectorViewWindow</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RollingDetectorView</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Helper for constructing via a Sciline workflow.&quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="n">RollingDetectorView</span><span class="p">(</span>
+                <span class="n">detector_number</span><span class="o">=</span><span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_number&#39;</span><span class="p">],</span>
+                <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
+                <span class="n">projection</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">factory</span>
+
+<div class="viewcode-block" id="RollingDetectorView.from_nexus">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.from_nexus">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_nexus</span><span class="p">(</span>
+        <span class="n">nexus_file</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">detector_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">window</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">projection</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;xy_plane&#39;</span><span class="p">,</span> <span class="s1">&#39;cylinder_mantle_z&#39;</span><span class="p">]</span>
+        <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">],</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">]</span>
+        <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">resolution</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">pixel_noise</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;cylindrical&#39;</span><span class="p">]</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RollingDetectorView</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a rolling detector view from a NeXus file using GenericNeXusWorkflow.</span>
+
+<span class="sd">        The configuration parameters are preliminary for testing and are expected to</span>
+<span class="sd">        change in the future.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nexus_file:</span>
+<span class="sd">            NeXus file providing detector parameters such as detector_number and pixel</span>
+<span class="sd">            positions.</span>
+<span class="sd">        detector_name:</span>
+<span class="sd">            Name of the detector in the NeXus file.</span>
+<span class="sd">        window:</span>
+<span class="sd">            Size of the rolling window.</span>
+<span class="sd">        projection:</span>
+<span class="sd">            Projection to use for the detector data. This can be a string selecting a</span>
+<span class="sd">            predefined projection or a function that takes a DataArray and returns a</span>
+<span class="sd">            DataArray. The predefined projections are &#39;xy_plane&#39; and</span>
+<span class="sd">            &#39;cylinder_mantle_z&#39;.</span>
+<span class="sd">        resolution:</span>
+<span class="sd">            Resolution to use for histogramming the detector data. Only required for</span>
+<span class="sd">            &#39;xy_plane&#39; and &#39;cylinder_mantle_z&#39; projections.</span>
+<span class="sd">        pixel_noise:</span>
+<span class="sd">            Noise to add to the pixel positions. This can be a scalar value to add</span>
+<span class="sd">            Gaussian noise to the pixel positions or the string &#39;cylindrical&#39; to add</span>
+<span class="sd">            noise to the pixel positions of a cylindrical detector. Adding noise can be</span>
+<span class="sd">            useful to avoid artifacts when projecting the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pixel_noise</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pixel_noise</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+            <span class="n">noise_replica_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Unclear what a good number is, could be made configurable.</span>
+            <span class="n">noise_replica_count</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="n">wf</span> <span class="o">=</span> <span class="n">GenericNeXusWorkflow</span><span class="p">(</span><span class="n">run_types</span><span class="o">=</span><span class="p">[</span><span class="n">SampleRun</span><span class="p">],</span> <span class="n">monitor_types</span><span class="o">=</span><span class="p">[])</span>
+        <span class="n">wf</span><span class="p">[</span><span class="n">RollingDetectorViewWindow</span><span class="p">]</span> <span class="o">=</span> <span class="n">window</span>
+        <span class="k">if</span> <span class="n">projection</span> <span class="o">==</span> <span class="s1">&#39;cylinder_mantle_z&#39;</span><span class="p">:</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">make_cylinder_mantle_coords</span><span class="p">)</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">RollingDetectorView</span><span class="o">.</span><span class="n">from_detector_and_histogrammer</span><span class="p">)</span>
+            <span class="n">wf</span><span class="p">[</span><span class="n">DetectorViewResolution</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolution</span>
+        <span class="k">elif</span> <span class="n">projection</span> <span class="o">==</span> <span class="s1">&#39;xy_plane&#39;</span><span class="p">:</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">make_xy_plane_coords</span><span class="p">)</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">RollingDetectorView</span><span class="o">.</span><span class="n">from_detector_and_histogrammer</span><span class="p">)</span>
+            <span class="n">wf</span><span class="p">[</span><span class="n">DetectorViewResolution</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolution</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">wf</span><span class="p">[</span><span class="n">NeXusTransformation</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span> <span class="n">SampleRun</span><span class="p">]]</span> <span class="o">=</span> <span class="n">NeXusTransformation</span><span class="p">[</span>
+                <span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span> <span class="n">SampleRun</span>
+            <span class="p">](</span><span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+                <span class="n">RollingDetectorView</span><span class="o">.</span><span class="n">from_detector_with_projection</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="n">projection</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pixel_noise</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">gaussian_position_noise</span><span class="p">)</span>
+            <span class="n">wf</span><span class="p">[</span><span class="n">PositionNoiseSigma</span><span class="p">]</span> <span class="o">=</span> <span class="n">pixel_noise</span>
+        <span class="k">elif</span> <span class="n">pixel_noise</span> <span class="o">==</span> <span class="s1">&#39;cylindrical&#39;</span><span class="p">:</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pixel_shape</span><span class="p">)</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pixel_cylinder_axis</span><span class="p">)</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">pixel_cylinder_radius</span><span class="p">)</span>
+            <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">position_noise_for_cylindrical_pixel</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid </span><span class="si">{</span><span class="n">pixel_noise</span><span class="si">=}</span><span class="s2">.&quot;</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">position_with_noisy_replicas</span><span class="p">)</span>
+        <span class="n">wf</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">Histogrammer</span><span class="o">.</span><span class="n">from_coords</span><span class="p">)</span>
+        <span class="n">wf</span><span class="p">[</span><span class="n">PositionNoiseReplicaCount</span><span class="p">]</span> <span class="o">=</span> <span class="n">noise_replica_count</span>
+        <span class="n">wf</span><span class="p">[</span><span class="n">Filename</span><span class="p">[</span><span class="n">SampleRun</span><span class="p">]]</span> <span class="o">=</span> <span class="n">nexus_file</span>
+        <span class="n">wf</span><span class="p">[</span><span class="n">NeXusDetectorName</span><span class="p">]</span> <span class="o">=</span> <span class="n">detector_name</span>
+        <span class="k">return</span> <span class="n">wf</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">RollingDetectorView</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RollingDetectorView.get">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.get">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the sum of counts over a window of the most recent counts.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        window:</span>
+<span class="sd">            Size of the window to use. If None, the full history is used.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Sum of counts over the window.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">window</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Window size must be less than the history size.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">window</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">window</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">-</span> <span class="n">window</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">[</span><span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="n">start</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s1">&#39;window&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">[</span><span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="n">start</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window</span> <span class="p">:]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s1">&#39;window&#39;</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">[</span><span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="mi">0</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="s1">&#39;window&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="RollingDetectorView.add_events">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.add_events">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add counts in the form of events grouped by pixel ID.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data:</span>
+<span class="sd">            Events grouped by pixel ID, given by binned data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">counts</span><span class="o">.</span><span class="n">unit</span> <span class="o">=</span> <span class="s1">&#39;counts&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_counts</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RollingDetectorView.add_counts">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.RollingDetectorView.html#ess.reduce.live.raw.RollingDetectorView.add_counts">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add counts in the form of a sequence of pixel IDs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        data:</span>
+<span class="sd">            List of pixel IDs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_counts</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_add_counts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">counts</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">counts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_projection</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">[</span><span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_history</span><span class="p">[</span><span class="s1">&#39;window&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">]</span> <span class="o">=</span> <span class="n">counts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">+=</span> <span class="n">counts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cumulative</span> <span class="o">+=</span> <span class="n">counts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window</span></div>
+
+
+
+<div class="viewcode-block" id="project_xy">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.project_xy.html#ess.reduce.live.raw.project_xy">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">project_xy</span><span class="p">(</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">zplane</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Project positions onto the x-y plane, i.e., perpendicular to the beam (z axis).</span>
+
+<span class="sd">    This is useful, e.g., for SANS instruments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">z</span>
+    <span class="n">zmin</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">zero</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">zmin</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">zplane</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">zplane</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="k">if</span> <span class="n">zmin</span> <span class="o">&lt;</span> <span class="n">zero</span> <span class="k">else</span> <span class="n">zmin</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">zplane</span> <span class="o">/</span> <span class="n">z</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">position</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">x</span> <span class="o">*</span> <span class="n">t</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">position</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">y</span> <span class="o">*</span> <span class="n">t</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">zplane</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="project_onto_cylinder_z">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.project_onto_cylinder_z.html#ess.reduce.live.raw.project_onto_cylinder_z">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">project_onto_cylinder_z</span><span class="p">(</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Project positions onto the mantle of a cylinder aligned with the z axis.</span>
+
+<span class="sd">    This is useful for cylindrical detectors, provided they are aligned along the beam.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">x</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">y</span>
+    <span class="n">r_xy</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">radius</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">radius</span> <span class="o">=</span> <span class="n">r_xy</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">/</span> <span class="n">r_xy</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">atan2</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;deg&#39;</span><span class="p">)</span>
+    <span class="n">arc_length</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">*</span> <span class="p">(</span><span class="n">phi</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;1/deg&#39;</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">(</span>
+        <span class="n">phi</span><span class="o">=</span><span class="n">phi</span><span class="p">,</span> <span class="n">r</span><span class="o">=</span><span class="n">radius</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">position</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">z</span> <span class="o">*</span> <span class="n">t</span><span class="p">,</span> <span class="n">arc_length</span><span class="o">=</span><span class="n">arc_length</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="pixel_shape">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.pixel_shape.html#ess.reduce.live.raw.pixel_shape">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pixel_shape</span><span class="p">(</span><span class="n">component</span><span class="p">:</span> <span class="n">NeXusComponent</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span> <span class="n">SampleRun</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">PixelShape</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">PixelShape</span><span class="p">(</span><span class="n">component</span><span class="p">[</span><span class="s1">&#39;pixel_shape&#39;</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="pixel_cylinder_axis">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.pixel_cylinder_axis.html#ess.reduce.live.raw.pixel_cylinder_axis">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pixel_cylinder_axis</span><span class="p">(</span>
+    <span class="n">shape</span><span class="p">:</span> <span class="n">PixelShape</span><span class="p">,</span>
+    <span class="n">transform</span><span class="p">:</span> <span class="n">NeXusTransformation</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span> <span class="n">SampleRun</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PixelCylinderAxis</span><span class="p">:</span>
+    <span class="n">vertices</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="s1">&#39;vertices&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Case of multiple cylinders not implemented.&quot;</span><span class="p">)</span>
+    <span class="c1"># Note that transformation may be affine, so we need to apply it to the vertices</span>
+    <span class="c1"># *before* subtracting them, to remove the translation part.</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">PixelCylinderAxis</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span> <span class="o">*</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="pixel_cylinder_radius">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.pixel_cylinder_radius.html#ess.reduce.live.raw.pixel_cylinder_radius">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pixel_cylinder_radius</span><span class="p">(</span>
+    <span class="n">shape</span><span class="p">:</span> <span class="n">PixelShape</span><span class="p">,</span>
+    <span class="n">transform</span><span class="p">:</span> <span class="n">NeXusTransformation</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span> <span class="n">SampleRun</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PixelCylinderRadius</span><span class="p">:</span>
+    <span class="n">vertices</span> <span class="o">=</span> <span class="n">shape</span><span class="p">[</span><span class="s1">&#39;vertices&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Case of multiple cylinders not implemented.&quot;</span><span class="p">)</span>
+    <span class="c1"># Note that transformation may be affine, so we need to apply it to the vertices</span>
+    <span class="c1"># *before* subtracting them, to remove the translation part.</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">return</span> <span class="n">PixelCylinderRadius</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">t</span> <span class="o">*</span> <span class="n">vertices</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+
+<span class="c1"># Arbitrary small but not tiny size. More is likely not necessary, but having it too</span>
+<span class="c1"># small might lead to visible patterns after projection. It is therefore also chosen</span>
+<span class="c1"># to be a prime number, but it likely does not matter.</span>
+<span class="n">_noise_size</span> <span class="o">=</span> <span class="mi">107</span>
+
+
+<div class="viewcode-block" id="position_noise_for_cylindrical_pixel">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.position_noise_for_cylindrical_pixel.html#ess.reduce.live.raw.position_noise_for_cylindrical_pixel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">position_noise_for_cylindrical_pixel</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">axis</span><span class="p">:</span> <span class="n">PixelCylinderAxis</span><span class="p">,</span> <span class="n">radius</span><span class="p">:</span> <span class="n">PixelCylinderRadius</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositionNoise</span><span class="p">:</span>
+    <span class="c1"># We *assume* that the cylinder is centered on the origin. Real files may not</span>
+    <span class="c1"># fulfill this. However, the rest of the data reduction currently assumes that</span>
+    <span class="c1"># the pixel offset corresponds to the pixel center, so if it is not fulfilled</span>
+    <span class="c1"># there are bigger problems elsewhere anywhere.</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;position&#39;</span><span class="p">,)</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">_noise_size</span>
+    <span class="n">z_hat</span> <span class="o">=</span> <span class="n">axis</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>  <span class="c1"># Unit vector along the cylinder axis</span>
+    <span class="n">x_hat</span> <span class="o">=</span> <span class="n">radius</span> <span class="o">/</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">radius</span><span class="p">)</span>  <span class="c1"># Unit vector along the radius direction</span>
+    <span class="n">y_hat</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">z_hat</span><span class="p">,</span> <span class="n">x_hat</span><span class="p">)</span>  <span class="c1"># Unit vector perpendicular to z_hat and x_hat</span>
+
+    <span class="n">dz</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">dims</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">))</span> <span class="o">*</span> <span class="n">axis</span>
+    <span class="n">dphi</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">dims</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;rad&#39;</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">radius</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">dr</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="n">dims</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">rng</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">r</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">),</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m^2&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">dr</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">dphi</span><span class="p">)</span> <span class="o">*</span> <span class="n">x_hat</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">dr</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">dphi</span><span class="p">)</span> <span class="o">*</span> <span class="n">y_hat</span>
+
+    <span class="k">return</span> <span class="n">PositionNoise</span><span class="p">(</span><span class="n">dx</span> <span class="o">+</span> <span class="n">dy</span> <span class="o">+</span> <span class="n">dz</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="gaussian_position_noise">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.gaussian_position_noise.html#ess.reduce.live.raw.gaussian_position_noise">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gaussian_position_noise</span><span class="p">(</span><span class="n">sigma</span><span class="p">:</span> <span class="n">PositionNoiseSigma</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PositionNoise</span><span class="p">:</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">sigma</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">_noise_size</span>
+    <span class="n">position</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;position&#39;</span><span class="p">:</span> <span class="n">size</span><span class="p">},</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">vector3</span><span class="p">)</span>
+    <span class="n">position</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1234</span><span class="p">)</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
+        <span class="mi">0</span><span class="p">,</span> <span class="n">sigma</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">PositionNoise</span><span class="p">(</span><span class="n">position</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="position_with_noisy_replicas">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.position_with_noisy_replicas.html#ess.reduce.live.raw.position_with_noisy_replicas">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">position_with_noisy_replicas</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="n">EmptyDetector</span><span class="p">[</span><span class="n">SampleRun</span><span class="p">],</span>
+    <span class="n">position_noise</span><span class="p">:</span> <span class="n">PositionNoise</span><span class="p">,</span>
+    <span class="n">replicas</span><span class="p">:</span> <span class="n">PositionNoiseReplicaCount</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CalibratedPositionWithNoisyReplicas</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a new position array with noise added to the detector positions.</span>
+
+<span class="sd">    The first slice of the new array is the original position data, and the</span>
+<span class="sd">    remaining slices are the original data with noise added.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">position</span> <span class="o">=</span> <span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;position&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">replicas</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">position</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;replica&#39;</span><span class="p">)</span>
+    <span class="n">noise_dim</span> <span class="o">=</span> <span class="n">position_noise</span><span class="o">.</span><span class="n">dim</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">position</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">replicas</span>
+    <span class="c1"># &quot;Paint&quot; the short array of noise on top of the (replicated) position data.</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">sc</span><span class="o">.</span><span class="n">broadcast</span><span class="p">(</span>
+            <span class="n">position_noise</span><span class="p">,</span>
+            <span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;dummy&#39;</span><span class="p">:</span> <span class="n">ceil</span><span class="p">(</span><span class="n">size</span> <span class="o">/</span> <span class="n">position_noise</span><span class="o">.</span><span class="n">size</span><span class="p">),</span> <span class="o">**</span><span class="n">position_noise</span><span class="o">.</span><span class="n">sizes</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">to</span><span class="o">=</span><span class="n">noise_dim</span><span class="p">)[:</span><span class="n">size</span><span class="p">]</span>
+        <span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">noise_dim</span><span class="p">,</span> <span class="n">sizes</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;replica&#39;</span><span class="p">:</span> <span class="n">replicas</span><span class="p">,</span> <span class="o">**</span><span class="n">position</span><span class="o">.</span><span class="n">sizes</span><span class="p">})</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">position</span><span class="p">,</span> <span class="n">noise</span> <span class="o">+</span> <span class="n">position</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="s1">&#39;replica&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="make_xy_plane_coords">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.make_xy_plane_coords.html#ess.reduce.live.raw.make_xy_plane_coords">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_xy_plane_coords</span><span class="p">(</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">CalibratedPositionWithNoisyReplicas</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProjectedCoords</span><span class="p">:</span>
+    <span class="c1"># The first slice is the original data, so we use it to determine the z plane.</span>
+    <span class="c1"># This avoids noise in the z plane which could later cause trouble when</span>
+    <span class="c1"># combining the data.</span>
+    <span class="n">zplane</span> <span class="o">=</span> <span class="n">project_xy</span><span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="s1">&#39;replica&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">])[</span><span class="s1">&#39;z&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">project_xy</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">zplane</span><span class="o">=</span><span class="n">zplane</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="make_cylinder_mantle_coords">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.live.raw.make_cylinder_mantle_coords.html#ess.reduce.live.raw.make_cylinder_mantle_coords">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_cylinder_mantle_coords</span><span class="p">(</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">CalibratedPositionWithNoisyReplicas</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProjectedCoords</span><span class="p">:</span>
+    <span class="n">radius</span> <span class="o">=</span> <span class="n">project_onto_cylinder_z</span><span class="p">(</span><span class="n">position</span><span class="p">[</span><span class="s1">&#39;replica&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">])[</span><span class="s1">&#39;r&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">project_onto_cylinder_z</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="n">radius</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ESSreduce version: 26.2.2 (<a href="https://github.com/scipp/essreduce/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

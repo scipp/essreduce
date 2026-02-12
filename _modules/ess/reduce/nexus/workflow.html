@@ -1,0 +1,1463 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ess.reduce.nexus.workflow &#8212; ESSreduce</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=de9f5bbb"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/ess/reduce/nexus/workflow';</script>
+    <script src="../../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../../_static/favicon.svg"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="26.2.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/logo.svg" class="logo__image only-light" alt="ESSreduce - Home"/>
+    <img src="../../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ESSreduce - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ess.reduce.nexus.workflow</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for ess.reduce.nexus.workflow</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2024 Scipp contributors (https://github.com/scipp)</span>
+
+<span class="sd">&quot;&quot;&quot;Workflow and workflow components for interacting with NeXus files.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">sciline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sciline.typing</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scippnexus</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">snx</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipp.constants</span><span class="w"> </span><span class="kn">import</span> <span class="n">g</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipp.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">label_based_index_to_positional_index</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scippneutron.chopper</span><span class="w"> </span><span class="kn">import</span> <span class="n">extract_chopper_from_nexus</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">_nexus_loader</span> <span class="k">as</span> <span class="n">nexus</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.types</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">COMPONENT_CONSTRAINTS</span><span class="p">,</span>
+    <span class="n">AllNeXusComponents</span><span class="p">,</span>
+    <span class="n">Beamline</span><span class="p">,</span>
+    <span class="n">Component</span><span class="p">,</span>
+    <span class="n">DetectorBankSizes</span><span class="p">,</span>
+    <span class="n">DetectorPositionOffset</span><span class="p">,</span>
+    <span class="n">EmptyDetector</span><span class="p">,</span>
+    <span class="n">EmptyMonitor</span><span class="p">,</span>
+    <span class="n">Filename</span><span class="p">,</span>
+    <span class="n">GravityVector</span><span class="p">,</span>
+    <span class="n">Measurement</span><span class="p">,</span>
+    <span class="n">MonitorPositionOffset</span><span class="p">,</span>
+    <span class="n">MonitorType</span><span class="p">,</span>
+    <span class="n">NeXusAllComponentLocationSpec</span><span class="p">,</span>
+    <span class="n">NeXusClass</span><span class="p">,</span>
+    <span class="n">NeXusComponent</span><span class="p">,</span>
+    <span class="n">NeXusComponentLocationSpec</span><span class="p">,</span>
+    <span class="n">NeXusData</span><span class="p">,</span>
+    <span class="n">NeXusDataLocationSpec</span><span class="p">,</span>
+    <span class="n">NeXusFileSpec</span><span class="p">,</span>
+    <span class="n">NeXusName</span><span class="p">,</span>
+    <span class="n">NeXusTransformation</span><span class="p">,</span>
+    <span class="n">NeXusTransformationChain</span><span class="p">,</span>
+    <span class="n">Position</span><span class="p">,</span>
+    <span class="n">PreopenNeXusFile</span><span class="p">,</span>
+    <span class="n">RawChoppers</span><span class="p">,</span>
+    <span class="n">RawDetector</span><span class="p">,</span>
+    <span class="n">RawMonitor</span><span class="p">,</span>
+    <span class="n">RunType</span><span class="p">,</span>
+    <span class="n">TimeInterval</span><span class="p">,</span>
+    <span class="n">UniqueComponent</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">origin</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;The origin, used as default sample position.&quot;&quot;&quot;</span>
+<span class="n">no_offset</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="s2">&quot;m&quot;</span><span class="p">)</span>
+<span class="sd">&quot;&quot;&quot;Offset that does not change the position.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="file_path_to_file_spec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.file_path_to_file_spec.html#ess.reduce.nexus.workflow.file_path_to_file_spec">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">file_path_to_file_spec</span><span class="p">(</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="n">Filename</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span> <span class="n">preopen</span><span class="p">:</span> <span class="n">PreopenNeXusFile</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusFileSpec</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">NeXusFileSpec</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span>
+        <span class="n">nexus</span><span class="o">.</span><span class="n">open_nexus_file</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">definitions</span><span class="o">=</span><span class="n">definitions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">preopen</span>
+        <span class="k">else</span> <span class="n">filename</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="no_monitor_position_offset">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.no_monitor_position_offset.html#ess.reduce.nexus.workflow.no_monitor_position_offset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">no_monitor_position_offset</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MonitorPositionOffset</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">MonitorPositionOffset</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">](</span><span class="n">no_offset</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="no_detector_position_offset">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.no_detector_position_offset.html#ess.reduce.nexus.workflow.no_detector_position_offset">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">no_detector_position_offset</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">DetectorPositionOffset</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">DetectorPositionOffset</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span><span class="n">no_offset</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="full_time_interval">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.full_time_interval.html#ess.reduce.nexus.workflow.full_time_interval">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">full_time_interval</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">TimeInterval</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Select all neutron pulses in the data.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">TimeInterval</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="gravity_vector_neg_y">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.gravity_vector_neg_y.html#ess.reduce.nexus.workflow.gravity_vector_neg_y">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gravity_vector_neg_y</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">GravityVector</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gravity vector for default instrument coordinate system where y is up.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">GravityVector</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">g</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="component_spec_by_name">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.component_spec_by_name.html#ess.reduce.nexus.workflow.component_spec_by_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">component_spec_by_name</span><span class="p">(</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="n">NeXusFileSpec</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="n">NeXusName</span><span class="p">[</span><span class="n">Component</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusComponentLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a location spec for a component group in a NeXus file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename:</span>
+<span class="sd">        NeXus file to use for the location spec.</span>
+<span class="sd">    name:</span>
+<span class="sd">        Name of the component group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">NeXusComponentLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span>
+        <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">component_name</span><span class="o">=</span><span class="n">name</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="all_component_spec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.all_component_spec.html#ess.reduce.nexus.workflow.all_component_spec">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">all_component_spec</span><span class="p">(</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="n">NeXusFileSpec</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusAllComponentLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a location spec for all components of a class in a NeXus file.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">NeXusAllComponentLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="unique_component_spec">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.unique_component_spec.html#ess.reduce.nexus.workflow.unique_component_spec">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">unique_component_spec</span><span class="p">(</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="n">NeXusFileSpec</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusComponentLocationSpec</span><span class="p">[</span><span class="n">UniqueComponent</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a location spec for a unique component group in a NeXus file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename:</span>
+<span class="sd">        NeXus file to use for the location spec.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">NeXusComponentLocationSpec</span><span class="p">[</span><span class="n">UniqueComponent</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="data_by_name">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.data_by_name.html#ess.reduce.nexus.workflow.data_by_name">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">data_by_name</span><span class="p">(</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="n">NeXusFileSpec</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">NeXusName</span><span class="p">[</span><span class="n">Component</span><span class="p">],</span>
+    <span class="n">selection</span><span class="p">:</span> <span class="n">TimeInterval</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusDataLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a location spec for monitor or detector data in a NeXus file.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    filename:</span>
+<span class="sd">        NeXus file to use for the location spec.</span>
+<span class="sd">    name:</span>
+<span class="sd">        Name of the monitor or detector group.</span>
+<span class="sd">    selection:</span>
+<span class="sd">        Time range (start and stop as a Python slice object).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">NeXusDataLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span>
+        <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">component_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">selection</span><span class="o">=</span><span class="n">selection</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_nexus_sample">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.load_nexus_sample.html#ess.reduce.nexus.workflow.load_nexus_sample">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_nexus_sample</span><span class="p">(</span>
+    <span class="n">location</span><span class="p">:</span> <span class="n">NeXusComponentLocationSpec</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusComponent</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a NeXus sample group from a file.</span>
+
+<span class="sd">    If there is no sample group in the file, an empty group is returned. This should</span>
+<span class="sd">    not happen, but handling it gracefully makes testing and working with</span>
+<span class="sd">    pre-production files easier. There should be little harm in returning an empty</span>
+<span class="sd">    group. Subsequent extract of the sample position will then default to the origin.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    location:</span>
+<span class="sd">        Location spec for the sample group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">dg</span> <span class="o">=</span> <span class="n">nexus</span><span class="o">.</span><span class="n">load_component</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">nx_class</span><span class="o">=</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">dg</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataGroup</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s1">&#39;depends_on&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dg</span><span class="p">:</span>
+        <span class="n">dg</span><span class="p">[</span><span class="s1">&#39;depends_on&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">snx</span><span class="o">.</span><span class="n">TransformationChain</span><span class="p">(</span><span class="n">parent</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">NeXusComponent</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span><span class="n">dg</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="nx_class_for_monitor">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.nx_class_for_monitor.html#ess.reduce.nexus.workflow.nx_class_for_monitor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nx_class_for_monitor</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">MonitorType</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">MonitorType</span><span class="p">](</span><span class="n">snx</span><span class="o">.</span><span class="n">NXmonitor</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="nx_class_for_detector">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.nx_class_for_detector.html#ess.reduce.nexus.workflow.nx_class_for_detector">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nx_class_for_detector</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">](</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="nx_class_for_source">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.nx_class_for_source.html#ess.reduce.nexus.workflow.nx_class_for_source">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nx_class_for_source</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsource</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsource</span><span class="p">](</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsource</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="nx_class_for_sample">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.nx_class_for_sample.html#ess.reduce.nexus.workflow.nx_class_for_sample">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nx_class_for_sample</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">](</span><span class="n">snx</span><span class="o">.</span><span class="n">NXsample</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="nx_class_for_disk_chopper">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.nx_class_for_disk_chopper.html#ess.reduce.nexus.workflow.nx_class_for_disk_chopper">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nx_class_for_disk_chopper</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdisk_chopper</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdisk_chopper</span><span class="p">](</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdisk_chopper</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="nx_class_for_crystal">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.nx_class_for_crystal.html#ess.reduce.nexus.workflow.nx_class_for_crystal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">nx_class_for_crystal</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXcrystal</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXcrystal</span><span class="p">](</span><span class="n">snx</span><span class="o">.</span><span class="n">NXcrystal</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_nexus_component">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.load_nexus_component.html#ess.reduce.nexus.workflow.load_nexus_component">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_nexus_component</span><span class="p">(</span>
+    <span class="n">location</span><span class="p">:</span> <span class="n">NeXusComponentLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="n">nx_class</span><span class="p">:</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">Component</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusComponent</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a NeXus component group from a file.</span>
+
+<span class="sd">    When loading a detector or monitor, event data is replaced by placeholders.</span>
+
+<span class="sd">    As the event data can be large and is not needed at this stage, it is replaced by</span>
+<span class="sd">    a placeholder. A placeholder is used to allow for returning a scipp.DataArray, which</span>
+<span class="sd">    is what most downstream code will expect.</span>
+<span class="sd">    Currently the placeholder is the detector number (for detectors) or a size-0 array</span>
+<span class="sd">    (for monitors), but this may change in the future.</span>
+
+<span class="sd">    The returned object is a scipp.DataGroup, as it may contain additional information</span>
+<span class="sd">    about the detector that cannot be represented as a single scipp.DataArray. Most</span>
+<span class="sd">    downstream code will only be interested in the contained scipp.DataArray so this</span>
+<span class="sd">    needs to be extracted. However, other processing steps may require the additional</span>
+<span class="sd">    information, so it is kept in the DataGroup.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    location:</span>
+<span class="sd">        Location spec for the source group.</span>
+<span class="sd">    nx_class:</span>
+<span class="sd">        NX_class to identify the component.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">NeXusComponent</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span>
+        <span class="n">nexus</span><span class="o">.</span><span class="n">load_component</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">nx_class</span><span class="o">=</span><span class="n">nx_class</span><span class="p">,</span> <span class="n">definitions</span><span class="o">=</span><span class="n">definitions</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_all_nexus_components">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.load_all_nexus_components.html#ess.reduce.nexus.workflow.load_all_nexus_components">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_all_nexus_components</span><span class="p">(</span>
+    <span class="n">location</span><span class="p">:</span> <span class="n">NeXusAllComponentLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="n">nx_class</span><span class="p">:</span> <span class="n">NeXusClass</span><span class="p">[</span><span class="n">Component</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AllNeXusComponents</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load all NeXus components of one class from one entry a file.</span>
+
+<span class="sd">    This is equivalent to calling :func:`load_nexus_component` for every component.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    location:</span>
+<span class="sd">        Location spec for the source group.</span>
+<span class="sd">    nx_class:</span>
+<span class="sd">        NX_class to identify the components.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">AllNeXusComponents</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span>
+        <span class="n">nexus</span><span class="o">.</span><span class="n">load_all_components</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">nx_class</span><span class="o">=</span><span class="n">nx_class</span><span class="p">,</span> <span class="n">definitions</span><span class="o">=</span><span class="n">definitions</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_nexus_data">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.load_nexus_data.html#ess.reduce.nexus.workflow.load_nexus_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_nexus_data</span><span class="p">(</span>
+    <span class="n">location</span><span class="p">:</span> <span class="n">NeXusDataLocationSpec</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusData</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load event or histogram data from a NeXus detector group.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    location:</span>
+<span class="sd">        Location spec for the detector group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">NeXusData</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span>
+        <span class="n">nexus</span><span class="o">.</span><span class="n">load_data</span><span class="p">(</span>
+            <span class="n">file_path</span><span class="o">=</span><span class="n">location</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">entry_name</span><span class="o">=</span><span class="n">location</span><span class="o">.</span><span class="n">entry_name</span><span class="p">,</span>
+            <span class="n">selection</span><span class="o">=</span><span class="n">location</span><span class="o">.</span><span class="n">selection</span><span class="p">,</span>
+            <span class="n">component_name</span><span class="o">=</span><span class="n">location</span><span class="o">.</span><span class="n">component_name</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_transformation_chain">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.get_transformation_chain.html#ess.reduce.nexus.workflow.get_transformation_chain">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_transformation_chain</span><span class="p">(</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="n">NeXusComponent</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusTransformationChain</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the transformation chain from a NeXus detector group.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    detector:</span>
+<span class="sd">        NeXus detector group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">chain</span> <span class="o">=</span> <span class="n">detector</span><span class="p">[</span><span class="s1">&#39;depends_on&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">NeXusTransformationChain</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span><span class="n">chain</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_time_filter</span><span class="p">(</span><span class="n">transform</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">transform</span><span class="o">.</span><span class="n">sizes</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}:</span>
+        <span class="k">return</span> <span class="n">transform</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Transform is time-dependent: </span><span class="si">{</span><span class="n">transform</span><span class="si">}</span><span class="s2">, but no filter is provided.&quot;</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="to_transformation">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.to_transformation.html#ess.reduce.nexus.workflow.to_transformation">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">to_transformation</span><span class="p">(</span>
+    <span class="n">chain</span><span class="p">:</span> <span class="n">NeXusTransformationChain</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span> <span class="n">interval</span><span class="p">:</span> <span class="n">TimeInterval</span><span class="p">[</span><span class="n">RunType</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NeXusTransformation</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert transformation chain into a single transformation matrix.</span>
+
+<span class="sd">    If one or more transformations in the chain are time-dependent, the time interval</span>
+<span class="sd">    is used to select a specific time point. If the interval is not a single time point,</span>
+<span class="sd">    an error is raised. This may be extended in the future to a more sophisticated</span>
+<span class="sd">    mechanism, e.g., averaging over the interval to remove noise.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    chain:</span>
+<span class="sd">        Transformation chain.</span>
+<span class="sd">    interval:</span>
+<span class="sd">        Time interval to select from the transformation chain.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">chain</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">chain</span><span class="o">.</span><span class="n">transformations</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">sizes</span> <span class="o">==</span> <span class="p">{}</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">interval</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">start</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">interval</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">stop</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">):</span>
+            <span class="c1"># NXlog entries are generally interpreted as the previous value being valid</span>
+            <span class="c1"># until the next entry. We therefore need to select the previous value, and</span>
+            <span class="c1"># any index after the last entry refers to the last entry, i.e., there is no</span>
+            <span class="c1"># &quot;end&quot; time in the files. We add a dummy end so we can use Scipp&#39;s label-</span>
+            <span class="c1"># based indexing for histogram data.</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span>
+            <span class="c1"># Add 1000 days as a dummy end time. This is hopefully long enough to cover</span>
+            <span class="c1"># all reasonable use cases.</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="mi">24_000</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="s1">&#39;hours&#39;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int64&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">time</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">time</span><span class="p">,</span> <span class="n">time</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">delta</span><span class="p">],</span> <span class="s1">&#39;time&#39;</span><span class="p">)</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">label_based_index_to_positional_index</span><span class="p">(</span>
+                <span class="n">sizes</span><span class="o">=</span><span class="n">t</span><span class="o">.</span><span class="n">sizes</span><span class="p">,</span> <span class="n">coord</span><span class="o">=</span><span class="n">time</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">interval</span><span class="o">.</span><span class="n">value</span>
+            <span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">_time_filter</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">_time_filter</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">value</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="n">interval</span><span class="o">.</span><span class="n">value</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">NeXusTransformation</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]</span><span class="o">.</span><span class="n">from_chain</span><span class="p">(</span><span class="n">chain</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="compute_position">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.compute_position.html#ess.reduce.nexus.workflow.compute_position">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">compute_position</span><span class="p">(</span>
+    <span class="n">transformation</span><span class="p">:</span> <span class="n">NeXusTransformation</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Position</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the position of a component from a transformation matrix.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Position</span><span class="p">[</span><span class="n">Component</span><span class="p">,</span> <span class="n">RunType</span><span class="p">](</span><span class="n">transformation</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">origin</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_calibrated_detector">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.get_calibrated_detector.html#ess.reduce.nexus.workflow.get_calibrated_detector">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_calibrated_detector</span><span class="p">(</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="n">NeXusComponent</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">transform</span><span class="p">:</span> <span class="n">NeXusTransformation</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="c1"># Strictly speaking we could apply an offset by modifying the transformation chain,</span>
+    <span class="c1"># using a more generic implementation. However, this may in general require</span>
+    <span class="c1"># extending the chain and it is currently not clear if that is desirable. As far as</span>
+    <span class="c1"># I am aware the offset is currently mainly used for handling files from other</span>
+    <span class="c1"># facilities and it is not clear if it is needed for ESS data and should be kept at</span>
+    <span class="c1"># all.</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="n">DetectorPositionOffset</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+    <span class="n">bank_sizes</span><span class="p">:</span> <span class="n">DetectorBankSizes</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmptyDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the data array corresponding to a detector&#39;s signal field.</span>
+
+<span class="sd">    The data array is reshaped to the logical detector shape, by folding the data</span>
+<span class="sd">    array along the detector_number dimension.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    detector:</span>
+<span class="sd">        NeXus detector group.</span>
+<span class="sd">    transform:</span>
+<span class="sd">        Transformation matrix for the detector.</span>
+<span class="sd">    offset:</span>
+<span class="sd">        Offset to add to the detector position.</span>
+<span class="sd">    bank_sizes:</span>
+<span class="sd">        Dictionary of detector bank sizes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">da</span> <span class="o">=</span> <span class="n">nexus</span><span class="o">.</span><span class="n">extract_signal_data_array</span><span class="p">(</span><span class="n">detector</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">sizes</span> <span class="o">:=</span> <span class="p">(</span><span class="n">bank_sizes</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">detector</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;nexus_component_name&#39;</span><span class="p">))</span>
+    <span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">da</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">fold</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s2">&quot;detector_number&quot;</span><span class="p">,</span> <span class="n">sizes</span><span class="o">=</span><span class="n">sizes</span><span class="p">)</span>
+    <span class="c1"># Note: We apply offset as early as possible, i.e., right in this function</span>
+    <span class="c1"># the detector array from the raw loader NeXus group, to prevent a source of bugs.</span>
+    <span class="c1"># If the NXdetector in the file is not 1-D, we want to match the order of dims.</span>
+    <span class="c1"># zip_pixel_offsets otherwise yields a vector with dimensions in the order given</span>
+    <span class="c1"># by the x/y/z offsets.</span>
+    <span class="n">offsets</span> <span class="o">=</span> <span class="n">snx</span><span class="o">.</span><span class="n">zip_pixel_offsets</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+    <span class="c1"># Get the dims in the order of the detector data array, but filter out dims that</span>
+    <span class="c1"># don&#39;t exist in the offsets (e.g. the detector data may have a &#39;time&#39; dimension).</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">da</span><span class="o">.</span><span class="n">dims</span> <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">offsets</span><span class="o">.</span><span class="n">dims</span><span class="p">]</span>
+    <span class="n">offsets</span> <span class="o">=</span> <span class="n">offsets</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="c1"># We use the unit of the offsets as this is likely what the user expects.</span>
+    <span class="k">if</span> <span class="n">transform</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">transform</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">unit</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+        <span class="n">transform_value</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">offsets</span><span class="o">.</span><span class="n">unit</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">transform_value</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">position</span> <span class="o">=</span> <span class="n">transform_value</span> <span class="o">*</span> <span class="n">offsets</span>
+    <span class="k">return</span> <span class="n">EmptyDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span>
+        <span class="n">da</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="n">position</span> <span class="o">+</span> <span class="n">offset</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">position</span><span class="o">.</span><span class="n">unit</span><span class="p">))</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="assemble_detector_data">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.assemble_detector_data.html#ess.reduce.nexus.workflow.assemble_detector_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assemble_detector_data</span><span class="p">(</span>
+    <span class="n">detector</span><span class="p">:</span> <span class="n">EmptyDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+    <span class="n">neutron_data</span><span class="p">:</span> <span class="n">NeXusData</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RawDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble a detector data array with event data.</span>
+
+<span class="sd">    Also adds variances to the event data if they are missing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    detector:</span>
+<span class="sd">        Calibrated detector data array.</span>
+<span class="sd">    neutron_data:</span>
+<span class="sd">        Neutron data array (events or histogram).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">neutron_data</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">neutron_data</span> <span class="o">=</span> <span class="n">nexus</span><span class="o">.</span><span class="n">group_event_data</span><span class="p">(</span>
+            <span class="n">event_data</span><span class="o">=</span><span class="n">neutron_data</span><span class="p">,</span> <span class="n">detector_number</span><span class="o">=</span><span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="s1">&#39;detector_number&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">RawDetector</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span>
+        <span class="n">_add_variances</span><span class="p">(</span><span class="n">neutron_data</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">detector</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">assign_masks</span><span class="p">(</span><span class="n">detector</span><span class="o">.</span><span class="n">masks</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="get_calibrated_monitor">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.get_calibrated_monitor.html#ess.reduce.nexus.workflow.get_calibrated_monitor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_calibrated_monitor</span><span class="p">(</span>
+    <span class="n">monitor</span><span class="p">:</span> <span class="n">NeXusComponent</span><span class="p">[</span><span class="n">MonitorType</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="n">transform</span><span class="p">:</span> <span class="n">NeXusTransformation</span><span class="p">[</span><span class="n">MonitorType</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+    <span class="n">offset</span><span class="p">:</span> <span class="n">MonitorPositionOffset</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">EmptyMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the data array corresponding to a monitor&#39;s signal field.</span>
+
+<span class="sd">    The returned data array includes coords pertaining directly to the</span>
+<span class="sd">    signal values array, but not additional information about the monitor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    monitor:</span>
+<span class="sd">        NeXus monitor group.</span>
+<span class="sd">    transform:</span>
+<span class="sd">        Transformation matrix for the monitor.</span>
+<span class="sd">    offset:</span>
+<span class="sd">        Offset to add to the monitor position.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">transform_unit</span> <span class="o">=</span> <span class="n">transform</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">unit</span>
+    <span class="k">return</span> <span class="n">EmptyMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">](</span>
+        <span class="n">nexus</span><span class="o">.</span><span class="n">extract_signal_data_array</span><span class="p">(</span><span class="n">monitor</span><span class="p">)</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span>
+            <span class="n">position</span><span class="o">=</span><span class="n">transform</span><span class="o">.</span><span class="n">value</span> <span class="o">*</span> <span class="n">sc</span><span class="o">.</span><span class="n">vector</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">unit</span><span class="o">=</span><span class="n">transform_unit</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">offset</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">unit</span><span class="o">=</span><span class="n">transform_unit</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="assemble_monitor_data">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.assemble_monitor_data.html#ess.reduce.nexus.workflow.assemble_monitor_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">assemble_monitor_data</span><span class="p">(</span>
+    <span class="n">monitor</span><span class="p">:</span> <span class="n">EmptyMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">],</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">NeXusData</span><span class="p">[</span><span class="n">MonitorType</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RawMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Assemble a monitor data array with event data.</span>
+
+<span class="sd">    Also adds variances to the event data if they are missing.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    monitor:</span>
+<span class="sd">        Calibrated monitor data array.</span>
+<span class="sd">    data:</span>
+<span class="sd">        Data array with neutron counts.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">da</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">assign_coords</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">coords</span><span class="p">)</span><span class="o">.</span><span class="n">assign_masks</span><span class="p">(</span><span class="n">monitor</span><span class="o">.</span><span class="n">masks</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">RawMonitor</span><span class="p">[</span><span class="n">RunType</span><span class="p">,</span> <span class="n">MonitorType</span><span class="p">](</span><span class="n">_add_variances</span><span class="p">(</span><span class="n">da</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="parse_disk_choppers">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.parse_disk_choppers.html#ess.reduce.nexus.workflow.parse_disk_choppers">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_disk_choppers</span><span class="p">(</span>
+    <span class="n">choppers</span><span class="p">:</span> <span class="n">AllNeXusComponents</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdisk_chopper</span><span class="p">,</span> <span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RawChoppers</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert the NeXus representation of a chopper to ours.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        A nested data group containing the loaded choppers.</span>
+<span class="sd">        The elements may be time-dependent arrays that first need to be processed</span>
+<span class="sd">        before they can be passed to other functions as</span>
+<span class="sd">        :class:`ess.reduce.nexus.types.DiskChoppers`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RawChoppers</span><span class="p">[</span><span class="n">RunType</span><span class="p">](</span>
+        <span class="n">choppers</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">chopper</span><span class="p">:</span> <span class="n">extract_chopper_from_nexus</span><span class="p">(</span>
+                <span class="n">nexus</span><span class="o">.</span><span class="n">compute_component_position</span><span class="p">(</span><span class="n">chopper</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_drop</span><span class="p">(</span>
+    <span class="n">children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">Field</span> <span class="o">|</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">],</span> <span class="n">classes</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">snx</span><span class="o">.</span><span class="n">NXobject</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">Field</span> <span class="o">|</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">child</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">nx_class</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">))</span>
+    <span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_EmptyField</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Empty field that can replace a missing detector_number in NXdetector.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sizes</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizes</span> <span class="o">=</span> <span class="n">sizes</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sizes</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sizes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_StrippedDetector</span><span class="p">(</span><span class="n">snx</span><span class="o">.</span><span class="n">NXdetector</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Detector definition without large geometry or event data for ScippNexus.</span>
+
+<span class="sd">    Drops NXoff_geometry and NXevent_data groups, data is replaced by detector_number.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">attrs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">Field</span> <span class="o">|</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;detector_number&#39;</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">children</span><span class="p">[</span><span class="s1">&#39;detector_number&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># We get the &#39;data&#39; sizes before the NXdata is dropped</span>
+            <span class="k">if</span> <span class="s1">&#39;data&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">children</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                    <span class="s2">&quot;StrippedDetector: Cannot determine shape of the detector. &quot;</span>
+                    <span class="s2">&quot;No &#39;detector_number&#39; was found, and the &#39;data&#39; entry is missing.&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;value&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">children</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                    <span class="s2">&quot;StrippedDetector: Cannot determine shape of the detector. &quot;</span>
+                    <span class="s2">&quot;The &#39;data&#39; entry has no &#39;value&#39;.&quot;</span>
+                <span class="p">)</span>
+            <span class="c1"># We drop any time-related dimension from the data sizes, as they are not</span>
+            <span class="c1"># relevant for the detector geometry/shape.</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">_EmptyField</span><span class="p">(</span>
+                <span class="n">sizes</span><span class="o">=</span><span class="p">{</span>
+                    <span class="n">dim</span><span class="p">:</span> <span class="n">size</span>
+                    <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">children</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">sizes</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;time&#39;</span><span class="p">,</span> <span class="s1">&#39;frame_time&#39;</span><span class="p">)</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="n">children</span> <span class="o">=</span> <span class="n">_drop</span><span class="p">(</span>
+            <span class="n">children</span><span class="p">,</span> <span class="p">(</span><span class="n">snx</span><span class="o">.</span><span class="n">NXoff_geometry</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">NXevent_data</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">NXdata</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">NXlog</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">children</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">children</span><span class="o">=</span><span class="n">children</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_DummyField</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Dummy field that can replace snx.Field in NXmonitor.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sizes</span> <span class="o">=</span> <span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dims</span> <span class="o">=</span> <span class="p">(</span><span class="n">dim</span><span class="p">,)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dims</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dims</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">unit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;int32&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_StrippedMonitor</span><span class="p">(</span><span class="n">snx</span><span class="o">.</span><span class="n">NXmonitor</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Monitor definition without event data for ScippNexus.</span>
+
+<span class="sd">    Drops NXevent_data and NXdata groups, data is replaced by a dummy field.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">attrs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">children</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">Field</span> <span class="o">|</span> <span class="n">snx</span><span class="o">.</span><span class="n">Group</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="n">is_dense</span> <span class="o">=</span> <span class="n">snx</span><span class="o">.</span><span class="n">NXdata</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="s1">&#39;nx_class&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span>
+        <span class="p">)</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="n">_drop</span><span class="p">(</span><span class="n">children</span><span class="p">,</span> <span class="p">(</span><span class="n">snx</span><span class="o">.</span><span class="n">NXevent_data</span><span class="p">,</span> <span class="n">snx</span><span class="o">.</span><span class="n">NXdata</span><span class="p">))</span>
+        <span class="n">children</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_DummyField</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="s1">&#39;time&#39;</span> <span class="k">if</span> <span class="n">is_dense</span> <span class="k">else</span> <span class="s1">&#39;event_time_zero&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">,</span> <span class="n">children</span><span class="o">=</span><span class="n">children</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_variances</span><span class="p">(</span><span class="n">da</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">:</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">deep</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">out</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">bins</span><span class="o">.</span><span class="n">constituents</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="n">content</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">_assign_values_as_variances</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">out</span><span class="o">.</span><span class="n">variances</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">_assign_values_as_variances</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_assign_values_as_variances</span><span class="p">(</span><span class="n">var</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">var</span><span class="o">.</span><span class="n">variances</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">except</span> <span class="n">sc</span><span class="o">.</span><span class="n">VariancesError</span><span class="p">:</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">sc</span><span class="o">.</span><span class="n">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+        <span class="n">var</span><span class="o">.</span><span class="n">variances</span> <span class="o">=</span> <span class="n">var</span><span class="o">.</span><span class="n">values</span>
+    <span class="k">return</span> <span class="n">var</span>
+
+
+<div class="viewcode-block" id="load_beamline_metadata_from_nexus">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.load_beamline_metadata_from_nexus.html#ess.reduce.nexus.workflow.load_beamline_metadata_from_nexus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_beamline_metadata_from_nexus</span><span class="p">(</span>
+    <span class="n">file_spec</span><span class="p">:</span> <span class="n">NeXusFileSpec</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Beamline</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load beamline metadata from a sample NeXus file.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">nexus</span><span class="o">.</span><span class="n">load_metadata</span><span class="p">(</span><span class="n">file_spec</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">Beamline</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="load_measurement_metadata_from_nexus">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.load_measurement_metadata_from_nexus.html#ess.reduce.nexus.workflow.load_measurement_metadata_from_nexus">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">load_measurement_metadata_from_nexus</span><span class="p">(</span>
+    <span class="n">file_spec</span><span class="p">:</span> <span class="n">NeXusFileSpec</span><span class="p">[</span><span class="n">RunType</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Measurement</span><span class="p">[</span><span class="n">RunType</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load measurement metadata from a sample NeXus file.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">nexus</span><span class="o">.</span><span class="n">load_metadata</span><span class="p">(</span><span class="n">file_spec</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">Measurement</span><span class="p">)</span></div>
+
+
+
+<span class="n">definitions</span> <span class="o">=</span> <span class="n">snx</span><span class="o">.</span><span class="n">base_definitions</span><span class="p">()</span>
+<span class="n">definitions</span><span class="p">[</span><span class="s2">&quot;NXdetector&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_StrippedDetector</span>
+<span class="n">definitions</span><span class="p">[</span><span class="s2">&quot;NXmonitor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_StrippedMonitor</span>
+
+
+<span class="n">_common_providers</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">gravity_vector_neg_y</span><span class="p">,</span>
+    <span class="n">file_path_to_file_spec</span><span class="p">,</span>
+    <span class="n">full_time_interval</span><span class="p">,</span>
+    <span class="n">component_spec_by_name</span><span class="p">,</span>
+    <span class="n">unique_component_spec</span><span class="p">,</span>  <span class="c1"># after component_spec_by_name, partially overrides</span>
+    <span class="n">all_component_spec</span><span class="p">,</span>
+    <span class="n">get_transformation_chain</span><span class="p">,</span>
+    <span class="n">to_transformation</span><span class="p">,</span>
+    <span class="n">compute_position</span><span class="p">,</span>
+    <span class="n">load_nexus_data</span><span class="p">,</span>
+    <span class="n">load_nexus_component</span><span class="p">,</span>
+    <span class="n">load_all_nexus_components</span><span class="p">,</span>
+    <span class="n">data_by_name</span><span class="p">,</span>
+    <span class="n">nx_class_for_detector</span><span class="p">,</span>
+    <span class="n">nx_class_for_monitor</span><span class="p">,</span>
+    <span class="n">nx_class_for_source</span><span class="p">,</span>
+    <span class="n">nx_class_for_sample</span><span class="p">,</span>
+    <span class="n">nx_class_for_disk_chopper</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_monitor_providers</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">no_monitor_position_offset</span><span class="p">,</span>
+    <span class="n">get_calibrated_monitor</span><span class="p">,</span>
+    <span class="n">assemble_monitor_data</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_detector_providers</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">no_detector_position_offset</span><span class="p">,</span>
+    <span class="n">load_nexus_sample</span><span class="p">,</span>
+    <span class="n">get_calibrated_detector</span><span class="p">,</span>
+    <span class="n">assemble_detector_data</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">_chopper_providers</span> <span class="o">=</span> <span class="p">(</span><span class="n">parse_disk_choppers</span><span class="p">,)</span>
+
+<span class="n">_metadata_providers</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">load_beamline_metadata_from_nexus</span><span class="p">,</span>
+    <span class="n">load_measurement_metadata_from_nexus</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="LoadMonitorWorkflow">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.LoadMonitorWorkflow.html#ess.reduce.nexus.workflow.LoadMonitorWorkflow">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">LoadMonitorWorkflow</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">run_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">],</span>
+    <span class="n">monitor_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic workflow for loading monitor data from a NeXus file.&quot;&quot;&quot;</span>
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span>
+        <span class="p">(</span><span class="o">*</span><span class="n">_common_providers</span><span class="p">,</span> <span class="o">*</span><span class="n">_monitor_providers</span><span class="p">),</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">_gather_constraints</span><span class="p">(</span>
+            <span class="n">run_types</span><span class="o">=</span><span class="n">run_types</span><span class="p">,</span> <span class="n">monitor_types</span><span class="o">=</span><span class="n">monitor_types</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">wf</span><span class="p">[</span><span class="n">PreopenNeXusFile</span><span class="p">]</span> <span class="o">=</span> <span class="n">PreopenNeXusFile</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wf</span></div>
+
+
+
+<div class="viewcode-block" id="LoadDetectorWorkflow">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.LoadDetectorWorkflow.html#ess.reduce.nexus.workflow.LoadDetectorWorkflow">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">LoadDetectorWorkflow</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span> <span class="n">run_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generic workflow for loading detector data from a NeXus file.&quot;&quot;&quot;</span>
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span>
+        <span class="p">(</span><span class="o">*</span><span class="n">_common_providers</span><span class="p">,</span> <span class="o">*</span><span class="n">_detector_providers</span><span class="p">),</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">_gather_constraints</span><span class="p">(</span><span class="n">run_types</span><span class="o">=</span><span class="n">run_types</span><span class="p">,</span> <span class="n">monitor_types</span><span class="o">=</span><span class="p">[]),</span>
+    <span class="p">)</span>
+    <span class="n">wf</span><span class="p">[</span><span class="n">DetectorBankSizes</span><span class="p">]</span> <span class="o">=</span> <span class="n">DetectorBankSizes</span><span class="p">({})</span>
+    <span class="n">wf</span><span class="p">[</span><span class="n">PreopenNeXusFile</span><span class="p">]</span> <span class="o">=</span> <span class="n">PreopenNeXusFile</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wf</span></div>
+
+
+
+<div class="viewcode-block" id="GenericNeXusWorkflow">
+<a class="viewcode-back" href="../../../../generated/modules/ess.reduce.nexus.workflow.GenericNeXusWorkflow.html#ess.reduce.nexus.workflow.GenericNeXusWorkflow">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">GenericNeXusWorkflow</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">run_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">],</span>
+    <span class="n">monitor_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic workflow for loading detector and monitor data from a NeXus file.</span>
+
+<span class="sd">    It is possible to limit which run types and monitor types</span>
+<span class="sd">    are supported by the returned workflow.</span>
+<span class="sd">    This is useful to reduce the size of the workflow and make it easier to inspect.</span>
+<span class="sd">    Make sure to add *all* required run types and monitor types when using this feature.</span>
+
+<span class="sd">    Attention</span>
+<span class="sd">    ---------</span>
+<span class="sd">    Filtering by run type and monitor type does not work with nested type vars.</span>
+<span class="sd">    E.g., if you have a type like ``Outer[Inner[RunType]]``, this type and its</span>
+<span class="sd">    provider will be removed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    run_types:</span>
+<span class="sd">        List of run types to include in the workflow.</span>
+<span class="sd">        Constrains the possible values of :class:`ess.reduce.nexus.types.RunType`.</span>
+<span class="sd">    monitor_types:</span>
+<span class="sd">        List of monitor types to include in the workflow.</span>
+<span class="sd">        Constrains the possible values of :class:`ess.reduce.nexus.types.MonitorType`</span>
+<span class="sd">        and :class:`ess.reduce.nexus.types.Component`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        The workflow.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">wf</span> <span class="o">=</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="o">*</span><span class="n">_common_providers</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_monitor_providers</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_detector_providers</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_chopper_providers</span><span class="p">,</span>
+            <span class="o">*</span><span class="n">_metadata_providers</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">_gather_constraints</span><span class="p">(</span>
+            <span class="n">run_types</span><span class="o">=</span><span class="n">run_types</span><span class="p">,</span> <span class="n">monitor_types</span><span class="o">=</span><span class="n">monitor_types</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">wf</span><span class="p">[</span><span class="n">DetectorBankSizes</span><span class="p">]</span> <span class="o">=</span> <span class="n">DetectorBankSizes</span><span class="p">({})</span>
+    <span class="n">wf</span><span class="p">[</span><span class="n">PreopenNeXusFile</span><span class="p">]</span> <span class="o">=</span> <span class="n">PreopenNeXusFile</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">wf</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gather_constraints</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">run_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">],</span>
+    <span class="n">monitor_types</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">TypeVar</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">type</span><span class="p">]]:</span>
+    <span class="n">mon</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">monitor_types</span><span class="p">))</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">RunType</span><span class="p">:</span> <span class="n">run_types</span><span class="p">,</span>
+        <span class="n">MonitorType</span><span class="p">:</span> <span class="n">mon</span><span class="p">,</span>
+        <span class="n">Component</span><span class="p">:</span> <span class="p">(</span><span class="o">*</span><span class="n">COMPONENT_CONSTRAINTS</span><span class="p">,</span> <span class="o">*</span><span class="n">mon</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">constraints</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ESSreduce version: 26.2.2 (<a href="https://github.com/scipp/essreduce/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

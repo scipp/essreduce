@@ -1,0 +1,129 @@
+Results of doctest builder run on 2026-02-12 13:05:24
+=====================================================
+
+Document: generated/modules/ess.reduce.nexus.types.DetectorPositionOffset
+-------------------------------------------------------------------------
+1 items passed all tests:
+   3 tests in default
+3 tests in 1 items.
+3 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.nexus.types.EmptyDetector
+----------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.nexus.types.EmptyMonitor
+---------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.nexus.types.MonitorPositionOffset
+------------------------------------------------------------------------
+1 items passed all tests:
+   3 tests in default
+3 tests in 1 items.
+3 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.nexus.types.NeXusData
+------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.nexus.types.Position
+-----------------------------------------------------------
+1 items passed all tests:
+   3 tests in default
+3 tests in 1 items.
+3 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.nexus.types.RawDetector
+--------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.nexus.types.RawMonitor
+-------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.time_of_flight.types.DetectorLtotal
+--------------------------------------------------------------------------
+1 items passed all tests:
+   3 tests in default
+3 tests in 1 items.
+3 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.time_of_flight.types.MonitorLtotal
+-------------------------------------------------------------------------
+1 items passed all tests:
+   3 tests in default
+3 tests in 1 items.
+3 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.time_of_flight.types.ToaDetector
+-----------------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.time_of_flight.types.TofDetector
+-----------------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.time_of_flight.types.TofMonitor
+----------------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.time_of_flight.types.WavelengthDetector
+------------------------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Document: generated/modules/ess.reduce.time_of_flight.types.WavelengthMonitor
+-----------------------------------------------------------------------------
+1 items passed all tests:
+   4 tests in default
+4 tests in 1 items.
+4 passed and 0 failed.
+Test passed.
+
+Doctest summary
+===============
+   55 tests
+    0 failures in tests
+    0 failures in setup code
+    0 failures in cleanup code

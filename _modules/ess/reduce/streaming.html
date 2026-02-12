@@ -1,0 +1,1591 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ess.reduce.streaming &#8212; ESSreduce</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=de9f5bbb"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/ess/reduce/streaming';</script>
+    <script src="../../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../../_static/favicon.svg"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="26.2.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/logo.svg" class="logo__image only-light" alt="ESSreduce - Home"/>
+    <img src="../../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ESSreduce - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">Module code</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ess.reduce.streaming</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for ess.reduce.streaming</h1><div class="highlight"><pre>
+<span></span><span class="c1"># SPDX-License-Identifier: BSD-3-Clause</span>
+<span class="c1"># Copyright (c) 2023 Scipp contributors (https://github.com/scipp)</span>
+<span class="sd">&quot;&quot;&quot;This module provides tools for running workflows in a streaming fashion.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">copy</span><span class="w"> </span><span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">networkx</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nx</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sciline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipp</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sc</span>
+
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">graphviz</span>
+
+<span class="n">T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="maybe_hist">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.maybe_hist.html#ess.reduce.streaming.maybe_hist">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">maybe_hist</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert value to a histogram if it is not already a histogram.</span>
+
+<span class="sd">    This is the default pre-processing used by accumulators.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    value:</span>
+<span class="sd">        Value to be converted to a histogram.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :</span>
+<span class="sd">        Histogram.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="n">sc</span><span class="o">.</span><span class="n">DataArray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">value</span> <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">bins</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">value</span><span class="o">.</span><span class="n">hist</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="Accumulator">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Accumulator</span><span class="p">(</span><span class="n">ABC</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract base class for accumulators.</span>
+
+<span class="sd">    Accumulators are used to accumulate values over multiple chunks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Accumulator.__init__">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">preprocess</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">T</span><span class="p">],</span> <span class="n">T</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">maybe_hist</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        preprocess:</span>
+<span class="sd">            Preprocessing function to be applied to pushed values prior to accumulation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess</span> <span class="o">=</span> <span class="n">preprocess</span></div>
+
+
+<div class="viewcode-block" id="Accumulator.push">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.push">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Push a value to the accumulator.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        value:</span>
+<span class="sd">            Value to be pushed to the accumulator.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_preprocess</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_do_push</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_do_push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the accumulator is empty.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            True if the accumulator is empty, False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the accumulated value.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Accumulated value.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the accumulator is empty.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_empty</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot get value from empty accumulator&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_value</span><span class="p">()</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return the accumulated value, assuming it exists.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Accumulator.clear">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.clear">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear the accumulator, resetting it to its initial state.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Accumulator.on_finalize">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.Accumulator.html#ess.reduce.streaming.Accumulator.on_finalize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Called after finalize retrieves value.</span>
+
+<span class="sd">        Override this method to perform custom cleanup after each finalize cycle.</span>
+<span class="sd">        The default implementation does nothing.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="EternalAccumulator">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.EternalAccumulator.html#ess.reduce.streaming.EternalAccumulator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EternalAccumulator</span><span class="p">(</span><span class="n">Accumulator</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple accumulator that adds pushed values immediately.</span>
+
+<span class="sd">    Does not support event data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EternalAccumulator.__init__">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.EternalAccumulator.html#ess.reduce.streaming.EternalAccumulator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">:</span> <span class="n">T</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="ow">is</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_value</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_do_push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">+=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="EternalAccumulator.clear">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.EternalAccumulator.html#ess.reduce.streaming.EternalAccumulator.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated value.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MeanAccumulator">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MeanAccumulator.html#ess.reduce.streaming.MeanAccumulator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MeanAccumulator</span><span class="p">(</span><span class="n">EternalAccumulator</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Accumulator that computes the mean of pushed values.</span>
+
+<span class="sd">    Does not support event data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MeanAccumulator.__init__">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MeanAccumulator.html#ess.reduce.streaming.MeanAccumulator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_do_push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_do_push</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_value</span><span class="p">()</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_count</span>
+
+<div class="viewcode-block" id="MeanAccumulator.clear">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MeanAccumulator.html#ess.reduce.streaming.MeanAccumulator.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated value and count.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_count</span> <span class="o">=</span> <span class="mi">0</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RollingAccumulator">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.RollingAccumulator.html#ess.reduce.streaming.RollingAccumulator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RollingAccumulator</span><span class="p">(</span><span class="n">Accumulator</span><span class="p">[</span><span class="n">T</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Accumulator that adds pushed values to a rolling window.</span>
+
+<span class="sd">    Does not support event data.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="RollingAccumulator.__init__">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.RollingAccumulator.html#ess.reduce.streaming.RollingAccumulator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">window</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        window:</span>
+<span class="sd">            Size of the rolling window.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_window</span> <span class="o">=</span> <span class="n">window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+        <span class="c1"># Naive and potentially slow implementation if values and/or window are large!</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_do_push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">T</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_window</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_values</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RollingAccumulator.clear">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.RollingAccumulator.html#ess.reduce.streaming.RollingAccumulator.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated values.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_values</span> <span class="o">=</span> <span class="p">[]</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MinAccumulator">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MinAccumulator.html#ess.reduce.streaming.MinAccumulator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MinAccumulator</span><span class="p">(</span><span class="n">Accumulator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keeps the minimum value seen so far.</span>
+
+<span class="sd">    Only supports scalar values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MinAccumulator.__init__">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MinAccumulator.html#ess.reduce.streaming.MinAccumulator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cur_min</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_do_push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cur_min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cur_min</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cur_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cur_min</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the accumulator has collected a minimum value.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cur_min</span> <span class="ow">is</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cur_min</span>
+
+<div class="viewcode-block" id="MinAccumulator.clear">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MinAccumulator.html#ess.reduce.streaming.MinAccumulator.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated minimum value.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cur_min</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MaxAccumulator">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MaxAccumulator.html#ess.reduce.streaming.MaxAccumulator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MaxAccumulator</span><span class="p">(</span><span class="n">Accumulator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Keeps the maximum value seen so far.</span>
+
+<span class="sd">    Only supports scalar values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MaxAccumulator.__init__">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MaxAccumulator.html#ess.reduce.streaming.MaxAccumulator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cur_max</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the accumulator has collected a maximum value.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cur_max</span> <span class="ow">is</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_do_push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cur_max</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cur_max</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cur_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cur_max</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sc</span><span class="o">.</span><span class="n">Variable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cur_max</span>
+
+<div class="viewcode-block" id="MaxAccumulator.clear">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.MaxAccumulator.html#ess.reduce.streaming.MaxAccumulator.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the accumulated maximum value.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cur_max</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="StreamProcessor">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StreamProcessor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrap a base workflow for streaming processing of chunks.</span>
+
+<span class="sd">    Note that this class can not determine if the workflow is valid for streamed</span>
+<span class="sd">    processing based on the input keys. In particular, it is the responsibility of the</span>
+<span class="sd">    user to ensure that the workflow is &quot;linear&quot; with respect to the dynamic keys up to</span>
+<span class="sd">    the accumulation keys.</span>
+
+<span class="sd">    Similarly, the stream processor cannot determine from the workflow structure whether</span>
+<span class="sd">    context updates are compatible with the accumulated data. Accumulators are not</span>
+<span class="sd">    cleared automatically. This is best illustrated with an example:</span>
+
+<span class="sd">    - If the context is the detector rotation angle, and we accumulate I(Q) (or a</span>
+<span class="sd">      prerequisite of I(Q)), then updating the detector angle context is compatible with</span>
+<span class="sd">      previous data, assuming Q for each new chunk is computed based on the angle.</span>
+<span class="sd">    - If the context is the sample temperature, and we accumulate I(Q), then updating</span>
+<span class="sd">      the temperature context is not compatible with previous data. Accumulating I(Q, T)</span>
+<span class="sd">      could be compatible in this case.</span>
+
+<span class="sd">    Since the correctness cannot be determined from the workflow structure, we recommend</span>
+<span class="sd">    implementing processing steps in a way to catch such problems. For example, adding</span>
+<span class="sd">    the temperature as a coordinate to the I(Q) data array should allow for</span>
+<span class="sd">    automatically raising in the accumulator if the temperature changes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="StreamProcessor.__init__">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">base_workflow</span><span class="p">:</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">dynamic_keys</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+        <span class="n">context_keys</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+        <span class="n">target_keys</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+        <span class="n">accumulators</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="n">Accumulator</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Accumulator</span><span class="p">]]</span>
+        <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+        <span class="n">allow_bypass</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a stream processor.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        base_workflow:</span>
+<span class="sd">            Workflow to be used for processing chunks.</span>
+<span class="sd">        dynamic_keys:</span>
+<span class="sd">            Keys that are expected to be updated with each chunk. These keys cannot</span>
+<span class="sd">            depend on each other or on context_keys.</span>
+<span class="sd">        context_keys:</span>
+<span class="sd">            Keys that define context for processing chunks and may change occasionally.</span>
+<span class="sd">            These keys cannot overlap with dynamic_keys or depend on each other or on</span>
+<span class="sd">            dynamic_keys.</span>
+<span class="sd">        target_keys:</span>
+<span class="sd">            Keys to be computed and returned.</span>
+<span class="sd">        accumulators:</span>
+<span class="sd">            Keys at which to accumulate values and their accumulators. If a tuple is</span>
+<span class="sd">            passed, :py:class:`EternalAccumulator` is used for all keys. Otherwise, a</span>
+<span class="sd">            dict mapping keys to accumulator instances can be passed. If a dict value is</span>
+<span class="sd">            a callable, base_workflow.bind_and_call(value) is used to make an instance.</span>
+<span class="sd">        allow_bypass:</span>
+<span class="sd">            If True, allow bypassing accumulators for keys that are not in the</span>
+<span class="sd">            accumulators dict. This is useful for dynamic keys that are not &quot;terminated&quot;</span>
+<span class="sd">            in any accumulator. USE WITH CARE! This will lead to incorrect results</span>
+<span class="sd">            unless the values for these keys are valid for all chunks comprised in the</span>
+<span class="sd">            final accumulators at the point where :py:meth:`finalize` is called.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">dynamic_keys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">context_keys</span><span class="p">)</span>
+
+        <span class="c1"># Validate that dynamic and context keys do not overlap</span>
+        <span class="n">overlap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span>
+        <span class="k">if</span> <span class="n">overlap</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Keys cannot be both dynamic and context: </span><span class="si">{</span><span class="n">overlap</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check dynamic/context keys don&#39;t depend on other dynamic/context keys</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">base_workflow</span><span class="o">.</span><span class="n">underlying_graph</span>
+        <span class="n">special_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">special_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">ancestors</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">ancestors</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="n">special_ancestors</span> <span class="o">=</span> <span class="n">ancestors</span> <span class="o">&amp;</span> <span class="n">special_keys</span>
+            <span class="n">downstream</span> <span class="o">=</span> <span class="s1">&#39;Dynamic&#39;</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span> <span class="k">else</span> <span class="s1">&#39;Context&#39;</span>
+            <span class="k">if</span> <span class="n">special_ancestors</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">downstream</span><span class="si">}</span><span class="s2"> key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; depends on other dynamic/context keys: &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">special_ancestors</span><span class="si">}</span><span class="s2">. This is not supported.&quot;</span>
+                <span class="p">)</span>
+
+        <span class="n">workflow</span> <span class="o">=</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">target_keys</span><span class="p">:</span>
+            <span class="n">workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">dynamic_keys</span><span class="p">:</span>
+            <span class="n">workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># hack to prune branches</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">context_keys</span><span class="p">:</span>
+            <span class="n">workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Store for visualization (copy in case caller modifies base_workflow later)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_workflow_for_viz</span> <span class="o">=</span> <span class="n">base_workflow</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Find and pre-compute static nodes as far down the graph as possible</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">_find_descendants</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">dynamic_keys</span> <span class="o">+</span> <span class="n">context_keys</span><span class="p">)</span>
+        <span class="n">last_static</span> <span class="o">=</span> <span class="n">_find_parents</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">nodes</span><span class="p">)</span> <span class="o">-</span> <span class="n">nodes</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">base_workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">last_static</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_keys</span> <span class="o">=</span> <span class="n">last_static</span>  <span class="c1"># Store for visualization</span>
+
+        <span class="c1"># Nodes that may need updating on context change but should be cached otherwise.</span>
+        <span class="n">dynamic_nodes</span> <span class="o">=</span> <span class="n">_find_descendants</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">dynamic_keys</span><span class="p">)</span>
+        <span class="c1"># Nodes as far &quot;down&quot; in the graph as possible, right before the dynamic nodes.</span>
+        <span class="c1"># This also includes target keys that are not dynamic but context-dependent.</span>
+        <span class="n">context_to_cache</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">_find_parents</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">dynamic_nodes</span><span class="p">)</span> <span class="o">|</span> <span class="nb">set</span><span class="p">(</span><span class="n">target_keys</span><span class="p">))</span> <span class="o">-</span> <span class="n">dynamic_nodes</span>
+        <span class="p">)</span> <span class="o">&amp;</span> <span class="n">_find_descendants</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">context_keys</span><span class="p">)</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">underlying_graph</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context_key_to_cached_context_nodes_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">context_key</span><span class="p">:</span> <span class="p">({</span><span class="n">context_key</span><span class="p">}</span> <span class="o">|</span> <span class="n">nx</span><span class="o">.</span><span class="n">descendants</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">context_key</span><span class="p">))</span>
+            <span class="o">&amp;</span> <span class="n">context_to_cache</span>
+            <span class="k">for</span> <span class="n">context_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span>
+            <span class="k">if</span> <span class="n">context_key</span> <span class="ow">in</span> <span class="n">graph</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context_workflow</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_process_chunk_workflow</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_workflow</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">accumulators</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">accumulators</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="n">EternalAccumulator</span><span class="p">()</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">accumulators</span><span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Map each accumulator to its dependent dynamic keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_accumulator_dependencies</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">acc_key</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">ancestors</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">acc_key</span><span class="p">)</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span>
+            <span class="k">for</span> <span class="n">acc_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span>
+            <span class="k">if</span> <span class="n">acc_key</span> <span class="ow">in</span> <span class="n">graph</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Depending on the target_keys, some accumulators can be unused and should not</span>
+        <span class="c1"># be computed when adding a chunk.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">graph</span>
+        <span class="p">}</span>
+        <span class="c1"># Create accumulators unless instances were passed. This allows for initializing</span>
+        <span class="c1"># accumulators with arguments that depend on the workflow such as bin edges,</span>
+        <span class="c1"># which would otherwise be hard to obtain.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">value</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Accumulator</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">base_workflow</span><span class="o">.</span><span class="n">bind_and_call</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_target_keys</span> <span class="o">=</span> <span class="n">target_keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_allow_bypass</span> <span class="o">=</span> <span class="n">allow_bypass</span></div>
+
+
+<div class="viewcode-block" id="StreamProcessor.set_context">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.set_context">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the context for processing chunks.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        context:</span>
+<span class="sd">            Context to be set.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">needs_recompute</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">context</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key &#39;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&#39; is not a context key&quot;</span><span class="p">)</span>
+            <span class="n">needs_recompute</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_key_to_cached_context_nodes_map</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_context_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="c1"># Propagate context values to finalize workflow so providers that depend</span>
+            <span class="c1"># on context keys receive the updated values during finalize().</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">needs_recompute</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_keys</span><span class="p">:</span>
+                <span class="c1"># Context-dependent key is direct target, independent of dynamic nodes.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_process_chunk_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span></div>
+
+
+<div class="viewcode-block" id="StreamProcessor.add_chunk">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.add_chunk">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_chunk</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">chunks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Legacy interface for accumulating values from chunks and finalizing the result.</span>
+
+<span class="sd">        It is recommended to use :py:meth:`accumulate` and :py:meth:`finalize` instead.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        chunks:</span>
+<span class="sd">            Chunks to be processed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Finalized result.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">accumulate</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="StreamProcessor.accumulate">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.accumulate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">accumulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunks</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Accumulate values from chunks without finalizing the result.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        chunks:</span>
+<span class="sd">            Chunks to be processed.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If non-dynamic keys are provided in chunks.</span>
+<span class="sd">            If accumulator computation requires dynamic keys not provided in chunks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">non_dynamic</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span>
+        <span class="k">if</span> <span class="n">non_dynamic</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Can only update dynamic keys. Got non-dynamic keys: </span><span class="si">{</span><span class="n">non_dynamic</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">accumulators_to_update</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">acc_key</span><span class="p">,</span> <span class="n">deps</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_accumulator_dependencies</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">deps</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">chunks</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">deps</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">chunks</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Accumulator &#39;</span><span class="si">{</span><span class="n">acc_key</span><span class="si">}</span><span class="s2">&#39; requires dynamic keys &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">deps</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">chunks</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span><span class="si">}</span><span class="s2"> not provided in the current chunk.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">accumulators_to_update</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">acc_key</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">chunks</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_process_chunk_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="c1"># There can be dynamic keys that do not &quot;terminate&quot; in any accumulator. In</span>
+            <span class="c1"># that case, we need to make sure they can be and are used when computing</span>
+            <span class="c1"># the target keys.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allow_bypass</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="n">to_accumulate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_chunk_workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">accumulators_to_update</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">processed</span> <span class="ow">in</span> <span class="n">to_accumulate</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">push</span><span class="p">(</span><span class="n">processed</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StreamProcessor.finalize">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.finalize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the final result by computing the target keys based on accumulated values.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            Finalized result.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_workflow</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_target_keys</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">acc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">acc</span><span class="o">.</span><span class="n">on_finalize</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="StreamProcessor.clear">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.clear">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear all accumulators, resetting them to their initial state.</span>
+
+<span class="sd">        This is useful for restarting a streaming computation without</span>
+<span class="sd">        creating a new StreamProcessor instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">accumulator</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">accumulator</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_viz_workflow</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the workflow used for visualization.&quot;&quot;&quot;</span>
+        <span class="n">viz_workflow</span> <span class="o">=</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_target_keys</span><span class="p">:</span>
+            <span class="n">viz_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_workflow_for_viz</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">viz_graph</span> <span class="o">=</span> <span class="n">viz_workflow</span><span class="o">.</span><span class="n">underlying_graph</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">viz_graph</span><span class="p">:</span>
+                <span class="n">viz_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">viz_graph</span><span class="p">:</span>
+                <span class="n">viz_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">viz_workflow</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_classify_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">graph</span><span class="p">:</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Classify all nodes in the graph for visualization.</span>
+
+<span class="sd">        Node categories:</span>
+
+<span class="sd">        - static: Pre-computed once, not dependent on dynamic or context keys</span>
+<span class="sd">        - cached_keys: Subset of static nodes that are actually cached (last_static)</span>
+<span class="sd">        - dynamic_keys: Input entry points for chunk data</span>
+<span class="sd">        - dynamic_nodes: Downstream of dynamic keys, recomputed per chunk</span>
+<span class="sd">          (excludes nodes downstream of accumulators, which are computed in finalize)</span>
+<span class="sd">        - context_keys: Input entry points for context data</span>
+<span class="sd">        - context_dependent: Downstream of context keys but not dynamic keys</span>
+<span class="sd">        - accumulator_keys: Where values are aggregated across chunks</span>
+<span class="sd">        - target_keys: Final outputs computed in finalize()</span>
+<span class="sd">        - finalize_nodes: Downstream of accumulators, computed in finalize()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">all_nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="n">accumulator_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_accumulators</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">target_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_target_keys</span><span class="p">)</span>
+
+        <span class="c1"># Compute derived classifications</span>
+        <span class="n">dynamic_descendants</span> <span class="o">=</span> <span class="n">_find_descendants</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span><span class="p">)</span>
+        <span class="n">context_descendants</span> <span class="o">=</span> <span class="n">_find_descendants</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span><span class="p">)</span>
+
+        <span class="c1"># Nodes downstream of accumulators are computed in finalize(), not per-chunk</span>
+        <span class="n">accumulator_descendants</span> <span class="o">=</span> <span class="n">_find_descendants</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">accumulator_keys</span><span class="p">)</span>
+        <span class="n">finalize_nodes</span> <span class="o">=</span> <span class="n">accumulator_descendants</span> <span class="o">-</span> <span class="n">accumulator_keys</span>
+
+        <span class="c1"># Dynamic nodes: downstream of dynamic keys but NOT downstream of accumulators</span>
+        <span class="c1"># These are recomputed for each chunk</span>
+        <span class="n">dynamic_nodes</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">dynamic_descendants</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span> <span class="o">-</span> <span class="n">accumulator_descendants</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Context-dependent nodes: downstream of context but not of dynamic</span>
+        <span class="n">context_dependent</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">context_descendants</span> <span class="o">-</span> <span class="n">dynamic_descendants</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Static nodes: not dependent on dynamic or context</span>
+        <span class="n">static_nodes</span> <span class="o">=</span> <span class="n">all_nodes</span> <span class="o">-</span> <span class="n">dynamic_descendants</span> <span class="o">-</span> <span class="n">context_descendants</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;static&#39;</span><span class="p">:</span> <span class="n">static_nodes</span><span class="p">,</span>
+            <span class="s1">&#39;cached_keys&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_keys</span> <span class="o">&amp;</span> <span class="n">all_nodes</span><span class="p">,</span>
+            <span class="s1">&#39;dynamic_keys&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dynamic_keys</span> <span class="o">&amp;</span> <span class="n">all_nodes</span><span class="p">,</span>
+            <span class="s1">&#39;dynamic_nodes&#39;</span><span class="p">:</span> <span class="n">dynamic_nodes</span><span class="p">,</span>
+            <span class="s1">&#39;context_keys&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_keys</span> <span class="o">&amp;</span> <span class="n">all_nodes</span><span class="p">,</span>
+            <span class="s1">&#39;context_dependent&#39;</span><span class="p">:</span> <span class="n">context_dependent</span><span class="p">,</span>
+            <span class="s1">&#39;accumulator_keys&#39;</span><span class="p">:</span> <span class="n">accumulator_keys</span> <span class="o">&amp;</span> <span class="n">all_nodes</span><span class="p">,</span>
+            <span class="s1">&#39;target_keys&#39;</span><span class="p">:</span> <span class="n">target_keys</span> <span class="o">&amp;</span> <span class="n">all_nodes</span><span class="p">,</span>
+            <span class="s1">&#39;finalize_nodes&#39;</span><span class="p">:</span> <span class="n">finalize_nodes</span><span class="p">,</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="StreamProcessor.visualize">
+<a class="viewcode-back" href="../../../generated/modules/ess.reduce.streaming.StreamProcessor.html#ess.reduce.streaming.StreamProcessor.visualize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">visualize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">compact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">,</span> <span class="s1">&#39;task&#39;</span><span class="p">,</span> <span class="s1">&#39;both&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;data&#39;</span><span class="p">,</span>
+        <span class="n">cluster_generics</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">cluster_color</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s1">&#39;#f0f0ff&#39;</span><span class="p">,</span>
+        <span class="n">show_legend</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">show_static_dependencies</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;graphviz.Digraph&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Visualize the workflow with node classification styling.</span>
+
+<span class="sd">        This post-processes sciline&#39;s visualization to add styling that highlights:</span>
+
+<span class="sd">        - Static nodes (gray): Pre-computed once, dependencies of cached nodes</span>
+<span class="sd">        - Static cached nodes (gray, thick border): Pre-computed and cached</span>
+<span class="sd">        - Dynamic keys (green, thick border): Input entry points for chunks</span>
+<span class="sd">        - Dynamic nodes (light green): Recomputed for each chunk</span>
+<span class="sd">        - Context keys (blue, thick border): Input entry points for context</span>
+<span class="sd">        - Context-dependent nodes (light blue): Cached until context changes</span>
+<span class="sd">        - Accumulator keys (orange cylinder): Aggregation points</span>
+<span class="sd">        - Finalize nodes (plum): Computed from accumulators during finalize</span>
+<span class="sd">        - Target keys (double border): Final outputs</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        compact:</span>
+<span class="sd">            If True, parameter-table-dependent branches are collapsed.</span>
+<span class="sd">        mode:</span>
+<span class="sd">            &#39;data&#39; shows only data nodes, &#39;task&#39; shows task nodes, &#39;both&#39; shows all.</span>
+<span class="sd">        cluster_generics:</span>
+<span class="sd">            If True, generic products are grouped into clusters.</span>
+<span class="sd">        cluster_color:</span>
+<span class="sd">            Background color of clusters. If None, clusters are dotted.</span>
+<span class="sd">        show_legend:</span>
+<span class="sd">            If True, add a legend explaining the node styles.</span>
+<span class="sd">        show_static_dependencies:</span>
+<span class="sd">            If True (default), show all static nodes including dependencies of cached</span>
+<span class="sd">            nodes. If False, hide the ancestors of cached nodes to simplify the graph.</span>
+<span class="sd">        **kwargs:</span>
+<span class="sd">            Additional arguments passed to graphviz.Digraph.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        :</span>
+<span class="sd">            A graphviz.Digraph with styled nodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">viz_workflow</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_viz_workflow</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">show_static_dependencies</span><span class="p">:</span>
+            <span class="c1"># Create a pruned workflow that hides ancestors of cached nodes</span>
+            <span class="n">viz_workflow</span> <span class="o">=</span> <span class="n">viz_workflow</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_keys</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">viz_workflow</span><span class="o">.</span><span class="n">underlying_graph</span><span class="p">:</span>
+                    <span class="n">viz_workflow</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">viz_workflow</span><span class="o">.</span><span class="n">underlying_graph</span>
+
+        <span class="n">dot</span> <span class="o">=</span> <span class="n">viz_workflow</span><span class="o">.</span><span class="n">visualize</span><span class="p">(</span>
+            <span class="n">compact</span><span class="o">=</span><span class="n">compact</span><span class="p">,</span>
+            <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+            <span class="n">cluster_generics</span><span class="o">=</span><span class="n">cluster_generics</span><span class="p">,</span>
+            <span class="n">cluster_color</span><span class="o">=</span><span class="n">cluster_color</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">classifications</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_classify_nodes</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+
+        <span class="c1"># Build a mapping from formatted names to original keys</span>
+        <span class="n">key_to_formatted</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+            <span class="n">key_to_formatted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_format_key_for_graphviz</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="c1"># Apply styles by re-adding nodes with updated attributes</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">formatted_name</span> <span class="ow">in</span> <span class="n">key_to_formatted</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="n">_get_node_style</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">classifications</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">style</span><span class="p">:</span>
+                <span class="n">dot</span><span class="o">.</span><span class="n">node</span><span class="p">(</span><span class="n">formatted_name</span><span class="p">,</span> <span class="o">**</span><span class="n">style</span><span class="p">)</span>
+
+        <span class="c1"># Add legend</span>
+        <span class="k">if</span> <span class="n">show_legend</span><span class="p">:</span>
+            <span class="n">_add_legend</span><span class="p">(</span><span class="n">dot</span><span class="p">,</span> <span class="n">show_static_dependencies</span><span class="o">=</span><span class="n">show_static_dependencies</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dot</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_descendants</span><span class="p">(</span>
+    <span class="n">source</span><span class="p">:</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span> <span class="o">|</span> <span class="n">nx</span><span class="o">.</span><span class="n">DiGraph</span><span class="p">,</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">]</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Find all descendants of any key in keys, including the keys themselves.&quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">underlying_graph</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;underlying_graph&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="n">source</span>
+    <span class="n">keys_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+    <span class="n">descendants</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys_set</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
+            <span class="n">descendants</span> <span class="o">|=</span> <span class="n">nx</span><span class="o">.</span><span class="n">descendants</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">descendants</span> <span class="o">|</span> <span class="p">(</span><span class="n">keys_set</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">nodes</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_find_parents</span><span class="p">(</span>
+    <span class="n">workflow</span><span class="p">:</span> <span class="n">sciline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">,</span> <span class="n">keys</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="n">sciline</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">Key</span><span class="p">]:</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">underlying_graph</span>
+    <span class="n">parents</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+        <span class="n">parents</span> <span class="o">|=</span> <span class="nb">set</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">predecessors</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">parents</span>
+
+
+<span class="c1"># =============================================================================</span>
+<span class="c1"># Visualization helpers</span>
+<span class="c1"># =============================================================================</span>
+
+<span class="c1"># Style definitions for each node category</span>
+<span class="c1"># Priority order for overlapping categories (higher = takes precedence for fill)</span>
+<span class="n">_VIZ_STYLES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;static&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;fillcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;#e8e8e8&#39;</span><span class="p">,</span>  <span class="c1"># Gray</span>
+        <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;cached_keys&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;fillcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;#e8e8e8&#39;</span><span class="p">,</span>  <span class="c1"># Gray (same as static)</span>
+        <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;penwidth&#39;</span><span class="p">:</span> <span class="s1">&#39;2.5&#39;</span><span class="p">,</span>  <span class="c1"># Thick border to distinguish from dependencies</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;context_dependent&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;fillcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;#d4e8f4&#39;</span><span class="p">,</span>  <span class="c1"># Light blue</span>
+        <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;context_keys&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;fillcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;#87CEEB&#39;</span><span class="p">,</span>  <span class="c1"># Sky blue</span>
+        <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;penwidth&#39;</span><span class="p">:</span> <span class="s1">&#39;2.5&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span>  <span class="c1"># Override sciline&#39;s red for unsatisfied</span>
+        <span class="s1">&#39;fontcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;dynamic_nodes&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;fillcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;#d4f4d4&#39;</span><span class="p">,</span>  <span class="c1"># Light green</span>
+        <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;dynamic_keys&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;fillcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;#90EE90&#39;</span><span class="p">,</span>  <span class="c1"># Light green (stronger)</span>
+        <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;penwidth&#39;</span><span class="p">:</span> <span class="s1">&#39;2.5&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;color&#39;</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span>  <span class="c1"># Override sciline&#39;s red for unsatisfied</span>
+        <span class="s1">&#39;fontcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;accumulator_keys&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;fillcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;#FFB347&#39;</span><span class="p">,</span>  <span class="c1"># Orange</span>
+        <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="s1">&#39;cylinder&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;finalize_nodes&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;fillcolor&#39;</span><span class="p">:</span> <span class="s1">&#39;#DDA0DD&#39;</span><span class="p">,</span>  <span class="c1"># Plum (more distinct from cluster color)</span>
+        <span class="s1">&#39;style&#39;</span><span class="p">:</span> <span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s1">&#39;target_keys&#39;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s1">&#39;peripheries&#39;</span><span class="p">:</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span>  <span class="c1"># Double border</span>
+        <span class="s1">&#39;priority&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_format_key_for_graphviz</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format a key to match sciline&#39;s node naming convention.&quot;&quot;&quot;</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sciline.visualize</span><span class="w"> </span><span class="kn">import</span> <span class="n">_format_type</span>
+
+    <span class="k">return</span> <span class="n">_format_type</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">name</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_get_node_style</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">classifications</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">set</span><span class="p">[</span><span class="n">Any</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Determine the style for a node based on its classifications.</span>
+
+<span class="sd">    A node can belong to multiple categories. We combine styles with</span>
+<span class="sd">    higher priority categories taking precedence for conflicting attributes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">applicable</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">category</span><span class="p">,</span> <span class="n">keys</span> <span class="ow">in</span> <span class="n">classifications</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">applicable</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">_VIZ_STYLES</span><span class="p">[</span><span class="n">category</span><span class="p">][</span><span class="s1">&#39;priority&#39;</span><span class="p">],</span> <span class="n">category</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">applicable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+
+    <span class="c1"># Sort by priority and merge styles</span>
+    <span class="n">applicable</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="n">merged</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">category</span> <span class="ow">in</span> <span class="n">applicable</span><span class="p">:</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="n">_VIZ_STYLES</span><span class="p">[</span><span class="n">category</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">style</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">)</span>
+        <span class="n">merged</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">style</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">merged</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_add_legend</span><span class="p">(</span>
+    <span class="n">dot</span><span class="p">:</span> <span class="s1">&#39;graphviz.Digraph&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">show_static_dependencies</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Add a legend subgraph explaining the node styles.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">dot</span><span class="o">.</span><span class="n">subgraph</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;cluster_legend&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">legend</span><span class="p">:</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Legend&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="s1">&#39;14&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;rounded&#39;</span><span class="p">)</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">attr</span><span class="p">(</span><span class="s1">&#39;node&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;rectangle&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="s1">&#39;1.5&#39;</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="s1">&#39;0.3&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Track first node for edge chaining</span>
+        <span class="n">prev_node</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">show_static_dependencies</span><span class="p">:</span>
+            <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+                <span class="s1">&#39;legend_static&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;Static&#39;</span><span class="p">,</span>
+                <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#e8e8e8&#39;</span><span class="p">,</span>
+                <span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">prev_node</span> <span class="o">=</span> <span class="s1">&#39;legend_static&#39;</span>
+
+        <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="s1">&#39;legend_cached&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Static (cached)&#39;</span><span class="p">,</span>
+            <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#e8e8e8&#39;</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+            <span class="n">penwidth</span><span class="o">=</span><span class="s1">&#39;2.5&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">prev_node</span><span class="p">:</span>
+            <span class="n">legend</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="s1">&#39;legend_cached&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;invis&#39;</span><span class="p">)</span>
+        <span class="n">prev_node</span> <span class="o">=</span> <span class="s1">&#39;legend_cached&#39;</span>
+
+        <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="s1">&#39;legend_context_key&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Context key (input)&#39;</span><span class="p">,</span>
+            <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#87CEEB&#39;</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+            <span class="n">penwidth</span><span class="o">=</span><span class="s1">&#39;2.5&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="s1">&#39;legend_context_key&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;invis&#39;</span><span class="p">)</span>
+        <span class="n">prev_node</span> <span class="o">=</span> <span class="s1">&#39;legend_context_key&#39;</span>
+
+        <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="s1">&#39;legend_context_dep&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Context-dependent&#39;</span><span class="p">,</span>
+            <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#d4e8f4&#39;</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="s1">&#39;legend_context_dep&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;invis&#39;</span><span class="p">)</span>
+        <span class="n">prev_node</span> <span class="o">=</span> <span class="s1">&#39;legend_context_dep&#39;</span>
+
+        <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="s1">&#39;legend_dynamic_key&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Dynamic key (input)&#39;</span><span class="p">,</span>
+            <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#90EE90&#39;</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+            <span class="n">penwidth</span><span class="o">=</span><span class="s1">&#39;2.5&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="s1">&#39;legend_dynamic_key&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;invis&#39;</span><span class="p">)</span>
+        <span class="n">prev_node</span> <span class="o">=</span> <span class="s1">&#39;legend_dynamic_key&#39;</span>
+
+        <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="s1">&#39;legend_dynamic_node&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Dynamic (per chunk)&#39;</span><span class="p">,</span>
+            <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#d4f4d4&#39;</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="s1">&#39;legend_dynamic_node&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;invis&#39;</span><span class="p">)</span>
+        <span class="n">prev_node</span> <span class="o">=</span> <span class="s1">&#39;legend_dynamic_node&#39;</span>
+
+        <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="s1">&#39;legend_accumulator&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Accumulator&#39;</span><span class="p">,</span>
+            <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#FFB347&#39;</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="s1">&#39;cylinder&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="s1">&#39;legend_accumulator&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;invis&#39;</span><span class="p">)</span>
+        <span class="n">prev_node</span> <span class="o">=</span> <span class="s1">&#39;legend_accumulator&#39;</span>
+
+        <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="s1">&#39;legend_finalize&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Finalize (from accum.)&#39;</span><span class="p">,</span>
+            <span class="n">fillcolor</span><span class="o">=</span><span class="s1">&#39;#DDA0DD&#39;</span><span class="p">,</span>
+            <span class="n">style</span><span class="o">=</span><span class="s1">&#39;filled&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="s1">&#39;legend_finalize&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;invis&#39;</span><span class="p">)</span>
+        <span class="n">prev_node</span> <span class="o">=</span> <span class="s1">&#39;legend_finalize&#39;</span>
+
+        <span class="n">legend</span><span class="o">.</span><span class="n">node</span><span class="p">(</span>
+            <span class="s1">&#39;legend_target&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;Target (output)&#39;</span><span class="p">,</span>
+            <span class="n">peripheries</span><span class="o">=</span><span class="s1">&#39;2&#39;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">legend</span><span class="o">.</span><span class="n">edge</span><span class="p">(</span><span class="n">prev_node</span><span class="p">,</span> <span class="s1">&#39;legend_target&#39;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s1">&#39;invis&#39;</span><span class="p">)</span>
+</pre></div>
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ESSreduce version: 26.2.2 (<a href="https://github.com/scipp/essreduce/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

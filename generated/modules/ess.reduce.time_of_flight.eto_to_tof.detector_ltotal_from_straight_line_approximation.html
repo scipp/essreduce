@@ -1,0 +1,949 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation &#8212; ESSreduce</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/autodoc_pydantic.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=de9f5bbb"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation';</script>
+    <script src="../../_static/anaconda-icon.js?v=461bdc62"></script>
+    <link rel="icon" href="../../_static/favicon.svg"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data" href="ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data.html" />
+    <link rel="prev" title="ess.reduce.time_of_flight.eto_to_tof" href="ess.reduce.time_of_flight.eto_to_tof.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="26.2.2" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/logo.svg" class="logo__image only-light" alt="ESSreduce - Home"/>
+    <img src="../../_static/logo-dark.svg" class="logo__image only-dark pst-js-only" alt="ESSreduce - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../user-guide/index.html">
+    User Guide
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../api-reference/index.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../developer/index.html">
+    Development
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../about/index.html">
+    About
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essdiffraction">
+    ESSdiffraction
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essimaging">
+    ESSimaging
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essnmx">
+    ESSnmx
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esspolarization">
+    ESSpolarization
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essreflectometry">
+    ESSreflectometry
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/esssans">
+    ESSsans
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-external" href="https://scipp.github.io/essspectroscopy">
+    ESSspectroscopy
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/scipp/essreduce" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/essreduce/" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-python fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">PyPI</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://anaconda.org/conda-forge/essreduce" title="Conda" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-anaconda fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Conda</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="ess.reduce.live.html">ess.reduce.live</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.live.raw.html">ess.reduce.live.raw</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.gaussian_position_noise.html">ess.reduce.live.raw.gaussian_position_noise</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.make_cylinder_mantle_coords.html">ess.reduce.live.raw.make_cylinder_mantle_coords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.make_xy_plane_coords.html">ess.reduce.live.raw.make_xy_plane_coords</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.pixel_cylinder_axis.html">ess.reduce.live.raw.pixel_cylinder_axis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.pixel_cylinder_radius.html">ess.reduce.live.raw.pixel_cylinder_radius</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.pixel_shape.html">ess.reduce.live.raw.pixel_shape</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.position_noise_for_cylindrical_pixel.html">ess.reduce.live.raw.position_noise_for_cylindrical_pixel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.position_with_noisy_replicas.html">ess.reduce.live.raw.position_with_noisy_replicas</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.project_onto_cylinder_z.html">ess.reduce.live.raw.project_onto_cylinder_z</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.project_xy.html">ess.reduce.live.raw.project_xy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.Detector.html">ess.reduce.live.raw.Detector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.Histogrammer.html">ess.reduce.live.raw.Histogrammer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.LogicalView.html">ess.reduce.live.raw.LogicalView</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.raw.RollingDetectorView.html">ess.reduce.live.raw.RollingDetectorView</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.live.roi.html">ess.reduce.live.roi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.roi.apply_selection.html">ess.reduce.live.roi.apply_selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.roi.select_indices_in_intervals.html">ess.reduce.live.roi.select_indices_in_intervals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.roi.select_indices_in_polygon.html">ess.reduce.live.roi.select_indices_in_polygon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.live.roi.ROIFilter.html">ess.reduce.live.roi.ROIFilter</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="ess.reduce.logging.html">ess.reduce.logging</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.logging.get_logger.html">ess.reduce.logging.get_logger</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="ess.reduce.nexus.html">ess.reduce.nexus</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.nexus.json_generator.html">ess.reduce.nexus.json_generator</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_generator.event_data_generator.html">ess.reduce.nexus.json_generator.event_data_generator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.nexus.json_nexus.html">ess.reduce.nexus.json_nexus</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.contains_stream.html">ess.reduce.nexus.json_nexus.contains_stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.json_nexus_group.html">ess.reduce.nexus.json_nexus.json_nexus_group</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.make_json_attr.html">ess.reduce.nexus.json_nexus.make_json_attr</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.make_json_dataset.html">ess.reduce.nexus.json_nexus.make_json_dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.JSONAttrID.html">ess.reduce.nexus.json_nexus.JSONAttrID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.JSONAttributeManager.html">ess.reduce.nexus.json_nexus.JSONAttributeManager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.JSONDataset.html">ess.reduce.nexus.json_nexus.JSONDataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.JSONGroup.html">ess.reduce.nexus.json_nexus.JSONGroup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.JSONNode.html">ess.reduce.nexus.json_nexus.JSONNode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.JSONTypeStringID.html">ess.reduce.nexus.json_nexus.JSONTypeStringID</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.json_nexus.MissingAttribute.html">ess.reduce.nexus.json_nexus.MissingAttribute</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.nexus.types.html">ess.reduce.nexus.types</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.FilePath.html">ess.reduce.nexus.types.FilePath</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusFile.html">ess.reduce.nexus.types.NeXusFile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusGroup.html">ess.reduce.nexus.types.NeXusGroup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusEntryName.html">ess.reduce.nexus.types.NeXusEntryName</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusSourceName.html">ess.reduce.nexus.types.NeXusSourceName</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.PreopenNeXusFile.html">ess.reduce.nexus.types.PreopenNeXusFile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.AnyRun.html">ess.reduce.nexus.types.AnyRun</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.BackgroundRun.html">ess.reduce.nexus.types.BackgroundRun</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.EmptyBeamRun.html">ess.reduce.nexus.types.EmptyBeamRun</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.SampleRun.html">ess.reduce.nexus.types.SampleRun</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.VanadiumRun.html">ess.reduce.nexus.types.VanadiumRun</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.RunType.html">ess.reduce.nexus.types.RunType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.IncidentMonitor.html">ess.reduce.nexus.types.IncidentMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.TransmissionMonitor.html">ess.reduce.nexus.types.TransmissionMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.FrameMonitor0.html">ess.reduce.nexus.types.FrameMonitor0</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.FrameMonitor1.html">ess.reduce.nexus.types.FrameMonitor1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.FrameMonitor2.html">ess.reduce.nexus.types.FrameMonitor2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.FrameMonitor3.html">ess.reduce.nexus.types.FrameMonitor3</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.CaveMonitor.html">ess.reduce.nexus.types.CaveMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.MonitorType.html">ess.reduce.nexus.types.MonitorType</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.Component.html">ess.reduce.nexus.types.Component</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.COMPONENT_CONSTRAINTS.html">ess.reduce.nexus.types.COMPONENT_CONSTRAINTS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.UniqueComponent.html">ess.reduce.nexus.types.UniqueComponent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusDetectorName.html">ess.reduce.nexus.types.NeXusDetectorName</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.AllNeXusComponents.html">ess.reduce.nexus.types.AllNeXusComponents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.Beamline.html">ess.reduce.nexus.types.Beamline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.DetectorPositionOffset.html">ess.reduce.nexus.types.DetectorPositionOffset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.DiskChoppers.html">ess.reduce.nexus.types.DiskChoppers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.EmptyDetector.html">ess.reduce.nexus.types.EmptyDetector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.EmptyMonitor.html">ess.reduce.nexus.types.EmptyMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.Filename.html">ess.reduce.nexus.types.Filename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.Measurement.html">ess.reduce.nexus.types.Measurement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.MonitorPositionOffset.html">ess.reduce.nexus.types.MonitorPositionOffset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusAllComponentLocationSpec.html">ess.reduce.nexus.types.NeXusAllComponentLocationSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusAllLocationSpec.html">ess.reduce.nexus.types.NeXusAllLocationSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusClass.html">ess.reduce.nexus.types.NeXusClass</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusComponent.html">ess.reduce.nexus.types.NeXusComponent</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusComponentLocationSpec.html">ess.reduce.nexus.types.NeXusComponentLocationSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusData.html">ess.reduce.nexus.types.NeXusData</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusDataLocationSpec.html">ess.reduce.nexus.types.NeXusDataLocationSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusFileSpec.html">ess.reduce.nexus.types.NeXusFileSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusLocationSpec.html">ess.reduce.nexus.types.NeXusLocationSpec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusName.html">ess.reduce.nexus.types.NeXusName</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusTransformation.html">ess.reduce.nexus.types.NeXusTransformation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.NeXusTransformationChain.html">ess.reduce.nexus.types.NeXusTransformationChain</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.Position.html">ess.reduce.nexus.types.Position</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.RawChoppers.html">ess.reduce.nexus.types.RawChoppers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.RawDetector.html">ess.reduce.nexus.types.RawDetector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.RawMonitor.html">ess.reduce.nexus.types.RawMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.Source.html">ess.reduce.nexus.types.Source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.TimeInterval.html">ess.reduce.nexus.types.TimeInterval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.types.TransmissionRun.html">ess.reduce.nexus.types.TransmissionRun</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.nexus.workflow.html">ess.reduce.nexus.workflow</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.origin.html">ess.reduce.nexus.workflow.origin</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.no_offset.html">ess.reduce.nexus.workflow.no_offset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.GenericNeXusWorkflow.html">ess.reduce.nexus.workflow.GenericNeXusWorkflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.LoadDetectorWorkflow.html">ess.reduce.nexus.workflow.LoadDetectorWorkflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.LoadMonitorWorkflow.html">ess.reduce.nexus.workflow.LoadMonitorWorkflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.all_component_spec.html">ess.reduce.nexus.workflow.all_component_spec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.assemble_detector_data.html">ess.reduce.nexus.workflow.assemble_detector_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.assemble_monitor_data.html">ess.reduce.nexus.workflow.assemble_monitor_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.component_spec_by_name.html">ess.reduce.nexus.workflow.component_spec_by_name</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.compute_position.html">ess.reduce.nexus.workflow.compute_position</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.data_by_name.html">ess.reduce.nexus.workflow.data_by_name</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.file_path_to_file_spec.html">ess.reduce.nexus.workflow.file_path_to_file_spec</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.full_time_interval.html">ess.reduce.nexus.workflow.full_time_interval</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.get_calibrated_detector.html">ess.reduce.nexus.workflow.get_calibrated_detector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.get_calibrated_monitor.html">ess.reduce.nexus.workflow.get_calibrated_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.get_transformation_chain.html">ess.reduce.nexus.workflow.get_transformation_chain</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.gravity_vector_neg_y.html">ess.reduce.nexus.workflow.gravity_vector_neg_y</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.load_all_nexus_components.html">ess.reduce.nexus.workflow.load_all_nexus_components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.load_beamline_metadata_from_nexus.html">ess.reduce.nexus.workflow.load_beamline_metadata_from_nexus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.load_measurement_metadata_from_nexus.html">ess.reduce.nexus.workflow.load_measurement_metadata_from_nexus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.load_nexus_component.html">ess.reduce.nexus.workflow.load_nexus_component</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.load_nexus_data.html">ess.reduce.nexus.workflow.load_nexus_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.load_nexus_sample.html">ess.reduce.nexus.workflow.load_nexus_sample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.no_detector_position_offset.html">ess.reduce.nexus.workflow.no_detector_position_offset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.no_monitor_position_offset.html">ess.reduce.nexus.workflow.no_monitor_position_offset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.nx_class_for_crystal.html">ess.reduce.nexus.workflow.nx_class_for_crystal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.nx_class_for_detector.html">ess.reduce.nexus.workflow.nx_class_for_detector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.nx_class_for_disk_chopper.html">ess.reduce.nexus.workflow.nx_class_for_disk_chopper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.nx_class_for_monitor.html">ess.reduce.nexus.workflow.nx_class_for_monitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.nx_class_for_sample.html">ess.reduce.nexus.workflow.nx_class_for_sample</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.nx_class_for_source.html">ess.reduce.nexus.workflow.nx_class_for_source</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.parse_disk_choppers.html">ess.reduce.nexus.workflow.parse_disk_choppers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.to_transformation.html">ess.reduce.nexus.workflow.to_transformation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.nexus.workflow.unique_component_spec.html">ess.reduce.nexus.workflow.unique_component_spec</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="ess.reduce.normalization.html">ess.reduce.normalization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.normalization.normalize_by_monitor_histogram.html">ess.reduce.normalization.normalize_by_monitor_histogram</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.normalization.normalize_by_monitor_integrated.html">ess.reduce.normalization.normalize_by_monitor_integrated</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="ess.reduce.streaming.html">ess.reduce.streaming</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.streaming.maybe_hist.html">ess.reduce.streaming.maybe_hist</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.streaming.Accumulator.html">ess.reduce.streaming.Accumulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.streaming.EternalAccumulator.html">ess.reduce.streaming.EternalAccumulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.streaming.MaxAccumulator.html">ess.reduce.streaming.MaxAccumulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.streaming.MeanAccumulator.html">ess.reduce.streaming.MeanAccumulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.streaming.MinAccumulator.html">ess.reduce.streaming.MinAccumulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.streaming.RollingAccumulator.html">ess.reduce.streaming.RollingAccumulator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.streaming.StreamProcessor.html">ess.reduce.streaming.StreamProcessor</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="ess.reduce.time_of_flight.html">ess.reduce.time_of_flight</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.html">ess.reduce.time_of_flight.eto_to_tof</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data.html">ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.detector_time_of_flight_data.html">ess.reduce.time_of_flight.eto_to_tof.detector_time_of_flight_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.detector_wavelength_data.html">ess.reduce.time_of_flight.eto_to_tof.detector_wavelength_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.mask_large_uncertainty_in_lut.html">ess.reduce.time_of_flight.eto_to_tof.mask_large_uncertainty_in_lut</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.monitor_ltotal_from_straight_line_approximation.html">ess.reduce.time_of_flight.eto_to_tof.monitor_ltotal_from_straight_line_approximation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.monitor_time_of_flight_data.html">ess.reduce.time_of_flight.eto_to_tof.monitor_time_of_flight_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.monitor_wavelength_data.html">ess.reduce.time_of_flight.eto_to_tof.monitor_wavelength_data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.providers.html">ess.reduce.time_of_flight.eto_to_tof.providers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.eto_to_tof.TofInterpolator.html">ess.reduce.time_of_flight.eto_to_tof.TofInterpolator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.time_of_flight.fakes.html">ess.reduce.time_of_flight.fakes</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.fakes.psc_choppers.html">ess.reduce.time_of_flight.fakes.psc_choppers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.fakes.pulse_skipping_choppers.html">ess.reduce.time_of_flight.fakes.pulse_skipping_choppers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.fakes.source_position.html">ess.reduce.time_of_flight.fakes.source_position</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.fakes.FakeBeamline.html">ess.reduce.time_of_flight.fakes.FakeBeamline</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.time_of_flight.interpolator_numba.html">ess.reduce.time_of_flight.interpolator_numba</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.interpolator_numba.interpolate.html">ess.reduce.time_of_flight.interpolator_numba.interpolate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.interpolator_numba.Interpolator.html">ess.reduce.time_of_flight.interpolator_numba.Interpolator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.time_of_flight.interpolator_scipy.html">ess.reduce.time_of_flight.interpolator_scipy</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.interpolator_scipy.Interpolator.html">ess.reduce.time_of_flight.interpolator_scipy.Interpolator</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.time_of_flight.lut.html">ess.reduce.time_of_flight.lut</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.NumberOfSimulatedNeutrons.html">ess.reduce.time_of_flight.lut.NumberOfSimulatedNeutrons</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.LtotalRange.html">ess.reduce.time_of_flight.lut.LtotalRange</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.DistanceResolution.html">ess.reduce.time_of_flight.lut.DistanceResolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.TimeResolution.html">ess.reduce.time_of_flight.lut.TimeResolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.PulsePeriod.html">ess.reduce.time_of_flight.lut.PulsePeriod</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.PulseStride.html">ess.reduce.time_of_flight.lut.PulseStride</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.SourcePosition.html">ess.reduce.time_of_flight.lut.SourcePosition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.SimulationSeed.html">ess.reduce.time_of_flight.lut.SimulationSeed</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.SimulationFacility.html">ess.reduce.time_of_flight.lut.SimulationFacility</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.TofLookupTableWorkflow.html">ess.reduce.time_of_flight.lut.TofLookupTableWorkflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.make_tof_lookup_table.html">ess.reduce.time_of_flight.lut.make_tof_lookup_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.simulate_chopper_cascade_using_tof.html">ess.reduce.time_of_flight.lut.simulate_chopper_cascade_using_tof</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.BeamlineComponentReading.html">ess.reduce.time_of_flight.lut.BeamlineComponentReading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.lut.SimulationResults.html">ess.reduce.time_of_flight.lut.SimulationResults</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.time_of_flight.resample.html">ess.reduce.time_of_flight.resample</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.resample.find_strictly_increasing_sections.html">ess.reduce.time_of_flight.resample.find_strictly_increasing_sections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.resample.get_min_max.html">ess.reduce.time_of_flight.resample.get_min_max</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.resample.make_regular_grid.html">ess.reduce.time_of_flight.resample.make_regular_grid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.resample.rebin_strictly_increasing.html">ess.reduce.time_of_flight.resample.rebin_strictly_increasing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.time_of_flight.types.html">ess.reduce.time_of_flight.types</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.TofLookupTableFilename.html">ess.reduce.time_of_flight.types.TofLookupTableFilename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.TimeOfFlightLookupTableFilename.html">ess.reduce.time_of_flight.types.TimeOfFlightLookupTableFilename</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.TimeOfFlightLookupTable.html">ess.reduce.time_of_flight.types.TimeOfFlightLookupTable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.PulseStrideOffset.html">ess.reduce.time_of_flight.types.PulseStrideOffset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.LookupTableRelativeErrorThreshold.html">ess.reduce.time_of_flight.types.LookupTableRelativeErrorThreshold</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.DetectorLtotal.html">ess.reduce.time_of_flight.types.DetectorLtotal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.ErrorLimitedTofLookupTable.html">ess.reduce.time_of_flight.types.ErrorLimitedTofLookupTable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.MonitorLtotal.html">ess.reduce.time_of_flight.types.MonitorLtotal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.TimeOfFlightLookupTable.html">ess.reduce.time_of_flight.types.TimeOfFlightLookupTable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.ToaDetector.html">ess.reduce.time_of_flight.types.ToaDetector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.TofDetector.html">ess.reduce.time_of_flight.types.TofDetector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.TofLookupTable.html">ess.reduce.time_of_flight.types.TofLookupTable</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.TofMonitor.html">ess.reduce.time_of_flight.types.TofMonitor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.WavelengthDetector.html">ess.reduce.time_of_flight.types.WavelengthDetector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.types.WavelengthMonitor.html">ess.reduce.time_of_flight.types.WavelengthMonitor</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="ess.reduce.time_of_flight.workflow.html">ess.reduce.time_of_flight.workflow</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.workflow.GenericTofWorkflow.html">ess.reduce.time_of_flight.workflow.GenericTofWorkflow</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ess.reduce.time_of_flight.workflow.load_tof_lookup_table.html">ess.reduce.time_of_flight.workflow.load_tof_lookup_table</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="ess.reduce.ui.html">ess.reduce.ui</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.connect_output_selection_and_parameter_run_button.html">ess.reduce.ui.connect_output_selection_and_parameter_run_button</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.connect_refresh_button.html">ess.reduce.ui.connect_refresh_button</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.get_parameter_widget_values.html">ess.reduce.ui.get_parameter_widget_values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.set_parameter_widget_values.html">ess.reduce.ui.set_parameter_widget_values</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.workflow_widget.html">ess.reduce.ui.workflow_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.OutputSelectionWidget.html">ess.reduce.ui.OutputSelectionWidget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.ParameterBox.html">ess.reduce.ui.ParameterBox</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.ResultBox.html">ess.reduce.ui.ResultBox</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.ui.WorkflowWidget.html">ess.reduce.ui.WorkflowWidget</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="ess.reduce.uncertainty.html">ess.reduce.uncertainty</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.uncertainty.broadcast_uncertainties.html">ess.reduce.uncertainty.broadcast_uncertainties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.uncertainty.broadcast_with_upper_bound_variances.html">ess.reduce.uncertainty.broadcast_with_upper_bound_variances</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.uncertainty.drop_variances_if_broadcast.html">ess.reduce.uncertainty.drop_variances_if_broadcast</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.uncertainty.UncertaintyBroadcastMode.html">ess.reduce.uncertainty.UncertaintyBroadcastMode</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="ess.reduce.widgets.html">ess.reduce.widgets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.bin_edges_parameter_widget.html">ess.reduce.widgets.bin_edges_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.boolean_parameter_widget.html">ess.reduce.widgets.boolean_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.create_parameter_widget.html">ess.reduce.widgets.create_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.filename_parameter_widget.html">ess.reduce.widgets.filename_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.multi_filename_parameter_widget.html">ess.reduce.widgets.multi_filename_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.multi_string_parameter_widget.html">ess.reduce.widgets.multi_string_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.optional_widget.html">ess.reduce.widgets.optional_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.param_with_bounds_widget.html">ess.reduce.widgets.param_with_bounds_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.param_with_option_widget.html">ess.reduce.widgets.param_with_option_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.string_parameter_widget.html">ess.reduce.widgets.string_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.switchable_widget.html">ess.reduce.widgets.switchable_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.vector_2d_parameter_widget.html">ess.reduce.widgets.vector_2d_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.vector_3d_parameter_widget.html">ess.reduce.widgets.vector_3d_parameter_widget</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ess.reduce.widgets.EssWidget.html">ess.reduce.widgets.EssWidget</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation"><code class="docutils literal notranslate"><span class="pre">detector_ltotal_from_straight_line_approximation()</span></code></a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/generated/modules/ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation.rst"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../api-reference/index.html" class="nav-link">API Reference</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="ess.reduce.time_of_flight.html" class="nav-link">ess.reduce.time_of_flight</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="ess.reduce.time_of_flight.eto_to_tof.html" class="nav-link">ess.reduce.time_of_flight.eto_to_tof</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="ess-reduce-time-of-flight-eto-to-tof-detector-ltotal-from-straight-line-approximation">
+<h1>ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation<a class="headerlink" href="#ess-reduce-time-of-flight-eto-to-tof-detector-ltotal-from-straight-line-approximation" title="Link to this heading">#</a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation">
+<span class="sig-prename descclassname"><span class="pre">ess.reduce.time_of_flight.eto_to_tof.</span></span><span class="sig-name descname"><span class="pre">detector_ltotal_from_straight_line_approximation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">detector</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">source_position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gravity</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/ess/reduce/time_of_flight/eto_to_tof.html#detector_ltotal_from_straight_line_approximation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ess.reduce.time_of_flight.eto_to_tof.detector_ltotal_from_straight_line_approximation" title="Link to this definition">#</a></dt>
+<dd><p>Compute Ltotal for the detector pixels.</p>
+<p>This is a naive straight-line approximation to Ltotal based on basic component
+positions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>detector</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="ess.reduce.nexus.types.EmptyDetector.html#ess.reduce.nexus.types.EmptyDetector" title="ess.reduce.nexus.types.EmptyDetector"><code class="xref py py-class docutils literal notranslate"><span class="pre">EmptyDetector</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">RunType</span></code>)]</span>) – Data array with detector positions.</p></li>
+<li><p><strong>source_position</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="ess.reduce.nexus.types.Position.html#ess.reduce.nexus.types.Position" title="ess.reduce.nexus.types.Position"><code class="xref py py-class docutils literal notranslate"><span class="pre">Position</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">NXsource</span></code>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">RunType</span></code>)]</span>) – Position of the neutron source.</p></li>
+<li><p><strong>sample_position</strong> (<span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="ess.reduce.nexus.types.Position.html#ess.reduce.nexus.types.Position" title="ess.reduce.nexus.types.Position"><code class="xref py py-class docutils literal notranslate"><span class="pre">Position</span></code></a>[<code class="xref py py-class docutils literal notranslate"><span class="pre">NXsample</span></code>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">RunType</span></code>)]</span>) – Position of the sample.</p></li>
+<li><p><strong>gravity</strong> (<span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">nexus.types.GravityVector</span></code> (<a class="reference external" href="https://scipp.github.io/generated/classes/scipp.Variable.html#scipp.Variable" title="(in Scipp v26.2.0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">scipp.Variable</span></code></a>)</span>) – Gravity vector.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="sphinx_autodoc_typehints-type"><a class="reference internal" href="ess.reduce.time_of_flight.types.DetectorLtotal.html#ess.reduce.time_of_flight.types.DetectorLtotal" title="ess.reduce.time_of_flight.types.DetectorLtotal"><code class="xref py py-class docutils literal notranslate"><span class="pre">DetectorLtotal</span></code></a>[<a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.TypeVar" title="(in Python v3.14)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code></a>(<code class="docutils literal notranslate"><span class="pre">RunType</span></code>)]</span></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="ess.reduce.time_of_flight.eto_to_tof.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">ess.reduce.time_of_flight.eto_to_tof</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">ess.reduce.time_of_flight.eto_to_tof.detector_time_of_arrival_data</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2024 Scipp contributors.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.0.4.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><!-- This will display the version of the docs -->
+Current ESSreduce version: 26.2.2 (<a href="https://github.com/scipp/essreduce/releases">older versions</a>).</div>
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
