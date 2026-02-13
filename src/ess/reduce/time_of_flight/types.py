@@ -8,7 +8,7 @@ from typing import Any, NewType
 import sciline as sl
 import scipp as sc
 
-from ..nexus.types import MonitorType, RunType
+from ..nexus.types import Component, MonitorType, RunType
 
 TofLookupTableFilename = NewType("TofLookupTableFilename", str)
 """Filename of the time-of-flight lookup table."""
@@ -52,7 +52,7 @@ TimeOfFlightLookupTable = TofLookupTable
 (alias)."""
 
 
-class ErrorLimitedTofLookupTable(TofLookupTable):
+class ErrorLimitedTofLookupTable(sl.Scope[Component, TofLookupTable], TofLookupTable):
     """Lookup table that is masked with NaNs in regions where the standard deviation of
     the time-of-flight is above a certain threshold."""
 

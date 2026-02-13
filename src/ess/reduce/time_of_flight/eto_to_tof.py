@@ -23,6 +23,7 @@ except ImportError:
     from .interpolator_scipy import Interpolator as InterpolatorImpl
 
 from ..nexus.types import (
+    Component,
     EmptyDetector,
     EmptyMonitor,
     GravityVector,
@@ -399,9 +400,9 @@ def monitor_ltotal_from_straight_line_approximation(
     )
 
 
-def mask_large_uncertainty_in_lut(
-    table: TofLookupTable, error_threshold: LookupTableRelativeErrorThreshold
-) -> ErrorLimitedTofLookupTable:
+def _mask_large_uncertainty_in_lut(
+    table: TofLookupTable, error_threshold: float
+) -> TofLookupTable:
     """
     Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
 
@@ -418,7 +419,7 @@ def mask_large_uncertainty_in_lut(
     da = table.array
     relative_error = sc.stddevs(da.data) / sc.values(da.data)
     mask = relative_error > sc.scalar(error_threshold)
-    return ErrorLimitedTofLookupTable(
+    return TofLookupTable(
         **{
             **asdict(table),
             "array": sc.where(mask, sc.scalar(np.nan, unit=da.unit), da),
@@ -426,9 +427,55 @@ def mask_large_uncertainty_in_lut(
     )
 
 
+def mask_large_uncertainty_in_lut_detector(
+    table: TofLookupTable,
+    error_threshold: LookupTableRelativeErrorThreshold,
+    detector_name: NeXusDetectorName,
+) -> ErrorLimitedTofLookupTable:
+    """
+    Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
+
+    Parameters
+    ----------
+    table:
+        Lookup table with time-of-flight as a function of distance and time-of-arrival.
+    error_threshold:
+        Threshold for the relative standard deviation (coefficient of variation) of the
+        projected time-of-flight above which values are masked.
+    """
+    return ErrorLimitedTofLookupTable[snx.NXdetector](
+        _mask_large_uncertainty_in_lut(
+            table=table, error_threshold=error_threshold[detector_name]
+        )
+    )
+
+
+def mask_large_uncertainty_in_lut_monitor(
+    table: TofLookupTable,
+    error_threshold: LookupTableRelativeErrorThreshold,
+    monitor_name: NeXusName[MonitorType],
+) -> ErrorLimitedTofLookupTable:
+    """
+    Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
+
+    Parameters
+    ----------
+    table:
+        Lookup table with time-of-flight as a function of distance and time-of-arrival.
+    error_threshold:
+        Threshold for the relative standard deviation (coefficient of variation) of the
+        projected time-of-flight above which values are masked.
+    """
+    return ErrorLimitedTofLookupTable[MonitorType](
+        _mask_large_uncertainty_in_lut(
+            table=table, error_threshold=error_threshold[monitor_name]
+        )
+    )
+
+
 def _compute_tof_data(
     da: sc.DataArray,
-    lookup: ErrorLimitedTofLookupTable,
+    lookup: ErrorLimitedTofLookupTable[Component],
     ltotal: sc.Variable,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
