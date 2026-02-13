@@ -11,6 +11,8 @@ accessible-pygments==0.0.5
     # via pydata-sphinx-theme
 alabaster==1.0.0
     # via sphinx
+appnope==0.1.4
+    # via ipykernel
 attrs==25.4.0
     # via
     #   jsonschema
@@ -41,7 +43,7 @@ fastjsonschema==2.21.2
     # via nbformat
 imagesize==1.4.1
     # via sphinx
-ipykernel==7.1.0
+ipykernel==7.2.0
     # via -r docs.in
 jinja2==3.1.6
     # via

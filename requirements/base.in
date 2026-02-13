@@ -1,4 +1,8 @@
 numba
+# Numba has an upper pin and pip-compile-multi will
+# always complain about solving envs with different numpy pins.
+# This needs to be in sync with numba upper pins
+numpy<2.4
 # Anything above "--- END OF CUSTOM SECTION ---"
 # will not be touched by ``make_base.py``
 # --- END OF CUSTOM SECTION ---
