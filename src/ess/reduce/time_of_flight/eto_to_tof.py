@@ -576,6 +576,11 @@ def detector_time_of_arrival_data(
     The time-of-arrival is the time since the neutron was emitted from the source.
     It is basically equal to event_time_offset + pulse_index * pulse_period.
 
+    TODO: This is not actually the 'time-of-arrival' in the strict sense, as it is
+    still wrapped over the frame period. We should consider unwrapping it in the future
+    to get the true time-of-arrival.
+    Or give it a different name to avoid confusion.
+
     Parameters
     ----------
     da:
