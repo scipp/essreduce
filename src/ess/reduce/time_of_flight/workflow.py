@@ -30,7 +30,7 @@ def load_tof_lookup_table(filename: TofLookupTableFilename) -> TofLookupTable:
             "error_threshold",
         } & set(table.coords)
         table = {
-            "array": table.drop_coords(to_be_dropped),
+            "array": table.drop_coords(list(to_be_dropped)),
             "pulse_period": table.coords["pulse_period"],
             "pulse_stride": table.coords["pulse_stride"].value,
             "distance_resolution": table.coords["distance_resolution"],
