@@ -444,6 +444,9 @@ def mask_large_uncertainty_in_lut_detector(
     error_threshold:
         Threshold for the relative standard deviation (coefficient of variation) of the
         projected time-of-flight above which values are masked.
+    detector_name:
+        Name of the detector for which to apply the error threshold. This is used to
+        get the correct error threshold from the dictionary of error thresholds.
     """
     return ErrorLimitedTofLookupTable[snx.NXdetector](
         _mask_large_uncertainty_in_lut(
@@ -467,6 +470,9 @@ def mask_large_uncertainty_in_lut_monitor(
     error_threshold:
         Threshold for the relative standard deviation (coefficient of variation) of the
         projected time-of-flight above which values are masked.
+    monitor_name:
+        Name of the monitor for which to apply the error threshold. This is used to
+        get the correct error threshold from the dictionary of error thresholds.
     """
     return ErrorLimitedTofLookupTable[MonitorType](
         _mask_large_uncertainty_in_lut(
