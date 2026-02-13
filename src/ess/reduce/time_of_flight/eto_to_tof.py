@@ -28,6 +28,8 @@ from ..nexus.types import (
     EmptyMonitor,
     GravityVector,
     MonitorType,
+    NeXusDetectorName,
+    NeXusName,
     Position,
     RawDetector,
     RawMonitor,
@@ -431,7 +433,7 @@ def mask_large_uncertainty_in_lut_detector(
     table: TofLookupTable,
     error_threshold: LookupTableRelativeErrorThreshold,
     detector_name: NeXusDetectorName,
-) -> ErrorLimitedTofLookupTable:
+) -> ErrorLimitedTofLookupTable[snx.NXdetector]:
     """
     Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
 
@@ -454,7 +456,7 @@ def mask_large_uncertainty_in_lut_monitor(
     table: TofLookupTable,
     error_threshold: LookupTableRelativeErrorThreshold,
     monitor_name: NeXusName[MonitorType],
-) -> ErrorLimitedTofLookupTable:
+) -> ErrorLimitedTofLookupTable[MonitorType]:
     """
     Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
 
@@ -494,7 +496,7 @@ def _compute_tof_data(
 
 def detector_time_of_flight_data(
     detector_data: RawDetector[RunType],
-    lookup: ErrorLimitedTofLookupTable,
+    lookup: ErrorLimitedTofLookupTable[snx.NXdetector],
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofDetector[RunType]:
@@ -529,7 +531,7 @@ def detector_time_of_flight_data(
 
 def monitor_time_of_flight_data(
     monitor_data: RawMonitor[RunType, MonitorType],
-    lookup: ErrorLimitedTofLookupTable,
+    lookup: ErrorLimitedTofLookupTable[MonitorType],
     ltotal: MonitorLtotal[RunType, MonitorType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofMonitor[RunType, MonitorType]:
@@ -564,7 +566,7 @@ def monitor_time_of_flight_data(
 
 def detector_time_of_arrival_data(
     detector_data: RawDetector[RunType],
-    lookup: ErrorLimitedTofLookupTable,
+    lookup: ErrorLimitedTofLookupTable[snx.NXdetector],
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> ToaDetector[RunType]:
@@ -662,5 +664,6 @@ def providers() -> tuple[Callable]:
         detector_time_of_arrival_data,
         detector_wavelength_data,
         monitor_wavelength_data,
-        mask_large_uncertainty_in_lut,
+        mask_large_uncertainty_in_lut_detector,
+        mask_large_uncertainty_in_lut_monitor,
     )
