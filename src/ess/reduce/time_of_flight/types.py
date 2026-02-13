@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
+from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, NewType
@@ -8,7 +9,7 @@ from typing import Any, NewType
 import sciline as sl
 import scipp as sc
 
-from ..nexus.types import MonitorType, RunType
+from ..nexus.types import Component, MonitorType, RunType
 
 TofLookupTableFilename = NewType("TofLookupTableFilename", str)
 """Filename of the time-of-flight lookup table."""
@@ -52,7 +53,7 @@ TimeOfFlightLookupTable = TofLookupTable
 (alias)."""
 
 
-class ErrorLimitedTofLookupTable(TofLookupTable):
+class ErrorLimitedTofLookupTable(sl.Scope[Component, TofLookupTable], TofLookupTable):
     """Lookup table that is masked with NaNs in regions where the standard deviation of
     the time-of-flight is above a certain threshold."""
 
@@ -63,7 +64,9 @@ When pulse-skipping, the offset of the first pulse in the stride. This is typica
 zero but can be a small integer < pulse_stride. If None, a guess is made.
 """
 
-LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
+LookupTableRelativeErrorThreshold = NewType(
+    "LookupTableRelativeErrorThreshold", defaultdict
+)
 """
 Threshold for the relative standard deviation (coefficient of variation) of the
 projected time-of-flight above which values are masked.

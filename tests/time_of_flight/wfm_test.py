@@ -9,7 +9,7 @@ from scippneutron.conversion.graph.beamline import beamline as beamline_graph
 from scippneutron.conversion.graph.tof import elastic as elastic_graph
 
 from ess.reduce import time_of_flight
-from ess.reduce.nexus.types import AnyRun, RawDetector, SampleRun
+from ess.reduce.nexus.types import AnyRun, NeXusDetectorName, RawDetector, SampleRun
 from ess.reduce.time_of_flight import GenericTofWorkflow, TofLookupTableWorkflow, fakes
 
 sl = pytest.importorskip("sciline")
@@ -132,7 +132,8 @@ def setup_workflow(
     pl = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     pl[RawDetector[SampleRun]] = raw_data
     pl[time_of_flight.DetectorLtotal[SampleRun]] = ltotal
-    pl[time_of_flight.LookupTableRelativeErrorThreshold] = error_threshold
+    pl[NeXusDetectorName] = "detector"
+    pl[time_of_flight.LookupTableRelativeErrorThreshold] = {"detector": error_threshold}
 
     lut_wf = lut_workflow.copy()
     lut_wf[time_of_flight.LtotalRange] = ltotal.min(), ltotal.max()

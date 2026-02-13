@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
+from collections import defaultdict
 from collections.abc import Iterable
 
 import sciline
@@ -94,6 +95,6 @@ def GenericTofWorkflow(
 
     # Default parameters
     wf[PulseStrideOffset] = None
-    wf[LookupTableRelativeErrorThreshold] = float('inf')
+    wf[LookupTableRelativeErrorThreshold] = defaultdict(lambda: float('inf'))
 
     return wf
