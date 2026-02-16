@@ -95,6 +95,5 @@ def GenericTofWorkflow(
 
     # Default parameters
     wf[PulseStrideOffset] = None
-    wf[LookupTableRelativeErrorThreshold] = defaultdict(lambda: float('inf'))
 
     return wf

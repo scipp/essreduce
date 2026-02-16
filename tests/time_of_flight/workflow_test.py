@@ -65,6 +65,7 @@ def workflow() -> GenericTofWorkflow:
 
     wf = GenericTofWorkflow(run_types=[SampleRun], monitor_types=[])
     wf[NeXusDetectorName] = "detector"
+    wf[time_of_flight.LookupTableRelativeErrorThreshold] = {'detector': np.inf}
     wf[EmptyDetector[SampleRun]] = calibrated_beamline
     wf[NeXusData[snx.NXdetector, SampleRun]] = nexus_data
     wf[Position[snx.NXsample, SampleRun]] = sc.vector([0, 0, 77], unit='m')

@@ -100,7 +100,7 @@ def _make_workflow_event_mode(
 
 
 def _make_workflow_histogram_mode(
-    dim, distance, choppers, lut_workflow, seed, detector_or_monitor
+    dim, distance, choppers, lut_workflow, seed, error_threshold, detector_or_monitor
 ):
     beamline = fakes.FakeBeamline(
         choppers=choppers,
@@ -125,6 +125,11 @@ def _make_workflow_histogram_mode(
         pl[NeXusName[FrameMonitor0]] = "monitor"
         pl[RawMonitor[SampleRun, FrameMonitor0]] = mon
         pl[time_of_flight.MonitorLtotal[SampleRun, FrameMonitor0]] = distance
+
+    pl[time_of_flight.LookupTableRelativeErrorThreshold] = {
+        'detector': error_threshold,
+        'monitor': error_threshold,
+    }
 
     lut_wf = lut_workflow.copy()
     lut_wf[time_of_flight.LtotalRange] = distance, distance
@@ -245,6 +250,7 @@ def test_standard_unwrap_histogram_mode(
         choppers=fakes.psc_choppers(),
         lut_workflow=lut_workflow_psc_choppers,
         seed=37,
+        error_threshold=np.inf,
         detector_or_monitor=detector_or_monitor,
     )
 
@@ -408,6 +414,10 @@ def test_pulse_skipping_unwrap_when_first_half_of_first_pulse_is_missing(
 
     pl[time_of_flight.TofLookupTable] = lut_wf.compute(time_of_flight.TofLookupTable)
     pl[time_of_flight.PulseStrideOffset] = 1  # Start the stride at the second pulse
+    pl[time_of_flight.LookupTableRelativeErrorThreshold] = {
+        'detector': np.inf,
+        'monitor': np.inf,
+    }
 
     if detector_or_monitor == "detector":
         pl[NeXusDetectorName] = "detector"
@@ -500,6 +510,7 @@ def test_pulse_skipping_unwrap_histogram_mode(
         choppers=fakes.pulse_skipping_choppers(),
         lut_workflow=lut_workflow_pulse_skipping,
         seed=9,
+        error_threshold=np.inf,
         detector_or_monitor=detector_or_monitor,
     )
 
