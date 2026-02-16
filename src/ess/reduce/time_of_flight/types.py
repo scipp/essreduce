@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
 
-from collections import defaultdict
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, NewType
@@ -64,12 +63,24 @@ When pulse-skipping, the offset of the first pulse in the stride. This is typica
 zero but can be a small integer < pulse_stride. If None, a guess is made.
 """
 
-LookupTableRelativeErrorThreshold = NewType(
-    "LookupTableRelativeErrorThreshold", defaultdict
-)
+LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", dict)
 """
 Threshold for the relative standard deviation (coefficient of variation) of the
 projected time-of-flight above which values are masked.
+The threshold can be different for different beamline components (monitors, detector
+banks, etc.). The dictionary should have the component names as keys and the
+corresponding thresholds as values.
+
+Example:
+
+.. highlight:: python
+.. code-block:: python
+
+   workflow[LookupTableRelativeErrorThreshold] = {
+       'detector': 0.1,
+       'monitor_close_to_source': 1.0,
+       'monitor_far_from_source': 0.2,
+   }
 """
 
 
