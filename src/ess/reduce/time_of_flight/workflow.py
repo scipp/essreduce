@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: BSD-3-Clause
 # Copyright (c) 2025 Scipp contributors (https://github.com/scipp)
-from collections import defaultdict
 from collections.abc import Iterable
 
 import sciline
@@ -8,12 +7,7 @@ import scipp as sc
 
 from ..nexus import GenericNeXusWorkflow
 from . import eto_to_tof
-from .types import (
-    LookupTableRelativeErrorThreshold,
-    PulseStrideOffset,
-    TofLookupTable,
-    TofLookupTableFilename,
-)
+from .types import PulseStrideOffset, TofLookupTable, TofLookupTableFilename
 
 
 def load_tof_lookup_table(filename: TofLookupTableFilename) -> TofLookupTable:
