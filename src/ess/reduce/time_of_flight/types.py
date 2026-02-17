@@ -73,7 +73,6 @@ corresponding thresholds as values.
 
 Example:
 
-.. highlight:: python
 .. code-block:: python
 
    workflow[LookupTableRelativeErrorThreshold] = {
