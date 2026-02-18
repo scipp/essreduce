@@ -23,10 +23,13 @@ except ImportError:
     from .interpolator_scipy import Interpolator as InterpolatorImpl
 
 from ..nexus.types import (
+    Component,
     EmptyDetector,
     EmptyMonitor,
     GravityVector,
     MonitorType,
+    NeXusDetectorName,
+    NeXusName,
     Position,
     RawDetector,
     RawMonitor,
@@ -399,9 +402,9 @@ def monitor_ltotal_from_straight_line_approximation(
     )
 
 
-def mask_large_uncertainty_in_lut(
-    table: TofLookupTable, error_threshold: LookupTableRelativeErrorThreshold
-) -> ErrorLimitedTofLookupTable:
+def _mask_large_uncertainty_in_lut(
+    table: TofLookupTable, error_threshold: float
+) -> TofLookupTable:
     """
     Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
 
@@ -418,7 +421,7 @@ def mask_large_uncertainty_in_lut(
     da = table.array
     relative_error = sc.stddevs(da.data) / sc.values(da.data)
     mask = relative_error > sc.scalar(error_threshold)
-    return ErrorLimitedTofLookupTable(
+    return TofLookupTable(
         **{
             **asdict(table),
             "array": sc.where(mask, sc.scalar(np.nan, unit=da.unit), da),
@@ -426,9 +429,61 @@ def mask_large_uncertainty_in_lut(
     )
 
 
+def mask_large_uncertainty_in_lut_detector(
+    table: TofLookupTable,
+    error_threshold: LookupTableRelativeErrorThreshold,
+    detector_name: NeXusDetectorName,
+) -> ErrorLimitedTofLookupTable[snx.NXdetector]:
+    """
+    Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
+
+    Parameters
+    ----------
+    table:
+        Lookup table with time-of-flight as a function of distance and time-of-arrival.
+    error_threshold:
+        Threshold for the relative standard deviation (coefficient of variation) of the
+        projected time-of-flight above which values are masked.
+    detector_name:
+        Name of the detector for which to apply the error threshold. This is used to
+        get the correct error threshold from the dictionary of error thresholds.
+    """
+    return ErrorLimitedTofLookupTable[snx.NXdetector](
+        _mask_large_uncertainty_in_lut(
+            table=table, error_threshold=error_threshold[detector_name]
+        )
+    )
+
+
+def mask_large_uncertainty_in_lut_monitor(
+    table: TofLookupTable,
+    error_threshold: LookupTableRelativeErrorThreshold,
+    monitor_name: NeXusName[MonitorType],
+) -> ErrorLimitedTofLookupTable[MonitorType]:
+    """
+    Mask regions in the time-of-flight lookup table with large uncertainty using NaNs.
+
+    Parameters
+    ----------
+    table:
+        Lookup table with time-of-flight as a function of distance and time-of-arrival.
+    error_threshold:
+        Threshold for the relative standard deviation (coefficient of variation) of the
+        projected time-of-flight above which values are masked.
+    monitor_name:
+        Name of the monitor for which to apply the error threshold. This is used to
+        get the correct error threshold from the dictionary of error thresholds.
+    """
+    return ErrorLimitedTofLookupTable[MonitorType](
+        _mask_large_uncertainty_in_lut(
+            table=table, error_threshold=error_threshold[monitor_name]
+        )
+    )
+
+
 def _compute_tof_data(
     da: sc.DataArray,
-    lookup: ErrorLimitedTofLookupTable,
+    lookup: ErrorLimitedTofLookupTable[Component],
     ltotal: sc.Variable,
     pulse_stride_offset: int,
 ) -> sc.DataArray:
@@ -447,7 +502,7 @@ def _compute_tof_data(
 
 def detector_time_of_flight_data(
     detector_data: RawDetector[RunType],
-    lookup: ErrorLimitedTofLookupTable,
+    lookup: ErrorLimitedTofLookupTable[snx.NXdetector],
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofDetector[RunType]:
@@ -482,7 +537,7 @@ def detector_time_of_flight_data(
 
 def monitor_time_of_flight_data(
     monitor_data: RawMonitor[RunType, MonitorType],
-    lookup: ErrorLimitedTofLookupTable,
+    lookup: ErrorLimitedTofLookupTable[MonitorType],
     ltotal: MonitorLtotal[RunType, MonitorType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> TofMonitor[RunType, MonitorType]:
@@ -517,7 +572,7 @@ def monitor_time_of_flight_data(
 
 def detector_time_of_arrival_data(
     detector_data: RawDetector[RunType],
-    lookup: ErrorLimitedTofLookupTable,
+    lookup: ErrorLimitedTofLookupTable[snx.NXdetector],
     ltotal: DetectorLtotal[RunType],
     pulse_stride_offset: PulseStrideOffset,
 ) -> ToaDetector[RunType]:
@@ -526,6 +581,11 @@ def detector_time_of_arrival_data(
     The output data will have a time-of-arrival coordinate.
     The time-of-arrival is the time since the neutron was emitted from the source.
     It is basically equal to event_time_offset + pulse_index * pulse_period.
+
+    TODO: This is not actually the 'time-of-arrival' in the strict sense, as it is
+    still wrapped over the frame period. We should consider unwrapping it in the future
+    to get the true time-of-arrival.
+    Or give it a different name to avoid confusion.
 
     Parameters
     ----------
@@ -615,5 +675,6 @@ def providers() -> tuple[Callable]:
         detector_time_of_arrival_data,
         detector_wavelength_data,
         monitor_wavelength_data,
-        mask_large_uncertainty_in_lut,
+        mask_large_uncertainty_in_lut_detector,
+        mask_large_uncertainty_in_lut_monitor,
     )

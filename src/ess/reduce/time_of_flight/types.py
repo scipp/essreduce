@@ -8,7 +8,7 @@ from typing import Any, NewType
 import sciline as sl
 import scipp as sc
 
-from ..nexus.types import MonitorType, RunType
+from ..nexus.types import Component, MonitorType, RunType
 
 TofLookupTableFilename = NewType("TofLookupTableFilename", str)
 """Filename of the time-of-flight lookup table."""
@@ -52,7 +52,7 @@ TimeOfFlightLookupTable = TofLookupTable
 (alias)."""
 
 
-class ErrorLimitedTofLookupTable(TofLookupTable):
+class ErrorLimitedTofLookupTable(sl.Scope[Component, TofLookupTable], TofLookupTable):
     """Lookup table that is masked with NaNs in regions where the standard deviation of
     the time-of-flight is above a certain threshold."""
 
@@ -63,10 +63,23 @@ When pulse-skipping, the offset of the first pulse in the stride. This is typica
 zero but can be a small integer < pulse_stride. If None, a guess is made.
 """
 
-LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", float)
+LookupTableRelativeErrorThreshold = NewType("LookupTableRelativeErrorThreshold", dict)
 """
 Threshold for the relative standard deviation (coefficient of variation) of the
 projected time-of-flight above which values are masked.
+The threshold can be different for different beamline components (monitors, detector
+banks, etc.). The dictionary should have the component names as keys and the
+corresponding thresholds as values.
+
+Example:
+
+.. code-block:: python
+
+   workflow[LookupTableRelativeErrorThreshold] = {
+       'detector': 0.1,
+       'monitor_close_to_source': 1.0,
+       'monitor_far_from_source': 0.2,
+   }
 """
 
 
