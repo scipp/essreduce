@@ -541,8 +541,10 @@ def group_event_data(
     # therefore always pass unless some unusual modifications were performed.
     if (
         event_data.masks
-        or begin[0] != sc.index(0)
-        or end[-1] != sc.index(data.sizes[data.dim])
+        or (
+            begin.size > 0
+            and (begin[0] != sc.index(0) or end[-1] != sc.index(data.sizes[data.dim]))
+        )
         or (begin[1:] != end[:-1]).any()
     ):
         raise ValueError("Grouping only implemented for contiguous data with no masks.")
