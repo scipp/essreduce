@@ -7,6 +7,7 @@ from io import BytesIO
 from pathlib import Path
 from typing import Any
 
+import h5py as h5
 import numpy as np
 import pytest
 import scipp as sc
@@ -189,6 +190,15 @@ def nexus_file(request):
                 yield f
 
 
+@pytest.fixture(params=[Path, BytesIO])
+def nexus_file_no_snx(request):
+    with _file_store(request) as store:
+        _write_nexus_data(store)
+        if isinstance(store, BytesIO):
+            store.seek(0)
+        yield store
+
+
 @pytest.fixture
 def expected_bank12():
     components = _event_data_components()
@@ -362,6 +372,53 @@ def test_group_event_data_does_not_modify_input(nexus_file):
         detector_number=detector.coords['detector_number'],
     )
     assert 'event_time_zero' not in events.bins.coords
+
+
+@pytest.mark.parametrize('entry_name', [None, nexus.types.NeXusEntryName('entry-001')])
+@pytest.mark.parametrize(
+    'selection',
+    [
+        None,
+        ('event_time_zero', slice(year_zero, None)),
+        ('event_time_zero', slice(None, year_zero)),
+    ],
+)
+def test_load_detector_no_events(
+    nexus_file_no_snx, expected_bank12, entry_name, selection
+):
+    # Remove events: (using nexus_file_no_snx) because ScippNeXus
+    # does not support accessing the raw h5py file.)
+    with h5.File(nexus_file_no_snx, 'r+') as f:
+        event_data = f['entry-001/reducer/bank12/bank12_events']
+        for key in ('event_id', 'event_time_offset', 'event_time_zero', 'event_index'):
+            dtype = event_data[key].dtype
+            attrs = dict(event_data[key].attrs.items())
+            del event_data[key]
+            event_data[key] = np.array([], dtype=dtype)
+            event_data[key].attrs.update(attrs)
+
+    loc = NeXusLocationSpec(
+        filename=nexus_file_no_snx,
+        entry_name=entry_name,
+        component_name=nexus.types.NeXusDetectorName('bank12'),
+    )
+    if selection is not None:
+        loc.selection = selection
+    detector = nexus.load_component(loc, nx_class=snx.NXdetector)
+    detector = nexus.compute_component_position(detector)
+    if selection:
+        expected = expected_bank12.bins[selection]
+        expected.coords.pop(selection[0])
+    else:
+        expected = expected_bank12
+
+    assert detector['bank12_events'].bins.size().sum().value == 0
+    sc.testing.assert_identical(detector['bank12_events'].coords, expected.coords)
+    offset = detector_transformation_components()['offset']
+    sc.testing.assert_identical(
+        detector['transform'],
+        sc.spatial.translation(unit=offset.unit, value=offset.value),
+    )
 
 
 def test_load_detector_open_file_with_new_definitions_raises(nexus_file):
