@@ -334,6 +334,12 @@ def to_transformation(
                 sizes=t.sizes, coord=time, index=interval.value
             )
             t.value = _time_filter(t.value[idx])
+        elif start is None and stop is None:
+            # FIXME: This is probably not the right way to do this, but is sufficient
+            #        for BIFROST's workflow when the NeXus file contains time-dependent
+            #        depends-on chains since it uses the *relative* positions of
+            #        detectors and analyzers, which are constant during a measurement
+            t.value = _time_filter(t.value['time', 0])
         else:
             t.value = _time_filter(t.value['time', interval.value])
 
