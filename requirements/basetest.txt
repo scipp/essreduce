@@ -103,7 +103,7 @@ python-dateutil==2.9.0.post0
     # via matplotlib
 requests==2.33.1
     # via pooch
-scipp==26.3.1
+scipp==26.7.0
     # via tof
 scipy==1.17.1
     # via -r basetest.in
